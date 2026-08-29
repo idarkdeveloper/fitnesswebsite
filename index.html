@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseFit — Smart Health & Fitness Tracker</title>
+  <meta name="description" content="Track steps, calories burned, sleep, and snap-count calorie intake with an AI-powered photo scanner. Modern, minimalist, dark-mode ready." />
+
+  <!-- Tailwind CDN (production would use build pipeline) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind theme extension: vibrant palette + dark mode by class
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#f0fdfa',
+              100: '#ccfbf1',
+              300: '#5eead4',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+            },
+            accent: {
+              500: '#f43f5e', // vibrant coral
+              600: '#e11d48',
+            },
+            sun: {
+              500: '#f59e0b', // vibrant amber
+            },
+            iris: {
+              500: '#8b5cf6', // vibrant violet
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          },
+          boxShadow: {
+            glow: '0 10px 40px -10px rgba(20,184,166,0.45)',
+          },
+          keyframes: {
+            floaty: {
+              '0%,100%': { transform: 'translateY(0px)' },
+              '50%':     { transform: 'translateY(-10px)' },
+            },
+            pulseRing: {
+              '0%':   { transform: 'scale(0.9)', opacity: '0.7' },
+              '100%': { transform: 'scale(1.6)', opacity: '0' },
+            },
+          },
+          animation: {
+            floaty: 'floaty 4s ease-in-out infinite',
+            pulseRing: 'pulseRing 2s cubic-bezier(0.4,0,0.6,1) infinite',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Custom stylesheet -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Inline: apply saved theme before paint to prevent flash -->
+  <script>
+    (function () {
+      try {
+        const saved = localStorage.getItem('pf_theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (_) {}
+    })();
+  </script>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased">
+
+  <!-- =================== NAVIGATION BAR =================== -->
+  <header id="navbar" class="fixed top-0 inset-x-0 z-50 backdrop-blur bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/60 dark:border-slate-800">
+    <nav class="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+      <!-- Logo -->
+      <a href="#home" class="flex items-center gap-2 group">
+        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-iris-500 text-white font-bold shadow-glow">P</span>
+        <span class="font-extrabold text-lg tracking-tight">PulseFit</span>
+      </a>
+
+      <!-- Desktop nav -->
+      <ul class="hidden md:flex items-center gap-8 text-sm font-medium">
+        <li><a class="nav-link" href="#home">Home</a></li>
+        <li><a class="nav-link" href="#services">Services</a></li>
+        <li><a class="nav-link" href="#dashboard">Dashboard</a></li>
+        <li><a class="nav-link" href="#tools">Tools</a></li>
+        <li><a class="nav-link" href="#portfolio">Showcase</a></li>
+      </ul>
+
+      <!-- Right side controls -->
+      <div class="flex items-center gap-2">
+        <!-- Theme toggle -->
+        <button id="themeToggle" aria-label="Toggle dark mode"
+          class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36l-1.42 1.42M6.05 17.95l-1.41 1.41m0-13.72l1.41 1.41m11.32 11.32l1.42 1.42M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+          <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+        </button>
+
+        <!-- CTA -->
+        <a href="#profile" class="hidden sm:inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-brand-500 to-iris-500 text-white text-sm font-semibold px-4 h-9 hover:opacity-90 transition shadow-glow">
+          Get Started
+        </a>
+
+        <!-- Mobile menu button -->
+        <button id="menuBtn" aria-label="Open menu"
+          class="md:hidden h-9 w-9 grid place-items-center rounded-lg border border-slate-200 dark:border-slate-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Mobile menu drawer -->
+    <div id="mobileMenu" class="md:hidden hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+      <ul class="flex flex-col p-4 gap-2 text-sm font-medium">
+        <li><a class="mobile-link" href="#home">Home</a></li>
+        <li><a class="mobile-link" href="#services">Services</a></li>
+        <li><a class="mobile-link" href="#dashboard">Dashboard</a></li>
+        <li><a class="mobile-link" href="#tools">Tools</a></li>
+        <li><a class="mobile-link" href="#portfolio">Showcase</a></li>
+        <li><a class="mobile-link" href="#profile">Profile</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="pt-16">
+
+    <!-- =================== HERO SECTION =================== -->
+    <section id="home" class="relative overflow-hidden">
+      <!-- Decorative blurred blobs -->
+      <div aria-hidden="true" class="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-brand-500/30 blur-3xl"></div>
+      <div aria-hidden="true" class="absolute top-40 -right-20 h-72 w-72 rounded-full bg-iris-500/30 blur-3xl"></div>
+
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 lg:pt-24 lg:pb-32 grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-brand-700/20 dark:text-brand-300">
+            <span class="h-2 w-2 rounded-full bg-brand-500 animate-pulse"></span>
+            Now with AI Snap Calorie Scanner
+          </span>
+          <h1 class="mt-4 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
+            Your <span class="bg-gradient-to-r from-brand-500 via-iris-500 to-accent-500 bg-clip-text text-transparent">pulse</span>,
+            perfectly tracked.
+          </h1>
+          <p class="mt-5 text-lg text-slate-600 dark:text-slate-300 max-w-xl">
+            Count steps, calories burned, sleep quality, and log meals with a single photo. PulseFit brings your entire wellness journey into one beautiful dashboard.
+          </p>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="#dashboard" class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-500 to-iris-500 text-white font-semibold px-6 py-3 shadow-glow hover:opacity-90 transition">
+              Open Dashboard
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+            <a href="#tools" class="inline-flex items-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 font-semibold px-6 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+              Explore Tools
+            </a>
+          </div>
+
+          <!-- Stats -->
+          <dl class="mt-10 grid grid-cols-3 gap-6 max-w-md">
+            <div>
+              <dt class="text-xs uppercase tracking-wider text-slate-500">Users</dt>
+              <dd class="mt-1 text-2xl font-bold text-brand-500">120K+</dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-wider text-slate-500">Meals Scanned</dt>
+              <dd class="mt-1 text-2xl font-bold text-iris-500">3.4M</dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-wider text-slate-500">Rating</dt>
+              <dd class="mt-1 text-2xl font-bold text-accent-500">4.9★</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Hero visual: animated ring + mock stats card -->
+        <div class="relative">
+          <div class="relative mx-auto w-72 h-72 sm:w-80 sm:h-80 rounded-full grid place-items-center animate-floaty">
+            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-brand-500 to-iris-500 opacity-20 animate-pulseRing"></div>
+            <div class="absolute inset-4 rounded-full bg-gradient-to-tr from-brand-500 to-iris-500 opacity-30 animate-pulseRing" style="animation-delay:.8s"></div>
+            <div class="relative h-52 w-52 sm:h-60 sm:w-60 rounded-full bg-white dark:bg-slate-900 shadow-xl grid place-items-center border border-slate-200 dark:border-slate-800">
+              <div class="text-center">
+                <p class="text-xs uppercase tracking-widest text-slate-500">Today</p>
+                <p class="text-5xl font-extrabold bg-gradient-to-r from-brand-500 to-iris-500 bg-clip-text text-transparent">8,342</p>
+                <p class="text-sm text-slate-500">steps</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating cards -->
+          <div class="hidden sm:block absolute -left-4 top-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-lg animate-floaty" style="animation-delay:.5s">
+            <p class="text-xs text-slate-500">Calories</p>
+            <p class="text-lg font-bold text-accent-500">412 kcal</p>
+          </div>
+          <div class="hidden sm:block absolute -right-2 bottom-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-lg animate-floaty" style="animation-delay:1s">
+            <p class="text-xs text-slate-500">Sleep</p>
+            <p class="text-lg font-bold text-iris-500">7h 24m</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== SERVICES SECTION =================== -->
+    <section id="services" class="py-20 sm:py-28 bg-white dark:bg-slate-900/50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mx-auto text-center">
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Everything you need to stay <span class="text-brand-500">healthy</span>.</h2>
+          <p class="mt-4 text-slate-600 dark:text-slate-300">Four core services that adapt to your lifestyle — from your morning walk to your late-night snack.</p>
+        </div>
+
+        <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <!-- Service card template -->
+          <article class="service-card group">
+            <div class="icon-wrap bg-brand-100 text-brand-600 dark:bg-brand-700/20 dark:text-brand-300">
+              <!-- footprints icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4c0 2.21 1.79 4 4 4s4-1.79 4-4M14 12c0 2.21 1.79 4 4 4s4-1.79 4-4M6 18a2 2 0 100 4 2 2 0 000-4zm10-14a2 2 0 100 4 2 2 0 000-4z"/></svg>
+            </div>
+            <h3 class="mt-4 font-bold text-lg">Step Counter</h3>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Automatic pedometer with daily goals, streaks, and weekly trend graphs.</p>
+          </article>
+
+          <article class="service-card group">
+            <div class="icon-wrap bg-accent-500/10 text-accent-500">
+              <!-- flame icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.24 17 12c.667-2 .333-4.333 1.5-6 1.5 2.5 3 5.5 3 8a8.5 8.5 0 01-3.843 4.657z"/></svg>
+            </div>
+            <h3 class="mt-4 font-bold text-lg">Calories Burned</h3>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Real-time burn estimation from activity, heart-rate, and body metrics.</p>
+          </article>
+
+          <article class="service-card group">
+            <div class="icon-wrap bg-iris-500/10 text-iris-500">
+              <!-- moon icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+            </div>
+            <h3 class="mt-4 font-bold text-lg">Sleep Tracking</h3>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Understand deep, light and REM cycles with an actionable sleep score.</p>
+          </article>
+
+          <article class="service-card group">
+            <div class="icon-wrap bg-sun-500/10 text-sun-500">
+              <!-- camera icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h2.4a2 2 0 001.6-.8l.8-1.1A2 2 0 0111.4 4h1.2a2 2 0 011.6.9l.8 1.1a2 2 0 001.6.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 class="mt-4 font-bold text-lg">AI Snap Calories</h3>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Point, shoot, log. Our AI estimates calories from a photo of your meal.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== DASHBOARD SECTION =================== -->
+    <section id="dashboard" class="py-20 sm:py-28">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-end justify-between flex-wrap gap-4">
+          <div>
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Today at a glance</h2>
+            <p class="mt-2 text-slate-600 dark:text-slate-300">Live totals update as you log activity throughout the day.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="logStepsBtn" class="btn-secondary">+ Log steps</button>
+            <button id="logSleepBtn" class="btn-secondary">+ Log sleep</button>
+            <button id="resetDayBtn" class="text-sm text-slate-500 hover:text-accent-500">Reset day</button>
+          </div>
+        </div>
+
+        <div class="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <!-- Steps -->
+          <div class="metric-card">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-slate-500">Steps</p>
+              <span class="chip bg-brand-100 text-brand-700 dark:bg-brand-700/20 dark:text-brand-300">Goal 10k</span>
+            </div>
+            <p class="mt-2 text-3xl font-extrabold" id="metricSteps">0</p>
+            <div class="mt-3 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+              <div id="stepsBar" class="h-full bg-gradient-to-r from-brand-500 to-iris-500 w-0 transition-all"></div>
+            </div>
+          </div>
+
+          <!-- Calories burned -->
+          <div class="metric-card">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-slate-500">Calories Burned</p>
+              <span class="chip bg-accent-500/10 text-accent-500">Auto</span>
+            </div>
+            <p class="mt-2 text-3xl font-extrabold" id="metricBurned">0 <span class="text-base font-medium text-slate-500">kcal</span></p>
+            <p class="mt-2 text-xs text-slate-500">Estimated from steps × body weight.</p>
+          </div>
+
+          <!-- Calories intake -->
+          <div class="metric-card">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-slate-500">Calories Intake</p>
+              <span class="chip bg-sun-500/10 text-sun-500">Snap-log</span>
+            </div>
+            <p class="mt-2 text-3xl font-extrabold" id="metricIntake">0 <span class="text-base font-medium text-slate-500">kcal</span></p>
+            <p class="mt-2 text-xs text-slate-500" id="intakeSummary">No meals logged yet.</p>
+          </div>
+
+          <!-- Sleep -->
+          <div class="metric-card">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-slate-500">Sleep</p>
+              <span class="chip bg-iris-500/10 text-iris-500">Last night</span>
+            </div>
+            <p class="mt-2 text-3xl font-extrabold" id="metricSleep">0h 0m</p>
+            <p class="mt-2 text-xs text-slate-500" id="sleepScore">Score: —</p>
+          </div>
+        </div>
+
+        <!-- Meal log -->
+        <div class="mt-10 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-lg">Today's meals</h3>
+            <a href="#snap" class="text-sm text-brand-500 hover:underline">+ Snap a meal</a>
+          </div>
+          <ul id="mealList" class="mt-4 divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+            <li class="py-4 text-slate-500">Nothing logged yet — try the AI Snap Scanner below.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== TOOLS SECTION =================== -->
+    <section id="tools" class="py-20 sm:py-28 bg-slate-100/60 dark:bg-slate-900/40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl">
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Health tools</h2>
+          <p class="mt-2 text-slate-600 dark:text-slate-300">Calculators and utilities powered by your saved profile.</p>
+        </div>
+
+        <div class="mt-10 grid gap-6 lg:grid-cols-2">
+
+          <!-- ============ PROFILE + BMI ============ -->
+          <div id="profile" class="tool-card">
+            <header class="flex items-center gap-3">
+              <div class="icon-wrap bg-brand-500/10 text-brand-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A9 9 0 1118.879 6.196 9 9 0 015.121 17.804zM12 12a4 4 0 100-8 4 4 0 000 8zm-6 8a6 6 0 0112 0"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-lg">Profile & BMI</h3>
+                <p class="text-sm text-slate-500">Weight, height and body composition.</p>
+              </div>
+            </header>
+
+            <form id="profileForm" class="mt-6 grid grid-cols-2 gap-4">
+              <label class="col-span-2">
+                <span class="lbl">Full name</span>
+                <input name="name" type="text" class="inp" placeholder="Alex Rivera" />
+              </label>
+              <label>
+                <span class="lbl">Age</span>
+                <input name="age" type="number" min="1" max="120" class="inp" placeholder="28" />
+              </label>
+              <label>
+                <span class="lbl">Sex</span>
+                <select name="sex" class="inp">
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </label>
+              <label>
+                <span class="lbl">Weight (kg)</span>
+                <input name="weight" type="number" step="0.1" min="20" max="400" class="inp" placeholder="70" />
+              </label>
+              <label>
+                <span class="lbl">Height (cm)</span>
+                <input name="height" type="number" step="0.1" min="80" max="260" class="inp" placeholder="175" />
+              </label>
+              <label>
+                <span class="lbl">Activity</span>
+                <select name="activity" class="inp">
+                  <option value="1.2">Sedentary (little exercise)</option>
+                  <option value="1.375">Light (1–3 days/week)</option>
+                  <option value="1.55" selected>Moderate (3–5 days/week)</option>
+                  <option value="1.725">Active (6–7 days/week)</option>
+                  <option value="1.9">Very active (athlete)</option>
+                </select>
+              </label>
+              <label>
+                <span class="lbl">Goal</span>
+                <select name="goal" class="inp">
+                  <option value="lose">Lose weight</option>
+                  <option value="maintain" selected>Maintain</option>
+                  <option value="gain">Gain muscle</option>
+                </select>
+              </label>
+
+              <fieldset class="col-span-2 mt-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-4">
+                <legend class="px-2 text-xs uppercase tracking-wider text-slate-500">Body measurements (cm)</legend>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <label><span class="lbl">Chest</span><input name="chest" type="number" step="0.1" class="inp" /></label>
+                  <label><span class="lbl">Waist</span><input name="waist" type="number" step="0.1" class="inp" /></label>
+                  <label><span class="lbl">Hips</span><input name="hips" type="number" step="0.1" class="inp" /></label>
+                  <label><span class="lbl">Biceps</span><input name="biceps" type="number" step="0.1" class="inp" /></label>
+                  <label><span class="lbl">Thigh</span><input name="thigh" type="number" step="0.1" class="inp" /></label>
+                  <label><span class="lbl">Neck</span><input name="neck" type="number" step="0.1" class="inp" /></label>
+                </div>
+              </fieldset>
+
+              <div class="col-span-2 flex items-center justify-between gap-2">
+                <button type="submit" class="btn-primary">Save profile</button>
+                <p id="profileSaved" class="text-xs text-brand-500 hidden">✓ Saved</p>
+              </div>
+            </form>
+
+            <!-- BMI result -->
+            <div class="mt-6 grid grid-cols-3 gap-3">
+              <div class="stat">
+                <p class="stat-label">BMI</p>
+                <p id="bmiVal" class="stat-num">—</p>
+              </div>
+              <div class="stat">
+                <p class="stat-label">Category</p>
+                <p id="bmiCat" class="stat-num text-sm sm:text-base">—</p>
+              </div>
+              <div class="stat">
+                <p class="stat-label">Ideal weight</p>
+                <p id="idealWeight" class="stat-num text-sm sm:text-base">—</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ CALORIE REQUIREMENT ============ -->
+          <div class="tool-card">
+            <header class="flex items-center gap-3">
+              <div class="icon-wrap bg-sun-500/10 text-sun-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-3-3v6m9 0A9 9 0 11 3 12a9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h3 class="font-bold text-lg">Calories Required</h3>
+                <p class="text-sm text-slate-500">Daily needs from BMR × activity × goal.</p>
+              </div>
+            </header>
+
+            <div class="mt-6 grid grid-cols-2 gap-4 text-center">
+              <div class="stat">
+                <p class="stat-label">BMR</p>
+                <p id="bmrVal" class="stat-num">— <span class="text-xs font-medium text-slate-500">kcal</span></p>
+              </div>
+              <div class="stat">
+                <p class="stat-label">TDEE</p>
+                <p id="tdeeVal" class="stat-num">— <span class="text-xs font-medium text-slate-500">kcal</span></p>
+              </div>
+              <div class="stat col-span-2 bg-gradient-to-r from-brand-500/10 to-iris-500/10 border-brand-500/20">
+                <p class="stat-label">Recommended for your goal</p>
+                <p id="targetKcal" class="stat-num text-2xl">— <span class="text-sm font-medium text-slate-500">kcal / day</span></p>
+              </div>
+            </div>
+
+            <div class="mt-6 space-y-3 text-sm">
+              <div class="flex justify-between">
+                <span class="text-slate-500">Protein</span>
+                <span id="macroP" class="font-semibold">— g</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Carbs</span>
+                <span id="macroC" class="font-semibold">— g</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500">Fat</span>
+                <span id="macroF" class="font-semibold">— g</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============ AI SNAP CALORIE COUNTER ============ -->
+          <div id="snap" class="tool-card lg:col-span-2">
+            <header class="flex items-center justify-between flex-wrap gap-3">
+              <div class="flex items-center gap-3">
+                <div class="icon-wrap bg-accent-500/10 text-accent-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h2.4a2 2 0 001.6-.8l.8-1.1A2 2 0 0111.4 4h1.2a2 2 0 011.6.9l.8 1.1a2 2 0 001.6.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg">AI Snap Calorie Counter</h3>
+                  <p class="text-sm text-slate-500">Upload a meal photo and get an estimated calorie count.</p>
+                </div>
+              </div>
+              <span class="chip bg-iris-500/10 text-iris-500">Beta AI</span>
+            </header>
+
+            <div class="mt-6 grid gap-6 md:grid-cols-2">
+              <!-- Uploader -->
+              <label id="dropZone" class="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 p-8 cursor-pointer hover:border-brand-500 transition min-h-[240px]">
+                <input id="mealPhoto" type="file" accept="image/*" capture="environment" class="hidden" />
+                <img id="previewImg" class="hidden max-h-56 rounded-xl object-cover" alt="Meal preview" />
+                <div id="dropHint" class="text-center">
+                  <div class="mx-auto h-12 w-12 rounded-full bg-brand-500/10 text-brand-500 grid place-items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v12"/></svg>
+                  </div>
+                  <p class="mt-3 font-semibold">Tap to upload or drag & drop</p>
+                  <p class="text-xs text-slate-500">JPG / PNG · up to 6 MB</p>
+                </div>
+              </label>
+
+              <!-- Result -->
+              <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 bg-white dark:bg-slate-900/60">
+                <div class="flex items-center justify-between">
+                  <p class="font-semibold">AI Detection</p>
+                  <span id="aiStatus" class="text-xs text-slate-500">Idle</span>
+                </div>
+
+                <div id="aiResult" class="mt-4 space-y-3 text-sm">
+                  <p class="text-slate-500">Snap a meal to see estimated calories and macros here.</p>
+                </div>
+
+                <div class="mt-6 flex flex-wrap gap-2">
+                  <button id="scanBtn" class="btn-primary" disabled>Analyze</button>
+                  <button id="logMealBtn" class="btn-secondary" disabled>+ Log to today</button>
+                  <button id="clearScanBtn" class="text-sm text-slate-500 hover:text-accent-500 ml-auto">Clear</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== PORTFOLIO / SHOWCASE GRID =================== -->
+    <section id="portfolio" class="py-20 sm:py-28">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-end justify-between flex-wrap gap-4">
+          <div>
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Success stories</h2>
+            <p class="mt-2 text-slate-600 dark:text-slate-300">Real people, real progress — powered by PulseFit.</p>
+          </div>
+          <!-- Filter chips -->
+          <div class="flex gap-2 flex-wrap">
+            <button class="chip-filter active" data-filter="all">All</button>
+            <button class="chip-filter" data-filter="weight">Weight loss</button>
+            <button class="chip-filter" data-filter="muscle">Muscle gain</button>
+            <button class="chip-filter" data-filter="sleep">Sleep</button>
+          </div>
+        </div>
+
+        <div id="portfolioGrid" class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <!-- Cards injected by JS from data.stories -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== CTA =================== -->
+    <section class="relative py-16 sm:py-20">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="rounded-3xl bg-gradient-to-r from-brand-500 via-iris-500 to-accent-500 p-8 sm:p-12 text-white shadow-glow">
+          <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h3 class="text-2xl sm:text-3xl font-extrabold">Start tracking in 60 seconds</h3>
+              <p class="mt-2 text-white/90 max-w-xl">Set up your profile, snap your next meal, and let PulseFit take care of the rest.</p>
+            </div>
+            <a href="#profile" class="inline-flex items-center gap-2 rounded-xl bg-white text-brand-700 font-semibold px-6 py-3 hover:bg-slate-100 transition">
+              Create your profile
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================== FOOTER =================== -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-iris-500 text-white font-bold">P</span>
+          <span>© <span id="year"></span> PulseFit. Built for your best self.</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="#services" class="hover:text-brand-500">Services</a>
+          <a href="#tools" class="hover:text-brand-500">Tools</a>
+          <a href="#portfolio" class="hover:text-brand-500">Showcase</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden">
+    <div class="rounded-xl bg-slate-900 text-white text-sm px-4 py-3 shadow-xl border border-slate-700"></div>
+  </div>
+
+  <!-- App script -->
+  <script src="app.js"></script>
+</body>
+</html>

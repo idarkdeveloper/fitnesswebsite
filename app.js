@@ -39,6 +39,45 @@ function toast(msg, ms = 2200) {
   toast._t = setTimeout(() => box.classList.add('hidden'), ms);
 }
 
+/* Accessible replacement for prompt()/confirm(). Resolves with the entered
+   number (or true for confirm-only), or null when cancelled. */
+function ask({ title, help = '', value = '', min, max, step = 'any', okLabel = 'Save', confirmOnly = false }) {
+  const dlg = $('#askDialog'), input = $('#askInput'), err = $('#askError');
+  $('#askTitle').textContent = title;
+  $('#askHelp').textContent = help;
+  $('#askOk').textContent = okLabel;
+  err.classList.add('hidden');
+  input.classList.toggle('hidden', confirmOnly);
+  Object.assign(input, { value, step });
+  input.min = min ?? ''; input.max = max ?? '';
+  input.setAttribute('aria-label', title);
+  return new Promise(resolve => {
+    const done = v => { dlg.close(); cleanup(); resolve(v); };
+    const onSubmit = e => {
+      e.preventDefault();
+      if (confirmOnly) return done(true);
+      const n = parseFloat(input.value);
+      if (isNaN(n) || (min !== undefined && n < min) || (max !== undefined && n > max)) {
+        err.textContent = `Enter a number between ${min} and ${max}.`;
+        err.classList.remove('hidden');
+        return input.focus();
+      }
+      done(n);
+    };
+    const onCancel = () => done(null);
+    const cleanup = () => {
+      $('#askForm').removeEventListener('submit', onSubmit);
+      $('#askCancel').removeEventListener('click', onCancel);
+      dlg.removeEventListener('cancel', onCancel);
+    };
+    $('#askForm').addEventListener('submit', onSubmit);
+    $('#askCancel').addEventListener('click', onCancel);
+    dlg.addEventListener('cancel', onCancel);
+    dlg.showModal();
+    if (!confirmOnly) { input.focus(); input.select(); }
+  });
+}
+
 const todayKey = () => 'pf_day_' + new Date().toISOString().slice(0, 10);
 
 /* =============================================================
@@ -174,7 +213,7 @@ function renderProfileMetrics(p) {
     const badge = $('#profileSaved');
     badge.classList.remove('hidden');
     setTimeout(() => badge.classList.add('hidden'), 1800);
-    toast(`Saved profile${data.name ? ' for ' + data.name : ''}`);
+    toast(`Profile saved${data.name ? ' for ' + data.name : ''}`);
   });
 
   // Live update BMI/TDEE as user types
@@ -222,7 +261,7 @@ function refreshDashboard() {
   // Meal list
   const list = $('#mealList');
   if (!day.meals.length) {
-    list.innerHTML = '<li class="py-4 text-slate-500">Nothing logged yet — try the AI Snap Scanner below.</li>';
+    list.innerHTML = '<li class="py-4 text-slate-500">No meals yet. Upload a meal photo in the scanner below to log your first one.</li>';
   } else {
     list.innerHTML = day.meals.map((meal, i) => `
       <li class="py-3 flex items-center justify-between">
@@ -256,29 +295,29 @@ function escapeHtml(s) {
 }
 
 (function initDashboardControls() {
-  $('#logStepsBtn').addEventListener('click', () => {
-    const v = prompt('Steps to add:', '1500');
-    const n = Math.max(0, parseInt(v, 10));
-    if (!n) return;
+  $('#logStepsBtn').addEventListener('click', async () => {
+    const v = await ask({ title: 'Add steps', help: 'How many steps do you want to add to today’s total?', value: 1500, min: 1, max: 100000, step: 1, okLabel: 'Add steps' });
+    if (v === null) return;
+    const n = Math.round(v);
     const d = loadDay(); d.steps += n; saveDay(d);
     refreshDashboard();
-    toast(`+${n.toLocaleString()} steps`);
+    toast(`Added ${n.toLocaleString()} steps`);
   });
 
-  $('#logSleepBtn').addEventListener('click', () => {
-    const v = prompt('Hours slept (e.g. 7.5):', '7.5');
-    const h = parseFloat(v);
-    if (isNaN(h) || h < 0 || h > 24) return;
+  $('#logSleepBtn').addEventListener('click', async () => {
+    const h = await ask({ title: 'Log last night’s sleep', help: 'Hours slept, for example 7.5.', value: 7.5, min: 0, max: 24, step: 0.25, okLabel: 'Save sleep' });
+    if (h === null) return;
     const d = loadDay(); d.sleepMinutes = Math.round(h * 60); saveDay(d);
     refreshDashboard();
-    toast(`Sleep logged: ${h}h`);
+    toast(`Saved ${h} hours of sleep`);
   });
 
-  $('#resetDayBtn').addEventListener('click', () => {
-    if (!confirm('Reset today\'s tracker?')) return;
+  $('#resetDayBtn').addEventListener('click', async () => {
+    const ok = await ask({ title: 'Clear today’s data?', help: 'This removes today’s steps, sleep and meals. It can’t be undone.', confirmOnly: true, okLabel: 'Clear today' });
+    if (!ok) return;
     store.del(todayKey());
     refreshDashboard();
-    toast('Day reset.');
+    toast('Today’s data cleared');
   });
 })();
 
@@ -363,11 +402,11 @@ function matchFood(color) {
 
   function acceptFile(file) {
     if (!file || !file.type.startsWith('image/')) {
-      toast('Please choose an image file.');
+      toast('That file isn’t an image. Choose a JPG or PNG.');
       return;
     }
     if (file.size > 6 * 1024 * 1024) {
-      toast('Image is over 6 MB.');
+      toast('That image is over 6 MB. Choose a smaller one.');
       return;
     }
     currentFile = file;
@@ -378,7 +417,7 @@ function matchFood(color) {
     logBtn.disabled  = true;
     lastScan = null;
     status.textContent = 'Ready to scan';
-    result.innerHTML = '<p class="text-slate-500">Click <b>Analyze</b> to estimate calories.</p>';
+    result.innerHTML = '<p class="text-slate-500">Select <b>Analyze</b> to estimate calories.</p>';
   }
 
   input.addEventListener('change', (e) => acceptFile(e.target.files[0]));
@@ -408,7 +447,7 @@ function matchFood(color) {
     result.innerHTML = `
       <div class="flex items-center gap-3 text-slate-500">
         <span class="inline-block h-3 w-3 rounded-full bg-brand-500 animate-pulse"></span>
-        Reading pixels & matching against food database…
+        Estimating from your photo…
       </div>`;
     try {
       // Fake a tiny delay so the UI shows the working state
@@ -434,22 +473,23 @@ function matchFood(color) {
             <p class="text-slate-500">Fat</p><p class="font-bold text-accent-500">${match.macros.f}g</p>
           </div>
         </div>
-        <p class="mt-3 text-xs text-slate-500">Estimate based on dominant color analysis. You can adjust when logging.</p>`;
+        <p class="mt-3 text-xs text-slate-500">Rough estimate from the photo’s dominant colors, not a measured value. You can adjust it when you log.</p>`;
       status.textContent = 'Done';
       scanBtn.disabled = false;
       logBtn.disabled  = false;
     } catch (err) {
       console.error(err);
       status.textContent = 'Error';
-      result.innerHTML = '<p class="text-accent-500">Couldn\'t read that image — try another.</p>';
+      result.innerHTML = '<p class="text-accent-500">We couldn’t read that image. Try a different JPG or PNG.</p>';
       scanBtn.disabled = false;
     }
   });
 
-  logBtn.addEventListener('click', () => {
+  logBtn.addEventListener('click', async () => {
     if (!lastScan) return;
-    const kcalAdj = parseInt(prompt('Confirm calories to log:', lastScan.kcal), 10);
-    if (isNaN(kcalAdj)) return;
+    const v = await ask({ title: `Log ${lastScan.name}`, help: 'Adjust the estimated calories if you know better.', value: lastScan.kcal, min: 1, max: 5000, step: 1, okLabel: 'Log meal' });
+    if (v === null) return;
+    const kcalAdj = Math.round(v);
     const d = loadDay();
     d.meals.push({
       name: lastScan.name,
@@ -475,7 +515,7 @@ function matchFood(color) {
     scanBtn.disabled = true;
     logBtn.disabled  = true;
     status.textContent = 'Idle';
-    result.innerHTML = '<p class="text-slate-500">Snap a meal to see estimated calories and macros here.</p>';
+    result.innerHTML = '<p class="text-slate-500">Upload a meal photo to see estimated calories and macros here.</p>';
   }
 })();
 
@@ -483,12 +523,12 @@ function matchFood(color) {
    6. Portfolio grid: static stories with filters
    ============================================================= */
 const STORIES = [
-  { name: 'Alex R.',   tag: 'weight', result: 'Lost 12 kg in 6 months',   quote: 'Snapping meals killed my mindless snacking.',                  hue: 'from-brand-500 to-iris-500' },
-  { name: 'Priya S.',  tag: 'sleep',  result: 'Sleep score 62 → 91',      quote: 'Bedtime nudges finally made routine stick.',                    hue: 'from-iris-500 to-accent-500' },
-  { name: 'Marcus T.', tag: 'muscle', result: 'Gained 4 kg lean mass',    quote: 'Macros hit the mark every day thanks to PulseFit.',            hue: 'from-sun-500 to-accent-500' },
-  { name: 'Emiko K.',  tag: 'weight', result: 'Dropped 2 dress sizes',    quote: 'The photo scanner takes the guesswork out of eating out.',     hue: 'from-brand-500 to-sun-500' },
-  { name: 'Jordan L.', tag: 'muscle', result: '+18% bench press',         quote: 'Body measurements make progress visible even on stale scale days.', hue: 'from-iris-500 to-brand-500' },
-  { name: 'Fatima H.', tag: 'sleep',  result: '2h more deep sleep / wk',  quote: 'Weekly trend reports helped me spot caffeine issues.',         hue: 'from-accent-500 to-iris-500' },
+  { name: 'Example goal',   tag: 'weight', result: 'Lose weight steadily',   quote: 'Track meals to cut back on mindless snacking.',                  hue: 'from-brand-500 to-iris-500' },
+  { name: 'Example goal',  tag: 'sleep',  result: 'Raise your sleep score',      quote: 'Log bedtimes to build a steadier routine.',                    hue: 'from-iris-500 to-accent-500' },
+  { name: 'Example goal', tag: 'muscle', result: 'Build lean mass',    quote: 'Check your macro targets every day.',            hue: 'from-sun-500 to-accent-500' },
+  { name: 'Example goal',  tag: 'weight', result: 'Eat out with confidence',    quote: 'Estimate calories when eating out.',     hue: 'from-brand-500 to-sun-500' },
+  { name: 'Example goal', tag: 'muscle', result: 'Track strength progress',         quote: 'Record measurements to see progress beyond the scale.', hue: 'from-iris-500 to-brand-500' },
+  { name: 'Example goal', tag: 'sleep',  result: 'Sleep more consistently',  quote: 'Review sleep trends to spot what affects your rest.',         hue: 'from-accent-500 to-iris-500' },
 ];
 
 (function initPortfolio() {
@@ -503,8 +543,8 @@ const STORIES = [
         </div>
       </div>
       <div class="p-5">
-        <p class="text-sm text-slate-600 dark:text-slate-300">"${s.quote}"</p>
-        <p class="mt-3 text-xs font-semibold text-slate-500">— ${s.name}</p>
+        <p class="text-sm text-slate-600 dark:text-slate-300">${s.quote}</p>
+        <p class="mt-3 text-xs font-semibold text-slate-500">${s.name}</p>
       </div>
     </article>`).join('');
 

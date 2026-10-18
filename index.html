@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PulseFit — Smart Health & Fitness Tracker</title>
-  <meta name="description" content="Track steps, calories burned, sleep, and snap-count calorie intake with an AI-powered photo scanner. Modern, minimalist, dark-mode ready." />
+  <meta name="description" content="Log steps, sleep and meals, and see your daily calorie needs. Free, private, and stored only on your device." />
 
   <!-- Tailwind CDN (production would use build pipeline) -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -104,7 +104,7 @@
       <!-- Right side controls -->
       <div class="flex items-center gap-2">
         <!-- Theme toggle -->
-        <button id="themeToggle" aria-label="Toggle dark mode"
+        <button id="themeToggle" aria-label="Switch between light and dark mode"
           class="h-9 w-9 grid place-items-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
           <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36-6.36l-1.42 1.42M6.05 17.95l-1.41 1.41m0-13.72l1.41 1.41m11.32 11.32l1.42 1.42M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
           <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
@@ -148,7 +148,7 @@
         <div>
           <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-100 text-brand-700 dark:bg-brand-700/20 dark:text-brand-300">
             <span class="h-2 w-2 rounded-full bg-brand-500 animate-pulse"></span>
-            Now with AI Snap Calorie Scanner
+            New: estimate meal calories from a photo
           </span>
           <h1 class="mt-4 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
             Your <span class="bg-gradient-to-r from-brand-500 via-iris-500 to-accent-500 bg-clip-text text-transparent">pulse</span>,
@@ -171,16 +171,16 @@
           <!-- Stats -->
           <dl class="mt-10 grid grid-cols-3 gap-6 max-w-md">
             <div>
-              <dt class="text-xs uppercase tracking-wider text-slate-500">Users</dt>
-              <dd class="mt-1 text-2xl font-bold text-brand-500">120K+</dd>
+              <dt class="text-xs uppercase tracking-wider text-slate-500">Price</dt>
+              <dd class="mt-1 text-2xl font-bold text-brand-500">Free</dd>
             </div>
             <div>
-              <dt class="text-xs uppercase tracking-wider text-slate-500">Meals Scanned</dt>
-              <dd class="mt-1 text-2xl font-bold text-iris-500">3.4M</dd>
+              <dt class="text-xs uppercase tracking-wider text-slate-500">Your data</dt>
+              <dd class="mt-1 text-xl sm:text-2xl font-bold text-iris-500 whitespace-nowrap">On-device</dd>
             </div>
             <div>
-              <dt class="text-xs uppercase tracking-wider text-slate-500">Rating</dt>
-              <dd class="mt-1 text-2xl font-bold text-accent-500">4.9★</dd>
+              <dt class="text-xs uppercase tracking-wider text-slate-500">Sign-up</dt>
+              <dd class="mt-1 text-2xl font-bold text-accent-500">None</dd>
             </div>
           </dl>
         </div>
@@ -217,7 +217,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-2xl mx-auto text-center">
           <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Everything you need to stay <span class="text-brand-500">healthy</span>.</h2>
-          <p class="mt-4 text-slate-600 dark:text-slate-300">Four core services that adapt to your lifestyle — from your morning walk to your late-night snack.</p>
+          <p class="mt-4 text-slate-600 dark:text-slate-300">Four simple trackers, from your morning walk to your late-night snack.</p>
         </div>
 
         <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -228,7 +228,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4c0 2.21 1.79 4 4 4s4-1.79 4-4M14 12c0 2.21 1.79 4 4 4s4-1.79 4-4M6 18a2 2 0 100 4 2 2 0 000-4zm10-14a2 2 0 100 4 2 2 0 000-4z"/></svg>
             </div>
             <h3 class="mt-4 font-bold text-lg">Step Counter</h3>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Automatic pedometer with daily goals, streaks, and weekly trend graphs.</p>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Log your steps and watch progress toward a 10,000-step daily goal.</p>
           </article>
 
           <article class="service-card group">
@@ -237,7 +237,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.24 17 12c.667-2 .333-4.333 1.5-6 1.5 2.5 3 5.5 3 8a8.5 8.5 0 01-3.843 4.657z"/></svg>
             </div>
             <h3 class="mt-4 font-bold text-lg">Calories Burned</h3>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Real-time burn estimation from activity, heart-rate, and body metrics.</p>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Estimated automatically from your steps and body weight.</p>
           </article>
 
           <article class="service-card group">
@@ -246,7 +246,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
             </div>
             <h3 class="mt-4 font-bold text-lg">Sleep Tracking</h3>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Understand deep, light and REM cycles with an actionable sleep score.</p>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Log the hours you slept and get a simple sleep score out of 100.</p>
           </article>
 
           <article class="service-card group">
@@ -254,8 +254,8 @@
               <!-- camera icon -->
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h2.4a2 2 0 001.6-.8l.8-1.1A2 2 0 0111.4 4h1.2a2 2 0 011.6.9l.8 1.1a2 2 0 001.6.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
-            <h3 class="mt-4 font-bold text-lg">AI Snap Calories</h3>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Point, shoot, log. Our AI estimates calories from a photo of your meal.</p>
+            <h3 class="mt-4 font-bold text-lg">Meal Photo Estimates</h3>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Upload a meal photo for a rough calorie estimate, then adjust it before you log.</p>
           </article>
         </div>
       </div>
@@ -267,12 +267,12 @@
         <div class="flex items-end justify-between flex-wrap gap-4">
           <div>
             <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Today at a glance</h2>
-            <p class="mt-2 text-slate-600 dark:text-slate-300">Live totals update as you log activity throughout the day.</p>
+            <p class="mt-2 text-slate-600 dark:text-slate-300">Your totals update as you log steps, sleep and meals. Everything resets daily.</p>
           </div>
           <div class="flex items-center gap-2">
             <button id="logStepsBtn" class="btn-secondary">+ Log steps</button>
             <button id="logSleepBtn" class="btn-secondary">+ Log sleep</button>
-            <button id="resetDayBtn" class="text-sm text-slate-500 hover:text-accent-500">Reset day</button>
+            <button id="resetDayBtn" class="text-sm text-slate-500 hover:text-accent-500">Clear today</button>
           </div>
         </div>
 
@@ -293,17 +293,17 @@
           <div class="metric-card">
             <div class="flex items-center justify-between">
               <p class="text-sm font-medium text-slate-500">Calories Burned</p>
-              <span class="chip bg-accent-500/10 text-accent-500">Auto</span>
+              <span class="chip bg-accent-500/10 text-accent-500">Estimated</span>
             </div>
             <p class="mt-2 text-3xl font-extrabold" id="metricBurned">0 <span class="text-base font-medium text-slate-500">kcal</span></p>
-            <p class="mt-2 text-xs text-slate-500">Estimated from steps × body weight.</p>
+            <p class="mt-2 text-xs text-slate-500">Estimated from your steps and body weight.</p>
           </div>
 
           <!-- Calories intake -->
           <div class="metric-card">
             <div class="flex items-center justify-between">
-              <p class="text-sm font-medium text-slate-500">Calories Intake</p>
-              <span class="chip bg-sun-500/10 text-sun-500">Snap-log</span>
+              <p class="text-sm font-medium text-slate-500">Calories Eaten</p>
+              <span class="chip bg-sun-500/10 text-sun-500">From meals</span>
             </div>
             <p class="mt-2 text-3xl font-extrabold" id="metricIntake">0 <span class="text-base font-medium text-slate-500">kcal</span></p>
             <p class="mt-2 text-xs text-slate-500" id="intakeSummary">No meals logged yet.</p>
@@ -324,10 +324,10 @@
         <div class="mt-10 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-lg">Today's meals</h3>
-            <a href="#snap" class="text-sm text-brand-500 hover:underline">+ Snap a meal</a>
+            <a href="#snap" class="text-sm text-brand-500 hover:underline">+ Add a meal</a>
           </div>
           <ul id="mealList" class="mt-4 divide-y divide-slate-200 dark:divide-slate-800 text-sm">
-            <li class="py-4 text-slate-500">Nothing logged yet — try the AI Snap Scanner below.</li>
+            <li class="py-4 text-slate-500">No meals yet. Upload a meal photo in the scanner below to log your first one.</li>
           </ul>
         </div>
       </div>
@@ -338,7 +338,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-2xl">
           <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Health tools</h2>
-          <p class="mt-2 text-slate-600 dark:text-slate-300">Calculators and utilities powered by your saved profile.</p>
+          <p class="mt-2 text-slate-600 dark:text-slate-300">Fill in your details to get your BMI and daily calorie target.</p>
         </div>
 
         <div class="mt-10 grid gap-6 lg:grid-cols-2">
@@ -412,7 +412,7 @@
 
               <div class="col-span-2 flex items-center justify-between gap-2">
                 <button type="submit" class="btn-primary">Save profile</button>
-                <p id="profileSaved" class="text-xs text-brand-500 hidden">✓ Saved</p>
+                <p id="profileSaved" class="text-xs text-brand-500 hidden">✓ Profile saved</p>
               </div>
             </form>
 
@@ -484,7 +484,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h2.4a2 2 0 001.6-.8l.8-1.1A2 2 0 0111.4 4h1.2a2 2 0 011.6.9l.8 1.1a2 2 0 001.6.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 </div>
                 <div>
-                  <h3 class="font-bold text-lg">AI Snap Calorie Counter</h3>
+                  <h3 class="font-bold text-lg">Meal Photo Calorie Estimator</h3>
                   <p class="text-sm text-slate-500">Upload a meal photo and get an estimated calorie count.</p>
                 </div>
               </div>
@@ -513,7 +513,7 @@
                 </div>
 
                 <div id="aiResult" class="mt-4 space-y-3 text-sm">
-                  <p class="text-slate-500">Snap a meal to see estimated calories and macros here.</p>
+                  <p class="text-slate-500">Upload a meal photo to see estimated calories and macros here.</p>
                 </div>
 
                 <div class="mt-6 flex flex-wrap gap-2">
@@ -534,8 +534,8 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-end justify-between flex-wrap gap-4">
           <div>
-            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Success stories</h2>
-            <p class="mt-2 text-slate-600 dark:text-slate-300">Real people, real progress — powered by PulseFit.</p>
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Example goals</h2>
+            <p class="mt-2 text-slate-600 dark:text-slate-300">Illustrative examples of what you could track. These are not real customer reviews.</p>
           </div>
           <!-- Filter chips -->
           <div class="flex gap-2 flex-wrap">
@@ -558,8 +558,8 @@
         <div class="rounded-3xl bg-gradient-to-r from-brand-500 via-iris-500 to-accent-500 p-8 sm:p-12 text-white shadow-glow">
           <div class="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              <h3 class="text-2xl sm:text-3xl font-extrabold">Start tracking in 60 seconds</h3>
-              <p class="mt-2 text-white/90 max-w-xl">Set up your profile, snap your next meal, and let PulseFit take care of the rest.</p>
+              <h3 class="text-2xl sm:text-3xl font-extrabold">Start tracking in a minute</h3>
+              <p class="mt-2 text-white/90 max-w-xl">Enter your details, log today’s steps and sleep, and add your next meal.</p>
             </div>
             <a href="#profile" class="inline-flex items-center gap-2 rounded-xl bg-white text-brand-700 font-semibold px-6 py-3 hover:bg-slate-100 transition">
               Create your profile
@@ -575,7 +575,7 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
         <div class="flex items-center gap-2">
           <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-iris-500 text-white font-bold">P</span>
-          <span>© <span id="year"></span> PulseFit. Built for your best self.</span>
+          <span>© <span id="year"></span> PulseFit. Your data stays on your device.</span>
         </div>
         <div class="flex items-center gap-4">
           <a href="#services" class="hover:text-brand-500">Services</a>
@@ -592,6 +592,20 @@
   </div>
 
   <!-- App script -->
+    <!-- Input dialog (replaces browser prompt/confirm) -->
+  <dialog id="askDialog" class="rounded-2xl p-0 backdrop:bg-slate-900/50 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 w-[min(92vw,24rem)] border border-slate-200 dark:border-slate-700">
+    <form method="dialog" id="askForm" class="p-6">
+      <h3 id="askTitle" class="font-bold text-lg"></h3>
+      <p id="askHelp" class="mt-1 text-sm text-slate-500"></p>
+      <input id="askInput" type="number" class="inp mt-4" />
+      <p id="askError" class="mt-2 text-xs text-accent-500 hidden"></p>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" id="askCancel" class="btn-secondary">Cancel</button>
+        <button type="submit" id="askOk" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="app.js"></script>
 </body>
 </html>

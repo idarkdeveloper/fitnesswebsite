@@ -1,0 +1,28 @@
+[
+  {
+    "id": "full-pushups",
+    "file": "img/review/full-pushups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "size": "1536x1024",
+    "prompt_sha256": "fa5fff43680266a1",
+    "prompt": "Athlete doing full pushups in an outdoor calisthenics park: in a straight-body pushup on the toes, knees off the ground, chest just above the floor. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "revised_prompt": null,
+    "generated_at": "2026-11-06T18:53:26.814Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 117,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 117
+      },
+      "output_tokens": 1962,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 394
+      },
+      "total_tokens": 2079
+    },
+    "cost_usd": 0.06337
+  }
+]

@@ -33,7 +33,8 @@
 
    Generated images land in img/review/ (never deployed). Check each one against the
    exercise's Tutorial and Form Cues, then `approve` the good ones. Every generation is
-   recorded in img/review/generation-log.json (model, prompt, time) for provenance.
+   recorded in img/review/generation-log.json (model, prompt, time, tokens, cost) for provenance.
+   --dry-run prints an estimated cost; real runs total the cost from the token usage the API returns.
    ============================================================= */
 'use strict';
 const fs = require('fs');
@@ -42,6 +43,37 @@ const crypto = require('crypto');
 const { buildAll, scanImages, writeManifest, REDO_IDS, ROOT } = require('./image-prompts.js');
 
 const REVIEW = path.join(ROOT, 'img', 'review');
+
+/* USD per 1M tokens, from OpenAI's pricing page (checked 2026-11-06). Re-check before big runs:
+   https://openai.com/api/pricing/  (image output tokens dominate the cost). */
+const PRICES = {
+  'gpt-image-2.6-sunburst': { textIn: 5, imageIn: 8, imageOut: 30 },
+  'gpt-image-2.6-flare':    { textIn: 5, imageIn: 8, imageOut: 30 },
+  'gpt-image-2.5-sunburst': { textIn: 5, imageIn: 8, imageOut: 30 },
+  'gpt-image-2.5-flare':    { textIn: 5, imageIn: 8, imageOut: 30 },
+  'gpt-image-2':            { textIn: 5, imageIn: 8, imageOut: 30 },
+  'gpt-image-1.5':          { textIn: 5, imageIn: 8, imageOut: 32 },
+  'chatgpt-image-latest':   { textIn: 5, imageIn: 8, imageOut: 32 },
+  'gpt-image-1-mini':       { textIn: 2, imageIn: 2.5, imageOut: 8 },
+};
+/* Output tokens per image for the GPT image 1.x family (OpenAI docs). Used only for --dry-run
+   estimates; real runs total the token usage the API returns. Newer models may differ. */
+const EST_TOKENS = {
+  '1024x1024': { low: 272, medium: 1056, high: 4160 },
+  '1536x1024': { low: 400, medium: 1568, high: 6208 },
+};
+const EST_PROMPT_TOKENS = 110;
+
+function costOf(model, usage) {
+  const p = PRICES[model];
+  if (!p || !usage) return null;
+  const d = usage.input_tokens_details || {};
+  const textIn = d.text_tokens ?? usage.input_tokens ?? 0;
+  const imageIn = d.image_tokens ?? 0;
+  const out = usage.output_tokens ?? 0;
+  return (textIn * p.textIn + imageIn * p.imageIn + out * p.imageOut) / 1e6;
+}
+const usd = (n) => '$' + n.toFixed(n < 1 ? 3 : 2);
 const LOG = path.join(REVIEW, 'generation-log.json');
 
 /* ---------- tiny .env loader (no dependency) ---------- */
@@ -137,7 +169,7 @@ async function generate(item, opts) {
       const json = JSON.parse(text);
       const b64 = json && json.data && json.data[0] && json.data[0].b64_json;
       if (!b64) throw new Error('response had no image data');
-      return { bytes: Buffer.from(b64, 'base64'), size: body.size, revised: json.data[0].revised_prompt || null };
+      return { bytes: Buffer.from(b64, 'base64'), size: body.size, revised: json.data[0].revised_prompt || null, usage: json.usage || null };
     }
     let msg = text.slice(0, 300);
     try { msg = JSON.parse(text).error.message || msg; } catch { /* keep raw */ }
@@ -195,11 +227,23 @@ async function main() {
 
   console.log(`${opts.dryRun ? 'Would generate' : 'Generating'} ${list.length} image(s) with ${opts.model}, quality ${opts.quality}:`);
   list.forEach((x) => console.log(`  • ${x.id.padEnd(28)} ${x.aspect === '1:1' ? '1024x1024' : '1536x1024'}  [${x.status}]`));
-  if (opts.dryRun) { console.log('\nDry run: no API calls made. See your plan\'s per-image price at https://openai.com/api/pricing/'); return; }
+  const price = PRICES[opts.model];
+  if (price) {
+    const est = list.reduce((sum, x) => {
+      const size = x.aspect === '1:1' ? '1024x1024' : '1536x1024';
+      return sum + (EST_TOKENS[size][opts.quality] * price.imageOut + EST_PROMPT_TOKENS * price.textIn) / 1e6;
+    }, 0);
+    console.log('\nEstimated cost: about ' + usd(est) + ' for this run (' + opts.model + ' at $' + price.imageOut + ' per 1M output tokens).');
+    console.log('Expect roughly 1.8x that if you regenerate images that show wrong form.');
+  } else {
+    console.log('\nNo price on file for ' + opts.model + '; check https://openai.com/api/pricing/');
+  }
+  if (opts.dryRun) { console.log('Dry run: no API calls made.'); return; }
   if (!process.env.OPENAI_API_KEY) fail('OPENAI_API_KEY is not set. Add it to .env (git-ignored) or export it in your shell.');
 
   fs.mkdirSync(REVIEW, { recursive: true });
   const ok = [], failed = [];
+  let spent = 0, unpriced = 0;
   for (const [i, x] of list.entries()) {
     process.stdout.write(`\n[${i + 1}/${list.length}] ${x.id} … `);
     const t0 = Date.now();
@@ -207,12 +251,15 @@ async function main() {
       const r = await generate(x, opts);
       const file = path.join(REVIEW, `${x.id}.webp`);
       fs.writeFileSync(file, r.bytes);
+      const cost = costOf(opts.model, r.usage);
+      if (cost == null) unpriced++; else spent += cost;
       appendLog({
         id: x.id, file: `img/review/${x.id}.webp`, model: opts.model, quality: opts.quality, size: r.size,
         prompt_sha256: crypto.createHash('sha256').update(x.prompt).digest('hex').slice(0, 16),
         prompt: x.prompt, revised_prompt: r.revised, generated_at: new Date().toISOString(), ai_generated: true,
+        usage: r.usage, cost_usd: cost == null ? null : Number(cost.toFixed(5)),
       });
-      console.log(`saved (${Math.round(r.bytes.length / 1024)} KB, ${((Date.now() - t0) / 1000).toFixed(1)} s)`);
+      console.log(`saved (${Math.round(r.bytes.length / 1024)} KB, ${((Date.now() - t0) / 1000).toFixed(1)} s` + (cost == null ? '' : ', ' + usd(cost)) + ')');
       ok.push(x.id);
     } catch (e) {
       console.log(`failed: ${e.message}`);
@@ -220,6 +267,7 @@ async function main() {
     }
   }
   console.log(`\nDone: ${ok.length} saved to img/review/, ${failed.length} failed.`);
+  console.log('Cost this run: ' + usd(spent) + ' from reported token usage' + (unpriced ? ' (+' + unpriced + ' image(s) without usage data or price)' : '') + '. Failed requests are normally not billed.');
   if (ok.length) {
     console.log('\nNext: open each image in img/review/ and compare it with the exercise\'s Tutorial and Form Cues.');
     console.log('Approve the good ones (others stay in review; regenerate with --force):');

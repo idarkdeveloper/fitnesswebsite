@@ -85,7 +85,15 @@ The app shows stick-figure art until you add photos. To make them with Gemini:
    ```
    Regenerate rejects with `--force`. Every generation is logged in `img/review/generation-log.json`.
 
-Requires Node 18+, with no `npm install`. The script retries rate limits and server errors with backoff. Prices depend on model, size and quality; see <https://openai.com/api/pricing/>. Some newer models require organisation verification; if you get a 403, try `--model gpt-image-1`.
+Requires Node 18+, with no `npm install`. The script retries rate limits and server errors with backoff. **Cost:** `--dry-run` prints an estimate, and real runs print what each image actually cost, using the token usage the API reports. Both also go into the log. Here are the estimates for all 74 missing images at medium quality, using OpenAI's per-token prices as of November 2026:
+
+| Model | One pass | With redos (~1.8×) |
+|---|---|---|
+| `gpt-image-1.5` (default) | ≈ $3.60 | ≈ $6.50 |
+| `gpt-image-2` | ≈ $3.40 | ≈ $6.10 |
+| `gpt-image-1-mini` | ≈ $0.90 | ≈ $1.65 |
+
+Low quality costs about a quarter of medium, and high about four times as much. Re-check <https://openai.com/api/pricing/> before big runs, and set a monthly limit in your OpenAI billing settings. Some newer models require organisation verification; if you get a 403, try `--model gpt-image-1`.
 
 To regenerate the prompts after editing `data.js`, run `node tools/image-prompts.js`. `img/prompts.json` has the same prompts for batch use with the Gemini API.
 

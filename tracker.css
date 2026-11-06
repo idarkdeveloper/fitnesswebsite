@@ -1,0 +1,241 @@
+/* =============================================================
+   PulseFit – custom styles
+   Tailwind handles the majority of styling; this file adds
+   reusable component classes and small polish that would be
+   noisy as long @apply-less utility strings in the HTML.
+   ============================================================= */
+
+/* Smooth focus ring for keyboard users */
+:focus-visible {
+  outline: 2px solid #14b8a6;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* --------- Navigation links --------- */
+.nav-link {
+  position: relative;
+  color: inherit;
+  transition: color .2s ease;
+}
+.nav-link:hover { color: #14b8a6; }
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -6px;
+  height: 2px;
+  background: linear-gradient(90deg, #14b8a6, #8b5cf6);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .25s ease;
+}
+.nav-link:hover::after { transform: scaleX(1); }
+
+.mobile-link {
+  display: block;
+  padding: .625rem .75rem;
+  border-radius: .5rem;
+}
+.mobile-link:hover {
+  background: rgba(20,184,166,0.08);
+  color: #14b8a6;
+}
+
+/* --------- Buttons --------- */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .625rem 1rem;
+  font-weight: 600;
+  font-size: .875rem;
+  border-radius: .625rem;
+  color: #fff;
+  background: linear-gradient(90deg, #14b8a6, #8b5cf6);
+  transition: opacity .2s ease, transform .1s ease;
+}
+.btn-primary:hover { opacity: .92; }
+.btn-primary:active { transform: translateY(1px); }
+.btn-primary:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .875rem;
+  font-weight: 600;
+  font-size: .875rem;
+  border-radius: .625rem;
+  border: 1px solid rgb(203 213 225);
+  background: transparent;
+  transition: background .2s ease;
+}
+.dark .btn-secondary { border-color: rgb(51 65 85); }
+.btn-secondary:hover { background: rgba(20,184,166,0.08); }
+.btn-secondary:disabled { opacity: .45; cursor: not-allowed; }
+
+/* --------- Form inputs --------- */
+.lbl {
+  display: block;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgb(100 116 139);
+  margin-bottom: .375rem;
+}
+.inp {
+  width: 100%;
+  padding: .625rem .75rem;
+  border-radius: .625rem;
+  border: 1px solid rgb(203 213 225);
+  background: #fff;
+  color: inherit;
+  font-size: .95rem;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.inp:focus {
+  outline: none;
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20,184,166,.2);
+}
+.dark .inp {
+  background: rgb(15 23 42);
+  border-color: rgb(51 65 85);
+}
+
+/* --------- Chips & filters --------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .25rem .625rem;
+  font-size: .7rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.chip-filter {
+  padding: .375rem .875rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 600;
+  border: 1px solid rgb(203 213 225);
+  transition: all .2s ease;
+}
+.dark .chip-filter { border-color: rgb(51 65 85); }
+.chip-filter:hover { background: rgba(20,184,166,0.08); }
+.chip-filter.active {
+  background: linear-gradient(90deg, #14b8a6, #8b5cf6);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* --------- Cards --------- */
+.service-card {
+  padding: 1.5rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.dark .service-card {
+  background: rgb(15 23 42 / .6);
+  border-color: rgb(30 41 59);
+}
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -20px rgba(20,184,166,.35);
+  border-color: rgba(20,184,166,.4);
+}
+
+.metric-card {
+  padding: 1.25rem;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
+}
+.dark .metric-card {
+  background: rgb(15 23 42 / .6);
+  border-color: rgb(30 41 59);
+}
+
+.tool-card {
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
+}
+.dark .tool-card {
+  background: rgb(15 23 42 / .6);
+  border-color: rgb(30 41 59);
+}
+
+.icon-wrap {
+  display: inline-grid;
+  place-items: center;
+  height: 2.75rem;
+  width: 2.75rem;
+  border-radius: .875rem;
+}
+
+/* --------- Stat blocks --------- */
+.stat {
+  padding: 1rem;
+  border-radius: .875rem;
+  background: rgba(148,163,184,.08);
+  border: 1px solid rgba(148,163,184,.15);
+}
+.stat-label {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: rgb(100 116 139);
+}
+.stat-num {
+  margin-top: .25rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+/* --------- Portfolio card --------- */
+.story-card {
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.dark .story-card {
+  background: rgb(15 23 42 / .6);
+  border-color: rgb(30 41 59);
+}
+.story-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px -20px rgba(139,92,246,.35);
+}
+.story-media {
+  height: 180px;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Hidden filter state */
+.story-card.hide { display: none; }
+
+/* --------- Utility: reduced-motion --------- */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* --------- Print hardening: hide interactive-only bits --------- */
+@media print {
+  #navbar, #toast, .btn-primary, .btn-secondary { display: none !important; }
+}

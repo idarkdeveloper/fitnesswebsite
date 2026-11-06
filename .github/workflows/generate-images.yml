@@ -12,6 +12,11 @@ name: Generate exercise images
 # Then: Actions → "Generate exercise images" → Run workflow.
 
 on:
+  # Changing this file on main triggers a run whose job is skipped (see `if:` below). That run costs
+  # nothing and needs no secrets, but it makes GitHub register the workflow so "Run workflow" appears.
+  push:
+    branches: [main]
+    paths: ['.github/workflows/generate-images.yml']
   workflow_dispatch:
     inputs:
       only:
@@ -46,6 +51,8 @@ concurrency:
 
 jobs:
   generate:
+    # Only a manual "Run workflow" generates images; push runs are skipped (no cost, no approval).
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment: image-generation
     timeout-minutes: 60
@@ -150,4 +157,3 @@ jobs:
           gh pr create --base "${GITHUB_REF_NAME}" --head "$branch" \
             --title "Review AI-generated images (run ${GITHUB_RUN_ID})" --body-file pr-body.md \
           || echo "::warning::Could not open the PR automatically. Enable 'Allow GitHub Actions to create and approve pull requests', or open a PR from branch ${branch} by hand."
-# registered

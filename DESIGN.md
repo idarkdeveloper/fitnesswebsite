@@ -13,35 +13,65 @@
 4. **Forgiving.** Destructive actions ask for confirmation, workouts can be cancelled, and rest days never break a streak.
 5. **Calm, sporty surface.** Deep gradient backdrop, rounded cards, one bright accent. Colour signals state and is never the only signal.
 
-## 2. Themes and colour tokens
+## 2. Colour
 
-Three themes: **Midnight** (default), **Light** and **Dark**. Components must use tokens, never raw hex.
+### 2.1 Palette primitives
+
+The **"PulseFit" palette** was generated with the ui-color-palette tool from harmonies of the original brand blue `#2466d4`:
+
+- **Harmony sources:** primary `#2466d4`; analogous teal `#24bed4`; complementary amber `#d49224`; compound red `#d43a24`; neutral navy `#1c2a55`.
+- **Scale:** Material stops 50–900, OKLCH colour space, lightness 96 → 24. Shade 50 is the lightest.
+
+The primitives are defined once in `styles.css` as `--{hue}-{stop}`. **Components never use primitives directly**; they use the role tokens in §2.2.
+
+| Scale | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `--blue-*` | `#bcf3ff` | `#9dd8ff` | `#7fbdff` | `#63a2ff` | `#4888f5` | `#2e6fdb` | `#1556bf` | `#003ea2` | `#002684` | `#000e63` |
+| `--teal-*` | `#a6ffff` | `#81eafc` | `#5cd1e4` | `#31b7cc` | `#009fb3` | `#00869b` | `#006e82` | `#00566a` | `#003f51` | `#002939` |
+| `--amber-*` | `#ffe8a2` | `#ffcc7e` | `#edb15c` | `#d59738` | `#bc7e02` | `#a36500` | `#894e00` | `#703700` | `#562200` | `#3c0f00` |
+| `--red-*` | `#ffccb5` | `#ffad95` | `#ff8e76` | `#ff7159` | `#e8533d` | `#cc3620` | `#af1200` | `#920000` | `#730000` | `#540000` |
+| `--navy-*` | `#e0f1ff` | `#c5d7ff` | `#aabdec` | `#90a3d4` | `#788bbc` | `#6073a3` | `#4a5c8a` | `#364671` | `#233057` | `#121d3e` |
+
+Avoid the hue-drifted ends for UI fills: `--blue-50` leans cyan, and `--red-700` to `--red-900` are very deep reds (suitable only as ink).
+
+### 2.2 Role tokens per theme
+
+Three themes: **Midnight** (default), **Light** and **Dark**. Components must use these role tokens, never raw hex.
 
 | Token | Role | Midnight | Light | Dark |
 |---|---|---|---|---|
 | `--bg-top` / `--bg-bottom` | Page backdrop gradient | `#33478f` → `#120f45` | `#eef3fb` → `#e3eaf6` | `#0c0e13` → `#0a0b0f` |
-| `--surface` | Cards, sheets, list groups | `#1c2a55` | `#ffffff` | `#161a22` |
+| `--surface` | Cards, sheets, list groups | `#1c2a55` (navy source) | `#ffffff` | `#161a22` |
 | `--surface-2` | Nested surfaces (options in sheets) | `#17224a` | `#f4f7fc` | `#11141a` |
 | `--surface-3` | Translucent fills (chips, hover) | white 6% | ink 5% | white 5% |
 | `--border` | Card / control outlines | `rgba(170,186,240,.42)` | `#cfd9ea` | `#2c3443` |
 | `--border-soft` | Dividers | `rgba(170,186,240,.14)` | `#e4eaf4` | `#1f2530` |
-| `--text` | Primary text | `#ffffff` | `#0f1b33` | `#f2f4f8` |
-| `--muted` | Secondary text | `#bcc5e8` | `#56637e` | `#9aa3b5` |
-| `--faint` | Tertiary text (on surfaces only) | `#a3aed6` | `#5a6680` | `#8e96a8` |
-| `--primary` | Primary buttons, links, current state | `#2466d4` | `#1f6fe0` | `#2566d6` |
-| `--accent` | Selected tab, streak/stat outline, highlights | `#4fd1c5` | `#0b7a72` | `#36d6c8` |
+| `--text` | Primary text | `#ffffff` | `navy-900` | `#f2f4f8` |
+| `--muted` | Secondary text | `navy-100` | `navy-600` | `#9aa3b5` |
+| `--faint` | Tertiary text (on surfaces only) | `navy-200` | `navy-500` | `#8e96a8` |
+| `--primary` | Primary buttons, current state | `blue-600` | `blue-600` | `blue-600` |
+| `--link` | Inline links and link buttons | `blue-200` | `blue-600` | `blue-200` |
+| `--accent` | Selected tab, stat outline, highlights | `teal-200` | `teal-600` | `teal-200` |
+| `--accent-ink` | Text on `--accent` | `teal-900` | `#ffffff` | `teal-900` |
 | `--success` | Completed level, mastered, done | `#7ee08a` | `#177a3b` | `#6fdc80` |
-| `--warn` | Flame/streak, earned badge, reminder banner | `#f5b942` | `#946200` | `#f5b942` |
-| `--danger` | Destructive actions | `#ff6b7a` | `#d33b4c` | `#ff6b7a` |
-| `--track` | Empty progress tracks, locked badge rings | `#8e9bd0` | `#c9d3e6` | `#3a4252` |
+| `--warn` | Flame/streak, earned badge, reminder banner | `amber-100` | `amber-600` | `amber-100` |
+| `--danger` | Destructive actions | `red-300` | `red-600` | `red-300` |
+| `--danger-ink` | Text on `--danger` | `red-900` | `#ffffff` | `red-900` |
+| `--track` | Empty progress tracks, locked badge rings | `navy-300` | `#c9d3e6` | `#3a4252` |
 
-**Contrast contract (WCAG 2.2 AA).** Measured with the bundled audit:
-- `--text`, `--muted` and `--faint` reach ≥ 4.5:1 on `--surface` in every theme.
-- `--text` and `--muted` also reach ≥ 4.5:1 on the page backdrop. Midnight `--faint` measures 3.9:1 at `--bg-top`, so don't place `--faint` text directly on the page backdrop; use `--muted` there.
-- `--primary-ink` (white) on `--primary` is ≥ 5:1.
-- Status colours (`--success`, `--accent`, `--warn`, `--danger`) are ≥ 4.5:1 on `--surface`, so they're safe for text and icons.
+The Dark theme keeps its own neutral greys for surfaces and text. It takes only the brand and status scales from the palette.
+
+**Contrast contract (WCAG 2.2 AA).** Measured with the bundled audit; minimum across all three themes:
+- `--text`, `--muted` and `--faint` on `--surface`: ≥ 4.6:1 (lowest is Light `--faint`).
+- `--text` and `--muted` on the page backdrop: ≥ 5.4:1. Light `--faint` measures 3.9–4.2:1 on the backdrop, so don't place `--faint` text directly on the page backdrop; use `--muted` there. Placeholders use `--muted` for this reason.
+- `--primary-ink` (white) on `--primary` (`blue-600`): 6.7:1.
+- `--accent-ink` on `--accent`: ≥ 5.9:1. `--danger-ink` on `--danger`: ≥ 5.6:1.
+- `--link` on `--surface`: ≥ 6.7:1.
+- Status colours (`--success`, `--accent`, `--warn`, `--danger`) are ≥ 5.1:1 on `--surface`, so they're safe for text and icons.
 
 **Colour is never the only signal.** Completed levels show a ✓ icon. Done days show "✓ Done". Locked items show a lock icon. Dot ladders carry an `aria-label` count.
+
+**Palette gap:** the palette has no green, so `--success` keeps its hand-picked values. If a green is added, derive it from the tetradic harmony (`#24d43a`) with the same Material and OKLCH settings.
 
 ## 3. Typography
 
@@ -139,7 +169,7 @@ Measured by a script over `styles.css` and `app.js`. Re-run it after each cleanu
 
 | Area | State at v1 | Target |
 |---|---|---|
-| Colour | All theme colours tokenised. 10 raw hex and 8 raw `rgba()` values remain in component rules: art overlays, success-ink `#0b2a14`, Pro gold `#ffd76a` and the sheet scrim. | Add `--success-ink`, `--pro`, `--scrim` and `--on-art` tokens; 0 raw colours |
+| Colour | All theme colours tokenised, and brand and status colours come from the palette primitives (§2.1). Raw values remain in component rules: art overlays, success-ink `#0b2a14`, Pro gold `#ffd76a` and the sheet scrim. `--danger-ink` was added in v1.1. | Add `--success-ink`, `--pro`, `--scrim` and `--on-art` tokens; 0 raw colours |
 | Spacing | 7 of 174 spacing declarations use `--space-*`. Off-scale values: 6, 10, 14, 18, 22 and 28px. | ≥ 90% tokenised; no off-scale values |
 | Type | 15 distinct font sizes against 7 documented roles | `--fs-*` tokens for the 7 roles; at most 9 sizes |
 | Radius | 15 distinct radius values against 4 tokens | Use `--r-sm`, `--r-md`, `--r-lg` and pill only |

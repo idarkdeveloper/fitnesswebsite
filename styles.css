@@ -3,6 +3,22 @@
    Three themes driven by CSS custom properties on <html data-theme>
    ============================================================= */
 
+/* Palette primitives — "PulseFit" palette (Material stops, OKLCH), generated
+   from harmonies of brand blue #2466d4. 50 = lightest, 900 = darkest.
+   Components never use these directly; themes map them to role tokens. */
+:root {
+  --blue-50: #bcf3ff; --blue-100: #9dd8ff; --blue-200: #7fbdff; --blue-300: #63a2ff; --blue-400: #4888f5;
+  --blue-500: #2e6fdb; --blue-600: #1556bf; --blue-700: #003ea2; --blue-800: #002684; --blue-900: #000e63;
+  --teal-50: #a6ffff; --teal-100: #81eafc; --teal-200: #5cd1e4; --teal-300: #31b7cc; --teal-400: #009fb3;
+  --teal-500: #00869b; --teal-600: #006e82; --teal-700: #00566a; --teal-800: #003f51; --teal-900: #002939;
+  --amber-50: #ffe8a2; --amber-100: #ffcc7e; --amber-200: #edb15c; --amber-300: #d59738; --amber-400: #bc7e02;
+  --amber-500: #a36500; --amber-600: #894e00; --amber-700: #703700; --amber-800: #562200; --amber-900: #3c0f00;
+  --red-50: #ffccb5; --red-100: #ffad95; --red-200: #ff8e76; --red-300: #ff7159; --red-400: #e8533d;
+  --red-500: #cc3620; --red-600: #af1200; --red-700: #920000; --red-800: #730000; --red-900: #540000;
+  --navy-50: #e0f1ff; --navy-100: #c5d7ff; --navy-200: #aabdec; --navy-300: #90a3d4; --navy-400: #788bbc;
+  --navy-500: #6073a3; --navy-600: #4a5c8a; --navy-700: #364671; --navy-800: #233057; --navy-900: #121d3e;
+}
+
 :root,
 :root[data-theme="midnight"] {
   --bg-top: #33478f;
@@ -13,17 +29,18 @@
   --border: rgba(170, 186, 240, 0.42);
   --border-soft: rgba(170, 186, 240, 0.14);
   --text: #ffffff;
-  --muted: #bcc5e8;
-  --faint: #a3aed6;
-  --primary: #2466d4;
-  --link: #8db8ff;
+  --muted: var(--navy-100);
+  --faint: var(--navy-200);
+  --primary: var(--blue-600);
+  --link: var(--blue-200);
   --primary-ink: #ffffff;
-  --accent: #4fd1c5;
-  --accent-ink: #0d2b33;
+  --accent: var(--teal-200);
+  --accent-ink: var(--teal-900);
   --success: #7ee08a;
-  --warn: #f5b942;
-  --danger: #ff6b7a;
-  --track: #8e9bd0;
+  --warn: var(--amber-100);
+  --danger: var(--red-300);
+  --danger-ink: var(--red-900);
+  --track: var(--navy-300);
   --nav-bg: #1c2a55;
   --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
   --grain-opacity: 0.08;
@@ -38,17 +55,18 @@
   --surface-3: rgba(15, 27, 51, 0.05);
   --border: #cfd9ea;
   --border-soft: #e4eaf4;
-  --text: #0f1b33;
-  --muted: #56637e;
-  --faint: #5a6680;
-  --primary: #1f6fe0;
-  --link: #1a5fc4;
+  --text: var(--navy-900);
+  --muted: var(--navy-600);
+  --faint: var(--navy-500);
+  --primary: var(--blue-600);
+  --link: var(--blue-600);
   --primary-ink: #ffffff;
-  --accent: #0b7a72;
+  --accent: var(--teal-600);
   --accent-ink: #ffffff;
   --success: #177a3b;
-  --warn: #946200;
-  --danger: #d33b4c;
+  --warn: var(--amber-600);
+  --danger: var(--red-600);
+  --danger-ink: #ffffff;
   --track: #c9d3e6;
   --nav-bg: #ffffff;
   --shadow: 0 10px 30px -16px rgba(15, 27, 51, 0.25);
@@ -67,14 +85,15 @@
   --text: #f2f4f8;
   --muted: #9aa3b5;
   --faint: #8e96a8;
-  --primary: #2566d6;
-  --link: #6fa3ff;
+  --primary: var(--blue-600);
+  --link: var(--blue-200);
   --primary-ink: #ffffff;
-  --accent: #36d6c8;
-  --accent-ink: #062523;
+  --accent: var(--teal-200);
+  --accent-ink: var(--teal-900);
   --success: #6fdc80;
-  --warn: #f5b942;
-  --danger: #ff6b7a;
+  --warn: var(--amber-100);
+  --danger: var(--red-300);
+  --danger-ink: var(--red-900);
   --track: #3a4252;
   --nav-bg: #13161d;
   --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.7);
@@ -309,7 +328,7 @@ img, svg { display: block; }
 .btn.ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
 .btn.subtle { background: var(--surface-3); color: var(--text); }
 .btn.accent { background: var(--accent); color: var(--accent-ink); }
-.btn.danger { background: var(--danger); color: #fff; }
+.btn.danger { background: var(--danger); color: var(--danger-ink); }
 .btn svg { width: 20px; height: 20px; }
 
 .icon-btn {
@@ -773,7 +792,7 @@ hr.sep { border: 0; border-top: 1px solid var(--border-soft); margin: 16px 0; }
 }
 .select { appearance: none; background-image: none; }
 .select option { color: #111; }
-.input::placeholder { color: var(--faint); }
+.input::placeholder { color: var(--muted); }
 
 .theme-opt {
   display: flex; align-items: center; gap: 16px;

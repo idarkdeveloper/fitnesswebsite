@@ -753,9 +753,9 @@ VIEWS.challenges = () => {
 };
 
 const THEMES = [
-  { id: 'midnight', name: 'Midnight', sw: '#1d1660', dots: ['#272b56', '#4c7dff', '#30e0e8'] },
-  { id: 'light', name: 'Light', sw: '#ffffff', dots: ['#1f6fe0', '#0f8f86'] },
-  { id: 'dark', name: 'Dark', sw: '#111111', dots: ['#222', '#2f7bf0', '#36d6c8'] },
+  { id: 'midnight', name: 'Midnight', sw: '#1d1660', dots: ['#272b56', '#4888f5', '#5cd1e4'] },
+  { id: 'light', name: 'Light', sw: '#ffffff', dots: ['#1556bf', '#006e82'] },
+  { id: 'dark', name: 'Dark', sw: '#111111', dots: ['#222', '#4888f5', '#5cd1e4'] },
 ];
 
 VIEWS.profile = () => {

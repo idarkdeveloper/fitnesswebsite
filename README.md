@@ -40,6 +40,7 @@ index.html    App shell (sidebar on desktop, bottom tab bar on mobile)
 styles.css    Theme tokens and components
 app.js        Router, views, progress model, workout logic
 data.js       Exercise database: 11 families, 74 progressions
+DESIGN.md     Design language: tokens, type, spacing, components, rules
 tracker.*     The original PulseFit daily health tracker
 ```
 

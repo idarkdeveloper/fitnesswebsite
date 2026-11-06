@@ -488,12 +488,23 @@ VIEWS.home = () => {
   return `
     <h1 class="h1">${greeting()}</h1>
     ${reminderBanner()}
+    ${!state.workouts.length && !state.seenIntro ? `
+    <section class="card howto" aria-label="How PulseFit works">
+      <div class="row-between"><h2 class="h3">How PulseFit works</h2>
+        <button class="icon-btn round bare" data-action="dismiss-intro" aria-label="Dismiss">${icon('x')}</button></div>
+      <ol>
+        <li>${icon('dumbbell')}<span><b>Each movement is a ladder.</b> Start with an exercise you can do with clean form — progression 1 if unsure.</span></li>
+        <li>${icon('check')}<span><b>Hit a level's target</b> (e.g. 2 sets of 15) to complete it. Finish level 3 to unlock the next exercise.</span></li>
+        <li>${icon('calendar')}<span><b>Train on your scheduled days.</b> Rest days never break your streak.</span></li>
+      </ol>
+      <button class="btn ghost block" data-action="dismiss-intro">Got it</button>
+    </section>` : ''}
     <section class="card challenge-strip" aria-label="30 day workout challenge">
       <div class="row-between">
         <div class="title">${icon('flame')} 30 Day Workout Challenge</div>
         <div class="row" style="gap:8px">
           <span class="muted small" style="font-weight:700">${count30} / 30 workouts</span>
-          <button class="icon-btn round bare" data-action="info-30" aria-label="About the 30 day challenge" style="width:30px;height:30px">${icon('info')}</button>
+          <button class="icon-btn round bare" data-action="info-30" aria-label="About the 30 day challenge">${icon('info')}</button>
         </div>
       </div>
       <div class="row">
@@ -555,12 +566,13 @@ VIEWS.category = (r) => {
   if (isLocked(c)) return lockedView(c);
   const cur = isStarted(c.id) ? currentIdx(c.id) : -1;
   return `
+    <div class="topbar">
+      <a class="icon-btn bare round" href="#/movements" aria-label="Back to Movement Library">${icon('chevL')}</a>
+      <div class="title">${esc(c.name)}</div>
+    </div>
     <div class="art cat-hero" style="--h:${CAT_HUE[c.id] ?? 210}">
       ${figure(c.id)}
-      <div class="overlay">
-        <a href="#/movements" class="row small" style="gap:4px;margin-bottom:6px">${icon('chevL', 'style="width:18px;height:18px"')} Library</a>
-        <h1>${esc(c.name)} Progressions</h1>
-      </div>
+      <div class="overlay"><h1>${esc(c.name)} Progressions</h1></div>
     </div>
     <p class="muted" style="font-size:17px;margin:18px 0 0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
     <div class="prog-list">
@@ -718,7 +730,7 @@ VIEWS.challenges = () => {
     const done = s.done >= s.total;
     return `<section class="card ch-card">
       <div class="head">${icon(l.icon)}<h3 class="h3">${esc(l.name)}</h3><span class="steps-count">${s.done} / ${s.total} steps</span></div>
-      <p>Climb from ${esc(s.progs[0].name)} to ${esc(last.name)}. Each progression you master earns its badge; master ${esc(last.name)} to finish the ladder.</p>
+      <p>Climb from ${esc(s.progs[0].name)} to ${esc(last.name)}. Each progression you master earns its badge; master ${esc(last.name)} to finish. Levels you've already logged count.</p>
       <div class="progress"><span style="width:${(s.done / s.total) * 100}%"></span></div>
       <div class="badge-grid five">${s.progs.map((p, i) => badgeHtml({ name: p.name, earned: isMastered(p.id), icon: TIER_ICONS[i], tier: TIER_ICONS[i] })).join('')}</div>
       ${done ? `<div class="btn block accent" aria-disabled="true">${icon('trophy')} Completed</div>`
@@ -759,7 +771,7 @@ VIEWS.profile = () => {
       <input class="input" id="pfName" data-bind="name" value="${esc(pf.name)}" placeholder="Your name" autocomplete="name" maxlength="40" /></div>
     <div class="field" style="margin-top:28px"><label for="pfEmail">Email</label>
       <input class="input" id="pfEmail" type="email" data-bind="email" value="${esc(pf.email)}" placeholder="you@example.com" autocomplete="email" maxlength="80" /></div>
-    <p class="faint small" style="margin:8px 4px 0">Stored only in this browser — nothing is sent anywhere.</p>
+    <p class="muted small" style="margin:8px 4px 0">Stored only in this browser — nothing is sent anywhere.</p>
 
     <h2 class="h2" style="font-size:30px;font-weight:500">Theme</h2>
     <div role="radiogroup" aria-label="Theme">
@@ -849,7 +861,7 @@ VIEWS.workout = () => {
     <p class="muted" style="text-align:center;margin:-6px 0 18px">${fmtLong(d)} · Tap ✓ after each set to start your rest timer.</p>
     ${draft.entries.map(entryEditor).join('')}
     <button class="btn block lg" data-action="finish-workout" ${doneSets ? '' : 'disabled'}>Finish workout</button>
-    <p class="faint small" style="text-align:center">Only sets marked ✓ are saved.</p>`;
+    <p class="muted small" style="text-align:center">Only sets marked ✓ are saved.</p>`;
 };
 
 function lockedView(c) {
@@ -1130,6 +1142,7 @@ const ACTIONS = {
   'shift-day': (el) => { selectedDay = dayKey(addDays(fromKey(selectedDay), Number(el.dataset.n))); carouselIdx = 0; rerender(); },
   'pick-day': (el) => { selectedDay = el.dataset.day; carouselIdx = 0; rerender(); },
   'next-tip': () => { tipIdx++; rerender(); },
+  'dismiss-intro': () => { state.seenIntro = true; save(); rerender(); },
   'info-30': () => openSheet('30 Day Workout Challenge', `<p>Train on 30 different days to complete the challenge. Days don't need to be consecutive — just keep showing up.</p><p class="muted">${workoutDays().size >= 30 ? 'You did it! 🎉' : `${30 - Math.min(30, workoutDays().size)} to go.`}</p>`),
   'info-streak': () => { const s = streakStats(); openSheet('Activity streak', `<p>Your streak counts consecutive <strong>scheduled training days</strong> with a logged workout. Rest days are skipped, so they never break it.</p><p class="muted">Current: ${s.current} · Best: ${s.best}</p>`); },
   'scroll-history': () => { const h = $('#history'); if (h) h.scrollIntoView({ behavior: 'smooth' }); },
@@ -1191,7 +1204,13 @@ const ACTIONS = {
   'locked': (el, ev) => { ev.preventDefault(); proSheet(); },
   'pro': proSheet,
   'toggle-pro': () => { state.profile.pro = !state.profile.pro; save(); closeSheet(); rerender(); toast(state.profile.pro ? 'Pro features unlocked' : 'Pro features turned off'); },
-  'join': (el) => { state.joined[el.dataset.id] = dayKey(today()); save(); rerender(); toast('Challenge joined — good luck!'); },
+  'join': (el) => {
+    const l = LADDERS.find((x) => x.id === el.dataset.id);
+    state.joined[l.id] = dayKey(today());
+    if (!isStarted(l.cat)) state.current[l.cat] = 0;
+    save(); rerender();
+    toast(`Joined! ${CAT[l.cat].name} is now on your progress board.`);
+  },
   'leave': (el) => { delete state.joined[el.dataset.id]; save(); rerender(); },
   'theme': (el) => { state.profile.theme = el.dataset.theme; save(); applyTheme(); rerender(); },
   'routine-days': routineDaysSheet,

@@ -35,7 +35,7 @@ on:
         options: [redo, missing, todo]
         default: redo
       limit:
-        description: 'Max images this run (1-30)'
+        description: 'Max images this run (1-30 direct; up to 85 for batch-submit)'
         required: true
         default: '5'
       quality:
@@ -92,8 +92,11 @@ jobs:
       - name: Validate inputs
         run: |
           set -euo pipefail
-          [[ "$IN_LIMIT" =~ ^[0-9]+$ ]] && (( IN_LIMIT >= 1 && IN_LIMIT <= 30 )) \
-            || { echo "::error::limit must be a number from 1 to 30"; exit 1; }
+          # Direct runs are capped at 30. A batch should hold everything you want in one go: separate
+          # batches would pick the same first N images, because each run starts from a fresh checkout.
+          max=30; [[ "$IN_MODE" == "batch-submit" ]] && max=85
+          [[ "$IN_LIMIT" =~ ^[0-9]+$ ]] && (( IN_LIMIT >= 1 && IN_LIMIT <= max )) \
+            || { echo "::error::limit must be a number from 1 to $max for mode $IN_MODE"; exit 1; }
           if [[ -n "$IN_ONLY" && ! "$IN_ONLY" =~ ^[a-z0-9,-]+$ ]]; then
             echo "::error::only may contain lowercase ids separated by commas"; exit 1
           fi

@@ -34,6 +34,12 @@ const FORM_NOTE = {
   pullups: 'Form: when hanging, feet are clearly off the ground.',
   grip: 'Form: when hanging, feet are clearly off the ground.',
 };
+/* Per-exercise corrections for faults seen in generated images (outside the 60-word core). */
+const ID_NOTE = {
+  'close-pushups': 'The arms carry the body weight; forearms stay off the ground (this is not a plank).',
+  'close-pullups': 'Both hands wrap over the bar side by side, palms facing away; the hands are not clasped together.',
+  'uneven-pullups': 'The towel hangs from the same high bar about 30 cm below it, gripped firmly; both arms pull.',
+};
 
 /* Where each movement family is performed (keeps equipment consistent). */
 const SETTING = {
@@ -56,7 +62,7 @@ const POSE_OVERRIDE = {
   "incline-pushups": "hands on a waist-high bench, body straight and angled, chest lowered to the bench edge",
   "knee-pushups": "knees on a mat, hands on the floor, body straight from knees to head, chest lowered near the floor",
   "full-pushups": "in a straight-body pushup on the toes, knees off the ground, chest just above the floor",
-  "close-pushups": "in a pushup on the toes, knees off the ground, hands touching under the chest, chest lowered",
+  "close-pushups": "in a pushup on the toes, palms flat and touching under the chest, elbows tucked, chest lowered",
   "uneven-pushups": "in a full plank pushup on the toes, knees off the ground, one hand on a basketball",
   "half-one-arm-pushups": "in a wide-stance one-arm pushup, other hand behind the back, elbow bent to 90 degrees",
   "lever-pushups": "in a pushup, one hand under the chest, the other arm straight out to the side on a ball",
@@ -67,8 +73,8 @@ const POSE_OVERRIDE = {
   "jackknife-pullups": "pulling up on a bar with legs straight forward, heels resting on a bench, chin over the bar",
   "half-pullups": "hanging from a bar, overhand grip, pulled halfway with elbows bent at 90 degrees",
   "full-pullups": "hanging from a high bar, feet well off the ground, chin clearly above the bar, legs straight together",
-  "close-pullups": "hanging from a high bar, feet well off the ground, hands touching, chin above the bar",
-  "uneven-pullups": "hanging from a high bar, feet off the ground, one hand on bar, other on a lower towel",
+  "close-pullups": "hanging from a high bar, hands side by side and touching, chin above the bar",
+  "uneven-pullups": "hanging from a high bar, one hand on the bar, other on a towel looped over it",
   "half-one-arm-pullups": "hanging by one hand from a high bar, feet well off the ground, elbow bent 90 degrees",
   "one-arm-pullups": "hanging by one hand from a high bar, feet well off the ground, chin above the bar",
   "jackknife-squats": "bent forward with hands on a knee-high bench, squatting deep, thighs below parallel",
@@ -186,7 +192,7 @@ function buildAll() {
     c.progressions.forEach((p, i) => {
       items.push({
         id: p.id, kind: 'progression', title: `${c.name} ${i + 1}: ${p.name}`,
-        ...brief(`Athlete doing ${p.name.toLowerCase()} ${SETTING[c.id] || 'outdoors'}: ${keyPose(p)}.`, '16:9', `img/${p.id}.webp`, FORM_NOTE[c.id]),
+        ...brief(`Athlete doing ${p.name.toLowerCase()} ${SETTING[c.id] || 'outdoors'}: ${keyPose(p)}.`, '16:9', `img/${p.id}.webp`, [FORM_NOTE[c.id], ID_NOTE[p.id]].filter(Boolean).join(' ')),
         usedIn: 'Home exercise card, progression list, exercise hero, workout session',
       });
     });

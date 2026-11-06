@@ -10,6 +10,12 @@ name: Generate exercise images
 #   2. Actions → General → Workflow permissions → tick
 #      "Allow GitHub Actions to create and approve pull requests" (needed for the review PR).
 # Then: Actions → "Generate exercise images" → Run workflow.
+#
+# Modes:
+#   direct        generate now (normal price) and open a review PR in the same run.
+#   batch-submit  queue the images with the OpenAI Batch API at 50% off; the run prints a batch id.
+#   batch-collect paste that batch id later (batches finish within 24 h, often in minutes) to download
+#                 the images and open the review PR. If it isn't ready yet, the run says so; try again later.
 
 on:
   # Changing this file on main triggers a run whose job is skipped (see `if:` below). That run costs
@@ -40,6 +46,15 @@ on:
         type: choice
         options: [gpt-image-1.5, gpt-image-2, gpt-image-1-mini]
         default: gpt-image-1.5
+      mode:
+        description: 'direct = now, full price; batch-submit = 50% off, collect later; batch-collect = fetch a submitted batch'
+        type: choice
+        options: [direct, batch-submit, batch-collect]
+        default: direct
+      batch_id:
+        description: 'For batch-collect only: the batch id printed by the batch-submit run (batch_...)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -63,6 +78,8 @@ jobs:
       IN_LIMIT: ${{ inputs.limit }}
       IN_QUALITY: ${{ inputs.quality }}
       IN_MODEL: ${{ inputs.model }}
+      IN_MODE: ${{ inputs.mode }}
+      IN_BATCH_ID: ${{ inputs.batch_id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,33 +97,64 @@ jobs:
           if [[ -n "$IN_ONLY" && ! "$IN_ONLY" =~ ^[a-z0-9,-]+$ ]]; then
             echo "::error::only may contain lowercase ids separated by commas"; exit 1
           fi
+          if [[ "$IN_MODE" == "batch-collect" && ! "$IN_BATCH_ID" =~ ^batch_[A-Za-z0-9_-]+$ ]]; then
+            echo "::error::batch-collect needs the batch id from the batch-submit run (it starts with batch_)"; exit 1
+          fi
           [[ -n "${OPENAI_API_KEY:-}" ]] || { echo "::error::Secret OPENAI_API_KEY is missing from the image-generation environment"; exit 1; }
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Estimate cost (no API calls)
+        if: inputs.mode != 'batch-collect'
         run: |
           set -euo pipefail
           args=(--limit "$IN_LIMIT" --quality "$IN_QUALITY" --model "$IN_MODEL")
           if [[ -n "$IN_ONLY" ]]; then args+=(--only "$IN_ONLY"); else args+=(--status "$IN_STATUS"); fi
-          node tools/generate-images.js "${args[@]}" --dry-run | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ "$IN_MODE" == "batch-submit" ]]; then
+            node tools/generate-images.js batch submit "${args[@]}" --dry-run | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            node tools/generate-images.js "${args[@]}" --dry-run | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Generate images
         id: gen
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          set -uo pipefail
+          # GitHub runs steps with `bash -e`; turn that off here so a partial failure or a
+          # "batch not ready" exit code is handled below instead of aborting the step.
+          set +e -uo pipefail
           args=(--limit "$IN_LIMIT" --quality "$IN_QUALITY" --model "$IN_MODEL")
           if [[ -n "$IN_ONLY" ]]; then args+=(--only "$IN_ONLY"); else args+=(--status "$IN_STATUS"); fi
-          # A partial failure (e.g. one prompt blocked) should still open a PR with the successes.
-          node tools/generate-images.js "${args[@]}" 2>&1 | tee gen.log
+          case "$IN_MODE" in
+            batch-submit)
+              node tools/generate-images.js batch submit "${args[@]}" 2>&1 | tee gen.log
+              code=${PIPESTATUS[0]}
+              bid=$(grep -o 'batch_[A-Za-z0-9_-]*' gen.log | head -n1 || true)
+              { echo '### Batch submitted (50% off)'; echo '```'; tail -n 40 gen.log; echo '```'
+                echo "When it's done (usually minutes, at most 24 h), run this workflow again with **mode: batch-collect** and **batch_id: \`${bid}\`**."; } >> "$GITHUB_STEP_SUMMARY"
+              echo "ids=" >> "$GITHUB_OUTPUT"
+              exit "$code" ;;
+            batch-collect)
+              node tools/generate-images.js batch collect "$IN_BATCH_ID" 2>&1 | tee gen.log
+              code=${PIPESTATUS[0]}
+              if [[ "$code" == "3" ]]; then
+                { echo '### Batch not ready yet'; echo '```'; cat gen.log; echo '```'; echo 'Run batch-collect again later with the same batch id.'; } >> "$GITHUB_STEP_SUMMARY"
+                echo "::notice::Batch $IN_BATCH_ID is not finished yet; run batch-collect again later."
+                echo "ids=" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi ;;
+            *)
+              # A partial failure (e.g. one prompt blocked) should still open a PR with the successes.
+              node tools/generate-images.js "${args[@]}" 2>&1 | tee gen.log ;;
+          esac
           ids=$(ls img/review/*.webp 2>/dev/null | xargs -r -n1 basename | sed 's/\.webp$//' | tr '\n' ' ')
           echo "ids=${ids% }" >> "$GITHUB_OUTPUT"
           { echo '### Generation log'; echo '```'; tail -n 40 gen.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           [[ -n "${ids// /}" ]] || { echo "::error::No images were generated"; exit 1; }
 
       - name: Keep a copy as a workflow artifact
+        if: steps.gen.outputs.ids != ''
         uses: actions/upload-artifact@v4
         with:
           name: generated-images-${{ github.run_id }}
@@ -114,6 +162,7 @@ jobs:
           retention-days: 14
 
       - name: Move images into img/ and register them
+        if: steps.gen.outputs.ids != ''
         env:
           IDS: ${{ steps.gen.outputs.ids }}
         run: |
@@ -125,6 +174,7 @@ jobs:
           node tools/image-prompts.js
 
       - name: Open review pull request
+        if: steps.gen.outputs.ids != ''
         env:
           GH_TOKEN: ${{ github.token }}
           IDS: ${{ steps.gen.outputs.ids }}
@@ -135,11 +185,11 @@ jobs:
           git config user.email "41898+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
           git add img docs
-          git commit -m "Add AI-generated images: ${IDS}" -m "Generated by workflow run ${GITHUB_RUN_ID} (${IN_MODEL}, ${IN_QUALITY}). Review form before merging."
+          git commit -m "Add AI-generated images: ${IDS}" -m "Generated by workflow run ${GITHUB_RUN_ID} (mode ${IN_MODE}${IN_BATCH_ID:+, batch ${IN_BATCH_ID}}). Review form before merging."
           git push -u origin "$branch"
 
           {
-            echo "AI-generated images from [workflow run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) · model \`${IN_MODEL}\` · quality \`${IN_QUALITY}\`."
+            echo "AI-generated images from [workflow run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) · mode \`${IN_MODE}\`${IN_BATCH_ID:+ · batch \`${IN_BATCH_ID}\`} (model and quality per image are in the log below)."
             echo
             echo "**Review each image against the exercise's Tutorial and Form Cues before merging.**"
             echo "Reject wrong form (knees down on pushups, feet on the ground on hanging moves, wrong grip, extra fingers):"

@@ -22,6 +22,11 @@
      node tools/generate-images.js approve full-pushups close-pushups
                                                        # move reviewed images into img/ and register them
 
+   Half-price batch mode (OpenAI Batch API, 50% cheaper, finishes within 24 h, usually much sooner):
+     node tools/generate-images.js batch submit --status missing --limit 30   # same selection options
+     node tools/generate-images.js batch status [batch_id]                   # default: last submitted
+     node tools/generate-images.js batch collect [batch_id]                  # saves images to img/review/
+
    Options:
      --status todo|redo|missing|all   which prompts (default: missing = todo + redo)
      --only id1,id2                   explicit ids (overrides --status)
@@ -62,7 +67,11 @@ const EST_TOKENS = {
   '1024x1024': { low: 272, medium: 1056, high: 4160 },
   '1536x1024': { low: 400, medium: 1568, high: 6208 },
 };
-const EST_PROMPT_TOKENS = 110;
+const EST_PROMPT_TOKENS = 260;
+/* Real runs used more output tokens than documented (gpt-image-1.5, 1536x1024 medium: 1962 vs 1568),
+   so estimates are scaled up to stay on the safe side. */
+const EST_FACTOR = 1.25;
+const BATCH_DISCOUNT = 0.5; // Batch API: 50% off (OpenAI Batch guide)
 
 function costOf(model, usage) {
   const p = PRICES[model];
@@ -131,10 +140,9 @@ function select(opts) {
   return list.slice(0, opts.limit).map((x) => ({ ...x, status: statusOf(x.id) }));
 }
 
-/* ---------- API call with retry ---------- */
-async function generate(item, opts) {
-  const base = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
-  const body = {
+/* ---------- request body (shared by direct and batch mode) ---------- */
+function bodyFor(item, opts) {
+  return {
     model: opts.model,
     prompt: item.prompt,
     n: 1,
@@ -145,6 +153,12 @@ async function generate(item, opts) {
     output_format: 'webp',
     output_compression: 80,
   };
+}
+
+/* ---------- API call with retry ---------- */
+async function generate(item, opts) {
+  const base = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+  const body = bodyFor(item, opts);
   const maxAttempts = 4;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const ctrl = new AbortController();
@@ -214,11 +228,153 @@ function approve(ids) {
   if (moved) writeManifest(); // an image in img/ marks the prompt as done, even if it was on the redo list
 }
 
+/* ---------- batch mode (OpenAI Batch API, 50% cheaper) ---------- */
+const BATCH_STATE = path.join(REVIEW, 'batch.json');
+const apiBase = () => (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
+
+async function api(pathname, { method = 'GET', json, form, raw = false } = {}) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    let res;
+    try {
+      res = await fetch(apiBase() + pathname, {
+        method,
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, ...(json ? { 'Content-Type': 'application/json' } : {}) },
+        body: json ? JSON.stringify(json) : form,
+      });
+    } catch (e) {
+      if (attempt === 4) throw new Error(`network: ${e.message}`);
+      await backoff(attempt, null, `network error (${e.message})`);
+      continue;
+    }
+    if (res.ok) return raw ? res.text() : res.json();
+    const text = await res.text();
+    if ((res.status === 429 || res.status >= 500) && attempt < 4) { await backoff(attempt, res.headers.get('retry-after'), `HTTP ${res.status}`); continue; }
+    let msg = text.slice(0, 300);
+    try { msg = JSON.parse(text).error.message || msg; } catch { /* keep raw */ }
+    throw new Error(`HTTP ${res.status} on ${method} ${pathname}: ${msg}`);
+  }
+}
+
+function readBatchState() { try { return JSON.parse(fs.readFileSync(BATCH_STATE, 'utf8')); } catch { return null; } }
+function batchIdFrom(arg) {
+  const id = arg || (readBatchState() || {}).id;
+  if (!id) fail('No batch id given and no img/review/batch.json from a previous submit.');
+  if (!/^batch_[A-Za-z0-9_-]+$/.test(id)) fail(`Not a batch id: ${id}`);
+  return id;
+}
+
+async function batchSubmit(argv) {
+  const opts = parseArgs(argv);
+  opts.model = opts.model || process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1.5';
+  const list = select(opts);
+  if (!list.length) { console.log('Nothing to submit (selected images already exist in img/ or img/review/; use --force).'); return; }
+  const price = PRICES[opts.model];
+  console.log(`${opts.dryRun ? 'Would submit' : 'Submitting'} a batch of ${list.length} image(s) with ${opts.model}, quality ${opts.quality}:`);
+  list.forEach((x) => console.log(`  • ${x.id.padEnd(28)} ${x.aspect === '1:1' ? '1024x1024' : '1536x1024'}  [${x.status}]`));
+  if (price) {
+    const est = list.reduce((sum, x) => sum + (EST_TOKENS[x.aspect === '1:1' ? '1024x1024' : '1536x1024'][opts.quality] * EST_FACTOR * price.imageOut + EST_PROMPT_TOKENS * price.textIn) / 1e6, 0);
+    console.log(`\nEstimated cost: about ${usd(est * BATCH_DISCOUNT)} with the 50% batch discount (${usd(est)} at normal price).`);
+  }
+  if (opts.dryRun) { console.log('Dry run: nothing submitted.'); return; }
+  if (!process.env.OPENAI_API_KEY) fail('OPENAI_API_KEY is not set. Add it to .env (git-ignored) or export it in your shell.');
+
+  fs.mkdirSync(REVIEW, { recursive: true });
+  const jsonl = list.map((x) => JSON.stringify({ custom_id: x.id, method: 'POST', url: '/v1/images/generations', body: bodyFor(x, opts) })).join('\n') + '\n';
+  const form = new FormData();
+  form.append('purpose', 'batch');
+  form.append('file', new Blob([jsonl], { type: 'application/jsonl' }), `pulsefit-images-${Date.now()}.jsonl`);
+  const file = await api('/files', { method: 'POST', form });
+  const batch = await api('/batches', {
+    method: 'POST',
+    json: { input_file_id: file.id, endpoint: '/v1/images/generations', completion_window: '24h',
+      metadata: { app: 'pulsefit', model: opts.model, quality: opts.quality, count: String(list.length) } },
+  });
+  const state = { id: batch.id, input_file_id: file.id, model: opts.model, quality: opts.quality, ids: list.map((x) => x.id), submitted_at: new Date().toISOString() };
+  fs.writeFileSync(BATCH_STATE, JSON.stringify(state, null, 2) + '\n');
+  console.log(`\nSubmitted batch ${batch.id} (status: ${batch.status}).`);
+  console.log('Check later:   node tools/generate-images.js batch status');
+  console.log('Collect later: node tools/generate-images.js batch collect');
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `batch_id=${batch.id}\n`);
+}
+
+async function batchStatus(argv) {
+  if (!process.env.OPENAI_API_KEY) fail('OPENAI_API_KEY is not set.');
+  const b = await api(`/batches/${batchIdFrom(argv[0])}`);
+  const c = b.request_counts || {};
+  console.log(`Batch ${b.id}: ${b.status}  (completed ${c.completed ?? 0} / ${c.total ?? '?'}, failed ${c.failed ?? 0})`);
+  return b;
+}
+
+async function batchCollect(argv) {
+  if (!process.env.OPENAI_API_KEY) fail('OPENAI_API_KEY is not set.');
+  const id = batchIdFrom(argv[0]);
+  const b = await api(`/batches/${id}`);
+  const c = b.request_counts || {};
+  if (b.status !== 'completed') {
+    console.log(`Batch ${id} is "${b.status}" (completed ${c.completed ?? 0} / ${c.total ?? '?'}). Not ready yet; collect again later.`);
+    if (['failed', 'expired', 'cancelled'].includes(b.status)) process.exitCode = 1;
+    else process.exitCode = 3; // "not ready" (used by the GitHub workflow)
+    return;
+  }
+  const model = (b.metadata && b.metadata.model) || (readBatchState() || {}).model || 'unknown';
+  const quality = (b.metadata && b.metadata.quality) || (readBatchState() || {}).quality || 'unknown';
+  fs.mkdirSync(REVIEW, { recursive: true });
+  const prompts = Object.fromEntries(buildAll().map((x) => [x.id, x.prompt]));
+  let saved = 0, failed = 0, spent = 0;
+  if (b.output_file_id) {
+    const text = await api(`/files/${b.output_file_id}/content`, { raw: true });
+    for (const line of text.split('\n').filter(Boolean)) {
+      const r = JSON.parse(line);
+      const idOk = /^[a-z0-9-]+$/.test(r.custom_id || '');
+      const bodyRes = r.response && r.response.body;
+      const b64 = bodyRes && bodyRes.data && bodyRes.data[0] && bodyRes.data[0].b64_json;
+      if (!idOk || !r.response || r.response.status_code !== 200 || !b64) {
+        failed++;
+        const why = (r.error && r.error.message) || (bodyRes && bodyRes.error && bodyRes.error.message) || `status ${r.response && r.response.status_code}`;
+        console.log(`✖ ${r.custom_id}: ${why}`);
+        continue;
+      }
+      const bytes = Buffer.from(b64, 'base64');
+      fs.writeFileSync(path.join(REVIEW, `${r.custom_id}.webp`), bytes);
+      const full = costOf(model, bodyRes.usage);
+      const cost = full == null ? null : full * BATCH_DISCOUNT;
+      if (cost != null) spent += cost;
+      appendLog({
+        id: r.custom_id, file: `img/review/${r.custom_id}.webp`, model, quality, batch_id: id,
+        prompt: prompts[r.custom_id] || null, generated_at: new Date().toISOString(), ai_generated: true,
+        usage: bodyRes.usage || null, cost_usd: cost == null ? null : Number(cost.toFixed(5)), batch_discount: BATCH_DISCOUNT,
+      });
+      console.log(`✔ ${r.custom_id} (${Math.round(bytes.length / 1024)} KB${cost == null ? '' : ', ' + usd(cost)})`);
+      saved++;
+    }
+  }
+  if (b.error_file_id) {
+    const errText = await api(`/files/${b.error_file_id}/content`, { raw: true });
+    for (const line of errText.split('\n').filter(Boolean)) {
+      const r = JSON.parse(line);
+      failed++;
+      console.log(`✖ ${r.custom_id}: ${(r.error && r.error.message) || (r.response && r.response.body && r.response.body.error && r.response.body.error.message) || 'failed'}`);
+    }
+  }
+  console.log(`\nCollected ${saved} image(s) into img/review/, ${failed} failed. Cost: ${usd(spent)} (batch price, from reported token usage).`);
+  if (saved) console.log('Review them, then: node tools/generate-images.js approve <ids>');
+  if (!saved) process.exitCode = 1;
+}
+
+async function batchCmd(argv) {
+  const sub = argv[0];
+  if (sub === 'submit') return batchSubmit(argv.slice(1));
+  if (sub === 'status') return batchStatus(argv.slice(1));
+  if (sub === 'collect') return batchCollect(argv.slice(1));
+  fail('Usage: batch submit [options] | batch status [batch_id] | batch collect [batch_id]');
+}
+
 /* ---------- main ---------- */
 async function main() {
   loadEnv();
   const argv = process.argv.slice(2);
   if (argv[0] === 'approve') return approve(argv.slice(1));
+  if (argv[0] === 'batch') return batchCmd(argv.slice(1));
   const opts = parseArgs(argv);
   opts.model = opts.model || process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1.5';
 
@@ -231,7 +387,7 @@ async function main() {
   if (price) {
     const est = list.reduce((sum, x) => {
       const size = x.aspect === '1:1' ? '1024x1024' : '1536x1024';
-      return sum + (EST_TOKENS[size][opts.quality] * price.imageOut + EST_PROMPT_TOKENS * price.textIn) / 1e6;
+      return sum + (EST_TOKENS[size][opts.quality] * EST_FACTOR * price.imageOut + EST_PROMPT_TOKENS * price.textIn) / 1e6;
     }, 0);
     console.log('\nEstimated cost: about ' + usd(est) + ' for this run (' + opts.model + ' at $' + price.imageOut + ' per 1M output tokens).');
     console.log('Expect roughly 1.8x that if you regenerate images that show wrong form.');

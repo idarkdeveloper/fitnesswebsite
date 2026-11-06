@@ -558,13 +558,6 @@ img, svg { display: block; }
 
 .cat-hero { aspect-ratio: 16 / 8; max-height: 340px; border-radius: 0 0 18px 18px; margin: -24px -16px 0; }
 @media (min-width: 960px) { .cat-hero { margin: 0; border-radius: 22px; } }
-.cat-hero .overlay {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  padding: 18px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.55), transparent);
-  color: #fff;
-}
-.cat-hero .overlay h1 { margin: 0; font-size: 26px; }
 
 .topbar {
   display: flex; align-items: center; gap: 8px;
@@ -587,7 +580,7 @@ img, svg { display: block; }
 .prog-row .num { font-size: 13px; color: var(--muted); }
 .prog-row .nm { font-size: 20px; font-weight: 700; line-height: 1.2; margin: 2px 0 6px; }
 .prog-row .lv { display: flex; align-items: center; gap: 8px; font-size: 15px; }
-.prog-row .badge-current {
+.prog-row .tag-current {
   display: inline-block; margin-left: 6px;
   font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
   color: var(--accent);

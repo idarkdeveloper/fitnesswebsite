@@ -572,16 +572,16 @@ VIEWS.category = (r) => {
     </div>
     <div class="art cat-hero" style="--h:${CAT_HUE[c.id] ?? 210}">
       ${figure(c.id)}
-      <div class="overlay"><h1>${esc(c.name)} Progressions</h1></div>
     </div>
-    <p class="muted" style="font-size:17px;margin:18px 0 0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
+    <h1 class="h2">${esc(c.name)} Progressions</h1>
+    <p class="muted" style="font-size:17px;margin:0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
     <div class="prog-list">
       ${c.progressions.map((p, i) => {
         const done = levelDone(p.id);
         return `<a class="prog-row" href="#/exercise/${p.id}">
           ${art(c.id, { shift: i * 4 })}
           <div>
-            <div class="num">Progression ${i + 1}${i === cur ? '<span class="badge-current">Current</span>' : ''}</div>
+            <div class="num">Progression ${i + 1}${i === cur ? '<span class="tag-current">Current</span>' : ''}</div>
             <div class="nm">${esc(p.name)}</div>
             <div class="lv">${done >= 3 ? `<span class="level-ring done">${icon('check')}</span> Mastered` : `<span class="level-ring ${done ? 'next' : ''}"></span> Level ${done + 1}`}</div>
           </div>
@@ -629,7 +629,7 @@ VIEWS.exercise = (r) => {
     </div>
     <div class="row small muted" style="flex-wrap:wrap;gap:8px;margin-top:-6px">
       <span>${esc(cat.name)} · Progression ${idx + 1} of ${cat.progressions.length}</span>
-      ${isCurrent ? '<span class="badge-current" style="color:var(--accent);font-weight:800">· CURRENT</span>' : `<button class="link-btn" data-action="set-current" data-prog="${p.id}">Make this my current progression</button>`}
+      ${isCurrent ? '<span class="tag-current" style="color:var(--accent);font-weight:800">· CURRENT</span>' : `<button class="link-btn" data-action="set-current" data-prog="${p.id}">Make this my current progression</button>`}
     </div>
     <h2 class="section-title">Overview</h2>
     <p class="overview">${esc(p.overview)}</p>

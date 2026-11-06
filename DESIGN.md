@@ -126,8 +126,25 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 
 Movement art is **original vector stick figures** on a per-family gradient. Each family has a fixed hue, shifted slightly per progression. This art is a deliberate placeholder system rather than final photography. If photography is added later, keep the 16:9 / 1:1 crops and the same gradient as a loading state.
 
-## 9. Known gaps
+## 9. Naming conventions
 
-- Motion tokens (durations and easings) are not yet tokenised.
-- Some legacy components still use raw pixel spacing between scale steps (for example 14, 18 and 22px). Move them to `--space-*` when touched.
-- No illustration for empty states beyond icons.
+- **Components:** `.block`, plus `.block .part` for inner parts, plus modifiers on the block (`.btn.ghost`, `.level-ring.done`).
+- **State:** prefer ARIA attributes as the styling hook (`[aria-pressed]`, `[aria-checked]`, `[aria-selected]`, `[aria-current]`) over state classes. The style and the accessibility state then can't drift apart.
+- **Reserved names:** `.overlay` means the modal scrim only. Text labels are `.tag-*`. `.badge` means the achievement medal only.
+- **Tokens:** `--{category}-{step}`, for example `--space-4` and `--r-md`. Theme colours are semantic roles (`--muted`, `--success`), never hue names.
+
+## 10. Audit baseline (v1) and known gaps
+
+Measured by a script over `styles.css` and `app.js`. Re-run it after each cleanup pass.
+
+| Area | State at v1 | Target |
+|---|---|---|
+| Colour | All theme colours tokenised. 10 raw hex and 8 raw `rgba()` values remain in component rules: art overlays, success-ink `#0b2a14`, Pro gold `#ffd76a` and the sheet scrim. | Add `--success-ink`, `--pro`, `--scrim` and `--on-art` tokens; 0 raw colours |
+| Spacing | 7 of 174 spacing declarations use `--space-*`. Off-scale values: 6, 10, 14, 18, 22 and 28px. | ≥ 90% tokenised; no off-scale values |
+| Type | 15 distinct font sizes against 7 documented roles | `--fs-*` tokens for the 7 roles; at most 9 sizes |
+| Radius | 15 distinct radius values against 4 tokens | Use `--r-sm`, `--r-md`, `--r-lg` and pill only |
+| Motion | 6 distinct durations, none tokenised | `--dur-fast` (150ms), `--dur-base` (220ms), plus one easing |
+| Inline styles | 52 `style=""` attributes in rendered HTML | Replace with utilities or modifiers; inline styles only for the dynamic `--h` hue |
+| States | No hover state on `.opt`, `.theme-opt`, `.day-chip`, `.prog-row`, `.mastery-row`, `.stat` or `.badge-callout` | Every clickable surface gets a hover style and a pressed style |
+
+Other gaps: no illustrations for empty states beyond icons.

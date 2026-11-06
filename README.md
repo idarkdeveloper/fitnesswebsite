@@ -1,132 +1,130 @@
-# PulseFit — Smart Health & Fitness Tracker
+# PulseFit — Bodyweight Progression Trainer
 
-A fully responsive, single-page health-tracking web app built with
-**HTML5**, **Tailwind CSS**, and **vanilla JavaScript**. It tracks steps,
-calories burned, sleep and calorie intake — including an AI-style
-photo scanner that estimates a meal's calories from an uploaded image.
+A mobile-first fitness web app for mastering bodyweight training one
+progression at a time. Each movement family is a ladder of exercises from
+easiest to hardest, and every exercise has three levels. When you hit a
+level's target, it's marked complete. Finish level 3 and the next
+progression unlocks.
 
-> Modern, minimalist design with a vibrant palette and first-class
-> dark mode. No build step, no backend, no dependencies to install —
-> just open `index.html` in a browser.
-
----
+There's no build step, no backend and nothing to install. Open `index.html`
+in a browser, or deploy the folder to any static host. The included workflow
+deploys it to GitHub Pages.
 
 ## Features
 
-### Landing experience
-- **Navigation Bar** — sticky, blurred, with mobile drawer & dark-mode toggle.
-- **Hero Section** — animated pulse ring, floating stat cards, gradient headline.
-- **Services Section** — four core services (steps, calories burned, sleep, snap-log).
-- **Portfolio / Showcase Grid** — filterable success-story cards.
-- **CTA + Footer** — gradient call-to-action and clean footer.
+| Tab | What it does |
+|-----|--------------|
+| **Home** | Greeting, a 30-day workout challenge bar, and the routine card. The card has a routine picker, a swipeable carousel of today's exercises showing your current progression and level, swap-progression and rest-timer buttons, **Start**, and a day navigator ("Day 3 of 7", status). Also shows 14 upcoming days and a "micro fitness hit" tip. |
+| **Movements** | A library of 11 movement families and 74 progressions. Each family page lists its progressions with your level status. Each exercise page has an overview, primary and secondary muscles, and three tabs: **Levels**, **Tutorial** (steps, plus how to make it harder or easier) and **Form Cues**. **Log sets** records a single exercise. |
+| **Activity** | Activity streak, total workouts, an achievements summary, "X / 74 Progressions Mastered" with a dot ladder per family, and workout history grouped by month. You can open and delete past workouts. |
+| **Challenges** | Streak badges (3 / 5 / 10 / 30 days) and joinable Pushup, Pullup and Squat ladders (15 steps each, with a badge per progression), plus the full set of 14 badges. |
+| **Profile** | Achievements, name and email (kept locally), three themes (Midnight, Light, Dark), PulseFit Pro (a demo toggle that unlocks four advanced families and a routine), training days, rest timer, reminders, data export, import and reset, FAQ, and Privacy. |
 
-### Tracker
-- **Live dashboard** for steps, calories burned, calories eaten, sleep — persisted
-  per-day in `localStorage`.
-- Quick actions: `+ Log steps`, `+ Log sleep`, `Reset day`.
-- Meal list with per-item remove.
+**Workout session.** Each set has a stepper input and a ✓ button. Ticking
+a set starts the rest countdown, which beeps and vibrates when it ends. Hold
+exercises include a "Time a hold" stopwatch. When you finish, the app checks
+each exercise against its level target, levels you up, unlocks the next
+progression and shows any new badges.
 
-### Tools
-- **Profile & BMI** — name, age, sex, weight, height, activity, goal, plus body
-  measurements (chest, waist, hips, biceps, thigh, neck).
-- **BMI calculator** with category (Underweight / Healthy / Overweight / Obese) and
-  ideal weight range (BMI 18.5–24.9).
-- **Calorie requirement calculator** — Mifflin-St Jeor BMR × activity → TDEE →
-  goal-adjusted target, plus a macro split (Protein / Carbs / Fat).
-- **AI Snap Calorie Counter** — upload or drag-drop a meal photo; a lightweight
-  in-browser "AI" reads dominant image colors and matches against a small food
-  database to output an estimated meal name, calories, macros and a confidence
-  score. Log the estimate straight into today's intake.
+**Schedule.** Pick your training days. Each routine's sessions rotate across
+those days, and the other days are rest days. Rest days never break your
+streak.
 
-### Design & UX
-- Tailwind with a **custom vibrant palette** (teal `brand`, violet `iris`,
-  coral `accent`, amber `sun`).
-- **Dark mode** with a persisted user preference and OS default fallback (no
-  flash of unstyled theme on load).
-- Fully **responsive** for mobile, tablet, and desktop.
-- Respects `prefers-reduced-motion`.
-
----
+The older steps, sleep, calorie and BMI tracker still works at
+`tracker.html`. Profile links to it as "Daily Health Tracker".
 
 ## Project structure
 
 ```
-.
-├── index.html      # Markup: nav, hero, services, dashboard, tools, portfolio, CTA, footer
-├── styles.css      # Reusable component classes and polish on top of Tailwind
-├── app.js          # State, tracker, BMI/TDEE, AI scanner, portfolio filter
-├── README.md       # This file
-└── .gitignore      # Standard ignores
+index.html    App shell (sidebar on desktop, bottom tab bar on mobile)
+styles.css    Theme tokens and components
+app.js        Router, views, progress model, workout logic
+data.js       Exercise database: 11 families, 74 progressions
+DESIGN.md     Design language: tokens, type, spacing, components, rules
+img/          Optional exercise images + manifest.js + prompts.json
+tools/        image-prompts.js (prompts, manifest), generate-images.js (OpenAI generation)
+docs/         IMAGE_PROMPTS.md (Gemini prompts)
+tracker.*     The original PulseFit daily health tracker
 ```
 
----
-
-## Getting started
-
-No install step. Just open the file in a browser:
+## Run locally
 
 ```bash
-# From the project root
-open index.html            # macOS
-xdg-open index.html        # Linux
-start index.html           # Windows
+python3 -m http.server 8080   # then open http://localhost:8080
 ```
 
-Or serve it locally so the `capture="environment"` file input can access a
-mobile camera:
+## Exercise images (optional)
 
-```bash
-# Python 3
-python3 -m http.server 8080
-# Then visit http://localhost:8080
-```
+The app shows stick-figure art until you add photos. To make them with Gemini:
 
----
+1. Open `docs/image-prompts.html`, which has a **Copy** button on every prompt, filters for to do, redo and done, and search. The same 85 prompts (11 category covers and 74 exercises) are also in `docs/IMAGE_PROMPTS.md`.
+2. Save each image as `img/<id>.webp`, using the filename shown with each prompt.
+3. Run `node tools/image-prompts.js manifest` to register the images.
 
-## How the "AI" scanner works
+### Generating images with the OpenAI API (optional)
 
-Real on-device food recognition needs a heavy ML model (e.g. TensorFlow.js
-MobileNet). PulseFit ships a lightweight, deterministic stand-in so the
-feature is fully offline and instant:
+`tools/generate-images.js` creates the images for you with OpenAI's image models. It runs on **your computer**. Never put an API key in the website: PulseFit is a public static site, so anyone could read the key and spend your credits.
 
-1. The uploaded image is drawn onto a 32×32 canvas.
-2. Near-white/black pixels (usually plate or background) are ignored.
-3. The average color of the remaining pixels is computed.
-4. That color is matched against a small food database using Euclidean
-   distance in RGB space.
-5. Distance is inversely mapped to a 55–98% confidence score.
+1. Create a key at <https://platform.openai.com/api-keys>. Copy `.env.example` to `.env` in the repo root (git-ignored) and paste the key in:
+   ```
+   OPENAI_API_KEY=sk-...
+   # optional: OPENAI_IMAGE_MODEL=gpt-image-2
+   ```
+2. Preview what would be made, without calling the API or spending anything:
+   ```bash
+   node tools/generate-images.js --dry-run
+   ```
+3. Generate a small batch. The default is 5 missing images (to do + redo) at medium quality, and new images go to `img/review/`, which is never deployed:
+   ```bash
+   node tools/generate-images.js --limit 5
+   node tools/generate-images.js --only full-pushups,close-pushups --quality high
+   ```
+4. Check each image in `img/review/` against the exercise's Tutorial and Form Cues. Approve the good ones:
+   ```bash
+   node tools/generate-images.js approve full-pushups close-pushups
+   ```
+   Regenerate rejects with `--force`. Every generation is logged in `img/review/generation-log.json`.
 
-Swapping this out for a real model — for example TF.js MobileNet or an API
-call — only requires replacing `extractDominantColor` + `matchFood` in
-`app.js`.
+Requires Node 18+, with no `npm install`. The script retries rate limits and server errors with backoff. **Cost:** `--dry-run` prints an estimate, and real runs print what each image actually cost, using the token usage the API reports. Both also go into the log. Here are the estimates for all 74 missing images at medium quality, using OpenAI's per-token prices as of November 2026:
 
----
+| Model | One pass | With redos (~1.8×) |
+|---|---|---|
+| `gpt-image-1.5` (default) | ≈ $3.60 | ≈ $6.50 |
+| `gpt-image-2` | ≈ $3.40 | ≈ $6.10 |
+| `gpt-image-1-mini` | ≈ $0.90 | ≈ $1.65 |
 
-## Persistence
+Low quality costs about a quarter of medium, and high about four times as much. Re-check <https://openai.com/api/pricing/> before big runs, and set a monthly limit in your OpenAI billing settings. Some newer models require organisation verification; if you get a 403, try `--model gpt-image-1`.
 
-All data lives in the browser's `localStorage`:
+### Generating images on GitHub (no local setup)
 
-| Key              | Contents                                             |
-|------------------|------------------------------------------------------|
-| `pf_theme`       | `"dark"` or `"light"`                                |
-| `pf_profile`     | Profile & body-measurement object                    |
-| `pf_day_YYYY-MM-DD` | Per-day steps, sleep minutes, meal log            |
+`.github/workflows/generate-images.yml` runs the same script in GitHub Actions, using a key stored as a GitHub secret. Nothing needs to be installed on your computer, and you can start runs from the GitHub mobile app.
 
-Clear via **Reset day** in the dashboard, or `localStorage.clear()` in
-DevTools.
+One-time setup in the repo's **Settings**:
+1. **Environments → New environment →** `image-generation` **→ Add environment secret** `OPENAI_API_KEY`. You can also add yourself under **Required reviewers**, so every run waits for your approval before it spends money.
+2. **Actions → General → Workflow permissions →** tick **Allow GitHub Actions to create and approve pull requests**.
 
----
+To run it: **Actions → Generate exercise images → Run workflow**. Pick the ids, or a status (`redo`, `missing`, `todo`), plus a limit (1–30), the quality and the model. The run shows a cost estimate, generates the images, and opens a **pull request with every image shown**. Check the form in each one, and delete any bad images from the pull request (with their lines in `img/manifest.js`) or close it. Merging publishes the images.
 
-## Roadmap ideas
+Token usage and cost for each run are saved in `img/generation-logs/run-<id>.json`. The workflow appears in the Actions tab only once this file is on the default branch.
 
-- Real image classification via TF.js MobileNet.
-- Multi-day trend charts (Chart.js).
-- Weekly & monthly digest reports.
-- Optional backend sync + auth.
-- PWA install & offline mode.
+To regenerate the prompts after editing `data.js`, run `node tools/image-prompts.js`. `img/prompts.json` has the same prompts for batch use with the Gemini API.
 
----
+## Data
+
+Everything is stored in the browser's `localStorage` under `pf2_state`. Use
+**Profile → Export Data** to back it up or move it to another device.
+
+## Editing content
+
+Add or edit exercises in `data.js`. Each progression has `type`
+(`reps` or `hold`), an optional `perSide`, three `levels` (`{ sets, target }`),
+`steps`, `harder`, `easier` and `cues`. The app picks up changes automatically.
+
+## Disclaimer
+
+PulseFit is general fitness education, not medical advice. Train within your
+abilities and stop if anything hurts.
 
 ## License
 
-MIT — see `LICENSE` if present, otherwise treat as MIT.
+MIT

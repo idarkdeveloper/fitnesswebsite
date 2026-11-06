@@ -1,0 +1,227 @@
+[
+  {
+    "id": "full-pushups",
+    "file": "img/review/full-pushups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing full pushups in an outdoor calisthenics park: in a straight-body pushup on the toes, knees off the ground, chest just above the floor. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.498Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 181,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 181
+      },
+      "output_tokens": 1952,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 384
+      },
+      "total_tokens": 2133
+    },
+    "cost_usd": 0.03168,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "close-pushups",
+    "file": "img/review/close-pushups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing close pushups in an outdoor calisthenics park: in a pushup on the toes, knees off the ground, hands touching under the chest, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.500Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 182,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 182
+      },
+      "output_tokens": 1963,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 395
+      },
+      "total_tokens": 2145
+    },
+    "cost_usd": 0.03186,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "uneven-pushups",
+    "file": "img/review/uneven-pushups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing uneven pushups in an outdoor calisthenics park: in a full plank pushup on the toes, knees off the ground, one hand on a basketball. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.501Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 181,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 181
+      },
+      "output_tokens": 1968,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 400
+      },
+      "total_tokens": 2149
+    },
+    "cost_usd": 0.03194,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "horizontal-rows",
+    "file": "img/review/horizontal-rows.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing horizontal rows on a steel pull-up bar in an outdoor calisthenics park: under a waist-high bar, body nearly horizontal and straight, heels down, chest pulled to the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.502Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 168,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 168
+      },
+      "output_tokens": 2001,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 433
+      },
+      "total_tokens": 2169
+    },
+    "cost_usd": 0.03244,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "full-pullups",
+    "file": "img/review/full-pullups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing full pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet well off the ground, chin clearly above the bar, legs straight together. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.502Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 170,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 170
+      },
+      "output_tokens": 1951,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 383
+      },
+      "total_tokens": 2121
+    },
+    "cost_usd": 0.03164,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "close-pullups",
+    "file": "img/review/close-pullups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet well off the ground, hands touching, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.503Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 168,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 168
+      },
+      "output_tokens": 1967,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 399
+      },
+      "total_tokens": 2135
+    },
+    "cost_usd": 0.03189,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "uneven-pullups",
+    "file": "img/review/uneven-pullups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet off the ground, one hand on bar, other on a lower towel. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.504Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 170,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 170
+      },
+      "output_tokens": 1969,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 401
+      },
+      "total_tokens": 2139
+    },
+    "cost_usd": 0.03193,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "half-one-arm-pullups",
+    "file": "img/review/half-one-arm-pullups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing half one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging by one hand from a high bar, feet well off the ground, elbow bent 90 degrees. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.504Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 171,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 171
+      },
+      "output_tokens": 1955,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 387
+      },
+      "total_tokens": 2126
+    },
+    "cost_usd": 0.03171,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "one-arm-pullups",
+    "file": "img/review/one-arm-pullups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee24917a008190be7f7df3597e18d5",
+    "prompt": "Athlete doing one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging by one hand from a high bar, feet well off the ground, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-06T19:26:01.505Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 169,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 169
+      },
+      "output_tokens": 1953,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 385
+      },
+      "total_tokens": 2122
+    },
+    "cost_usd": 0.03167,
+    "batch_discount": 0.5
+  }
+]

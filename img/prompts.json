@@ -39,7 +39,7 @@
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/close-pushups.webp",
-    "prompt": "Athlete doing close pushups in an outdoor calisthenics park: in a pushup on the toes, knees off the ground, hands touching under the chest, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing close pushups in an outdoor calisthenics park: in a pushup on the toes, palms flat and touching under the chest, elbows tucked, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. The arms carry the body weight; forearms stay off the ground (this is not a plank). Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "uneven-pushups",
@@ -123,14 +123,14 @@
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/close-pullups.webp",
-    "prompt": "Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet well off the ground, hands touching, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, hands side by side and touching, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Both hands wrap over the bar side by side, palms facing away; the hands are not clasped together. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "uneven-pullups",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/uneven-pullups.webp",
-    "prompt": "Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet off the ground, one hand on bar, other on a lower towel. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, one hand on the bar, other on a towel looped over it. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. The towel hangs from the same high bar about 30 cm below it, gripped firmly; both arms pull. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "half-one-arm-pullups",

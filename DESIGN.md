@@ -77,17 +77,19 @@ The Dark theme keeps its own neutral greys for surfaces and text. It takes only 
 
 Family: **Roboto** (400 / 500 / 700 / 800), falling back to the system UI font.
 
-| Role | Size / weight | Usage |
-|---|---|---|
-| Display (`.h1`) | 34 / 800, −0.02em | Page titles ("Activity", greeting) |
-| Title (`.h2`) | 24 / 800 | Section headers |
-| Headline (`.h3`) | 18 / 700 | Card titles |
-| Body large | 17–18 / 400 | Exercise overview, tutorial steps, cues |
-| Body | 16 / 400 | Default |
-| Label | 14–15 / 500–700 | Buttons, stats, list secondary text |
-| Caption (`.small`) | 13 / 400 | Meta lines ("Progression 2 of 10") |
+| Role | Token | Size / weight | Usage |
+|---|---|---|---|
+| Display (`.h1`) | `--fs-3xl` | 34 / 800, −0.02em | Page titles ("Activity", greeting) |
+| Title (`.h2`) | `--fs-2xl` | 24 / 800 | Section headers |
+| Subtitle | `--fs-xl` | 20 / 700 | Exercise names, stat values, tutorial headings |
+| Headline (`.h3`) / body large | `--fs-lg` | 18 / 700 or 400 | Card titles; overview, steps, cues |
+| Body | `--fs-body` | 16 / 400 | Default |
+| Label | `--fs-label` | 14 / 500–700 | Buttons, stats, list secondary text |
+| Caption (`.small`) | `--fs-sm` | 13 / 400 | Meta lines ("Progression 2 of 10") |
+| Micro | `--fs-xs` | 12 / 700–800 | Pills, 5-up ladder badge labels, sidebar footer |
+| Emoji display | `--fs-display` | 54 | Workout summary emoji only |
 
-Minimum text size is 12px, used only for the 5-up ladder badge labels.
+Minimum text size is 12px (`--fs-xs`).
 
 ## 4. Spacing, radius, elevation
 
@@ -102,13 +104,18 @@ Minimum text size is 12px, used only for the 5-up ladder badge labels.
 | `--space-5` | 20px | Card inset (default) |
 | `--space-6` | 24px | Section separation, card inset (large) |
 | `--space-8` | 32px | Desktop page gutter, major breaks |
+| `--space-10` | 40px | Desktop top padding |
+| `--space-16` | 64px | Desktop bottom padding |
+
+Hairline offsets of 1–3px (borders and badge nudges) stay raw by design. `--nav-clear` (96px) is the mobile bottom padding that clears the tab bar.
 
 | Radius | Value | Usage |
 |---|---|---|
 | `--r-sm` | 12px | Icon buttons, inputs inside cards, art thumbnails |
 | `--r-md` | 16px | Buttons, options, stat tiles |
 | `--r-lg` | 22px | Cards, sheets, nav bar corners |
-| pill | 999px | Chips, segmented control, progress bars |
+| `--r-pill` | 999px | Chips, segmented control, progress bars |
+| `--r-round` | 50% | Rings, dots, medals, round icon buttons |
 
 Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest bar. Sheets use a blurred scrim instead of extra shadow.
 
@@ -127,7 +134,8 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 - **One primary button per view.** Use `.btn` for the primary action, `.btn.ghost` or `.btn.subtle` for secondary actions, and `.link-btn` only inside text.
 - **Destructive actions** (reset, delete workout, discard workout with ticked sets) always confirm.
 - **Feedback:** every save shows a toast or a summary sheet. Ticking a set starts the rest timer.
-- **Motion:** 150–250ms fades and slides only, all disabled under `prefers-reduced-motion`.
+- **Motion:** tokens `--dur-press` (80ms, pressed scale), `--dur-fast` (150ms, colour and border), `--dur-base` (220ms, tab indicator, sheet settle, page fade) and `--dur-slow` (400ms, progress fill), all on `--ease` (`cubic-bezier(0.2, 0.8, 0.2, 1)`). Everything is disabled under `prefers-reduced-motion`.
+- **States:** every clickable surface (options, theme options, day chips, stats, callouts, routine picker, list items, progression and mastery rows, library tiles, buttons, icon buttons, steppers, weekday buttons) has a hover style (tint toward `--accent`, only on hover-capable devices), a pressed style (`scale(0.98)`) and the global focus ring. Text inputs use an accent border plus a 3px ring instead of the outline.
 - Focus is always visible: 3px `--accent` outline.
 
 ## 7. Component inventory
@@ -138,19 +146,20 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | List group / item | `.list-group`, `.list-item` | Settings rows with a trailing chevron or icon; `.danger` variant |
 | Button | `.btn` (+ `.block`, `.lg`, `.ghost`, `.subtle`, `.accent`, `.danger`) | Height ≥ 48px |
 | Icon button | `.icon-btn` (+ `.round`, `.bare`) | 48px square, or 44px round |
-| Segmented tabs | `.segmented` | ARIA `tablist`; the selected tab uses `--accent` |
+| Segmented tabs | `.segmented` | ARIA `tablist`. A sliding `--accent` indicator positioned by `--n` (segment count) and `--i` (selected index); it replays from the old position after a re-render, and focus moves to the selected tab |
 | Chip | `.chip` | Muscle tags |
 | Progress bar | `.progress > span` | Gradient `--primary` → `--accent` |
 | Level ring | `.level-ring` (+ `.done`, `.next`, `.big`) | ✓ icon when done |
 | Dot ladder | `.dots .dot` (+ `.done`, `.current`) | One dot per progression |
 | Badge / medal | `.badge` (+ `.earned`) | Optional `.num` (top) and `.tier` (bottom) |
 | Option row | `.opt` | Radio-style choices in sheets |
-| Bottom sheet | `.overlay > .sheet` | Esc, the scrim and ✕ all close it; focus returns to the trigger |
+| Bottom sheet | `.overlay > .sheet` | Grab handle on mobile. Drag the handle or header down more than 90px (or flick) to close; shorter drags snap back. Esc, the scrim and ✕ also close it, and focus returns to the trigger |
 | Field | `.field > label + .input` | Static label above the input |
 | Toggle | `.toggle[role=switch]` | |
-| Stepper | `.stepper` | − / number / + with a unit suffix |
+| Stepper | `.stepper` | − / number / + with a unit suffix. Press and hold ± to repeat (after 400ms, every 70ms) |
 | Figure art | `.art` | Gradient by `--h` hue per movement family, plus a stick-figure SVG |
 | Toast, banner, rest bar | `.toast`, `.banner`, `.rest-bar` | |
+| Utilities | `.m-0`, `.mt-*`, `.mb-*`, `.ml-*`, `.gap-*`, `.wrap`, `.text-center`, `.fw-*`, `.t-*`, `.c-*`, `.static`, `.icon-sm` | Token-backed one-liners defined last in the cascade. Use them instead of `style=""` |
 
 ## 8. Imagery
 
@@ -173,18 +182,18 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 - **Reserved names:** `.overlay` means the modal scrim only. Text labels are `.tag-*`. `.badge` means the achievement medal only.
 - **Tokens:** `--{category}-{step}`, for example `--space-4` and `--r-md`. Theme colours are semantic roles (`--muted`, `--success`), never hue names.
 
-## 10. Audit baseline (v1) and known gaps
+## 10. Audit: v1 baseline → v2 (stage 2)
 
 Measured by a script over `styles.css` and `app.js`. Re-run it after each cleanup pass.
 
-| Area | State at v1 | Target |
-|---|---|---|
-| Colour | All theme colours tokenised, and brand and status colours come from the palette primitives (§2.1). Raw values remain in component rules: art overlays, success-ink `#0b2a14`, Pro gold `#ffd76a` and the sheet scrim. `--danger-ink` was added in v1.1. | Add `--success-ink`, `--pro`, `--scrim` and `--on-art` tokens; 0 raw colours |
-| Spacing | 7 of 174 spacing declarations use `--space-*`. Off-scale values: 6, 10, 14, 18, 22 and 28px. | ≥ 90% tokenised; no off-scale values |
-| Type | 15 distinct font sizes against 7 documented roles | `--fs-*` tokens for the 7 roles; at most 9 sizes |
-| Radius | 15 distinct radius values against 4 tokens | Use `--r-sm`, `--r-md`, `--r-lg` and pill only |
-| Motion | 6 distinct durations, none tokenised | `--dur-fast` (150ms), `--dur-base` (220ms), plus one easing |
-| Inline styles | 52 `style=""` attributes in rendered HTML | Replace with utilities or modifiers; inline styles only for the dynamic `--h` hue |
-| States | No hover state on `.opt`, `.theme-opt`, `.day-chip`, `.prog-row`, `.mastery-row`, `.stat` or `.badge-callout` | Every clickable surface gets a hover style and a pressed style |
+| Area | v1 | v2 | Target met? |
+|---|---|---|---|
+| Colour | 10 raw hex + 8 raw `rgba()` in component rules | 1 (`#111` for native `<option>` text). Added `--on-art`, `--on-art-muted`, `--art-dim`, `--scrim`, `--success-ink`, `--pro`, `--pro-bg`; figure SVGs use `currentColor` | ✅ (one native-control exception) |
+| Spacing | 7 / 174 tokenised; off-scale 6, 10, 14, 18, 22, 28px | 173 / 200 tokenised. The rest are 1–3px hairlines plus 3 positional offsets | ✅ |
+| Type | 15 distinct sizes | 9 sizes, all `--fs-*` tokens | ✅ |
+| Radius | 15 distinct values | All on `--r-sm/md/lg/pill/round` (plus `0` and `inherit`) | ✅ |
+| Motion | 6 raw durations | 0 raw; `--dur-*` and `--ease` | ✅ |
+| Inline styles | 52 | 7, all data-driven: art hue `--h`, progress widths, theme swatch colours, tab indicator index | ✅ |
+| States | 7 clickable components without hover or pressed styles | Shared hover, pressed and focus rules (§6) | ✅ |
 
 Other gaps: no illustrations for empty states beyond icons.

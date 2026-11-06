@@ -100,20 +100,20 @@ const POSES = {
 
 function figure(catId) {
   const pose = POSES[catId] || POSES.pushups;
-  const prop = 'stroke="rgba(255,255,255,.45)" stroke-width="3"';
+  const prop = 'class="prop" stroke="currentColor" stroke-width="3"';
   let svg = '';
   if (pose.ground) svg += `<line x1="8" y1="88" x2="152" y2="88" ${prop}/>`;
   if (pose.bar) svg += `<line x1="${pose.bar[0]}" y1="${pose.bar[1]}" x2="${pose.bar[2]}" y2="${pose.bar[3]}" ${prop}/>`;
   if (pose.bars) svg += `<path d="M40 50H124M54 50V96M110 50V96" ${prop} fill="none"/>`;
   if (pose.pole) svg += `<path d="M100 4V96" ${prop} stroke-width="4"/>`;
-  const body = 'stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+  const body = 'stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"';
   (pose.lines || []).forEach((l) => {
     const pts = [];
     for (let i = 0; i < l.length; i += 2) pts.push(`${l[i]},${l[i + 1]}`);
     svg += `<polyline points="${pts.join(' ')}" ${body}/>`;
   });
   if (pose.path) svg += `<path d="${pose.path}" ${body}/>`;
-  svg += `<circle cx="${pose.head[0]}" cy="${pose.head[1]}" r="7" fill="#fff"/>`;
+  svg += `<circle cx="${pose.head[0]}" cy="${pose.head[1]}" r="7" fill="currentColor"/>`;
   return `<svg class="fig" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${svg}</svg>`;
 }
 
@@ -121,8 +121,9 @@ function figure(catId) {
 const IMAGES = window.PF_IMAGES || {};
 function media(catId, imgId, alt = '') {
   const src = imgId && IMAGES[imgId];
+  // The figure stays underneath as the loading placeholder; the photo covers it once decoded.
   return src
-    ? `<img class="photo" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" />`
+    ? `${figure(catId)}<img class="photo" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" />`
     : figure(catId);
 }
 
@@ -341,6 +342,7 @@ function openSheet(title, body, { onClose } = {}) {
   $('#layer').innerHTML = `
     <div class="overlay" data-action="overlay">
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+        <span class="sheet-handle" aria-hidden="true"></span>
         <div class="sheet-head">
           <h2 id="sheetTitle">${esc(title)}</h2>
           <button class="icon-btn round bare" data-action="close-sheet" aria-label="Close">${icon('x')}</button>
@@ -348,9 +350,41 @@ function openSheet(title, body, { onClose } = {}) {
         <div id="sheetBody">${body}</div>
       </div>
     </div>`;
+  enableSheetDrag($('#layer .sheet'));
   const first = $('#layer .sheet button:not([data-action="close-sheet"]), #layer .sheet input, #layer .sheet select');
   (first || $('#layer [data-action="close-sheet"]')).focus();
 }
+/** Drag the handle or header down to dismiss (touch and mouse). Past 90px or a fast flick closes. */
+function enableSheetDrag(sheet) {
+  if (!sheet) return;
+  let startY = 0, dy = 0, t0 = 0, active = false;
+  const grab = (ev) => {
+    if (!ev.target.closest('.sheet-handle, .sheet-head') || ev.target.closest('button')) return;
+    active = true; startY = ev.clientY; dy = 0; t0 = performance.now();
+    sheet.classList.add('dragging');
+    sheet.setPointerCapture(ev.pointerId);
+  };
+  const move = (ev) => {
+    if (!active) return;
+    dy = Math.max(0, ev.clientY - startY);
+    sheet.style.transform = `translateY(${dy}px)`;
+  };
+  const release = () => {
+    if (!active) return;
+    active = false;
+    sheet.classList.remove('dragging');
+    const fast = dy / Math.max(1, performance.now() - t0) > 0.6;
+    if (dy > 90 || (fast && dy > 30)) { closeSheet(); return; }
+    sheet.classList.add('settling');
+    sheet.style.transform = '';
+    setTimeout(() => sheet.classList.remove('settling'), 250);
+  };
+  sheet.addEventListener('pointerdown', grab);
+  sheet.addEventListener('pointermove', move);
+  sheet.addEventListener('pointerup', release);
+  sheet.addEventListener('pointercancel', release);
+}
+
 function closeSheet() {
   if (!$('#layer').innerHTML) return;
   $('#layer').innerHTML = '';
@@ -465,9 +499,9 @@ VIEWS.home = () => {
             <div class="label">${esc(c.name)} ${currentIdx(cid) + 1}</div>
             <div class="name">${esc(p.name)}</div>
             <div class="lvl">${isMastered(p.id) ? `<span class="level-ring done">${icon('check')}</span> Mastered` : `<span class="level-ring"></span> Level ${lvl}`}</div>
-            <div class="small muted" style="margin-top:4px">${targetText(p, lvl)}</div>
+            <div class="small muted mt-1">${targetText(p, lvl)}</div>
           </div>
-          <div class="row" style="gap:10px">
+          <div class="row gap-3">
             <button class="icon-btn" data-action="rest-settings" aria-label="Rest timer settings">${icon('timer')}</button>
             <button class="icon-btn" data-action="swap-prog" data-cat="${cid}" aria-label="Change ${esc(c.name)} progression">${icon('swap')}</button>
           </div>
@@ -478,7 +512,7 @@ VIEWS.home = () => {
   const isFuture = d > today();
   const routineBody = cats.length ? `
       <div class="ex-carousel" id="carousel">${slides}</div>
-      ${cats.length > 1 ? `<div class="carousel-dots" role="tablist">${cats.map((_, i) => `<button data-action="dot" data-i="${i}" aria-label="Exercise ${i + 1}" ${i === carouselIdx ? 'aria-current="true"' : ''}></button>`).join('')}</div>` : '<div style="height:18px"></div>'}
+      ${cats.length > 1 ? `<div class="carousel-dots" role="tablist">${cats.map((_, i) => `<button data-action="dot" data-i="${i}" aria-label="Exercise ${i + 1}" ${i === carouselIdx ? 'aria-current="true"' : ''}></button>`).join('')}</div>` : '<div class="spacer-5"></div>'}
       <button class="btn block lg" data-action="start-workout" ${isFuture ? 'disabled' : ''}>${status.done ? 'Train again' : isFuture ? 'Upcoming' : 'Start'}</button>`
     : `<div class="rest-day">${icon('moon')}<div class="h3">Rest &amp; recover</div><p class="muted">No session scheduled. Light walking or mobility work is a great idea.</p></div>`;
 
@@ -511,14 +545,14 @@ VIEWS.home = () => {
     <section class="card challenge-strip" aria-label="30 day workout challenge">
       <div class="row-between">
         <div class="title">${icon('flame')} 30 Day Workout Challenge</div>
-        <div class="row" style="gap:8px">
-          <span class="muted small" style="font-weight:700">${count30} / 30 workouts</span>
+        <div class="row gap-2">
+          <span class="muted small fw-bold">${count30} / 30 workouts</span>
           <button class="icon-btn round bare" data-action="info-30" aria-label="About the 30 day challenge">${icon('info')}</button>
         </div>
       </div>
       <div class="row">
         <div class="progress grow" role="progressbar" aria-valuemin="0" aria-valuemax="30" aria-valuenow="${count30}"><span style="width:${(count30 / 30) * 100}%"></span></div>
-        <span class="gift" ${count30 >= 30 ? 'style="color:var(--warn)"' : ''}>${icon('gift')}</span>
+        <span class="gift ${count30 >= 30 ? 'c-warn' : ''}">${icon('gift')}</span>
       </div>
     </section>
 
@@ -532,7 +566,7 @@ VIEWS.home = () => {
         <div>
           <div class="d1">${fmtLong(d)}</div>
           <div class="d2">Day ${mondayIndex(d) + 1} of 7</div>
-          <div class="d3" ${status.done ? 'style="color:var(--success)"' : ''}>${status.text}</div>
+          <div class="d3 ${status.done ? 'c-success' : ''}">${status.text}</div>
         </div>
         <button class="icon-btn bare" data-action="shift-day" data-n="1" aria-label="Next day">${icon('chevR')}</button>
       </div>
@@ -541,7 +575,7 @@ VIEWS.home = () => {
     <h2 class="h2">Upcoming Days</h2>
     <div class="days-strip">${strip}</div>
 
-    <section class="card micro" style="margin-top:18px">
+    <section class="card micro mt-5">
       <h3>${icon('bolt')} Got 60 seconds?<br/>Try a micro fitness hit</h3>
       <div class="note">Adjust to your comfort level — every small step counts!</div>
       <p class="tip">${esc(TIPS[tipIdx % TIPS.length])}</p>
@@ -555,8 +589,8 @@ VIEWS.movements = () => `
   <div class="promo">
     <span class="pill">${icon('crown')} Pro</span>
     <h3>Unlock advanced movements</h3>
-    <p class="muted" style="margin:0 0 10px">Lunges, dips, elbow levers, the clutch flag and the Strength Builder routine.</p>
-    <button class="link-btn" data-action="pro">See PulseFit Pro ${icon('chevR', 'style="width:16px;height:16px"')}</button>
+    <p class="muted m-0 mb-3">Lunges, dips, elbow levers, the clutch flag and the Strength Builder routine.</p>
+    <button class="link-btn" data-action="pro">See PulseFit Pro ${icon('chevR', 'class="icon-sm"')}</button>
   </div>`}
   <div class="lib-grid">
     ${CATS.map((c) => {
@@ -583,7 +617,7 @@ VIEWS.category = (r) => {
       ${media(c.id, c.id)}
     </div>
     <h1 class="h2">${esc(c.name)} Progressions</h1>
-    <p class="muted" style="font-size:17px;margin:0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
+    <p class="muted t-lg m-0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
     <div class="prog-list">
       ${c.progressions.map((p, i) => {
         const done = levelDone(p.id);
@@ -600,6 +634,7 @@ VIEWS.category = (r) => {
 };
 
 let exTab = 'levels';
+const EX_TABS = ['levels', 'tutorial', 'cues'];
 VIEWS.exercise = (r) => {
   const ref = PROG[r.arg];
   if (!ref) return notFound();
@@ -616,12 +651,12 @@ VIEWS.exercise = (r) => {
         <span class="lname">Level ${i + 1}</span><span class="ltarget">${targetText(p, i + 1)}</span></li>`).join('')}</ul>`;
   } else if (exTab === 'tutorial') {
     tabBody = `
-      <h3 class="section-title" style="font-size:20px">How to do ${esc(p.name.toLowerCase())}?</h3>
+      <h3 class="section-title t-xl">How to do ${esc(p.name.toLowerCase())}?</h3>
       <ol class="steps">${(p.steps || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
-      <h3 class="section-title" style="font-size:20px">How to make this exercise harder?</h3>
-      <p style="font-size:17px">${esc(p.harder || '')}</p>
-      <h3 class="section-title" style="font-size:20px">How to make this exercise easier?</h3>
-      <p style="font-size:17px">${esc(p.easier || '')}</p>`;
+      <h3 class="section-title t-xl">How to make this exercise harder?</h3>
+      <p class="t-lg">${esc(p.harder || '')}</p>
+      <h3 class="section-title t-xl">How to make this exercise easier?</h3>
+      <p class="t-lg">${esc(p.easier || '')}</p>`;
   } else {
     tabBody = `<ul class="cues">${(p.cues || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`;
   }
@@ -636,24 +671,24 @@ VIEWS.exercise = (r) => {
       <h1>${esc(p.name)}</h1>
       <button class="btn" data-action="log-sets" data-prog="${p.id}">Log sets</button>
     </div>
-    <div class="row small muted" style="flex-wrap:wrap;gap:8px;margin-top:-6px">
+    <div class="row small muted wrap gap-2">
       <span>${esc(cat.name)} · Progression ${idx + 1} of ${cat.progressions.length}</span>
-      ${isCurrent ? '<span class="tag-current" style="color:var(--accent);font-weight:800">· CURRENT</span>' : `<button class="link-btn" data-action="set-current" data-prog="${p.id}">Make this my current progression</button>`}
+      ${isCurrent ? '<span class="tag-current c-accent fw-heavy">· CURRENT</span>' : `<button class="link-btn" data-action="set-current" data-prog="${p.id}">Make this my current progression</button>`}
     </div>
     <h2 class="section-title">Overview</h2>
     <p class="overview">${esc(p.overview)}</p>
     <hr class="sep" />
-    <div class="h3" style="margin-bottom:8px">Muscles Worked</div>
+    <div class="h3 mb-2">Muscles Worked</div>
     <div class="small">Primary:</div>
     <div class="chips">${p.primary.map((m) => `<span class="chip">${esc(m)}</span>`).join('')}</div>
     <div class="small">Secondary:</div>
     <div class="chips">${p.secondary.map((m) => `<span class="chip">${esc(m)}</span>`).join('')}</div>
-    <div class="segmented" role="tablist" aria-label="Exercise details">
+    <div class="segmented" role="tablist" aria-label="Exercise details" style="--n:3;--i:${EX_TABS.indexOf(exTab)}">
       ${[['levels', 'Levels'], ['tutorial', 'Tutorial'], ['cues', 'Form Cues']].map(([id, label]) =>
         `<button role="tab" aria-selected="${exTab === id}" data-action="ex-tab" data-tab="${id}">${label}</button>`).join('')}
     </div>
     <div role="tabpanel">${tabBody}</div>
-    <div class="row-between" style="margin-top:24px">
+    <div class="row-between mt-6">
       ${prev ? `<a class="btn ghost" href="#/exercise/${prev.id}">${icon('chevL')} ${esc(prev.name)}</a>` : '<span></span>'}
       ${next ? `<a class="btn ghost" href="#/exercise/${next.id}">${esc(next.name)} ${icon('chevR')}</a>` : ''}
     </div>`;
@@ -698,10 +733,10 @@ VIEWS.activity = () => {
           <div class="dt">${esc(fmtShort(d))}</div>
           <div class="tm">${icon('check')} ${fmtTime(d)} · ${plural(w.entries.length, 'exercise')}</div>
         </div>
-        <button class="icon-btn round" data-action="view-workout" data-id="${w.id}" aria-label="View workout from ${esc(fmtShort(d))}" style="color:var(--accent);border-color:var(--accent)">${icon('chevR')}</button>
+        <button class="icon-btn round accent-outline" data-action="view-workout" data-id="${w.id}" aria-label="View workout from ${esc(fmtShort(d))}">${icon('chevR')}</button>
       </div>`;
     }).join('')}`).join('')
-    : `<div class="empty">${icon('calendar')}<div>No workouts yet. Your sessions will show up here.</div><a class="btn" href="#/home" style="margin-top:12px">Go to today's session</a></div>`;
+    : `<div class="empty">${icon('calendar')}<div>No workouts yet. Your sessions will show up here.</div><a class="btn mt-3" href="#/home">Go to today's session</a></div>`;
 
   return `
     <h1 class="h1">Activity</h1>
@@ -709,10 +744,10 @@ VIEWS.activity = () => {
       <button class="stat" data-action="info-streak"><div><div class="v">${current}</div><div class="k">Day Activity Streak</div></div>${icon('chevR')}</button>
       <button class="stat" data-action="scroll-history"><div><div class="v">${total}</div><div class="k">Total Workouts</div></div>${icon('chevR')}</button>
     </div>
-    <div class="row-between" style="margin-top:22px"><h2 class="h2" style="margin:0">Achievements</h2><span class="muted small">${earned.length} / ${ach.length} earned</span></div>
-    <a class="badge-callout" href="#/challenges" style="margin-top:10px">
+    <div class="row-between mt-5"><h2 class="h2 m-0">Achievements</h2><span class="muted small">${earned.length} / ${ach.length} earned</span></div>
+    <a class="badge-callout mt-3" href="#/challenges">
       ${icon('award')}
-      <div><div class="h3" style="font-size:16px">${earned.length ? `${plural(earned.length, 'badge')} earned` : 'No badges yet'}</div>
+      <div><div class="h3 t-body">${earned.length ? `${plural(earned.length, 'badge')} earned` : 'No badges yet'}</div>
       <div class="small muted">${earned.length ? 'Latest: ' + esc(earned[earned.length - 1].name) : 'Complete challenges to earn badges.'}</div></div>
       ${icon('chevR')}
     </a>
@@ -752,13 +787,13 @@ VIEWS.challenges = () => {
     <h1 class="h1">Challenges</h1>
     <section class="card">
       <div class="row-between"><h2 class="h3">Workout Streaks</h2><span class="muted small">Current: ${current} · Best: ${best}</span></div>
-      <p class="muted small" style="margin:6px 0 16px">Train on consecutive scheduled days. Rest days never break a streak.</p>
+      <p class="muted small m-0 mt-2 mb-4">Train on consecutive scheduled days. Rest days never break a streak.</p>
       <div class="badge-grid">${streak.join('')}</div>
     </section>
     <h2 class="h2">Join a challenge</h2>
     ${ladders}
     <h2 class="h2">All badges</h2>
-    <div class="card"><div class="badge-row" style="flex-wrap:wrap;justify-content:flex-start">${achievements().map(badgeHtml).join('')}</div></div>`;
+    <div class="card"><div class="badge-row wrap">${achievements().map(badgeHtml).join('')}</div></div>`;
 };
 
 const THEMES = [
@@ -772,17 +807,17 @@ VIEWS.profile = () => {
   const pf = state.profile;
   return `
     <h1 class="h1">Profile</h1>
-    <div class="row-between"><h2 class="h2" style="margin:8px 0 0">Achievements</h2><span class="muted">${ach.filter((a) => a.earned).length} / ${ach.length} earned</span></div>
-    <p class="muted" style="margin:4px 0 14px">Complete challenges to earn badges.</p>
+    <div class="row-between"><h2 class="h2 m-0 mt-2">Achievements</h2><span class="muted">${ach.filter((a) => a.earned).length} / ${ach.length} earned</span></div>
+    <p class="muted m-0 mt-1 mb-4">Complete challenges to earn badges.</p>
     <div class="badge-row">${ach.map(badgeHtml).join('')}</div>
 
-    <div class="field" style="margin-top:34px"><label for="pfName">Name</label>
+    <div class="field mt-8"><label for="pfName">Name</label>
       <input class="input" id="pfName" data-bind="name" value="${esc(pf.name)}" placeholder="Your name" autocomplete="name" maxlength="40" /></div>
-    <div class="field" style="margin-top:28px"><label for="pfEmail">Email</label>
+    <div class="field mt-6"><label for="pfEmail">Email</label>
       <input class="input" id="pfEmail" type="email" data-bind="email" value="${esc(pf.email)}" placeholder="you@example.com" autocomplete="email" maxlength="80" /></div>
-    <p class="muted small" style="margin:8px 4px 0">Stored only in this browser — nothing is sent anywhere.</p>
+    <p class="muted small m-0 mt-2 ml-1">Stored only in this browser — nothing is sent anywhere.</p>
 
-    <h2 class="h2" style="font-size:30px;font-weight:500">Theme</h2>
+    <h2 class="h2">Theme</h2>
     <div role="radiogroup" aria-label="Theme">
       ${THEMES.map((t) => `<button class="theme-opt" role="radio" aria-checked="${pf.theme === t.id}" data-action="theme" data-theme="${t.id}">
         <span class="sw" style="background:${t.sw}">${t.dots.map((c) => `<i style="background:${c}"></i>`).join('')}</span>
@@ -790,7 +825,7 @@ VIEWS.profile = () => {
       </button>`).join('')}
     </div>
 
-    <div class="list-group" style="margin-top:22px">
+    <div class="list-group mt-5">
       <button class="list-item" data-action="pro"><span>PulseFit Pro<span class="li-sub">${pf.pro ? 'Unlocked' : 'Advanced movements & routines'}</span></span>${icon('chevR')}</button>
       <a class="list-item" href="tracker.html"><span>Daily Health Tracker<span class="li-sub">Steps, sleep, calories &amp; BMI tools</span></span>${icon('external')}</a>
     </div>
@@ -835,7 +870,7 @@ function entryEditor(e, i) {
         <div class="target-line">${isMastered(p.id) ? 'Mastered · ' : `Level ${lvl} target: `}${targetText(p, lvl)}</div>
       </div>
     </div>
-    <div style="margin-top:10px">
+    <div class="mt-3">
       ${e.values.map((v, s) => `<div class="set-row">
         <span class="sl">Set ${s + 1}</span>
         <div class="stepper">
@@ -867,14 +902,14 @@ VIEWS.workout = () => {
       <button class="icon-btn bare round" data-action="cancel-workout" aria-label="Cancel workout">${icon('x')}</button>
       <div class="title">${esc(routine().name)}</div>
     </div>
-    <p class="muted" style="text-align:center;margin:-6px 0 18px">${fmtLong(d)} · Tap ✓ after each set to start your rest timer.</p>
+    <p class="muted text-center m-0 mb-5">${fmtLong(d)} · Tap ✓ after each set to start your rest timer.</p>
     ${draft.entries.map(entryEditor).join('')}
     <button class="btn block lg" data-action="finish-workout" ${doneSets ? '' : 'disabled'}>Finish workout</button>
-    <p class="muted small" style="text-align:center">Only sets marked ✓ are saved.</p>`;
+    <p class="muted small text-center">Only sets marked ✓ are saved.</p>`;
 };
 
 function lockedView(c) {
-  return `<div class="empty">${art(c.id, { locked: true, img: c.id }).replace('class="art', 'style="max-width:260px;aspect-ratio:1;margin:0 auto 16px;--h:' + (CAT_HUE[c.id] ?? 210) + '" class="art')}
+  return `<div class="empty">${art(c.id, { locked: true, img: c.id, cls: 'locked-hero' })}
     <div class="h3">${esc(c.name)} is a Pro movement</div>
     <p>Unlock it, along with the other advanced families, with PulseFit Pro.</p>
     <button class="btn" data-action="pro">See PulseFit Pro</button></div>`;
@@ -884,13 +919,16 @@ const notFound = () => `<div class="empty">${icon('help')}<p>That page doesn't e
 /* ---------------------------------------------------------------
    9. After-render wiring (carousel scroll sync)
    --------------------------------------------------------------- */
+/** Width of one carousel step: slide width plus the CSS gap token. */
+const slideStep = (car) => car.clientWidth + (parseFloat(getComputedStyle(car).columnGap) || 0);
+
 function afterRender(r) {
   if (r.name === 'home') {
     const car = $('#carousel');
     if (car) {
-      car.scrollLeft = carouselIdx * (car.clientWidth + 22);
+      car.scrollLeft = carouselIdx * slideStep(car);
       car.addEventListener('scroll', () => {
-        const i = Math.round(car.scrollLeft / (car.clientWidth + 22));
+        const i = Math.round(car.scrollLeft / slideStep(car));
         if (i !== carouselIdx) {
           carouselIdx = i;
           $$('.carousel-dots button').forEach((b, j) => b.setAttribute('aria-current', String(j === i)));
@@ -946,15 +984,15 @@ function showSummary(summary) {
     const p = PROG[r.progId].p;
     let msg = r.passed ? (r.leveledUp ? `Level ${r.level} complete!` : 'Target hit') : 'Logged — keep at it';
     if (r.unlocked) msg += ` Unlocked ${PROG[r.unlocked].p.name}.`;
-    return `<div class="opt" style="cursor:default"><span class="level-ring ${r.passed ? 'done' : ''}">${r.passed ? icon('check') : ''}</span>
+    return `<div class="opt static"><span class="level-ring ${r.passed ? 'done' : ''}">${r.passed ? icon('check') : ''}</span>
       <div><div class="t">${esc(p.name)}</div><div class="s">${esc(r.values.join(' · '))} ${unitOf(p)} — ${esc(msg)}</div></div></div>`;
   }).join('');
   openSheet('Workout saved', `
     <div class="celebrate"><div class="big">${results.some((r) => r.leveledUp) ? '🏆' : '💪'}</div>
       <p class="muted">${results.some((r) => r.leveledUp) ? 'You levelled up. Great work!' : 'Every session counts. See you next time!'}</p></div>
     <div class="opt-list">${lines}</div>
-    ${newBadges.length ? `<h3 class="h3" style="margin:18px 0 8px">New badge${newBadges.length > 1 ? 's' : ''}</h3><div class="badge-row">${newBadges.map(badgeHtml).join('')}</div>` : ''}
-    <button class="btn block" data-action="close-sheet" style="margin-top:18px">Done</button>`);
+    ${newBadges.length ? `<h3 class="h3 m-0 mt-5 mb-2">New badge${newBadges.length > 1 ? 's' : ''}</h3><div class="badge-row">${newBadges.map(badgeHtml).join('')}</div>` : ''}
+    <button class="btn block mt-5" data-action="close-sheet">Done</button>`);
 }
 
 /* ---------- rest + hold timers ---------- */
@@ -1034,7 +1072,7 @@ function refreshDraftView() {
 function quickLogBody() {
   return `${entryEditor(draft.entries[0], 0)}
     <button class="btn block lg" data-action="save-quick" ${draft.entries[0].done.some(Boolean) ? '' : 'disabled'}>Save sets</button>
-    <p class="faint small" style="text-align:center">Mark each set ✓ to include it.</p>`;
+    <p class="faint small text-center">Mark each set ✓ to include it.</p>`;
 }
 
 /* ---------------------------------------------------------------
@@ -1045,7 +1083,7 @@ function routineSheet() {
     ${ROUTINES.map((r) => {
       const locked = r.pro && !state.profile.pro;
       return `<button class="opt" role="radio" aria-checked="${routine().id === r.id}" data-action="${locked ? 'pro' : 'set-routine'}" data-id="${r.id}">
-        <div><div class="t">${esc(r.name)} ${r.pro ? `<span class="pill" style="margin-left:6px">${icon('crown')} Pro</span>` : ''}</div>
+        <div><div class="t">${esc(r.name)} ${r.pro ? `<span class="pill ml-2">${icon('crown')} Pro</span>` : ''}</div>
         <div class="s">${esc(r.desc)} ${r.sessions.length > 1 ? `${r.sessions.length} rotating sessions.` : ''}</div></div>
         ${locked ? icon('lock') : routine().id === r.id ? icon('check') : ''}
       </button>`;
@@ -1084,17 +1122,17 @@ function remindersSheet() {
   const rm = state.reminder;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   openSheet('Reminders', `
-    <div class="row-between" style="margin-bottom:16px"><div><div class="t" style="font-weight:700">Daily reminder</div><div class="small muted">On training days, while PulseFit is open</div></div>
+    <div class="row-between mb-4"><div><div class="t fw-bold">Daily reminder</div><div class="small muted">On training days, while PulseFit is open</div></div>
       <button class="toggle" role="switch" aria-checked="${rm.enabled}" data-action="toggle-reminder" aria-label="Daily reminder"></button></div>
     <div class="field"><label for="rmTime">Time</label><input class="input" id="rmTime" type="time" value="${esc(rm.time)}" data-bind="reminderTime" /></div>
-    <p class="small muted" style="margin-top:14px">${perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
+    <p class="small muted mt-4">${perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
 }
 
 function proSheet() {
   openSheet('PulseFit Pro', `
     <p>Pro unlocks the advanced movement families — <strong>Lunges, Dips, Elbow Levers and the Clutch Flag</strong> — plus the <strong>Strength Builder</strong> routine.</p>
     <p class="muted small">This site is a demo with no payments or accounts. Flip the switch to try Pro features for free.</p>
-    <div class="row-between card flat soft" style="margin:14px 0"><div><div style="font-weight:700">Pro features</div><div class="small muted">${state.profile.pro ? 'Unlocked' : 'Locked'}</div></div>
+    <div class="row-between card flat soft mt-4 mb-4"><div><div class="fw-bold">Pro features</div><div class="small muted">${state.profile.pro ? 'Unlocked' : 'Locked'}</div></div>
       <button class="toggle" role="switch" aria-checked="${state.profile.pro}" data-action="toggle-pro" aria-label="Pro features"></button></div>`);
 }
 
@@ -1125,11 +1163,11 @@ function workoutSheet(id) {
     <div class="opt-list">${w.entries.map((e) => {
       const ref = PROG[e.progId];
       const name = ref ? ref.p.name : e.progId;
-      return `<div class="opt" style="cursor:default"><span class="level-ring ${e.passed ? 'done' : ''}">${e.passed ? icon('check') : ''}</span>
+      return `<div class="opt static"><span class="level-ring ${e.passed ? 'done' : ''}">${e.passed ? icon('check') : ''}</span>
         <div><div class="t">${esc(name)} · Level ${e.level}</div><div class="s">${esc(e.values.join(' · '))} ${ref ? unitOf(ref.p) : ''}${e.passed ? ' — target hit' : ''}</div></div></div>`;
     }).join('')}</div>
-    <button class="btn block danger" data-action="delete-workout" data-id="${w.id}" style="margin-top:18px">${icon('trash')} Delete workout</button>
-    <p class="faint small" style="text-align:center">Deleting a workout does not undo levels already earned.</p>`);
+    <button class="btn block danger mt-5" data-action="delete-workout" data-id="${w.id}">${icon('trash')} Delete workout</button>
+    <p class="faint small text-center">Deleting a workout does not undo levels already earned.</p>`);
 }
 
 /* ---------------------------------------------------------------
@@ -1147,7 +1185,7 @@ const ACTIONS = {
   'dot': (el) => {
     carouselIdx = Number(el.dataset.i);
     const car = $('#carousel');
-    if (car) car.scrollTo({ left: carouselIdx * (car.clientWidth + 22), behavior: 'smooth' });
+    if (car) car.scrollTo({ left: carouselIdx * slideStep(car), behavior: 'smooth' });
   },
   'shift-day': (el) => { selectedDay = dayKey(addDays(fromKey(selectedDay), Number(el.dataset.n))); carouselIdx = 0; rerender(); },
   'pick-day': (el) => { selectedDay = el.dataset.day; carouselIdx = 0; rerender(); },
@@ -1209,7 +1247,20 @@ const ACTIONS = {
   'remove-set': (el) => { const e = draft.entries[el.dataset.e]; if (e.values.length > 1) { e.values.pop(); e.done.pop(); } saveDraft(); refreshDraftView(); },
   'hold-timer': (el) => toggleHold(Number(el.dataset.e)),
   'skip-rest': stopRest,
-  'ex-tab': (el) => { exTab = el.dataset.tab; rerender(); },
+  'ex-tab': (el) => {
+    const from = EX_TABS.indexOf(exTab);
+    exTab = el.dataset.tab;
+    rerender();
+    // Re-rendering replaces the control, so replay the slide from the old position.
+    const seg = $('.segmented');
+    if (seg && from !== EX_TABS.indexOf(exTab)) {
+      seg.style.setProperty('--i', from);
+      void seg.offsetWidth;
+      seg.style.setProperty('--i', EX_TABS.indexOf(exTab));
+    }
+    const sel = $('.segmented [aria-selected="true"]');
+    if (sel) sel.focus();
+  },
   'set-current': (el) => { const { cat, idx, p } = PROG[el.dataset.prog]; state.current[cat.id] = idx; save(); rerender(); toast(`${p.name} is now your current ${cat.name.toLowerCase()} progression`); },
   'locked': (el, ev) => { ev.preventDefault(); proSheet(); },
   'pro': proSheet,
@@ -1268,9 +1319,27 @@ document.addEventListener('click', (ev) => {
   if (!el) return;
   const fn = ACTIONS[el.dataset.action];
   if (!fn) return;
+  if (el.dataset.action === 'step' && suppressStepClick) { suppressStepClick = false; return; }
   if (el.dataset.action === 'overlay') { fn(el, ev); return; }
   fn(el, ev);
 });
+
+/* Press and hold a stepper button to repeat (after 400ms, every 70ms). */
+let holdRepeat = null;
+let suppressStepClick = false;
+document.addEventListener('pointerdown', (ev) => {
+  const el = ev.target.closest('[data-action="step"]');
+  if (!el) return;
+  clearTimeout(holdRepeat?.t); clearInterval(holdRepeat?.i);
+  suppressStepClick = false;
+  holdRepeat = { t: setTimeout(() => {
+    suppressStepClick = true;
+    holdRepeat.i = setInterval(() => ACTIONS.step(el), 70);
+  }, 400) };
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => document.addEventListener(type, () => {
+  if (holdRepeat) { clearTimeout(holdRepeat.t); clearInterval(holdRepeat.i); holdRepeat = null; }
+}, true));
 
 document.addEventListener('input', (ev) => {
   const t = ev.target;

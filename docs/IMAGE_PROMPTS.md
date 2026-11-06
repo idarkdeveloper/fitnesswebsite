@@ -71,23 +71,23 @@ Athlete doing kneeling pushups in an outdoor calisthenics park: knees on a mat, 
 `img/full-pushups.webp` · aspect **16:9** · 53 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing full pushups in an outdoor calisthenics park: in a straight-body pushup at the bottom, chest just above the floor, elbows about 45 degrees. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing full pushups in an outdoor calisthenics park: in a straight-body pushup on the toes, knees off the ground, chest just above the floor. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pushups 5: Close Pushups
 
-`img/close-pushups.webp` · aspect **16:9** · 53 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/close-pushups.webp` · aspect **16:9** · 54 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing close pushups in an outdoor calisthenics park: in a pushup with hands touching under the chest, elbows tucked to the ribs, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing close pushups in an outdoor calisthenics park: in a pushup on the toes, knees off the ground, hands touching under the chest, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pushups 6: Uneven Pushups
 
-`img/uneven-pushups.webp` · aspect **16:9** · 53 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/uneven-pushups.webp` · aspect **16:9** · 54 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing uneven pushups in an outdoor calisthenics park: in a pushup with one hand on a basketball, the other on the floor, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing uneven pushups in an outdoor calisthenics park: in a full plank pushup on the toes, knees off the ground, one hand on a basketball. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pushups 7: Half One-Arm Pushups
@@ -142,10 +142,10 @@ Athlete doing vertical pulls on a steel pull-up bar in an outdoor calisthenics p
 
 ### Pullups 2: Horizontal Rows
 
-`img/horizontal-rows.webp` · aspect **16:9** · 59 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/horizontal-rows.webp` · aspect **16:9** · 58 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing horizontal rows on a steel pull-up bar in an outdoor calisthenics park: under a waist-high bar, body straight and inclined, heels on the ground, chest pulled to the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing horizontal rows on a steel pull-up bar in an outdoor calisthenics park: under a waist-high bar, body nearly horizontal and straight, heels down, chest pulled to the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pullups 3: Jackknife Pullups
@@ -166,10 +166,10 @@ Athlete doing half pullups on a steel pull-up bar in an outdoor calisthenics par
 
 ### Pullups 5: Full Pullups
 
-`img/full-pullups.webp` · aspect **16:9** · 57 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/full-pullups.webp` · aspect **16:9** · 60 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing full pullups on a steel pull-up bar in an outdoor calisthenics park: at the top of a pullup, overhand grip, chin over the bar, legs straight together. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing full pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet well off the ground, chin clearly above the bar, legs straight together. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pullups 6: Close Pullups
@@ -177,7 +177,7 @@ Athlete doing full pullups on a steel pull-up bar in an outdoor calisthenics par
 `img/close-pullups.webp` · aspect **16:9** · 58 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: at the top of a pullup with hands touching on the bar, chin over the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet well off the ground, hands touching, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pullups 7: Uneven Pullups
@@ -185,23 +185,23 @@ Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics pa
 `img/uneven-pullups.webp` · aspect **16:9** · 60 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: pulling up, one hand on the bar, the other gripping a lower hanging towel, chin over the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet off the ground, one hand on bar, other on a lower towel. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pullups 8: Half One-Arm Pullups
 
-`img/half-one-arm-pullups.webp` · aspect **16:9** · 59 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/half-one-arm-pullups.webp` · aspect **16:9** · 60 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing half one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from one hand with the elbow bent at 90 degrees, free hand at the side. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing half one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging by one hand from a high bar, feet well off the ground, elbow bent 90 degrees. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pullups 9: One-Arm Pullups
 
-`img/one-arm-pullups.webp` · aspect **16:9** · 58 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/one-arm-pullups.webp` · aspect **16:9** · 59 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: at the top of a one-arm pullup, chin over the bar, free arm by the side. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging by one hand from a high bar, feet well off the ground, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ## Squats

@@ -32,21 +32,21 @@
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/full-pushups.webp",
-    "prompt": "Athlete doing full pushups in an outdoor calisthenics park: in a straight-body pushup at the bottom, chest just above the floor, elbows about 45 degrees. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing full pushups in an outdoor calisthenics park: in a straight-body pushup on the toes, knees off the ground, chest just above the floor. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "close-pushups",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/close-pushups.webp",
-    "prompt": "Athlete doing close pushups in an outdoor calisthenics park: in a pushup with hands touching under the chest, elbows tucked to the ribs, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing close pushups in an outdoor calisthenics park: in a pushup on the toes, knees off the ground, hands touching under the chest, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "uneven-pushups",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/uneven-pushups.webp",
-    "prompt": "Athlete doing uneven pushups in an outdoor calisthenics park: in a pushup with one hand on a basketball, the other on the floor, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing uneven pushups in an outdoor calisthenics park: in a full plank pushup on the toes, knees off the ground, one hand on a basketball. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "half-one-arm-pushups",
@@ -95,7 +95,7 @@
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/horizontal-rows.webp",
-    "prompt": "Athlete doing horizontal rows on a steel pull-up bar in an outdoor calisthenics park: under a waist-high bar, body straight and inclined, heels on the ground, chest pulled to the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing horizontal rows on a steel pull-up bar in an outdoor calisthenics park: under a waist-high bar, body nearly horizontal and straight, heels down, chest pulled to the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "jackknife-pullups",
@@ -116,35 +116,35 @@
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/full-pullups.webp",
-    "prompt": "Athlete doing full pullups on a steel pull-up bar in an outdoor calisthenics park: at the top of a pullup, overhand grip, chin over the bar, legs straight together. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing full pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet well off the ground, chin clearly above the bar, legs straight together. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "close-pullups",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/close-pullups.webp",
-    "prompt": "Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: at the top of a pullup with hands touching on the bar, chin over the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet well off the ground, hands touching, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "uneven-pullups",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/uneven-pullups.webp",
-    "prompt": "Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: pulling up, one hand on the bar, the other gripping a lower hanging towel, chin over the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, feet off the ground, one hand on bar, other on a lower towel. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "half-one-arm-pullups",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/half-one-arm-pullups.webp",
-    "prompt": "Athlete doing half one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from one hand with the elbow bent at 90 degrees, free hand at the side. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing half one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging by one hand from a high bar, feet well off the ground, elbow bent 90 degrees. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "one-arm-pullups",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/one-arm-pullups.webp",
-    "prompt": "Athlete doing one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: at the top of a one-arm pullup, chin over the bar, free arm by the side. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+    "prompt": "Athlete doing one-arm pullups on a steel pull-up bar in an outdoor calisthenics park: hanging by one hand from a high bar, feet well off the ground, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "squats",

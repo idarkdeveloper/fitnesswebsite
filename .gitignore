@@ -51,3 +51,6 @@ coverage/
 *.tmp
 *.bak
 *.orig
+
+# ---------- Generated images awaiting review (never deployed) ----------
+img/review/

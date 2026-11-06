@@ -42,7 +42,7 @@ app.js        Router, views, progress model, workout logic
 data.js       Exercise database: 11 families, 74 progressions
 DESIGN.md     Design language: tokens, type, spacing, components, rules
 img/          Optional exercise images + manifest.js + prompts.json
-tools/        image-prompts.js (prompt generator, manifest builder)
+tools/        image-prompts.js (prompts, manifest), generate-images.js (OpenAI generation)
 docs/         IMAGE_PROMPTS.md (Gemini prompts)
 tracker.*     The original PulseFit daily health tracker
 ```
@@ -60,6 +60,32 @@ The app shows stick-figure art until you add photos. To make them with Gemini:
 1. Open `docs/image-prompts.html`, which has a **Copy** button on every prompt, filters for to do, redo and done, and search. The same 85 prompts (11 category covers and 74 exercises) are also in `docs/IMAGE_PROMPTS.md`.
 2. Save each image as `img/<id>.webp`, using the filename shown with each prompt.
 3. Run `node tools/image-prompts.js manifest` to register the images.
+
+### Generating images with the OpenAI API (optional)
+
+`tools/generate-images.js` creates the images for you with OpenAI's image models. It runs on **your computer**. Never put an API key in the website: PulseFit is a public static site, so anyone could read the key and spend your credits.
+
+1. Create a key at <https://platform.openai.com/api-keys> and add it to a `.env` file in the repo root (already git-ignored):
+   ```
+   OPENAI_API_KEY=sk-...
+   # optional: OPENAI_IMAGE_MODEL=gpt-image-2
+   ```
+2. Preview what would be made, without calling the API or spending anything:
+   ```bash
+   node tools/generate-images.js --dry-run
+   ```
+3. Generate a small batch. The default is 5 missing images (to do + redo) at medium quality, and new images go to `img/review/`, which is never deployed:
+   ```bash
+   node tools/generate-images.js --limit 5
+   node tools/generate-images.js --only full-pushups,close-pushups --quality high
+   ```
+4. Check each image in `img/review/` against the exercise's Tutorial and Form Cues. Approve the good ones:
+   ```bash
+   node tools/generate-images.js approve full-pushups close-pushups
+   ```
+   Regenerate rejects with `--force`. Every generation is logged in `img/review/generation-log.json`.
+
+Requires Node 18+, with no `npm install`. The script retries rate limits and server errors with backoff. Prices depend on model, size and quality; see <https://openai.com/api/pricing/>. Some newer models require organisation verification; if you get a 403, try `--model gpt-image-1`.
 
 To regenerate the prompts after editing `data.js`, run `node tools/image-prompts.js`. `img/prompts.json` has the same prompts for batch use with the Gemini API.
 

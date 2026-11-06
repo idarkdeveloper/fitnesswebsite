@@ -416,4 +416,8 @@ function apply() {
 </html>
 `;
 
-if (process.argv[2] === 'manifest') writeManifest(); else writePrompts();
+module.exports = { buildAll, scanImages, writeManifest, writePrompts, REDO_IDS, ROOT };
+
+if (require.main === module) {
+  if (process.argv[2] === 'manifest') writeManifest(); else writePrompts();
+}

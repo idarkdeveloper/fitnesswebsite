@@ -95,6 +95,18 @@ Requires Node 18+, with no `npm install`. The script retries rate limits and ser
 
 Low quality costs about a quarter of medium, and high about four times as much. Re-check <https://openai.com/api/pricing/> before big runs, and set a monthly limit in your OpenAI billing settings. Some newer models require organisation verification; if you get a 403, try `--model gpt-image-1`.
 
+### Generating images on GitHub (no local setup)
+
+`.github/workflows/generate-images.yml` runs the same script in GitHub Actions, using a key stored as a GitHub secret. Nothing needs to be installed on your computer, and you can start runs from the GitHub mobile app.
+
+One-time setup in the repo's **Settings**:
+1. **Environments → New environment →** `image-generation` **→ Add environment secret** `OPENAI_API_KEY`. You can also add yourself under **Required reviewers**, so every run waits for your approval before it spends money.
+2. **Actions → General → Workflow permissions →** tick **Allow GitHub Actions to create and approve pull requests**.
+
+To run it: **Actions → Generate exercise images → Run workflow**. Pick the ids, or a status (`redo`, `missing`, `todo`), plus a limit (1–30), the quality and the model. The run shows a cost estimate, generates the images, and opens a **pull request with every image shown**. Check the form in each one, and delete any bad images from the pull request (with their lines in `img/manifest.js`) or close it. Merging publishes the images.
+
+Token usage and cost for each run are saved in `img/generation-logs/run-<id>.json`. The workflow appears in the Actions tab only once this file is on the default branch.
+
 To regenerate the prompts after editing `data.js`, run `node tools/image-prompts.js`. `img/prompts.json` has the same prompts for batch use with the Gemini API.
 
 ## Data

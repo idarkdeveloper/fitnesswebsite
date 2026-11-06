@@ -1,0 +1,152 @@
+name: Generate exercise images
+
+# Runs tools/generate-images.js with the OpenAI key stored as a GitHub secret, then opens a
+# pull request containing the new images so a person can check form before they ship.
+#
+# One-time setup (repo Settings):
+#   1. Environments → New environment → "image-generation".
+#      Add secret OPENAI_API_KEY. Optional: add yourself under "Required reviewers"
+#      so every run waits for your approval before it can spend money.
+#   2. Actions → General → Workflow permissions → tick
+#      "Allow GitHub Actions to create and approve pull requests" (needed for the review PR).
+# Then: Actions → "Generate exercise images" → Run workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Exact image ids, comma-separated (leave empty to use "status")'
+        required: false
+        default: ''
+      status:
+        description: 'Which missing images when "only" is empty'
+        type: choice
+        options: [redo, missing, todo]
+        default: redo
+      limit:
+        description: 'Max images this run (1-30)'
+        required: true
+        default: '5'
+      quality:
+        type: choice
+        options: [medium, low, high]
+        default: medium
+      model:
+        type: choice
+        options: [gpt-image-1.5, gpt-image-2, gpt-image-1-mini]
+        default: gpt-image-1.5
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: generate-images
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    environment: image-generation
+    timeout-minutes: 60
+    env:
+      # Inputs are passed through env vars (never interpolated into scripts) to avoid injection.
+      IN_ONLY: ${{ inputs.only }}
+      IN_STATUS: ${{ inputs.status }}
+      IN_LIMIT: ${{ inputs.limit }}
+      IN_QUALITY: ${{ inputs.quality }}
+      IN_MODEL: ${{ inputs.model }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          [[ "$IN_LIMIT" =~ ^[0-9]+$ ]] && (( IN_LIMIT >= 1 && IN_LIMIT <= 30 )) \
+            || { echo "::error::limit must be a number from 1 to 30"; exit 1; }
+          if [[ -n "$IN_ONLY" && ! "$IN_ONLY" =~ ^[a-z0-9,-]+$ ]]; then
+            echo "::error::only may contain lowercase ids separated by commas"; exit 1
+          fi
+          [[ -n "${OPENAI_API_KEY:-}" ]] || { echo "::error::Secret OPENAI_API_KEY is missing from the image-generation environment"; exit 1; }
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Estimate cost (no API calls)
+        run: |
+          set -euo pipefail
+          args=(--limit "$IN_LIMIT" --quality "$IN_QUALITY" --model "$IN_MODEL")
+          if [[ -n "$IN_ONLY" ]]; then args+=(--only "$IN_ONLY"); else args+=(--status "$IN_STATUS"); fi
+          node tools/generate-images.js "${args[@]}" --dry-run | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate images
+        id: gen
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -uo pipefail
+          args=(--limit "$IN_LIMIT" --quality "$IN_QUALITY" --model "$IN_MODEL")
+          if [[ -n "$IN_ONLY" ]]; then args+=(--only "$IN_ONLY"); else args+=(--status "$IN_STATUS"); fi
+          # A partial failure (e.g. one prompt blocked) should still open a PR with the successes.
+          node tools/generate-images.js "${args[@]}" 2>&1 | tee gen.log
+          ids=$(ls img/review/*.webp 2>/dev/null | xargs -r -n1 basename | sed 's/\.webp$//' | tr '\n' ' ')
+          echo "ids=${ids% }" >> "$GITHUB_OUTPUT"
+          { echo '### Generation log'; echo '```'; tail -n 40 gen.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          [[ -n "${ids// /}" ]] || { echo "::error::No images were generated"; exit 1; }
+
+      - name: Keep a copy as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-images-${{ github.run_id }}
+          path: img/review/
+          retention-days: 14
+
+      - name: Move images into img/ and register them
+        env:
+          IDS: ${{ steps.gen.outputs.ids }}
+        run: |
+          set -euo pipefail
+          mkdir -p img/generation-logs
+          cp img/review/generation-log.json "img/generation-logs/run-${GITHUB_RUN_ID}.json"
+          # shellcheck disable=SC2086  # ids are validated slugs from file names
+          node tools/generate-images.js approve $IDS
+          node tools/image-prompts.js
+
+      - name: Open review pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IDS: ${{ steps.gen.outputs.ids }}
+        run: |
+          set -euo pipefail
+          branch="images/run-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add img docs
+          git commit -m "Add AI-generated images: ${IDS}" -m "Generated by workflow run ${GITHUB_RUN_ID} (${IN_MODEL}, ${IN_QUALITY}). Review form before merging."
+          git push -u origin "$branch"
+
+          {
+            echo "AI-generated images from [workflow run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) · model \`${IN_MODEL}\` · quality \`${IN_QUALITY}\`."
+            echo
+            echo "**Review each image against the exercise's Tutorial and Form Cues before merging.**"
+            echo "Reject wrong form (knees down on pushups, feet on the ground on hanging moves, wrong grip, extra fingers):"
+            echo "delete the file from this PR (and its line in \`img/manifest.js\`), or close the PR. Merging publishes the images."
+            echo
+            echo "| Image | Id |"
+            echo "|---|---|"
+            for id in $IDS; do
+              echo "| <img src=\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/${branch}/img/${id}.webp?raw=true\" width=\"320\"> | \`${id}\` |"
+            done
+            echo
+            echo "Cost and token usage: \`img/generation-logs/run-${GITHUB_RUN_ID}.json\`."
+          } > pr-body.md
+
+          gh pr create --base "${GITHUB_REF_NAME}" --head "$branch" \
+            --title "Review AI-generated images (run ${GITHUB_RUN_ID})" --body-file pr-body.md \
+          || echo "::warning::Could not open the PR automatically. Enable 'Allow GitHub Actions to create and approve pull requests', or open a PR from branch ${branch} by hand."

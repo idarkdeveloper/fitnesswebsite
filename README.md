@@ -57,7 +57,7 @@ python3 -m http.server 8080   # then open http://localhost:8080
 
 The app shows stick-figure art until you add photos. To make them with Gemini:
 
-1. Open `docs/IMAGE_PROMPTS.md`. It has a style anchor plus 85 ready-to-paste prompts: 11 category covers and 74 exercises.
+1. Open `docs/image-prompts.html`, which has a **Copy** button on every prompt, filters for to do, redo and done, and search. The same 85 prompts (11 category covers and 74 exercises) are also in `docs/IMAGE_PROMPTS.md`.
 2. Save each image as `img/<id>.webp`, using the filename shown with each prompt.
 3. Run `node tools/image-prompts.js manifest` to register the images.
 

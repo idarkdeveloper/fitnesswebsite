@@ -150,3 +150,4 @@ jobs:
           gh pr create --base "${GITHUB_REF_NAME}" --head "$branch" \
             --title "Review AI-generated images (run ${GITHUB_RUN_ID})" --body-file pr-body.md \
           || echo "::warning::Could not open the PR automatically. Enable 'Allow GitHub Actions to create and approve pull requests', or open a PR from branch ${branch} by hand."
+# registered

@@ -65,7 +65,7 @@ The app shows stick-figure art until you add photos. To make them with Gemini:
 
 `tools/generate-images.js` creates the images for you with OpenAI's image models. It runs on **your computer**. Never put an API key in the website: PulseFit is a public static site, so anyone could read the key and spend your credits.
 
-1. Create a key at <https://platform.openai.com/api-keys> and add it to a `.env` file in the repo root (already git-ignored):
+1. Create a key at <https://platform.openai.com/api-keys>. Copy `.env.example` to `.env` in the repo root (git-ignored) and paste the key in:
    ```
    OPENAI_API_KEY=sk-...
    # optional: OPENAI_IMAGE_MODEL=gpt-image-2

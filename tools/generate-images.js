@@ -8,7 +8,7 @@
 
    Setup (once):
      1. Create a key at https://platform.openai.com/api-keys
-     2. Put it in a .env file in the repo root (already git-ignored):
+     2. Copy .env.example to .env in the repo root (git-ignored) and paste your key:
           OPENAI_API_KEY=sk-...
         or export it in your shell.
      3. Node 18+ (uses the built-in fetch). No npm install needed.

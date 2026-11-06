@@ -85,13 +85,23 @@ The app shows stick-figure art until you add photos. To make them with Gemini:
    ```
    Regenerate rejects with `--force`. Every generation is logged in `img/review/generation-log.json`.
 
+**Half price with batch mode.** The OpenAI Batch API charges 50% less. Results arrive within 24 hours, usually much sooner:
+```bash
+node tools/generate-images.js batch submit --status missing --limit 30   # same options as above; prints a batch id
+node tools/generate-images.js batch status                              # check progress (last batch by default)
+node tools/generate-images.js batch collect                             # download finished images into img/review/
+```
+Then review and `approve` as usual. Costs in the log are recorded at batch price.
+
+Prompt caching wouldn't lower the cost here. It only discounts *input* tokens, and only for prompts of 1,024 tokens or more. Our prompts are about 250 tokens, and prompt text costs well under a cent per image. The image output is about 99% of the bill.
+
 Requires Node 18+, with no `npm install`. The script retries rate limits and server errors with backoff. **Cost:** `--dry-run` prints an estimate, and real runs print what each image actually cost, using the token usage the API reports. Both also go into the log. Here are the estimates for all 74 missing images at medium quality, using OpenAI's per-token prices as of November 2026:
 
 | Model | One pass | With redos (~1.8×) |
 |---|---|---|
-| `gpt-image-1.5` (default) | ≈ $3.60 | ≈ $6.50 |
-| `gpt-image-2` | ≈ $3.40 | ≈ $6.10 |
-| `gpt-image-1-mini` | ≈ $0.90 | ≈ $1.65 |
+| `gpt-image-1.5` (default) | ≈ $4.55 (batch ≈ $2.30) | ≈ $8.20 (batch ≈ $4.10) |
+| `gpt-image-2` | ≈ $4.25 (batch ≈ $2.15) | ≈ $7.70 (batch ≈ $3.85) |
+| `gpt-image-1-mini` | ≈ $1.15 (batch ≈ $0.60) | ≈ $2.10 (batch ≈ $1.05) |
 
 Low quality costs about a quarter of medium, and high about four times as much. Re-check <https://openai.com/api/pricing/> before big runs, and set a monthly limit in your OpenAI billing settings. Some newer models require organisation verification; if you get a 403, try `--model gpt-image-1`.
 
@@ -103,7 +113,12 @@ One-time setup in the repo's **Settings**:
 1. **Environments → New environment →** `image-generation` **→ Add environment secret** `OPENAI_API_KEY`. You can also add yourself under **Required reviewers**, so every run waits for your approval before it spends money.
 2. **Actions → General → Workflow permissions →** tick **Allow GitHub Actions to create and approve pull requests**.
 
-To run it: **Actions → Generate exercise images → Run workflow**. Pick the ids, or a status (`redo`, `missing`, `todo`), plus a limit (1–30), the quality and the model. The run shows a cost estimate, generates the images, and opens a **pull request with every image shown**. Check the form in each one, and delete any bad images from the pull request (with their lines in `img/manifest.js`) or close it. Merging publishes the images.
+To run it: **Actions → Generate exercise images → Run workflow**. Choose a **mode**:
+- `direct`: generate now at full price, then open the review pull request.
+- `batch-submit`: queue the images at **50% off**. The run summary shows a batch id.
+- `batch-collect`: paste that batch id later to download the images and open the review pull request. If the batch isn't finished yet, the run says so; try again later.
+
+Then pick the ids, or a status (`redo`, `missing`, `todo`), plus a limit (1–30), the quality and the model. The run shows a cost estimate, generates the images, and opens a **pull request with every image shown**. Check the form in each one, and delete any bad images from the pull request (with their lines in `img/manifest.js`) or close it. Merging publishes the images.
 
 Token usage and cost for each run are saved in `img/generation-logs/run-<id>.json`. The workflow appears in the Actions tab only once this file is on the default branch.
 

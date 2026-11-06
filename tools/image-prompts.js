@@ -25,6 +25,15 @@ const COMPOSITION = '35mm eye-level side view, whole body in frame, centred with
 const LIGHTING = 'Soft golden-hour side light.';
 const COLOR = 'Cool blue-teal grade, calm and focused.';
 const NEGATIVE = 'No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints.';
+/* Same person in every image. API models don't remember earlier images (unlike one long Gemini chat),
+   so the description has to travel with each prompt. Matches the approved Gemini set. */
+const ATHLETE = 'Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot.';
+/* Family-wide form rules, added outside the 60-word core because they fix recurring generation faults. */
+const FORM_NOTE = {
+  pushups: 'Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking.',
+  pullups: 'Form: when hanging, feet are clearly off the ground.',
+  grip: 'Form: when hanging, feet are clearly off the ground.',
+};
 
 /* Where each movement family is performed (keeps equipment consistent). */
 const SETTING = {
@@ -136,7 +145,7 @@ const words = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 const REDO_IDS = new Set(['full-pushups', 'close-pushups', 'uneven-pushups', 'horizontal-rows', 'full-pullups',
   'close-pullups', 'uneven-pullups', 'half-one-arm-pullups', 'one-arm-pullups']);
 
-const STYLE_ANCHOR = () => `You are producing a consistent series of exercise photos for a calisthenics app. Every image: ${STYLE} ${COMPOSITION} ${LIGHTING} ${COLOR} Keep the subject centred so the image can be cropped to a square. ${NEGATIVE} Show safe, textbook form.`;
+const STYLE_ANCHOR = () => `You are producing a consistent series of exercise photos for a calisthenics app. Every image: ${STYLE} ${COMPOSITION} ${LIGHTING} ${COLOR} Keep the subject centred so the image can be cropped to a square. ${ATHLETE} ${NEGATIVE} Show safe, textbook form.`;
 
 /** Images present in img/ that match a known id → { id: 'img/<file>' }. */
 function scanImages() {
@@ -152,7 +161,7 @@ function scanImages() {
   return { found, unknown, known };
 }
 
-function brief(subject, aspect, file) {
+function brief(subject, aspect, file, note = '') {
   const core = [
     `Subject: ${subject}`,
     `Style: ${STYLE}`,
@@ -161,7 +170,8 @@ function brief(subject, aspect, file) {
     `Color/mood: ${COLOR}`,
   ];
   const count = words(core.map((l) => l.replace(/^[\w/]+: /, '')).join(' '));
-  return { core, count, aspect, file, prompt: `${core.map((l) => l.replace(/^[\w/]+: /, '')).join(' ')} ${NEGATIVE} Aspect ratio ${aspect}.` };
+  const tail = [note, ATHLETE, NEGATIVE].filter(Boolean).join(' ');
+  return { core, count, aspect, file, prompt: `${core.map((l) => l.replace(/^[\w/]+: /, '')).join(' ')} ${tail} Aspect ratio ${aspect}.` };
 }
 
 function buildAll() {
@@ -170,13 +180,13 @@ function buildAll() {
     const signature = c.progressions[Math.min(c.progressions.length - 1, Math.floor(c.progressions.length * 0.6))];
     items.push({
       id: c.id, kind: 'cover', title: `${c.name} (cover)`,
-      ...brief(`Athlete performing ${signature.name.toLowerCase()} ${SETTING[c.id] || 'outdoors'}, strong and controlled.`, '1:1', `img/${c.id}.webp`),
+      ...brief(`Athlete performing ${signature.name.toLowerCase()} ${SETTING[c.id] || 'outdoors'}, strong and controlled.`, '1:1', `img/${c.id}.webp`, FORM_NOTE[c.id]),
       usedIn: 'Movement Library tile, category hero, Activity row before starting',
     });
     c.progressions.forEach((p, i) => {
       items.push({
         id: p.id, kind: 'progression', title: `${c.name} ${i + 1}: ${p.name}`,
-        ...brief(`Athlete doing ${p.name.toLowerCase()} ${SETTING[c.id] || 'outdoors'}: ${keyPose(p)}.`, '16:9', `img/${p.id}.webp`),
+        ...brief(`Athlete doing ${p.name.toLowerCase()} ${SETTING[c.id] || 'outdoors'}: ${keyPose(p)}.`, '16:9', `img/${p.id}.webp`, FORM_NOTE[c.id]),
         usedIn: 'Home exercise card, progression list, exercise hero, workout session',
       });
     });

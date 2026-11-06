@@ -117,9 +117,18 @@ function figure(catId) {
   return `<svg class="fig" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${svg}</svg>`;
 }
 
-function art(catId, { cls = '', locked = false, shift = 0, inner = '' } = {}) {
+/** Generated photo for an id (category cover or progression) if listed in img/manifest.js, else the stick figure. */
+const IMAGES = window.PF_IMAGES || {};
+function media(catId, imgId, alt = '') {
+  const src = imgId && IMAGES[imgId];
+  return src
+    ? `<img class="photo" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" />`
+    : figure(catId);
+}
+
+function art(catId, { cls = '', locked = false, shift = 0, inner = '', img = null, alt = '' } = {}) {
   const h = (CAT_HUE[catId] ?? 210) + shift;
-  return `<div class="art ${cls} ${locked ? 'locked' : ''}" style="--h:${h}">${figure(catId)}${locked ? `<span class="lock">${icon('lock')}</span>` : ''}${inner}</div>`;
+  return `<div class="art ${cls} ${locked ? 'locked' : ''}" style="--h:${h}">${media(catId, img, alt)}${locked ? `<span class="lock">${icon('lock')}</span>` : ''}${inner}</div>`;
 }
 
 /* ---------------------------------------------------------------
@@ -449,7 +458,7 @@ VIEWS.home = () => {
     const lvl = workingLevel(p.id);
     return `
       <div class="ex-slide" data-slide="${i}">
-        <a href="#/exercise/${p.id}" aria-label="${esc(p.name)} details">${art(cid, { shift: currentIdx(cid) * 4 })}</a>
+        <a href="#/exercise/${p.id}" aria-label="${esc(p.name)} details">${art(cid, { shift: currentIdx(cid) * 4, img: p.id })}</a>
         <div class="cat-title">${esc(c.name)}</div>
         <div class="row-between ex-meta">
           <div class="grow">
@@ -553,7 +562,7 @@ VIEWS.movements = () => `
     ${CATS.map((c) => {
       const locked = isLocked(c);
       return `<a class="lib-tile" href="#/category/${c.id}" ${locked ? `data-action="locked" data-cat="${c.id}"` : ''}>
-        ${art(c.id, { locked })}
+        ${art(c.id, { locked, img: c.id })}
         <div class="name">${esc(c.name)}</div>
         <div class="count">${plural(c.progressions.length, 'Progression')}</div>
       </a>`;
@@ -571,7 +580,7 @@ VIEWS.category = (r) => {
       <div class="title">${esc(c.name)}</div>
     </div>
     <div class="art cat-hero" style="--h:${CAT_HUE[c.id] ?? 210}">
-      ${figure(c.id)}
+      ${media(c.id, c.id)}
     </div>
     <h1 class="h2">${esc(c.name)} Progressions</h1>
     <p class="muted" style="font-size:17px;margin:0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
@@ -579,7 +588,7 @@ VIEWS.category = (r) => {
       ${c.progressions.map((p, i) => {
         const done = levelDone(p.id);
         return `<a class="prog-row" href="#/exercise/${p.id}">
-          ${art(c.id, { shift: i * 4 })}
+          ${art(c.id, { shift: i * 4, img: p.id })}
           <div>
             <div class="num">Progression ${i + 1}${i === cur ? '<span class="tag-current">Current</span>' : ''}</div>
             <div class="nm">${esc(p.name)}</div>
@@ -622,7 +631,7 @@ VIEWS.exercise = (r) => {
       <a class="icon-btn bare round" href="#/category/${cat.id}" aria-label="Back to ${esc(cat.name)}">${icon('chevL')}</a>
       <div class="title">${esc(p.name)}</div>
     </div>
-    ${art(cat.id, { cls: 'ex-hero', shift: idx * 4 })}
+    ${art(cat.id, { cls: 'ex-hero', shift: idx * 4, img: p.id, alt: `Athlete demonstrating ${p.name}` })}
     <div class="ex-head">
       <h1>${esc(p.name)}</h1>
       <button class="btn" data-action="log-sets" data-prog="${p.id}">Log sets</button>
@@ -664,7 +673,7 @@ VIEWS.activity = () => {
     const dots = c.progressions.map((q, i) => `<span class="dot ${isMastered(q.id) ? 'done' : started && i === cur ? 'current' : ''}"></span>`).join('');
     const sub = locked ? 'Pro · Tap to learn more' : started ? `${esc(p.name)} · Level ${isMastered(p.id) ? 'mastered' : workingLevel(p.id) + ' / 3'}` : 'Not Started · Tap to begin';
     return `<a class="mastery-row ${started ? '' : 'inactive'}" href="#/category/${c.id}" ${locked ? `data-action="locked" data-cat="${c.id}"` : ''}>
-      ${art(c.id, { shift: started ? cur * 4 : 0 })}
+      ${art(c.id, { shift: started ? cur * 4 : 0, img: started ? p.id : c.id })}
       <div class="grow"><div class="nm">${esc(c.name)}</div><div class="dots" aria-label="${c.progressions.filter((q) => isMastered(q.id)).length} of ${c.progressions.length} mastered">${dots}</div><div class="sub">${sub}</div></div>
     </a>`;
   }).join('');
@@ -819,7 +828,7 @@ function entryEditor(e, i) {
   const unit = unitOf(p);
   return `<section class="card session-ex" data-entry="${i}">
     <div class="top">
-      ${art(cat.id, { shift: idx * 4 })}
+      ${art(cat.id, { shift: idx * 4, img: p.id })}
       <div class="grow">
         <div class="small muted">${esc(cat.name)} ${idx + 1}</div>
         <div class="h3">${esc(p.name)}</div>
@@ -865,7 +874,7 @@ VIEWS.workout = () => {
 };
 
 function lockedView(c) {
-  return `<div class="empty">${art(c.id, { locked: true, cls: '', inner: '' }).replace('class="art', 'style="max-width:260px;aspect-ratio:1;margin:0 auto 16px;--h:' + (CAT_HUE[c.id] ?? 210) + '" class="art')}
+  return `<div class="empty">${art(c.id, { locked: true, img: c.id }).replace('class="art', 'style="max-width:260px;aspect-ratio:1;margin:0 auto 16px;--h:' + (CAT_HUE[c.id] ?? 210) + '" class="art')}
     <div class="h3">${esc(c.name)} is a Pro movement</div>
     <p>Unlock it, along with the other advanced families, with PulseFit Pro.</p>
     <button class="btn" data-action="pro">See PulseFit Pro</button></div>`;
@@ -1103,6 +1112,7 @@ function faqSheet() {
 function privacySheet() {
   openSheet('Privacy & Terms', `
     <p><strong>Privacy.</strong> PulseFit has no servers and no accounts. Everything you enter — your name, email, workouts and settings — is stored in your browser's local storage and never transmitted. Clearing your browser data or using Reset All Progress deletes it.</p>
+    <p><strong>Imagery.</strong> Exercise photos are AI-generated illustrations, not photographs of real athletes. Follow the written cues for exact form.</p>
     <p><strong>Terms.</strong> PulseFit is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);
 }
 

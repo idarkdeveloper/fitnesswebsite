@@ -41,6 +41,9 @@ styles.css    Theme tokens and components
 app.js        Router, views, progress model, workout logic
 data.js       Exercise database: 11 families, 74 progressions
 DESIGN.md     Design language: tokens, type, spacing, components, rules
+img/          Optional exercise images + manifest.js + prompts.json
+tools/        image-prompts.js (prompt generator, manifest builder)
+docs/         IMAGE_PROMPTS.md (Gemini prompts)
 tracker.*     The original PulseFit daily health tracker
 ```
 
@@ -49,6 +52,16 @@ tracker.*     The original PulseFit daily health tracker
 ```bash
 python3 -m http.server 8080   # then open http://localhost:8080
 ```
+
+## Exercise images (optional)
+
+The app shows stick-figure art until you add photos. To make them with Gemini:
+
+1. Open `docs/IMAGE_PROMPTS.md`. It has a style anchor plus 85 ready-to-paste prompts: 11 category covers and 74 exercises.
+2. Save each image as `img/<id>.webp`, using the filename shown with each prompt.
+3. Run `node tools/image-prompts.js manifest` to register the images.
+
+To regenerate the prompts after editing `data.js`, run `node tools/image-prompts.js`. `img/prompts.json` has the same prompts for batch use with the Gemini API.
 
 ## Data
 

@@ -1462,3 +1462,8 @@ svg.icon-sm { width: 16px; height: 16px; }
 /* Meal plan: week switch and grocery quantities */
 .wk-switch { margin-bottom: 0; }
 .grocery .qty { flex-shrink: 0; max-width: 45%; line-height: 1.25; }
+.grocery .g-item { padding: 2px 0; color: inherit; font: inherit; min-height: 44px; display: flex; flex-direction: column; justify-content: center; }
+.grocery .g-item .done { text-decoration: line-through; opacity: .65; }
+.accent-text { color: var(--accent); }
+.swap-list { margin: var(--space-2) 0 0; padding-left: 1.1em; }
+.swap-list li { margin-top: 2px; }

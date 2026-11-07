@@ -202,7 +202,7 @@ function defaultState() {
     hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
     foods: {},                          // saved foods: id -> { name, kcal, protein? }
     meals: [],                          // {id, day, at, name, kcal, protein?}
-    grocery: {},                        // ticked grocery items: "weekMonday|ingredient" -> 1
+    grocery: {},                        // "weekMonday|ingredient" -> 1 (bought as suggested) or { b: amount bought, sub?: stand-in, sb?: its amount }
     foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
     foodsSeededDE: false,               // German everyday foods added on this device (not synced)
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
@@ -1590,12 +1590,22 @@ const PLAN_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 let planTab = 'week';
 const planIdx = (key) => (fromKey(key).getDay() + 6) % 7;          // Monday = 0
 const weekStart = (key) => keyAdd(key, -planIdx(key));
-const dishOf = (id) => window.PF_MEALS.DISH[id];
+/** A dish, with any stand-ins you bought applied (subs = { ingredient: stand-in }). */
+const dishOf = (id, subs) => window.PF_MEALS.dishWith(id, subs);
+/** Stand-ins recorded on a week's grocery list: { ingredient: what you bought instead }. */
+function subsFor(wk) {
+  const out = {};
+  for (const [k, v] of Object.entries(state.grocery)) {
+    if (!k.startsWith(wk + '|') || !v || typeof v !== 'object' || !v.sub) continue;
+    out[k.slice(wk.length + 1)] = v.sub;
+  }
+  return Object.keys(out).length ? out : null;
+}
 
-function mealInfo(items) {
+function mealInfo(items, subs) {
   let kcal = 0, protein = 0;
   const parts = items.map(([id, n]) => {
-    const [name, , k, p] = dishOf(id);
+    const [name, , k, p] = dishOf(id, subs);
     kcal += k * n; protein += p * n;
     return n === 1 ? name : `${n} × ${name}`;
   });
@@ -1603,9 +1613,10 @@ function mealInfo(items) {
 }
 
 /** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week. */
-function dayInfo(i, wk = weekStart(todayKey())) {
-  const meals = window.PF_MEALS.weekPlan(wk)[i].map(([label, items]) => ({ label, items, ...mealInfo(items) }));
-  return { meals, kcal: meals.reduce((a, m) => a + m.kcal, 0), protein: meals.reduce((a, m) => a + m.protein, 0) };
+function dayInfo(i, wk = weekStart(todayKey()), raw = false) {
+  const subs = raw ? null : subsFor(wk);                             // raw: the plan as generated (for the grocery list)
+  const meals = window.PF_MEALS.weekPlan(wk)[i].map(([label, items]) => ({ label, items, ...mealInfo(items, subs) }));
+  return { subs, meals, kcal: meals.reduce((a, m) => a + m.kcal, 0), protein: meals.reduce((a, m) => a + m.protein, 0) };
 }
 
 /** Protein-first extras that bring a plan day up to your calorie and protein targets. */
@@ -1613,7 +1624,7 @@ function topUps(day, T) {
   if (!T) return [];
   let gap = T.kcal - day.kcal, pgap = T.protein - day.protein;
   const out = [];
-  const add = (id, n) => { const [, , k, p] = dishOf(id); out.push([id, n]); gap -= k * n; pgap -= p * n; };
+  const add = (id, n) => { const [, , k, p] = dishOf(id, day.subs); out.push([id, n]); gap -= k * n; pgap -= p * n; };
   if (pgap >= 25 && gap >= 250) add('tikka', 1);
   if (pgap >= 8 && gap >= 150) add('boiled2', 1);
   if (pgap >= 4 && gap >= 90) add('curd', 1);
@@ -1621,7 +1632,7 @@ function topUps(day, T) {
   if (roti > 0) add('roti', roti);
   return out;
 }
-const topUpText = (list) => list.map(([id, n]) => { const [name, serving] = dishOf(id); return n === 1 ? `${name} (${serving})` : `${n} × ${name}`; }).join(', ');
+const topUpText = (list, subs) => list.map(([id, n]) => { const [name, serving] = dishOf(id, subs); return n === 1 ? `${name} (${serving})` : `${n} × ${name}`; }).join(', ');
 
 function planCard(key) {
   if (!window.PF_MEALS) return '';
@@ -1629,7 +1640,7 @@ function planCard(key) {
   const d = dayInfo(i, weekStart(key));
   const T = targets(key) || targets(todayKey());
   const ups = topUps(d, T);
-  const upInfo = ups.length ? mealInfo(ups) : null;
+  const upInfo = ups.length ? mealInfo(ups, d.subs) : null;
   return `
     <section class="card mt-4" aria-labelledby="planH">
       <div class="row-between"><h2 class="h3" id="planH">Meal plan · ${PLAN_DAYS[i]}</h2><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
@@ -1639,7 +1650,7 @@ function planCard(key) {
           <button class="btn subtle sm" data-action="plan-log" data-day="${i}" data-wk="${weekStart(key)}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} ${esc(onDayLabel())}">${icon('plus')} Log</button>
         </li>`).join('')}</ul>
       <p class="small m-0 mt-3">Plan: <b>${nf(d.kcal)} kcal</b> · <b>${nf(d.protein)} g protein</b>${T ? ` (your target ${nf(T.kcal)} kcal · ${T.protein} g)` : ''}.</p>
-      ${upInfo ? `<p class="small muted m-0 mt-1">To reach your target, add: ${esc(topUpText(ups))}. That's about +${nf(upInfo.kcal)} kcal, +${nf(upInfo.protein)} g protein.</p>` : ''}
+      ${upInfo ? `<p class="small muted m-0 mt-1">To reach your target, add: ${esc(topUpText(ups, d.subs))}. That's about +${nf(upInfo.kcal)} kcal, +${nf(upInfo.protein)} g protein.</p>` : ''}
       ${T && T.kcal < d.kcal - 100 ? '<p class="small muted m-0 mt-1">Your target is below this plan. Skip a roti at lunch or dinner.</p>' : ''}
     </section>`;
 }
@@ -1654,39 +1665,113 @@ function groceryList(start) {
   let withTopUps = false;
   const T = targets(todayKey());                                    // today's target applies to the whole week
   for (let i = 0; i < 7; i++) {
-    const d = dayInfo(i, start);
+    const d = dayInfo(i, start, true);
     d.meals.forEach((m) => addItems(m.items));
     const ups = topUps(d, T);
     if (ups.length) { withTopUps = true; addItems(ups); }
   }
-  const fmt = (ing, v) => {
-    const [, , unit, pack] = M.ING[ing];
-    const n = Math.ceil(v - 0.001);
-    if (unit === 'tin') return [`${n} ${n === 1 ? 'tin' : 'tins'}`, ''];
-    // How many shop packs that is, e.g. "3 × 400 g pack". Only when it's more than one pack.
-    const packs = pack && v > pack[0] * 1.05 ? `${Math.ceil(v / pack[0] - 0.05)} × ${pack[1]}` : '';
-    if (unit === 'pc') return [`${n}${ing === 'bread' ? (n === 1 ? ' slice' : ' slices') : ''}`, packs];
-    const small = Math.ceil(v / 50 - 0.001) * 50;                  // round up to 50 g / 50 ml
-    const big = (Math.ceil(v / 100 - 0.001) * 100 / 1000).toFixed(1).replace(/\.0$/, '');
-    if (unit === 'ml') return [small >= 1000 ? `${big} L` : `${small} ml`, packs];
-    return [small >= 1000 ? `${big} kg` : `${small} g`, packs];
-  };
   const sections = M.SECTIONS.map((s) => ({
     name: s,
     items: Object.keys(tot).filter((ing) => M.ING[ing][1] === s).sort((a, b) => M.ING[a][0].localeCompare(M.ING[b][0]))
-      .map((ing) => { const [qty, packs] = fmt(ing, tot[ing]); return { id: ing, name: M.ING[ing][0], qty, packs }; }),
+      .map((ing) => { const [qty, packs] = fmtQty(ing, tot[ing]); return { id: ing, name: M.ING[ing][0], qty, packs, need: roundQty(ing, tot[ing]) }; }),
   })).filter((s) => s.items.length);
   return { sections, withTopUps };
 }
 
+/** A suggested amount rounded for shopping: whole pieces and tins, otherwise up to the next 50 g / 50 ml. */
+function roundQty(ing, v) {
+  const unit = window.PF_MEALS.ING[ing][2];
+  return unit === 'pc' || unit === 'tin' ? Math.ceil(v - 0.001) : Math.ceil(v / 50 - 0.001) * 50;
+}
+/** "1.5 kg" style text for an amount of an ingredient. */
+function fmtAmt(ing, v) {
+  const unit = window.PF_MEALS.ING[ing][2];
+  const n = Math.round(v * 10) / 10;
+  if (unit === 'tin') return `${n} ${n === 1 ? 'tin' : 'tins'}`;
+  if (unit === 'pc') return ing === 'eggs' ? `${n} ${n === 1 ? 'egg' : 'eggs'}` : ing === 'bread' ? `${n} ${n === 1 ? 'slice' : 'slices'}` : `${n}`;
+  const big = (Math.round(v / 100) / 10).toString();
+  if (unit === 'ml') return v >= 1000 ? `${big} L` : `${Math.round(v)} ml`;
+  return v >= 1000 ? `${big} kg` : `${Math.round(v)} g`;
+}
+/** Suggested quantity text plus how many shop packs that is, e.g. ["1.5 kg", "4 × 400 g pack"]. */
+function fmtQty(ing, v) {
+  const pack = window.PF_MEALS.ING[ing][3];
+  const packs = pack && v > pack[0] * 1.05 ? `${Math.ceil(v / pack[0] - 0.05)} × ${pack[1]}` : '';
+  return [fmtAmt(ing, roundQty(ing, v)), packs];
+}
+const ingShort = (ing) => window.PF_MEALS.ING[ing][0].replace(/\s*\(.*\)\s*$/, '');
+/** The note under a grocery row: what you bought, or what you got instead. */
+function groceryStatus(ing, v) {
+  if (!v || typeof v !== 'object') return '';
+  const parts = [];
+  if (v.b === 0 && !v.sub) parts.push('Not bought');
+  else if (v.b > 0) parts.push(`Bought ${fmtAmt(ing, v.b)}`);
+  if (v.sub) parts.push(`${v.b > 0 ? '+' : 'Instead:'} ${ingShort(v.sub)}${v.sb ? ` ${fmtAmt(v.sub, v.sb)}` : ''}`);
+  return parts.join(' ');
+}
+/** Drop grocery records from weeks that are over (this week's and next week's stay). */
+function pruneGrocery() {
+  const keep = weekStart(todayKey());
+  for (const k of Object.keys(state.grocery)) if (k.split('|')[0] < keep) delete state.grocery[k];
+}
+
+let groEdit = null;   // grocery item being edited: { k, ing, need, sub }
+/** Which planned dishes change if `sub` stands in for `ing` that week: ["Palak paneer → Saag paneer", ...]. */
+function swapPreview(wk, ing, sub) {
+  const out = new Set();
+  for (let i = 0; i < 7; i++) for (const [, items] of window.PF_MEALS.weekPlan(wk)[i]) for (const [id] of items) {
+    if (!dishOf(id)[4][ing]) continue;
+    const a = dishOf(id)[0], b = dishOf(id, { ...(subsFor(wk) || {}), [ing]: sub })[0];
+    if (a !== b) out.add(`${a} → ${b}`);
+  }
+  return [...out];
+}
+function grocerySubBox() {
+  const { k, ing, need, sub } = groEdit;
+  if (!sub) return '';
+  const wk = k.split('|')[0];
+  const v = state.grocery[k];
+  const unit = window.PF_MEALS.ING[sub][2];
+  const def = roundQty(sub, window.PF_MEALS.swapAmount(ing, sub, need));
+  const prev = swapPreview(wk, ing, sub);
+  return `
+    <div class="field mt-3"><label for="gbSubAmt">How much ${esc(ingShort(sub).toLowerCase())} (${unit === 'pc' ? 'pieces' : unit === 'tin' ? 'tins' : unit})</label>
+      <input class="input" id="gbSubAmt" type="number" inputmode="decimal" min="0" step="any" value="${v && v.sub === sub && v.sb != null ? v.sb : def}" /></div>
+    ${prev.length ? `<div class="note-box mt-3"><b>Your meals that week:</b><ul class="swap-list">${prev.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : `<p class="small muted mt-3 m-0">Your meals use it in place of ${esc(ingShort(ing).toLowerCase())}.</p>`}`;
+}
+function groceryEditSheet(k, ing, need) {
+  const M = window.PF_MEALS;
+  const [, section, unit, pack] = M.ING[ing];
+  const v = state.grocery[k];
+  const rec = v && typeof v === 'object' ? v : v ? { b: need } : {};
+  groEdit = { k, ing, need, sub: rec.sub || null };
+  const [qty, packs] = fmtQty(ing, need);
+  const alts = M.altsFor(ing);
+  const unitLabel = unit === 'pc' ? (ing === 'eggs' ? 'eggs' : ing === 'bread' ? 'slices' : 'pieces') : unit === 'tin' ? 'tins' : unit;
+  openSheet(ingShort(ing), `
+    <p class="small muted m-0 sheet-meta">${esc(M.ING[ing][0])} · ${esc(section)}</p>
+    <div class="card flat soft mt-3 row-between"><span>Suggested for the week</span><span class="text-right"><b>${esc(qty)}</b>${packs ? `<span class="d-block small muted">${esc(packs)}</span>` : ''}</span></div>
+    <div class="field mt-4"><label for="gbAmt">What you bought (${unitLabel})</label>
+      <input class="input" id="gbAmt" type="number" inputmode="decimal" min="0" step="any" value="${rec.b ?? ''}" placeholder="${need}" /></div>
+    <div class="chips mt-2"><button class="chip" data-action="grocery-amt" data-v="${need}">As suggested</button><button class="chip" data-action="grocery-amt" data-v="0">Not available</button>${pack && unit !== 'pc' ? `<button class="chip" data-action="grocery-amt" data-v="${pack[0] * Math.max(1, Math.round(need / pack[0]))}">${Math.max(1, Math.round(need / pack[0]))} × ${esc(pack[1])}</button>` : ''}</div>
+    ${alts.length ? `<h3 class="sheet-sub">Bought something else instead?</h3>
+      <p class="small muted m-0">Pick it and that week's meals switch to it.</p>
+      <div class="chips mt-2" id="gbSubs">${alts.map((a) => `<button class="chip ${groEdit.sub === a ? 'on' : ''}" aria-pressed="${groEdit.sub === a}" data-action="grocery-sub" data-sub="${a}">${esc(ingShort(a))}</button>`).join('')}</div>
+      <div id="gbSubBox">${grocerySubBox()}</div>` : ''}
+    <button class="btn block lg mt-4" data-action="grocery-save">Save</button>
+    ${v ? '<button class="link-btn small danger-text mt-3" data-action="grocery-reset">Clear this item</button>' : ''}`);
+}
+
 let planSel = null;   // selected day (0 = Monday) on the Week plan; null = today
 let planWeek = null;  // 0 = this week, 1 = next week; null = automatic (Groceries shows next week from Friday)
+let planWkShown = 0;  // the week on screen, so switching tabs stays on it
 
 VIEWS.plan = () => {
   if (!window.PF_MEALS) return '<p class="muted">Meal plan data is missing.</p>';
   const tk = todayKey();
   const ti = planIdx(tk);
   const wkOff = planWeek ?? (planTab === 'groceries' && ti >= 4 ? 1 : 0);   // from Friday, shop for next week
+  planWkShown = wkOff;
   const start = keyAdd(weekStart(tk), 7 * wkOff);
   const sel = planSel ?? (wkOff ? 0 : ti);
   const T = targets(tk);
@@ -1704,7 +1789,7 @@ VIEWS.plan = () => {
     const isToday = !wkOff && sel === ti;
     const dayK = keyAdd(start, sel);
     const ups = topUps(d, T);
-    const upInfo = ups.length ? mealInfo(ups) : null;
+    const upInfo = ups.length ? mealInfo(ups, d.subs) : null;
     const meals = d.meals.map((m, j) => {
       const logged = isToday && planLogged(tk, m.label);
       return `<li><span class="plan-k">${m.label}</span><span class="grow">${esc(m.text)}<span class="d-block small muted">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
@@ -1725,14 +1810,15 @@ VIEWS.plan = () => {
           ${T ? `<div class="text-right small"><span class="muted d-block">target</span><b>${nf(T.kcal)} · ${T.protein} g</b></div>` : ''}
         </div>
         <ul class="plan-list mt-3">${meals}</ul>
-        ${upInfo ? `<div class="note-box mt-3"><b>To reach your target, add:</b> ${esc(topUpText(ups))}. About +${nf(upInfo.kcal)} kcal, +${nf(upInfo.protein)} g protein.</div>` : ''}
+        ${d.subs && d.meals.some((m, j) => m.text !== dayInfo(sel, start, true).meals[j].text) ? `<p class="small muted m-0 mt-2">Using what you bought: ${esc(Object.entries(d.subs).map(([a, b]) => `${ingShort(b).toLowerCase()} instead of ${ingShort(a).toLowerCase()}`).join(', '))}.</p>` : ''}
+        ${upInfo ? `<div class="note-box mt-3"><b>To reach your target, add:</b> ${esc(topUpText(ups, d.subs))}. About +${nf(upInfo.kcal)} kcal, +${nf(upInfo.protein)} g protein.</div>` : ''}
       </section>
       ${nextDays}`;
   } else {
     body = `
       <section class="card groc-head mt-4">
         <div class="ring-wrap sm">${ringSvg(all.length ? ticked / all.length : 0, 52, 6)}<div class="ring-c"><b class="small">${ticked}/${all.length}</b></div></div>
-        <div class="grow"><div class="fw-bold">${wkOff ? 'Next week' : 'This week'}, one person</div><div class="small muted">${withTopUps ? 'Includes your daily top-ups · ' : ''}new plan every Monday</div></div>
+        <div class="grow"><div class="fw-bold">${wkOff ? 'Next week' : 'This week'}, one person</div><div class="small muted">Amounts are suggestions${withTopUps ? ', with your daily top-ups' : ''}. Tap an item to note what you bought or a swap.</div></div>
         ${ticked ? `<button class="link-btn" data-action="grocery-clear" data-wk="${start}">Clear</button>` : ''}
       </section>
       ${sections.map((s) => {
@@ -1740,7 +1826,10 @@ VIEWS.plan = () => {
         return `<div class="sec-head sm"><h2 class="group-label m-0">${esc(s.name)}</h2><span class="small muted">${n} / ${s.items.length}</span></div>
         <ul class="grocery card list-card">${s.items.map((it) => {
           const k = `${start}|${it.id}`;
-          return `<li><label class="check grow"><input type="checkbox" data-grocery="${esc(k)}" ${state.grocery[k] ? 'checked' : ''} /><span class="${state.grocery[k] ? 'done' : ''}">${esc(it.name)}</span></label><span class="text-right qty"><b>${esc(it.qty)}</b>${it.packs ? `<span class="d-block small muted">${esc(it.packs)}</span>` : ''}</span></li>`;
+          const v = state.grocery[k], st = groceryStatus(it.id, v);
+          return `<li><label class="check"><input type="checkbox" data-grocery="${esc(k)}" ${v ? 'checked' : ''} aria-label="Bought ${esc(it.name)}" /></label>
+            <button class="g-item grow plain text-left" data-action="grocery-edit" data-k="${esc(k)}" data-ing="${it.id}" data-need="${it.need}" aria-label="${esc(it.name)}: note what you bought"><span class="${v ? 'done' : ''}">${esc(it.name)}</span>${st ? `<span class="d-block small ${v && v.sub ? 'accent-text' : 'muted'}">${esc(st)}</span>` : ''}</button>
+            <span class="text-right qty"><b>${esc(it.qty)}</b>${it.packs ? `<span class="d-block small muted">${esc(it.packs)}</span>` : ''}</span></li>`;
         }).join('')}</ul>`;
       }).join('')}
       <p class="muted small mt-4">${esc(window.PF_MEALS.PANTRY_NOTE)}</p>`;
@@ -1793,7 +1882,27 @@ const PLAN_ACTIONS = {
     if (parseRoute().name !== 'track') trackDay = null;           // only the day log adds to another day
     addMeal(`${m.label}: ${m.text}`.slice(0, 120), m.kcal, m.protein);
   },
-  'plan-tab': (el) => { planTab = el.dataset.tab; rerender(); },
+  'plan-tab': (el) => { if (planWeek == null && el.dataset.tab === 'week') planWeek = planWkShown; if (planTab !== el.dataset.tab) planSel = null; planTab = el.dataset.tab; rerender(); },
+  'grocery-edit': (el) => groceryEditSheet(el.dataset.k, el.dataset.ing, Number(el.dataset.need)),
+  'grocery-amt': (el) => { const i = $('#gbAmt'); if (i) i.value = el.dataset.v; },
+  'grocery-sub': (el) => {
+    groEdit.sub = groEdit.sub === el.dataset.sub ? null : el.dataset.sub;
+    $$('#gbSubs .chip').forEach((c) => { const on = c.dataset.sub === groEdit.sub; c.classList.toggle('on', on); c.setAttribute('aria-pressed', on); });
+    $('#gbSubBox').innerHTML = grocerySubBox();
+  },
+  'grocery-save': () => {
+    if (!groEdit) return;
+    const { k, ing, sub } = groEdit;
+    const amt = parseNum($('#gbAmt').value);
+    const subAmt = sub && $('#gbSubAmt') ? parseNum($('#gbSubAmt').value) : null;
+    if ((amt != null && (amt < 0 || amt > 100000)) || (subAmt != null && (subAmt < 0 || subAmt > 100000))) { toast('Check the amounts'); return; }
+    pruneGrocery();
+    if (amt == null && !sub) delete state.grocery[k];
+    else state.grocery[k] = { ...(amt != null ? { b: amt } : sub ? { b: 0 } : {}), ...(sub ? { sub, ...(subAmt != null ? { sb: subAmt } : {}) } : {}) };
+    save(); closeSheet(); rerender();
+    toast(sub ? `Meals that week now use ${ingShort(sub).toLowerCase()}` : 'Saved');
+  },
+  'grocery-reset': () => { if (!groEdit) return; delete state.grocery[groEdit.k]; save(); closeSheet(); rerender(); toast('Cleared'); },
   'plan-week': (el) => { planWeek = Number(el.dataset.w); planSel = null; rerender(); },
   'grocery-clear': (el) => {
     const start = el.dataset.wk || weekStart(todayKey());
@@ -2654,8 +2763,8 @@ document.addEventListener('input', (ev) => {
 
 document.addEventListener('change', async (ev) => {
   if (ev.target.dataset && ev.target.dataset.grocery) {
-    const k = ev.target.dataset.grocery, week = k.split('|')[0];
-    for (const old of Object.keys(state.grocery)) if (!old.startsWith(week + '|')) delete state.grocery[old];   // keep only this week
+    const k = ev.target.dataset.grocery;
+    pruneGrocery();                                                 // past weeks only; this and next week stay
     if (ev.target.checked) state.grocery[k] = 1; else delete state.grocery[k];
     save(); rerender();
     return;

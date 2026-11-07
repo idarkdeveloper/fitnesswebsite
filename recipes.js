@@ -169,4 +169,10 @@ window.PF_COOK = {
   tuna: 'just until hot, about 2 minutes',
   eggs: 'about 3–4 minutes',
   paneer: 'for 2–3 minutes, just to heat through',
+  chickenthigh: 'until cooked through, about 15–18 minutes',
+  beef: 'breaking it up, until browned, about 8–10 minutes',
+  lamb: 'covered on low heat until tender, about 40–50 minutes (add water as needed)',
+  salmon: 'gently, 8–10 minutes until it flakes',
+  prawns: 'just until pink and curled, 3–4 minutes',
+  tofu: 'for 3–4 minutes, just to heat through',
 };

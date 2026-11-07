@@ -25,11 +25,17 @@ window.PF_MEALS = (function () {
     chard: ['Chard (Mangold)', V, 'g'],
     aubergine: ['Aubergine (Aubergine)', V, 'g'],
     leek: ['Leek (Lauch)', V, 'g'],
+    mushrooms: ['Mushrooms (Champignons)', V, 'g', [250, '250 g box']],
     lemon: ['Lemons (Zitronen)', V, 'pc'],
     fruit: ['Fruit (apples, oranges, bananas)', V, 'pc'],
     chicken: ['Chicken breast (Hähnchenbrustfilet)', MT, 'g', [400, '400 g pack']],
     turkey: ['Turkey mince (Putenhackfleisch)', MT, 'g', [400, '400 g pack']],
     eggs: ['Eggs (Eier)', MT, 'pc', [10, 'box of 10']],
+    chickenthigh: ['Chicken thighs, boneless (Hähnchenschenkel)', MT, 'g', [400, '400 g pack']],
+    beef: ['Beef mince (Rinderhackfleisch)', MT, 'g', [500, '500 g pack']],
+    lamb: ['Lamb (Lammfleisch)', MT, 'g', [400, '400 g pack']],
+    salmon: ['Salmon fillet (Lachs)', MT, 'g', [250, '2-fillet pack']],
+    tofu: ['Tofu (natur)', DY, 'g', [200, '200 g block']],
     quark: ['Low-fat quark (Magerquark)', DY, 'g', [500, '500 g tub']],
     curd: ['Plain yoghurt 1.5 % (Naturjoghurt)', DY, 'g', [500, '500 g tub']],
     milk: ['Milk 1.5 % (fettarme Milch)', DY, 'ml', [1000, '1 L carton']],
@@ -47,6 +53,7 @@ window.PF_MEALS = (function () {
     mixedveg: ['Frozen mixed vegetables (TK Gemüse)', FZ, 'g', [1000, '1 kg bag']],
     peas: ['Frozen peas (TK Erbsen)', FZ, 'g', [450, '450 g bag']],
     fish: ['Frozen pollock fillets (TK Alaska-Seelachs)', FZ, 'g', [400, '400 g pack']],
+    prawns: ['Frozen prawns (TK Garnelen)', FZ, 'g', [400, '400 g pack']],
     peanuts: ['Peanuts, unsalted (Erdnüsse)', PN, 'g', [200, '200 g bag']],
     oil: ['Rapeseed oil (Rapsöl)', PN, 'ml', [1000, '1 L bottle']],
     tea: ['Black tea (for chai)', PN, 'g'],
@@ -56,6 +63,7 @@ window.PF_MEALS = (function () {
     moong: ['Yellow moong dal', AS, 'g', [1000, '1 kg bag']],
     poha: ['Poha', AS, 'g', [500, '500 g bag']],
     roastchana: ['Roasted chana', AS, 'g', [500, '500 g bag']],
+    okra: ['Okra (bhindi)', AS, 'g'],
   };
 
   // id: [name, serving, kcal, protein g, { ingredient: amount per serving }]
@@ -239,8 +247,8 @@ window.PF_MEALS = (function () {
      Ingredients in the same group can stand in for each other. Dishes with a "role" for an ingredient get renamed
      (Palak paneer + kale -> Saag paneer) and their kcal/protein adjusted. */
   const GROUPS = {
-    veg: ['spinach', 'kale', 'chard', 'cauliflower', 'broccoli', 'cabbage', 'pumpkin', 'zucchini', 'aubergine', 'beans', 'carrot', 'peas', 'capsicum', 'leek', 'mixedveg'],
-    protein: ['chicken', 'turkey', 'fish', 'tuna', 'eggs', 'paneer'],
+    veg: ['spinach', 'kale', 'chard', 'cauliflower', 'broccoli', 'cabbage', 'pumpkin', 'zucchini', 'aubergine', 'beans', 'okra', 'mushrooms', 'carrot', 'peas', 'capsicum', 'leek', 'mixedveg'],
+    protein: ['chicken', 'chickenthigh', 'turkey', 'beef', 'lamb', 'fish', 'salmon', 'prawns', 'tuna', 'eggs', 'paneer', 'tofu'],
     lentils: ['dal', 'moong'],
     beans: ['rajma', 'chana'],
   };
@@ -251,6 +259,9 @@ window.PF_MEALS = (function () {
     pumpkin: ['Kaddu', 0.4, 0.01, 100], zucchini: ['Zucchini', 0.2, 0.015, 100], aubergine: ['Baingan', 0.25, 0.01, 100],
     beans: ['Beans', 0.3, 0.02, 100], carrot: ['Gajar', 0.4, 0.01, 100], peas: ['Matar', 0.8, 0.05, 100],
     capsicum: ['Shimla mirch', 0.3, 0.01, 100], leek: ['Leek', 0.3, 0.02, 100], mixedveg: ['Mixed veg', 0.5, 0.03, 100],
+    okra: ['Bhindi', 0.33, 0.02, 100], mushrooms: ['Mushroom', 0.22, 0.03, 100],
+    chickenthigh: ['Chicken', 1.8, 0.2, 150], beef: ['Beef', 2.5, 0.2, 150], lamb: ['Lamb', 2.4, 0.2, 150],
+    salmon: ['Salmon', 2.0, 0.2, 150], prawns: ['Prawn', 0.8, 0.18, 160], tofu: ['Tofu', 1.2, 0.13, 150],
     chicken: ['Chicken', 1.1, 0.23, 150], turkey: ['Turkey', 1.5, 0.2, 150], fish: ['Fish', 0.8, 0.18, 160],
     tuna: ['Tuna', 130, 30, 1], eggs: ['Egg', 75, 6, 3], paneer: ['Paneer', 3.0, 0.18, 100],
     dal: ['Masoor', 3.5, 0.24, 50], moong: ['Moong', 3.5, 0.24, 50], rajma: ['Rajma', 280, 18, 0.5], chana: ['Chana', 300, 17, 0.5],
@@ -264,6 +275,18 @@ window.PF_MEALS = (function () {
     sabzi: '{mixedveg} sabzi', gobi: '{cauliflower} sabzi', pattagobhi: '{cabbage} sabzi', kaddu: '{pumpkin} sabzi',
     gajarmatar: '{carrot} {peas}', zucchini: '{zucchini} sabzi', beans: '{beans} sabzi', moongchilla: '{moong} dal chilla',
   };
+  /** Register something you bought that isn't on any list ("Other…"), standing in for `base`.
+      kcal/protein are per 100 g (or per piece / tin); left out, the original's values are used. */
+  function registerCustom(id, base, name, kcal, protein) {
+    const b = ING[base];
+    if (!b) return;
+    ING[id] = [name, b[1], b[2]];
+    const perUnit = (v) => (v == null ? null : b[2] === 'g' || b[2] === 'ml' ? v / 100 : v);
+    const sw = SWAP[base];
+    const short = name.length > 18 ? name.slice(0, 18).trim() : name;
+    // Without a nutrition model for the original (e.g. atta), dishes are renamed but kcal stay as planned.
+    SWAP[id] = [short.charAt(0).toUpperCase() + short.slice(1), perUnit(kcal) ?? (sw ? sw[1] : 0), perUnit(protein) ?? (sw ? sw[2] : 0), sw ? sw[3] : 1];
+  }
   const groupOf = (ing) => Object.keys(GROUPS).find((g) => GROUPS[g].includes(ing));
   /** Ingredients you could buy instead of `ing` (same group), or [] if it has no stand-ins. */
   const altsFor = (ing) => { const g = groupOf(ing); return g ? GROUPS[g].filter((x) => x !== ing) : []; };
@@ -298,5 +321,5 @@ window.PF_MEALS = (function () {
 
   const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday.';
 
-  return { SECTIONS, ING, DISH, QUICK, QUICK_DE, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith };
+  return { SECTIONS, ING, DISH, QUICK, QUICK_DE, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
 })();

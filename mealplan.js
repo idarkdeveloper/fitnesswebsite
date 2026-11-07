@@ -14,12 +14,17 @@ window.PF_MEALS = (function () {
     tomato: ['Tomatoes (Tomaten)', V, 'g'],
     cucumber: ['Cucumber (Salatgurke)', V, 'pc'],
     carrot: ['Carrots (Möhren)', V, 'g', [1000, '1 kg bag']],
-    capsicum: ['Peppers (Paprika)', V, 'pc'],
-    cauliflower: ['Cauliflower (Blumenkohl)', V, 'pc'],
+    capsicum: ['Peppers (Paprika)', V, 'g', [500, '3-pack, about 500 g']],
+    cauliflower: ['Cauliflower (Blumenkohl)', V, 'g', [700, 'head, about 700 g']],
     cabbage: ['White cabbage (Weißkohl)', V, 'g'],
     pumpkin: ['Hokkaido pumpkin (Hokkaido-Kürbis)', V, 'g'],
     zucchini: ['Courgette (Zucchini)', V, 'g'],
     beans: ['Green beans (grüne Bohnen)', V, 'g'],
+    broccoli: ['Broccoli (Brokkoli)', V, 'g', [500, 'head, about 500 g']],
+    kale: ['Kale (Grünkohl)', V, 'g'],
+    chard: ['Chard (Mangold)', V, 'g'],
+    aubergine: ['Aubergine (Aubergine)', V, 'g'],
+    leek: ['Leek (Lauch)', V, 'g'],
     lemon: ['Lemons (Zitronen)', V, 'pc'],
     fruit: ['Fruit (apples, oranges, bananas)', V, 'pc'],
     chicken: ['Chicken breast (Hähnchenbrustfilet)', MT, 'g', [400, '400 g pack']],
@@ -70,7 +75,7 @@ window.PF_MEALS = (function () {
     tunamasala: ['Tuna masala', '1 tin', 190, 26, { tuna: 1, onion: 30, tomato: 40, oil: 4 }],
     eggcurry: ['Egg curry', '3 eggs', 320, 20, { eggs: 3, onion: 40, tinnedtom: 60, oil: 6 }],
     paneerbhurji: ['Paneer bhurji', '100 g paneer', 330, 19, { paneer: 100, onion: 40, tomato: 50, oil: 5 }],
-    paneertikka: ['Paneer tikka with peppers', '100 g paneer', 320, 20, { paneer: 100, capsicum: 1, onion: 30, curd: 30, oil: 5 }],
+    paneertikka: ['Paneer tikka with peppers', '100 g paneer', 320, 20, { paneer: 100, capsicum: 150, onion: 30, curd: 30, oil: 5 }],
     palakpaneer: ['Palak paneer', '1 bowl', 330, 17, { paneer: 80, spinach: 150, onion: 30, tinnedtom: 30, oil: 8 }],
     omelette: ['Masala omelette', '3 eggs', 290, 19, { eggs: 3, onion: 30, tomato: 30, oil: 5 }],
     eggbhurji: ['Egg bhurji', '3 eggs', 290, 19, { eggs: 3, onion: 30, tomato: 30, oil: 5 }],
@@ -83,7 +88,7 @@ window.PF_MEALS = (function () {
     upma: ['Vegetable upma', '1 bowl', 280, 7, { sooji: 50, mixedveg: 60, onion: 20, oil: 5 }],
     khichdi: ['Moong dal khichdi', '1 bowl', 320, 13, { rice: 40, moong: 40, mixedveg: 50, oil: 5 }],
     sabzi: ['Mixed veg sabzi', '1 bowl', 120, 4, { mixedveg: 150, onion: 20, oil: 7 }],
-    gobi: ['Gobi sabzi (cauliflower)', '1 bowl', 130, 5, { cauliflower: 0.33, onion: 20, tomato: 30, oil: 7 }],
+    gobi: ['Gobi sabzi (cauliflower)', '1 bowl', 130, 5, { cauliflower: 230, onion: 20, tomato: 30, oil: 7 }],
     pattagobhi: ['Patta gobhi (white cabbage)', '1 bowl', 110, 4, { cabbage: 200, peas: 30, oil: 6 }],
     kaddu: ['Kaddu sabzi (Hokkaido pumpkin)', '1 bowl', 140, 3, { pumpkin: 200, onion: 20, oil: 6 }],
     gajarmatar: ['Gajar matar (carrot & peas)', '1 bowl', 130, 4, { carrot: 150, peas: 50, oil: 6 }],
@@ -138,6 +143,8 @@ window.PF_MEALS = (function () {
       { p: 'turkey', items: [['roti', 2], ['keema', 1], ['salad', 1]] },
       { p: 'egg', items: [['rice', 1], ['eggcurry', 1], ['salad', 1]] },
       { p: 'beans', items: [['rice', 1], ['rajma', 1], ['raita', 1]] },
+      { p: 'chicken', v2: 1, items: [['roti', 2], ['tikka', 1], ['raita', 1]] },
+      { p: 'fish', v2: 1, items: [['roti', 2], ['fishtikka', 1], ['SABZI', 1]] },
     ],
     [S]: [
       { p: '', items: [['chai', 1], ['roastchana', 1]] },
@@ -158,10 +165,14 @@ window.PF_MEALS = (function () {
       { p: 'fish', items: [['fishtikka', 1], ['SABZI', 1], ['roti', 1]] },
       { p: 'turkey', items: [['keema', 1], ['roti', 1], ['salad', 1]] },
       { p: 'fish', items: [['tunamasala', 1], ['roti', 1], ['SABZI', 1]] },
+      { p: 'egg', v2: 1, items: [['eggcurry', 1], ['roti', 1], ['salad', 1]] },
+      { p: 'chicken', v2: 1, items: [['chickencurry', 1], ['rice', 1], ['salad', 1]] },
     ],
   };
-  // At most this many meals a week with each protein (paneer is pricey and fatty; fish keeps to twice a week).
-  const MAX = { chicken: 3, paneer: 2, fish: 2, turkey: 2 };
+  // Non-veg is fine any day; only paneer (pricey and fatty) is kept to twice a week. Weeks before V2_FROM keep the
+  // first version's rules (fewer non-veg meals), so a plan you've already shopped for never changes.
+  const V2_FROM = '2026-11-16';
+  const MAX_V1 = { chicken: 3, paneer: 2, fish: 2, turkey: 2 }, MAX_V2 = { paneer: 2 };
 
   // What's in season (or cheap) in German shops, by month. Frozen mixed veg fills in all year.
   const SEASON = [
@@ -189,10 +200,11 @@ window.PF_MEALS = (function () {
   function weekPlan(mondayKey) {
     if (cache[mondayKey]) return cache[mondayKey];
     const r = rng('pulsefit|' + mondayKey);
+    const v2 = mondayKey >= V2_FROM, MAX = v2 ? MAX_V2 : MAX_V1;
     const used = {};                                   // protein -> count this week
     const days = Array.from({ length: 7 }, () => ({}));
     for (const slot of [L, D, B, S]) {                 // lunch and dinner first: they carry the protein limits
-      const order = shuffle(POOLS[slot], r);
+      const order = shuffle(v2 ? POOLS[slot] : POOLS[slot].filter((o) => !o.v2), r);
       const taken = new Set();
       for (let i = 0; i < 7; i++) {
         if (taken.size >= order.length) taken.clear();   // small pools (snacks) repeat only after every option was used
@@ -223,7 +235,68 @@ window.PF_MEALS = (function () {
     return plan;
   }
 
+  /* ---- Swaps: bought something else instead? ----
+     Ingredients in the same group can stand in for each other. Dishes with a "role" for an ingredient get renamed
+     (Palak paneer + kale -> Saag paneer) and their kcal/protein adjusted. */
+  const GROUPS = {
+    veg: ['spinach', 'kale', 'chard', 'cauliflower', 'broccoli', 'cabbage', 'pumpkin', 'zucchini', 'aubergine', 'beans', 'carrot', 'peas', 'capsicum', 'leek', 'mixedveg'],
+    protein: ['chicken', 'turkey', 'fish', 'tuna', 'eggs', 'paneer'],
+    lentils: ['dal', 'moong'],
+    beans: ['rajma', 'chana'],
+  };
+  // Short name used in dish names, per-unit [kcal, protein g], and one serving's amount (so swaps keep portions sensible).
+  const SWAP = {
+    spinach: ['Palak', 0.25, 0.03, 100], kale: ['Saag', 0.45, 0.04, 100], chard: ['Saag', 0.2, 0.02, 100],
+    cauliflower: ['Gobi', 0.25, 0.02, 100], broccoli: ['Broccoli', 0.35, 0.03, 100], cabbage: ['Patta gobhi', 0.25, 0.013, 100],
+    pumpkin: ['Kaddu', 0.4, 0.01, 100], zucchini: ['Zucchini', 0.2, 0.015, 100], aubergine: ['Baingan', 0.25, 0.01, 100],
+    beans: ['Beans', 0.3, 0.02, 100], carrot: ['Gajar', 0.4, 0.01, 100], peas: ['Matar', 0.8, 0.05, 100],
+    capsicum: ['Shimla mirch', 0.3, 0.01, 100], leek: ['Leek', 0.3, 0.02, 100], mixedveg: ['Mixed veg', 0.5, 0.03, 100],
+    chicken: ['Chicken', 1.1, 0.23, 150], turkey: ['Turkey', 1.5, 0.2, 150], fish: ['Fish', 0.8, 0.18, 160],
+    tuna: ['Tuna', 130, 30, 1], eggs: ['Egg', 75, 6, 3], paneer: ['Paneer', 3.0, 0.18, 100],
+    dal: ['Masoor', 3.5, 0.24, 50], moong: ['Moong', 3.5, 0.24, 50], rajma: ['Rajma', 280, 18, 0.5], chana: ['Chana', 300, 17, 0.5],
+  };
+  // Dish name templates: {ingredient} is replaced by that ingredient's (or its stand-in's) short name.
+  const ROLE = {
+    dal: '{dal} dal', dalpalak: 'Dal {spinach}', rajma: '{rajma} masala', chana: '{chana} masala',
+    chickencurry: '{chicken} curry', tikka: '{chicken} tikka', keema: '{turkey} keema matar', fishcurry: '{fish} curry',
+    fishtikka: 'Tandoori {fish}', tunamasala: '{tuna} masala', eggcurry: '{eggs} curry', paneerbhurji: '{paneer} bhurji',
+    paneertikka: '{paneer} tikka with {capsicum}', palakpaneer: '{spinach} {paneer}', khichdi: '{moong} dal khichdi',
+    sabzi: '{mixedveg} sabzi', gobi: '{cauliflower} sabzi', pattagobhi: '{cabbage} sabzi', kaddu: '{pumpkin} sabzi',
+    gajarmatar: '{carrot} {peas}', zucchini: '{zucchini} sabzi', beans: '{beans} sabzi', moongchilla: '{moong} dal chilla',
+  };
+  const groupOf = (ing) => Object.keys(GROUPS).find((g) => GROUPS[g].includes(ing));
+  /** Ingredients you could buy instead of `ing` (same group), or [] if it has no stand-ins. */
+  const altsFor = (ing) => { const g = groupOf(ing); return g ? GROUPS[g].filter((x) => x !== ing) : []; };
+  /** How much of `to` matches `amount` of `from` (same number of servings). */
+  const swapAmount = (from, to, amount) => (SWAP[from] && SWAP[to] ? amount / SWAP[from][3] * SWAP[to][3] : amount);
+
+  /** A dish with stand-ins applied: subs = { ingredient: stand-in }. Returns [name, serving, kcal, protein, ingredients]. */
+  function dishWith(id, subs) {
+    const d = DISH[id];
+    if (!d || !subs) return d;
+    const hit = Object.keys(d[4]).filter((ing) => subs[ing] && subs[ing] !== ing);
+    if (!hit.length) return d;
+    let [name, serving, kcal, protein, ings] = d;
+    ings = { ...ings };
+    for (const ing of hit) {
+      const to = subs[ing], a = ings[ing], b = swapAmount(ing, to, a);
+      if (SWAP[ing] && SWAP[to]) {
+        kcal += b * SWAP[to][1] - a * SWAP[ing][1];
+        protein += b * SWAP[to][2] - a * SWAP[ing][2];
+      }
+      delete ings[ing]; ings[to] = (ings[to] || 0) + b;
+    }
+    if (ROLE[id]) {
+      name = ROLE[id].replace(/\{(\w+)\}/g, (m, ing, at) => {
+        const w = SWAP[subs[ing] || ing] ? SWAP[subs[ing] || ing][0] : ing;
+        return at === 0 ? w : w.toLowerCase();                     // capital only at the start of the name
+      });
+    } else name += ` (with ${hit.map((i) => SWAP[subs[i]] ? SWAP[subs[i]][0].toLowerCase() : subs[i]).join(', ')})`;
+    if (/\d/.test(serving) && hit.some((i) => serving.includes(String(d[4][i])))) serving = '1 portion';
+    return [name, serving, Math.max(0, Math.round(kcal / 5) * 5), Math.max(0, Math.round(protein)), ings];
+  }
+
   const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday.';
 
-  return { SECTIONS, ING, DISH, QUICK, QUICK_DE, POOLS, weekPlan, PANTRY_NOTE };
+  return { SECTIONS, ING, DISH, QUICK, QUICK_DE, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith };
 })();

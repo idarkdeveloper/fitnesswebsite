@@ -204,6 +204,7 @@ function defaultState() {
     foods: {},                          // saved foods: id -> { name, kcal, protein? }
     meals: [],                          // {id, day, at, name, kcal, protein?}
     grocery: {},                        // "weekMonday|ingredient" -> 1 (bought as suggested) or { b: amount bought, sub?: stand-in, sb?: its amount }
+    videos: {},                         // your own "Watch how" video per progression: progId -> YouTube id (synced)
     foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
     foodsSeededDE: false,               // German everyday foods added on this device (not synced)
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
@@ -800,6 +801,7 @@ VIEWS.exercise = (r) => {
         <div class="eyebrow">${isCurrent ? 'Current progression' : `Progression ${idx + 1}`}</div>
         <h1>${esc(p.name)}</h1>
       </div>
+      ${videoFor(p.id) ? `<button class="glass-btn watch-btn" data-action="video" data-prog="${p.id}">${icon('play', 'class="icon-sm"')} Watch how</button>` : ''}
     </div>
     <section class="card lvl-card mt-4" aria-label="Levels">
       <div class="row-between"><h2 class="h3">${mastered ? 'Mastered' : `Level ${lvl} of 3`}</h2>${mastered ? icon('trophy', 'class="c-warn icon-md"') : `<span class="small muted">Target <b class="c-text">${targetText(p, lvl)}</b></span>`}</div>
@@ -822,6 +824,46 @@ VIEWS.exercise = (r) => {
       <button class="btn lg grow" data-action="log-sets" data-prog="${p.id}">Log sets</button>
       <button class="btn subtle lg" data-action="swap-prog" data-cat="${cat.id}">Swap</button>
     </div>`;
+};
+
+
+/* ---------- "Watch how" videos (videos.js) ---------- */
+/** YouTube id for a progression: your own choice first, else the one picked in videos.js. */
+const videoFor = (progId) => (state.videos && state.videos[progId]) || (window.PF_VIDEOS && window.PF_VIDEOS[progId] && window.PF_VIDEOS[progId][0]) || null;
+/** Accept a YouTube link (watch, youtu.be, shorts, embed) or a bare 11-character id. */
+function youtubeId(text) {
+  const t = (text || '').trim();
+  if (/^[\w-]{11}$/.test(t)) return t;
+  const m = t.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/|\/live\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+function videoSheet(progId, editing = false) {
+  const { p } = PROG[progId];
+  const id = videoFor(progId);
+  const own = !!(state.videos && state.videos[progId]);
+  const meta = !own && window.PF_VIDEOS && window.PF_VIDEOS[progId];
+  // Privacy-enhanced player; it only loads after you open this sheet.
+  const src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  openSheet(p.name, `
+    <div class="video-frame"><iframe src="${src}" title="${esc(p.name)} tutorial video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <p class="small muted m-0 mt-2">${meta ? `${esc(meta[1])} · ${esc(meta[2])}` : 'Your video'} · <a href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">Open in YouTube</a></p>
+    <p class="small muted m-0 mt-2">Tutorials are by other creators; follow the form cues in PulseFit if anything differs.</p>
+    ${editing ? `
+      <div class="field mt-4"><label for="vidLink">YouTube link</label><input class="input" id="vidLink" inputmode="url" placeholder="https://youtu.be/…" autocomplete="off" /></div>
+      <button class="btn block mt-2" data-action="video-save" data-prog="${progId}">Use this video</button>`
+    : `<div class="row gap mt-4"><button class="link-btn small" data-action="video-edit" data-prog="${progId}">Use a different video</button>${own ? `<button class="link-btn small" data-action="video-reset" data-prog="${progId}">Back to the suggested video</button>` : ''}</div>`}`);
+}
+const VIDEO_ACTIONS = {
+  'video': (el) => videoSheet(el.dataset.prog),
+  'video-edit': (el) => { videoSheet(el.dataset.prog, true); setTimeout(() => $('#vidLink')?.focus(), 50); },
+  'video-save': (el) => {
+    const id = youtubeId($('#vidLink').value);
+    if (!id) { toast('That doesn\'t look like a YouTube link'); return; }
+    state.videos = state.videos || {};
+    state.videos[el.dataset.prog] = id;
+    save(); videoSheet(el.dataset.prog); toast('Video saved');
+  },
+  'video-reset': (el) => { delete state.videos[el.dataset.prog]; save(); videoSheet(el.dataset.prog); toast('Using the suggested video'); },
 };
 
 /* ---------- Progress (Activity + Challenges + Body) ---------- */
@@ -2252,7 +2294,7 @@ const WORKOUT_ACTIONS = {
   },
   'wo-howto': (el) => {
     const { p } = PROG[el.dataset.prog];
-    openSheet(p.name, `<ol class="num-steps">${(p.steps || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+    openSheet(p.name, `${videoFor(p.id) ? `<button class="btn ghost block mb-4" data-action="video" data-prog="${p.id}">${icon('play')} Watch how (video)</button>` : ''}<ol class="num-steps">${(p.steps || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
       <h3 class="h3 mt-4">Form cues</h3><ul class="cues">${(p.cues || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`);
   },
 };
@@ -3066,7 +3108,7 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, TRACK_ACTIONS, PLAN_ACTIONS, WORKOUT_ACTIONS, PROFILE_ACTIONS, HEALTH_ACTIONS, {
+Object.assign(ACTIONS, TRACK_ACTIONS, PLAN_ACTIONS, WORKOUT_ACTIONS, PROFILE_ACTIONS, HEALTH_ACTIONS, VIDEO_ACTIONS, {
   'mov-filter': (el) => { movFilter = el.dataset.f; rerender(); },
   'prog-tab': (el) => { progTab = el.dataset.tab; rerender(); if (el.closest('.card, .stat3')) window.scrollTo(0, 0); },
   'plan-sel': (el) => { planSel = Number(el.dataset.i); rerender(); },

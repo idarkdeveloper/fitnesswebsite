@@ -2,11 +2,11 @@
    - App files: network first (you always get the latest when online), cached copy when offline.
    - Exercise images and fonts: served from cache, refreshed in the background.
    - Never touches Supabase or any other site's requests (sync must always hit the network). */
-const SHELL = 'pf-shell-v15';
+const SHELL = 'pf-shell-v16';
 const MEDIA = 'pf-media-v1';
 const SHELL_FILES = [
   './', './index.html', './styles.css', './app.js', './data.js', './theme-boot.js', './pwa.js',
-  './sync-config.js', './mealplan.js', './recipes.js', './vendor/capacitor-8.6.0.js', './sync-core.js', './sync.js', './vendor/supabase-2.118.0.js', './img/manifest.js',
+  './sync-config.js', './mealplan.js', './recipes.js', './videos.js', './vendor/capacitor-8.6.0.js', './sync-core.js', './sync.js', './vendor/supabase-2.118.0.js', './img/manifest.js',
   './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 const FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];

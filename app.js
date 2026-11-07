@@ -46,6 +46,7 @@ const ICONS = {
   download: 'M12 4v11.5M7 10.5l5 5 5-5M4.5 20h15',
   upload: 'M12 20V8.5M7 13.5l5-5 5 5M4.5 4h15',
   reset: 'M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 3.5v5.1h5.1',
+  heartPulse: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
   cloud: 'M7 18.5h10.5a4 4 0 0 0 .4-7.98A6 6 0 0 0 6.3 9.1 4.75 4.75 0 0 0 7 18.5z',
   dumbbell: 'M6.5 6.5l11 11M3.5 9.5l6-6M14.5 20.5l6-6M2 11l2 2M11 2l2 2M20 11l2 2M11 20l2 2',
   star: 'M12 3.2l2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.8z',
@@ -195,6 +196,11 @@ function defaultState() {
     joined: {},                         // ladderId -> ISO date
     reminder: { enabled: false, time: '18:00', lastNotified: '' },
     challengeStart: null,
+    hprofile: {},                       // body profile & targets (Track tab)
+    hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
+    foods: {},                          // saved foods: id -> { name, kcal, protein? }
+    meals: [],                          // {id, day, at, name, kcal, protein?}
+    hmigrated: false,                   // old tracker.html data imported on this device (not synced)
   };
 }
 
@@ -401,6 +407,7 @@ const sheetOpen = () => !!$('#layer .overlay');
    --------------------------------------------------------------- */
 const NAV = [
   { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'track', label: 'Track', icon: 'heartPulse' },
   { id: 'movements', label: 'Movements', icon: 'run' },
   { id: 'activity', label: 'Activity', icon: 'activity' },
   { id: 'challenges', label: 'Challenges', icon: 'award' },
@@ -830,7 +837,6 @@ VIEWS.profile = () => {
     <div class="list-group mt-5">
       <button class="list-item" data-action="pro"><span>PulseFit Pro<span class="li-sub">${pf.pro ? 'Unlocked' : 'Advanced movements & routines'}</span></span>${icon('chevR')}</button>
       ${installRow()}
-      <a class="list-item" href="tracker.html"><span>Daily Health Tracker<span class="li-sub">Steps, sleep, calories &amp; BMI tools</span></span>${icon('external')}</a>
     </div>
     <div class="list-group">
       <button class="list-item" data-action="routine-days"><span>Adjust Routine Days<span class="li-sub">${[1, 2, 3, 4, 5, 6, 0].filter((d) => state.trainingDays.includes(d)).map((d) => WEEKDAY_SHORT[d]).join(', ') || 'None'}</span></span>${icon('chevR')}</button>
@@ -849,6 +855,523 @@ VIEWS.profile = () => {
     </div>
     <input type="file" id="importFile" accept="application/json,.json" hidden />`;
 };
+
+/* ---------- Track: weight, food, steps, sleep, water, measurements ----------
+   Data (all synced, see sync-core.js):
+   - state.hprofile: { sex, age, height, activity, goalWeight, rate, stepGoal, sleepGoal (min), waterGoal (ml) }
+   - state.hlog: { "YYYY-MM-DD|field": number }  fields: weight (kg), steps, sleep (min), water (ml), MEASURES (cm)
+   - state.meals: [{ id, day, at, name, kcal, protein? }]
+   - state.foods: { id: { name, kcal, protein? } }   saved foods */
+const MEASURES = [['waist', 'Waist'], ['chest', 'Chest'], ['hips', 'Hips'], ['arm', 'Upper arm'], ['thigh', 'Thigh'], ['neck', 'Neck']];
+const ACTIVITY = [
+  [1.2, 'Mostly sitting, little exercise'],
+  [1.375, 'Light: exercise 1–3 days a week'],
+  [1.55, 'Moderate: exercise 3–5 days a week'],
+  [1.725, 'Active: exercise 6–7 days a week'],
+  [1.9, 'Very active: physical job or training twice a day'],
+];
+const RATES = [[0.25, '0.25 kg a week (gentle)'], [0.5, '0.5 kg a week (steady)'], [0.75, '0.75 kg a week (faster)'], [1, '1 kg a week (aggressive)']];
+const KCAL_PER_KG = 7700;
+const HDEF = { stepGoal: 8000, sleepGoal: 450, waterGoal: 2500 };
+
+let trackDay = null;                                   // selected day on the Track tab; null = today
+const todayKey = () => dayKey(today());
+const tKey = () => trackDay || todayKey();
+const keyAdd = (key, n) => dayKey(addDays(fromKey(key), n));
+const hk = (day, f) => `${day}|${f}`;
+const hget = (day, f) => state.hlog[hk(day, f)];
+function hset(day, f, v) {
+  if (v == null || !Number.isFinite(v)) delete state.hlog[hk(day, f)];
+  else state.hlog[hk(day, f)] = v;
+}
+const hp = () => state.hprofile;
+const nf = (n) => Math.round(n).toLocaleString('en-US');
+const kg = (n) => (Math.round(n * 10) / 10).toFixed(1);
+const fmtSleep = (min) => `${Math.floor(min / 60)}h ${String(Math.round(min % 60)).padStart(2, '0')}m`;
+const newId = (p) => p + Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => b.toString(16).padStart(2, '0')).join('');
+const parseNum = (v) => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : null; };
+
+/** All logged values of one field, oldest first: [{ day, v }]. */
+function series(field, from = '0000', to = '9999') {
+  const out = [];
+  for (const [k, v] of Object.entries(state.hlog)) {
+    const i = k.indexOf('|');
+    if (k.slice(i + 1) === field && k.slice(0, i) >= from && k.slice(0, i) <= to) out.push({ day: k.slice(0, i), v });
+  }
+  return out.sort((a, b) => (a.day < b.day ? -1 : 1));
+}
+const latestOn = (field, upTo) => { const s = series(field, '0000', upTo); return s[s.length - 1] || null; };
+const firstOf = (field) => series(field)[0] || null;
+
+/** Mean of weigh-ins in the 7 days ending on `day` (smooths daily water swings). */
+function avg7(day) {
+  const s = series('weight', keyAdd(day, -6), day);
+  return s.length ? s.reduce((a, b) => a + b.v, 0) / s.length : null;
+}
+
+/** Weekly change from a least-squares line over the last 4 weeks; needs 3+ weigh-ins over 7+ days. */
+function weeklyRate(day) {
+  const s = series('weight', keyAdd(day, -27), day);
+  if (s.length < 3) return null;
+  const t0 = fromKey(s[0].day);
+  const xs = s.map((p) => Math.round((fromKey(p.day) - t0) / DAY_MS));
+  if (xs[xs.length - 1] < 7) return null;
+  const mx = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const my = s.reduce((a, b) => a + b.v, 0) / s.length;
+  let num = 0, den = 0;
+  xs.forEach((x, i) => { num += (x - mx) * (s[i].v - my); den += (x - mx) ** 2; });
+  return den ? (num / den) * 7 : null;
+}
+
+/** Daily calorie and protein targets (Mifflin–St Jeor × activity, minus the chosen weekly loss). */
+function targets(day) {
+  const p = hp();
+  const weight = avg7(day) ?? latestOn('weight', day)?.v;
+  if (!p.sex || !p.age || !p.height || !weight) return null;
+  const bmr = 10 * weight + 6.25 * p.height - 5 * p.age + (p.sex === 'female' ? -161 : 5);
+  const tdee = bmr * (p.activity || 1.375);
+  const losing = !!p.goalWeight && p.goalWeight < weight - 0.2;
+  const rate = losing ? (p.rate || 0.5) : 0;
+  const floor = p.sex === 'female' ? 1200 : 1500;
+  const raw = tdee - (rate * KCAL_PER_KG) / 7;
+  return {
+    bmr, tdee, weight, losing, rate,
+    kcal: Math.round(Math.max(floor, raw) / 10) * 10,
+    floored: raw < floor,
+    protein: Math.round(1.6 * (p.goalWeight || weight)),
+  };
+}
+
+/* ---------- Track view ---------- */
+VIEWS.track = () => {
+  const day = tKey();
+  const isToday = day === todayKey();
+  const d = fromKey(day);
+  const p = hp();
+  const T = targets(day);
+  const needsProfile = !p.sex || !p.age || !p.height;
+  const thisDay = isToday ? 'today' : 'this day';
+
+  return `
+    <h1 class="h1">Track</h1>
+    <div class="day-nav card flat soft">
+      <button class="icon-btn round bare" data-action="track-day" data-n="-1" aria-label="Previous day">${icon('chevL')}</button>
+      <div class="text-center">
+        <div class="fw-bold t-lg">${isToday ? 'Today' : esc(fmtShort(d))}</div>
+        ${isToday ? `<div class="muted small">${esc(fmtShort(d))}</div>` : '<button class="link-btn small" data-action="track-day" data-n="0">Back to today</button>'}
+      </div>
+      <button class="icon-btn round bare" data-action="track-day" data-n="1" aria-label="Next day" ${isToday ? 'disabled' : ''}>${icon('chevR')}</button>
+    </div>
+    ${needsProfile ? `
+      <section class="card mt-4 callout">
+        <h2 class="h3">Set your targets</h2>
+        <p class="muted small mt-2 mb-3">Add your age, height and goal weight, and PulseFit works out a daily calorie and protein target for you.</p>
+        <button class="btn block" data-action="track-setup">Set up targets</button>
+      </section>` : ''}
+    ${trackFoodCard(day, T, thisDay)}
+    ${trackWeightCard(day, T, thisDay, isToday)}
+    ${trackHabits(day)}
+    ${trackMeasureCard(day)}
+    <div class="list-group mt-5">
+      <button class="list-item" data-action="track-setup"><span>Targets &amp; body profile<span class="li-sub">${T ? `${nf(T.kcal)} kcal a day${p.goalWeight ? ` · goal ${kg(p.goalWeight)} kg` : ' · no goal weight yet'}` : 'Not set up yet'}</span></span>${icon('chevR')}</button>
+    </div>
+    <p class="muted small mt-4">Targets are estimates from the Mifflin–St Jeor formula. If your weekly trend is slower or faster than planned for 2–3 weeks, adjust the target. Check with a doctor before big changes to your diet or exercise.</p>`;
+};
+
+function trackFoodCard(day, T, thisDay) {
+  const meals = state.meals.filter((m) => m.day === day);
+  const eaten = meals.reduce((a, m) => a + m.kcal, 0);
+  const protein = meals.reduce((a, m) => a + (m.protein || 0), 0);
+  const left = T ? T.kcal - eaten : null;
+  const pct = T ? Math.min(100, (eaten / T.kcal) * 100) : 0;
+  return `
+    <section class="card mt-4" aria-labelledby="foodH">
+      <div class="row-between"><h2 class="h3" id="foodH">Food</h2>${T ? `<span class="muted small">Target ${nf(T.kcal)} kcal</span>` : ''}</div>
+      <div class="kpi mt-3"><span class="kpi-v">${nf(T ? Math.abs(left) : eaten)}</span><span class="kpi-u">${T ? (left >= 0 ? 'kcal left' : 'kcal over') : 'kcal eaten'}</span></div>
+      ${T ? `
+        <div class="progress mt-3 ${left < 0 ? 'over' : ''}" role="progressbar" aria-label="Calories eaten" aria-valuemin="0" aria-valuemax="${T.kcal}" aria-valuenow="${Math.round(eaten)}"><span style="width:${pct}%"></span></div>
+        <div class="row-between small muted mt-2"><span>Eaten ${nf(eaten)} kcal</span><span>Protein ${nf(protein)} / ${T.protein} g</span></div>` : ''}
+      <button class="btn block mt-4" data-action="track-food">${icon('plus')} Add food</button>
+      ${meals.length ? `<ul class="food-list mt-3">${meals.map((m) => `
+        <li>
+          <span class="grow"><span class="fw-bold">${esc(m.name)}</span><span class="d-block muted small">${nf(m.kcal)} kcal${m.protein ? ` · ${nf(m.protein)} g protein` : ''}</span></span>
+          <button class="icon-btn round bare" data-action="track-meal-del" data-id="${esc(m.id)}" aria-label="Delete ${esc(m.name)}">${icon('trash')}</button>
+        </li>`).join('')}</ul>` : `<p class="muted small mt-3 m-0">No food logged ${thisDay} yet.</p>`}
+    </section>`;
+}
+
+function trackWeightCard(day, T, thisDay, isToday) {
+  const p = hp();
+  const w = hget(day, 'weight');
+  const a = avg7(day);
+  const r = weeklyRate(day);
+  const cur = a ?? latestOn('weight', day)?.v;
+  const toGo = p.goalWeight && cur != null ? cur - p.goalWeight : null;
+  let trend;
+  if (r == null) trend = 'Weigh in on 3 or more days across a week to see your trend.';
+  else if (Math.abs(r) < 0.05) trend = 'Holding steady this month.';
+  else {
+    trend = `${r < 0 ? 'Losing' : 'Gaining'} about ${Math.abs(r).toFixed(2)} kg a week (last 4 weeks).`;
+    if (toGo > 0 && r < -0.05) {
+      const eta = addDays(fromKey(day), Math.round((toGo / -r) * 7));
+      trend += ` At this rate you reach your goal around ${eta.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.`;
+    }
+  }
+  return `
+    <section class="card mt-4" aria-labelledby="weightH">
+      <div class="row-between"><h2 class="h3" id="weightH">Weight</h2><button class="btn subtle sm" data-action="track-weight">${w != null ? 'Edit' : 'Log weight'}</button></div>
+      <div class="kpi mt-3">${w != null
+        ? `<span class="kpi-v">${kg(w)}</span><span class="kpi-u">kg${isToday ? ' today' : ''}</span>`
+        : `<span class="kpi-v faint">–</span><span class="kpi-u">Not weighed ${thisDay}</span>`}</div>
+      <div class="facts mt-2">
+        ${a != null ? `<span>7-day average <b>${kg(a)} kg</b></span>` : ''}
+        ${toGo != null ? `<span>${toGo > 0.05 ? `<b>${kg(toGo)} kg</b> to goal` : '<b>Goal reached</b>'}</span>` : ''}
+      </div>
+      <p class="small mt-2 m-0">${trend}</p>
+      ${weightChart(day)}
+    </section>`;
+}
+
+function trackHabits(day) {
+  const p = hp();
+  const tile = (action, label, val, valText, goal, goalText) => {
+    const pct = val != null && goal ? Math.min(100, (val / goal) * 100) : 0;
+    return `<button class="tile" data-action="${action}">
+      <span class="k">${label}</span>
+      <span class="v">${val != null ? valText : '–'}</span>
+      <span class="g">of ${goalText}</span>
+      <span class="progress thin" aria-hidden="true"><span style="width:${pct}%"></span></span>
+    </button>`;
+  };
+  const steps = hget(day, 'steps'), sleep = hget(day, 'sleep'), water = hget(day, 'water');
+  const sg = p.stepGoal || HDEF.stepGoal, lg = p.sleepGoal || HDEF.sleepGoal, wg = p.waterGoal || HDEF.waterGoal;
+  return `
+    <section class="mt-4" aria-label="Steps, sleep and water">
+      <div class="tiles">
+        ${tile('track-steps', 'Steps', steps, steps != null ? nf(steps) : '', sg, nf(sg))}
+        ${tile('track-sleep', 'Sleep', sleep, sleep != null ? fmtSleep(sleep) : '', lg, fmtSleep(lg))}
+        ${tile('track-water', 'Water', water, water != null ? `${(water / 1000).toFixed(1)} L` : '', wg, `${(wg / 1000).toFixed(1)} L`)}
+      </div>
+      <button class="btn ghost block mt-3" data-action="track-water-add" data-ml="250">${icon('plus')} Glass of water (250 ml)</button>
+    </section>`;
+}
+
+function trackMeasureCard(day) {
+  const rows = MEASURES.map(([f, label]) => {
+    const l = latestOn(f, day);
+    if (!l) return '';
+    const f0 = firstOf(f);
+    const diff = l.v - f0.v;
+    const delta = f0.day !== l.day && Math.abs(diff) >= 0.05
+      ? `<span class="delta">${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)}</span>` : '';
+    return `<li><span>${label}</span><span><b>${kg(l.v)} cm</b>${delta}</span></li>`;
+  }).join('');
+  return `
+    <section class="card mt-4" aria-labelledby="measH">
+      <div class="row-between"><h2 class="h3" id="measH">Measurements</h2><button class="btn subtle sm" data-action="track-measure">Log</button></div>
+      ${rows
+        ? `<ul class="kv-list mt-3">${rows}</ul><p class="muted small m-0 mt-2">Latest value, and change since your first entry.</p>`
+        : '<p class="muted small mt-3 m-0">Measure your waist every week or two, at the same time of day. It keeps going down even in weeks when the scale doesn’t.</p>'}
+    </section>`;
+}
+
+/** 30-day weight chart: daily weigh-ins as dots, the 7-day average as the line, goal as a dashed reference. */
+function weightChart(endDay) {
+  const N = 30;
+  const pts = Array.from({ length: N }, (_, i) => {
+    const k = keyAdd(endDay, i - N + 1);
+    return { k, i, w: hget(k, 'weight') ?? null, a: avg7(k) };
+  });
+  const ws = pts.filter((p) => p.w != null);
+  if (ws.length < 2) {
+    return `<p class="muted small mt-3 m-0">${ws.length ? 'One more weigh-in and your 30-day chart appears here.' : 'Your 30-day chart appears after two weigh-ins.'}</p>`;
+  }
+  const goal = hp().goalWeight;
+  const vals = [...ws.map((p) => p.w), ...pts.filter((p) => p.a != null).map((p) => p.a)];
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const showGoal = !!goal && goal >= lo - 3 && goal <= hi + 3;
+  if (showGoal) { lo = Math.min(lo, goal); hi = Math.max(hi, goal); }
+  const pad = Math.max(0.6, (hi - lo) * 0.15);
+  lo = Math.floor(lo - pad); hi = Math.ceil(hi + pad);
+  const W = 320, H = 150, L = 34, R = 8, TP = 10, B = 22;
+  const x = (i) => L + (i / (N - 1)) * (W - L - R);
+  const y = (v) => TP + ((hi - v) / (hi - lo)) * (H - TP - B);
+  const ticks = [lo, (lo + hi) / 2, hi].map((v) => Math.round(v * 10) / 10);
+  const line = pts.filter((p) => p.a != null).map((p, j) => `${j ? 'L' : 'M'}${x(p.i).toFixed(1)} ${y(p.a).toFixed(1)}`).join(' ');
+  const label = (k) => fromKey(k).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const step = (W - L - R) / (N - 1);
+  const data = pts.map((p) => ({ d: fmtShort(fromKey(p.k)), w: p.w, a: p.a == null ? null : Math.round(p.a * 10) / 10 }));
+  const first = ws[0], last = ws[ws.length - 1];
+  const summary = `Weight over the last 30 days: ${kg(first.w)} kg on ${label(first.k)}, ${kg(last.w)} kg on ${label(last.k)}.`;
+  return `
+    <div class="wchart" data-points="${esc(JSON.stringify(data))}">
+      <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(summary)}" tabindex="0">
+        <g class="grid">${ticks.map((t) => `<line x1="${L}" x2="${W - R}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}"/><text x="${L - 6}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end">${t % 1 ? t.toFixed(1) : t}</text>`).join('')}</g>
+        ${showGoal ? `<line class="goal" x1="${L}" x2="${W - R}" y1="${y(goal).toFixed(1)}" y2="${y(goal).toFixed(1)}"/><text class="goal-t" x="${W - R}" y="${(y(goal) - 4).toFixed(1)}" text-anchor="end">Goal ${kg(goal)}</text>` : ''}
+        <path class="trend" d="${line}"/>
+        ${ws.map((p) => `<circle class="wdot" cx="${x(p.i).toFixed(1)}" cy="${y(p.w).toFixed(1)}" r="2.5"/>`).join('')}
+        <text x="${L}" y="${H - 6}">${label(pts[0].k)}</text>
+        <text x="${W - R}" y="${H - 6}" text-anchor="end">${endDay === todayKey() ? 'Today' : label(endDay)}</text>
+        <line class="xh" y1="${TP}" y2="${H - B}" x1="0" x2="0" visibility="hidden"/>
+        <circle class="fdot" r="4.5" cx="0" cy="0" visibility="hidden"/>
+        ${pts.map((p) => `<rect class="hit" x="${(x(p.i) - step / 2).toFixed(1)}" y="${TP}" width="${step.toFixed(1)}" height="${H - TP - B}" data-i="${p.i}" data-x="${x(p.i).toFixed(1)}" data-y="${p.w != null ? y(p.w).toFixed(1) : p.a != null ? y(p.a).toFixed(1) : ''}"/>`).join('')}
+      </svg>
+      <div class="chart-tip" hidden></div>
+      <div class="chart-key small muted"><span class="key-line"></span>7-day average <span class="key-dot"></span>Weigh-in${showGoal ? '<span class="key-goal"></span>Goal' : ''}</div>
+      <details class="mt-2"><summary class="small muted">Show as table</summary>
+        <table class="data-table"><thead><tr><th scope="col">Date</th><th scope="col">Weight</th><th scope="col">7-day avg</th></tr></thead>
+        <tbody>${[...ws].reverse().map((p) => `<tr><td>${esc(label(p.k))}</td><td>${kg(p.w)} kg</td><td>${p.a != null ? kg(p.a) + ' kg' : '–'}</td></tr>`).join('')}</tbody></table>
+      </details>
+    </div>`;
+}
+
+/** Hover, tap and arrow-key readout for the weight chart. */
+function wireWeightChart() {
+  const wrap = $('.wchart');
+  if (!wrap) return;
+  const svg = wrap.querySelector('svg'), tip = wrap.querySelector('.chart-tip');
+  const xh = svg.querySelector('.xh'), dot = svg.querySelector('.fdot');
+  const data = JSON.parse(wrap.dataset.points);
+  const hits = [...svg.querySelectorAll('.hit')];
+  let cur = -1;
+  const show = (i) => {
+    const r = hits[i], p = data[i];
+    if (!r || !p) return;
+    cur = i;
+    const px = Number(r.dataset.x);
+    xh.setAttribute('x1', px); xh.setAttribute('x2', px); xh.setAttribute('visibility', 'visible');
+    if (r.dataset.y) { dot.setAttribute('cx', px); dot.setAttribute('cy', r.dataset.y); dot.setAttribute('visibility', 'visible'); }
+    else dot.setAttribute('visibility', 'hidden');
+    tip.textContent = `${p.d} · ${p.w != null ? kg(p.w) + ' kg' : 'no weigh-in'}${p.a != null ? ` · avg ${kg(p.a)}` : ''}`;
+    tip.hidden = false;
+    const vb = svg.viewBox.baseVal, scale = svg.clientWidth / vb.width;
+    const left = Math.min(Math.max(px * scale, tip.offsetWidth / 2), wrap.clientWidth - tip.offsetWidth / 2);
+    tip.style.left = `${left}px`;
+  };
+  const hide = () => { tip.hidden = true; xh.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); cur = -1; };
+  svg.addEventListener('pointermove', (e) => { const r = e.target.closest('.hit'); if (r) show(Number(r.dataset.i)); });
+  svg.addEventListener('pointerdown', (e) => { const r = e.target.closest('.hit'); if (r) show(Number(r.dataset.i)); });
+  svg.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') hide(); });
+  svg.addEventListener('blur', hide);
+  svg.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    show(Math.min(data.length - 1, Math.max(0, (cur < 0 ? data.length : cur) + (e.key === 'ArrowLeft' ? -1 : 1))));
+  });
+}
+
+/* ---------- Track sheets ---------- */
+function onDayLabel() {
+  const day = tKey();
+  return day === todayKey() ? 'today' : `on ${fmtShort(fromKey(day))}`;
+}
+
+function foodSheet() {
+  const saved = Object.entries(state.foods).sort((a, b) => a[1].name.localeCompare(b[1].name));
+  const savedNames = new Set(saved.map(([, f]) => f.name.toLowerCase()));
+  const seen = new Set();
+  const recent = [...state.meals].sort((a, b) => (a.at < b.at ? 1 : -1)).filter((m) => {
+    const k = m.name.toLowerCase();
+    if (seen.has(k) || savedNames.has(k)) return false;
+    seen.add(k); return true;
+  }).slice(0, 6);
+  openSheet('Add food', `
+    ${saved.length ? `<h3 class="sheet-sub">My foods <span class="muted">· tap to add</span></h3><div class="chips">${saved.map(([id, f]) => `
+      <span class="chip-pair"><button class="chip" data-action="track-food-quick" data-food="${esc(id)}">${esc(f.name)} · ${nf(f.kcal)}</button><button class="chip-x" data-action="track-food-forget" data-food="${esc(id)}" aria-label="Remove ${esc(f.name)} from my foods">${icon('x')}</button></span>`).join('')}</div>` : ''}
+    ${recent.length ? `<h3 class="sheet-sub">Recent</h3><div class="chips">${recent.map((m) => `<button class="chip" data-action="track-food-recent" data-id="${esc(m.id)}">${esc(m.name)} · ${nf(m.kcal)}</button>`).join('')}</div>` : ''}
+    <div class="field"><label for="fName">Food</label><input class="input" id="fName" maxlength="60" placeholder="e.g. Chicken and rice" autocomplete="off" /></div>
+    <div class="grid2">
+      <div class="field"><label for="fKcal">Calories (kcal)</label><input class="input" id="fKcal" type="number" inputmode="numeric" min="0" max="5000" /></div>
+      <div class="field"><label for="fProt">Protein (g), optional</label><input class="input" id="fProt" type="number" inputmode="decimal" min="0" max="500" /></div>
+    </div>
+    <label class="check mt-4"><input type="checkbox" id="fSave" /> Save to my foods for one-tap logging</label>
+    <button class="btn block lg mt-5" data-action="track-food-add">Add to ${esc(onDayLabel())}</button>
+    <p class="muted small mt-3 m-0">Calories are on the pack label, or search the food online. A rough number logged every day beats a perfect one logged sometimes.</p>`);
+}
+
+function addMeal(name, kcal, protein) {
+  state.meals.push({ id: newId('m'), day: tKey(), at: new Date().toISOString(), name, kcal: Math.round(kcal), ...(protein ? { protein: Math.round(protein * 10) / 10 } : {}) });
+  save(); closeSheet(); rerender();
+  toast(`Added ${name} · ${nf(kcal)} kcal`);
+}
+
+function numberSheet({ title, field, label, value, unit, step = 1, min = 0, max = 100000, hint = '' }) {
+  openSheet(title, `
+    <div class="field"><label for="numVal">${esc(label)}</label>
+      <div class="input-unit"><input class="input" id="numVal" type="number" inputmode="decimal" step="${step}" min="${min}" max="${max}" value="${value ?? ''}" /><span>${esc(unit)}</span></div></div>
+    ${hint ? `<p class="muted small mt-2 m-0">${hint}</p>` : ''}
+    <button class="btn block lg mt-5" data-action="track-num-save" data-f="${field}" data-min="${min}" data-max="${max}">Save</button>
+    ${hget(tKey(), field) != null ? `<button class="btn ghost block mt-3" data-action="track-clear" data-f="${field}">Remove this entry</button>` : ''}`);
+}
+
+function sleepSheet() {
+  const v = hget(tKey(), 'sleep');
+  openSheet('Sleep', `
+    <p class="muted small m-0">How long you slept the night before ${esc(onDayLabel())}.</p>
+    <div class="grid2">
+      <div class="field"><label for="slH">Hours</label><input class="input" id="slH" type="number" inputmode="numeric" min="0" max="16" value="${v != null ? Math.floor(v / 60) : ''}" /></div>
+      <div class="field"><label for="slM">Minutes</label><input class="input" id="slM" type="number" inputmode="numeric" min="0" max="59" value="${v != null ? Math.round(v % 60) : ''}" /></div>
+    </div>
+    <button class="btn block lg mt-5" data-action="track-sleep-save">Save</button>
+    ${v != null ? '<button class="btn ghost block mt-3" data-action="track-clear" data-f="sleep">Remove this entry</button>' : ''}`);
+}
+
+function measureSheet() {
+  const day = tKey();
+  openSheet('Measurements', `
+    <p class="muted small m-0">In centimetres, ${esc(onDayLabel())}. Fill in only what you measured; the rest stays as it was.</p>
+    <div class="grid2">${MEASURES.map(([f, label]) => {
+      const last = latestOn(f, day);
+      return `<div class="field"><label for="ms-${f}">${label}</label><input class="input" id="ms-${f}" data-measure="${f}" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${hget(day, f) ?? ''}" placeholder="${last ? kg(last.v) : ''}" /></div>`;
+    }).join('')}</div>
+    <p class="muted small mt-3 m-0">Waist: around your belly button, relaxed, after breathing out. Use the same spot every time.</p>
+    <button class="btn block lg mt-5" data-action="track-measure-save">Save</button>`);
+}
+
+function setupSheet() {
+  const p = hp();
+  const opt = (list, cur) => list.map(([v, t]) => `<option value="${v}" ${Number(cur) === v ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  openSheet('Targets & body profile', `
+    <div class="grid2">
+      <div class="field"><label for="tpSex">Sex (for the formula)</label><select class="select input" id="tpSex">
+        <option value="">Choose</option><option value="male" ${p.sex === 'male' ? 'selected' : ''}>Male</option><option value="female" ${p.sex === 'female' ? 'selected' : ''}>Female</option></select></div>
+      <div class="field"><label for="tpAge">Age</label><input class="input" id="tpAge" type="number" inputmode="numeric" min="14" max="100" value="${p.age ?? ''}" /></div>
+      <div class="field"><label for="tpHeight">Height (cm)</label><input class="input" id="tpHeight" type="number" inputmode="numeric" min="100" max="250" value="${p.height ?? ''}" /></div>
+      <div class="field"><label for="tpGoal">Goal weight (kg)</label><input class="input" id="tpGoal" type="number" inputmode="decimal" step="0.1" min="30" max="300" value="${p.goalWeight ?? ''}" /></div>
+    </div>
+    <div class="field"><label for="tpAct">Activity outside logged workouts</label><select class="select input" id="tpAct">${opt(ACTIVITY, p.activity ?? 1.375)}</select></div>
+    <div class="field"><label for="tpRate">How fast to lose</label><select class="select input" id="tpRate">${opt(RATES, p.rate ?? 0.5)}</select></div>
+    <p class="muted small mt-2 m-0">Losing about 0.5–1% of your body weight a week is a common, sustainable pace. Your target never goes below 1,500 kcal (men) or 1,200 kcal (women).</p>
+    <h3 class="sheet-sub mt-6">Daily goals</h3>
+    <div class="grid3">
+      <div class="field"><label for="tpSteps">Steps</label><input class="input" id="tpSteps" type="number" inputmode="numeric" min="1000" max="50000" step="500" value="${p.stepGoal ?? HDEF.stepGoal}" /></div>
+      <div class="field"><label for="tpSleep">Sleep (h)</label><input class="input" id="tpSleep" type="number" inputmode="decimal" min="4" max="12" step="0.5" value="${(p.sleepGoal ?? HDEF.sleepGoal) / 60}" /></div>
+      <div class="field"><label for="tpWater">Water (L)</label><input class="input" id="tpWater" type="number" inputmode="decimal" min="0.5" max="6" step="0.25" value="${(p.waterGoal ?? HDEF.waterGoal) / 1000}" /></div>
+    </div>
+    <button class="btn block lg mt-6" data-action="track-setup-save">Save</button>`);
+}
+
+const TRACK_ACTIONS = {
+  'track-day': (el) => {
+    const n = Number(el.dataset.n);
+    trackDay = n === 0 ? null : keyAdd(tKey(), n);
+    if (trackDay && trackDay >= todayKey()) trackDay = null;
+    rerender();
+  },
+  'track-setup': setupSheet,
+  'track-setup-save': () => {
+    const v = (id) => parseNum($(id)?.value);
+    const sex = $('#tpSex').value;
+    const age = v('#tpAge'), height = v('#tpHeight'), goal = v('#tpGoal');
+    if (!sex || !age || !height) { toast('Add sex, age and height to get your targets'); return; }
+    if (age < 14 || age > 100 || height < 100 || height > 250) { toast('Check age (14–100) and height (100–250 cm)'); return; }
+    if (goal != null && (goal < 30 || goal > 300)) { toast('Goal weight should be between 30 and 300 kg'); return; }
+    const p = state.hprofile;
+    p.sex = sex; p.age = Math.round(age); p.height = Math.round(height);
+    if (goal != null) p.goalWeight = Math.round(goal * 10) / 10; else delete p.goalWeight;
+    p.activity = Number($('#tpAct').value); p.rate = Number($('#tpRate').value);
+    p.stepGoal = clamp(Math.round(v('#tpSteps') || HDEF.stepGoal), 1000, 50000);
+    p.sleepGoal = clamp(Math.round((v('#tpSleep') || HDEF.sleepGoal / 60) * 60), 240, 720);
+    p.waterGoal = clamp(Math.round((v('#tpWater') || HDEF.waterGoal / 1000) * 1000), 500, 6000);
+    save(); closeSheet(); rerender(); toast('Targets saved');
+  },
+  'track-food': foodSheet,
+  'track-food-add': () => {
+    const name = ($('#fName').value || '').trim();
+    const kcal = parseNum($('#fKcal').value), protein = parseNum($('#fProt').value);
+    if (!name) { toast('Name the food'); return; }
+    if (kcal == null || kcal < 0 || kcal > 5000) { toast('Enter calories between 0 and 5,000'); return; }
+    if (protein != null && (protein < 0 || protein > 500)) { toast('Protein should be between 0 and 500 g'); return; }
+    if ($('#fSave').checked) {
+      const exists = Object.values(state.foods).some((f) => f.name.toLowerCase() === name.toLowerCase());
+      if (!exists) state.foods[newId('f')] = { name, kcal: Math.round(kcal), ...(protein ? { protein } : {}) };
+    }
+    addMeal(name, kcal, protein);
+  },
+  'track-food-quick': (el) => { const f = state.foods[el.dataset.food]; if (f) addMeal(f.name, f.kcal, f.protein); },
+  'track-food-recent': (el) => { const m = state.meals.find((x) => x.id === el.dataset.id); if (m) addMeal(m.name, m.kcal, m.protein); },
+  'track-food-forget': (el) => { delete state.foods[el.dataset.food]; save(); foodSheet(); },
+  'track-meal-del': (el) => {
+    const m = state.meals.find((x) => x.id === el.dataset.id);
+    if (!m || !confirm(`Delete ${m.name} (${nf(m.kcal)} kcal)?`)) return;
+    state.meals = state.meals.filter((x) => x.id !== m.id);
+    save(); rerender(); toast('Deleted');
+  },
+  'track-weight': () => numberSheet({
+    title: 'Weight', field: 'weight', label: `Weight (kg) ${onDayLabel()}`, unit: 'kg', step: 0.1, min: 30, max: 350,
+    value: hget(tKey(), 'weight') ?? latestOn('weight', tKey())?.v,
+    hint: 'Weigh yourself in the morning, after the toilet and before eating or drinking. Daily numbers swing by 1–2 kg; the 7-day average shows the real trend.',
+  }),
+  'track-steps': () => numberSheet({ title: 'Steps', field: 'steps', label: `Steps ${onDayLabel()}`, unit: 'steps', step: 100, min: 0, max: 100000, value: hget(tKey(), 'steps'), hint: 'Copy the total from your phone’s health app or your watch.' }),
+  'track-water': () => numberSheet({ title: 'Water', field: 'water', label: `Water ${onDayLabel()} (ml)`, unit: 'ml', step: 50, min: 0, max: 10000, value: hget(tKey(), 'water') }),
+  'track-water-add': (el) => {
+    const day = tKey();
+    hset(day, 'water', (hget(day, 'water') || 0) + Number(el.dataset.ml));
+    save(); rerender(); toast(`Water: ${((hget(day, 'water')) / 1000).toFixed(2)} L`);
+  },
+  'track-num-save': (el) => {
+    const v = parseNum($('#numVal').value), min = Number(el.dataset.min), max = Number(el.dataset.max);
+    if (v == null || v < min || v > max) { toast(`Enter a number between ${nf(min)} and ${nf(max)}`); return; }
+    hset(tKey(), el.dataset.f, el.dataset.f === 'weight' ? Math.round(v * 10) / 10 : Math.round(v));
+    save(); closeSheet(); rerender(); toast('Saved');
+  },
+  'track-sleep': sleepSheet,
+  'track-sleep-save': () => {
+    const h = parseNum($('#slH').value) || 0, m = parseNum($('#slM').value) || 0;
+    const total = Math.round(h * 60 + m);
+    if (total <= 0 || total > 16 * 60 || m > 59) { toast('Enter hours (0–16) and minutes (0–59)'); return; }
+    hset(tKey(), 'sleep', total);
+    save(); closeSheet(); rerender(); toast('Saved');
+  },
+  'track-measure': measureSheet,
+  'track-measure-save': () => {
+    const day = tKey();
+    let bad = false, n = 0;
+    $$('[data-measure]').forEach((inp) => {
+      const v = parseNum(inp.value);
+      if (inp.value.trim() === '') { if (hget(day, inp.dataset.measure) != null) { hset(day, inp.dataset.measure, null); n++; } return; }
+      if (v == null || v < 10 || v > 300) { bad = true; return; }
+      hset(day, inp.dataset.measure, Math.round(v * 10) / 10); n++;
+    });
+    if (bad) { toast('Measurements should be between 10 and 300 cm'); return; }
+    save(); closeSheet(); rerender(); toast(n ? 'Measurements saved' : 'Nothing changed');
+  },
+  'track-clear': (el) => { hset(tKey(), el.dataset.f, null); save(); closeSheet(); rerender(); toast('Entry removed'); },
+};
+
+/** One-time import from the old standalone tracker (tracker.html), which kept its data under pf_* keys. */
+function importOldTracker() {
+  if (state.hmigrated) return;
+  state.hmigrated = true;
+  const read = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch { return null; } };
+  const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) && n > 0 ? n : undefined; };
+  const p = read('pf_profile');
+  const day = todayKey();
+  if (p && typeof p === 'object') {
+    const hpNew = { sex: ['male', 'female'].includes(p.sex) ? p.sex : undefined, age: num(p.age), height: num(p.height), activity: num(p.activity) };
+    for (const [k, v] of Object.entries(hpNew)) if (v !== undefined && state.hprofile[k] === undefined) state.hprofile[k] = v;
+    if (num(p.weight) && !series('weight').length) hset(day, 'weight', Math.round(num(p.weight) * 10) / 10);
+    for (const [old, f] of [['chest', 'chest'], ['waist', 'waist'], ['hips', 'hips'], ['biceps', 'arm'], ['thigh', 'thigh'], ['neck', 'neck']]) {
+      if (num(p[old]) && !series(f).length) hset(day, f, num(p[old]));
+    }
+    if (!state.profile.name && typeof p.name === 'string') state.profile.name = p.name.trim().slice(0, 40);
+  }
+  for (let i = 0; i < localStorage.length; i++) {
+    const m = /^pf_day_(\d{4}-\d{2}-\d{2})$/.exec(localStorage.key(i) || '');
+    if (!m) continue;
+    const d = read(m[0]);
+    if (!d || typeof d !== 'object') continue;
+    if (num(d.steps) && hget(m[1], 'steps') == null) hset(m[1], 'steps', Math.round(num(d.steps)));
+    if (num(d.sleepMinutes) && hget(m[1], 'sleep') == null) hset(m[1], 'sleep', Math.round(num(d.sleepMinutes)));
+    (Array.isArray(d.meals) ? d.meals : []).forEach((meal, j) => {
+      const id = `pf1-${m[1]}-${j}`;
+      if (!meal || !Number.isFinite(meal.kcal) || state.meals.some((x) => x.id === id)) return;
+      const at = Number.isFinite(meal.at) ? new Date(meal.at).toISOString() : `${m[1]}T12:00:00.000Z`;
+      state.meals.push({ id, day: m[1], at, name: String(meal.name || 'Meal').slice(0, 60), kcal: Math.round(meal.kcal) });
+    });
+  }
+  save();
+}
 
 /* ---------- workout session ---------- */
 let draft = null; // {date, entries:[{progId, values[], done[]}]}
@@ -927,6 +1450,7 @@ const notFound = () => `<div class="empty">${icon('help')}<p>That page doesn't e
 const slideStep = (car) => car.clientWidth + (parseFloat(getComputedStyle(car).columnGap) || 0);
 
 function afterRender(r) {
+  if (r.name === 'track') wireWeightChart();
   if (r.name === 'home') {
     const car = $('#carousel');
     if (car) {
@@ -1154,7 +1678,7 @@ function faqSheet() {
 function privacySheet() {
   openSheet('Privacy & Terms', `
     <p><strong>Privacy.</strong> Everything you enter is stored in your browser's local storage. Clearing your browser data or using Reset All Progress deletes it.</p>
-    <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, progressions, joined ladders, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
+    <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, progressions, joined ladders, health logs (weight, food, steps, sleep, water, measurements), targets, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
     <p><strong>Imagery.</strong> Exercise photos are AI-generated illustrations, not photographs of real athletes. Follow the written cues for exact form.</p>
     <p><strong>Terms.</strong> PulseFit is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);
 }
@@ -1422,9 +1946,9 @@ const ACTIONS = {
   'export': () => downloadJson(state, 'pulsefit-backup'),
   'import': () => $('#importFile').click(),
   'reset': () => {
-    if (!confirm('Reset all progress, workouts and settings? This cannot be undone.')) return;
+    if (!confirm('Reset all progress, workouts, health logs and settings? This cannot be undone.')) return;
     const theme = state.profile.theme;
-    state = defaultState(); state.profile.theme = theme;
+    state = defaultState(); state.profile.theme = theme; state.hmigrated = true;
     if (window.PFSync) window.PFSync.noteReset(state);   // a reset replaces older data on synced devices too
     save(); rerender(); toast('All progress reset');
   },
@@ -1437,6 +1961,8 @@ const ACTIONS = {
     save(); closeSheet(); rerender(); toast('Workout deleted');
   },
 };
+
+Object.assign(ACTIONS, TRACK_ACTIONS);
 
 document.addEventListener('click', (ev) => {
   const el = ev.target.closest('[data-action]');
@@ -1542,6 +2068,7 @@ window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
   if (line && st.user) line.textContent = syncLine(st);                  // same card, new status
   else if (!document.activeElement?.matches('input, textarea')) rerender(); // signed in/out: redraw the card
 });
+importOldTracker();
 applyTheme();
 if (!location.hash) history.replaceState(null, '', '#/home');
 render();

@@ -9,7 +9,11 @@
   // Single-value settings, merged by newest stamp.
   const FIXED_REGS = ['profile.name', 'profile.theme', 'profile.pro', 'routineId', 'trainingDays', 'restSeconds'];
   // Maps of single values (one register per key), merged by newest stamp.
-  const MAP_REGS = ['current', 'joined'];
+  // hprofile: body profile and targets; hlog: "YYYY-MM-DD|field" -> number (weight, steps, sleep, water,
+  // measurements); foods: saved foods by id.
+  const MAP_REGS = ['current', 'joined', 'hprofile', 'hlog', 'foods'];
+  // Append-only lists of records with ids, merged by union minus tombstones.
+  const COLLECTIONS = ['workouts', 'meals'];
 
   const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
   const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
@@ -34,6 +38,10 @@
       levels: isObj(s.levels) ? s.levels : {},
       joined: isObj(s.joined) ? s.joined : {},
       workouts: Array.isArray(s.workouts) ? s.workouts : [],
+      hprofile: isObj(s.hprofile) ? s.hprofile : {},
+      hlog: isObj(s.hlog) ? s.hlog : {},
+      foods: isObj(s.foods) ? s.foods : {},
+      meals: Array.isArray(s.meals) ? s.meals : [],
     });
   }
 
@@ -67,7 +75,7 @@
   /** What the device remembers to detect changes between saves. */
   function snapshot(state) {
     const d = pick(state);
-    return { regs: registers(d), ids: d.workouts.map((w) => w.id) };
+    return { regs: registers(d), ids: COLLECTIONS.flatMap((c) => d[c].map((x) => x.id)) };
   }
 
   function emptyMeta() {
@@ -76,7 +84,7 @@
 
   /**
    * Record a local save: stamp registers that changed since the last snapshot,
-   * tombstone workouts that disappeared. Returns a new meta object.
+   * tombstone workouts and meals that disappeared. Returns a new meta object.
    */
   function noteSave(meta, state, nowIso) {
     const m = clone(meta) || emptyMeta();
@@ -115,6 +123,10 @@
     if (!isObj(d.levels) || Object.values(d.levels).some((v) => !Number.isInteger(v) || v < 0 || v > 3)) return 'bad levels';
     if (!isObj(d.current) || !isObj(d.joined) || !isObj(d.profile)) return 'bad maps';
     if (!isObj(doc.stamps) || !isObj(doc.deleted)) return 'bad meta';
+    // Health fields are optional (documents written before the Track tab don't have them).
+    if (d.meals !== undefined && (!Array.isArray(d.meals) || d.meals.some((m) => !isObj(m) || typeof m.id !== 'string' || typeof m.at !== 'string' || !Number.isFinite(m.kcal)))) return 'bad meals';
+    if (d.hlog !== undefined && (!isObj(d.hlog) || Object.values(d.hlog).some((v) => !Number.isFinite(v)))) return 'bad hlog';
+    for (const k of ['hprofile', 'foods']) if (d[k] !== undefined && !isObj(d[k])) return 'bad ' + k;
     return null;
   }
 
@@ -128,7 +140,8 @@
   /**
    * Merge a local document with a remote (cloud) document.
    * - Different gen: the higher gen wins outright (reset wins).
-   * - Same gen: workouts union minus tombstones, levels by max, registers by newest stamp.
+   * - Same gen: workouts and meals union minus tombstones, levels by max, registers
+   *   (settings, health profile, daily log values, saved foods) by newest stamp.
    *   Equal stamps: a value beats no value; otherwise the remote copy wins.
    * Returns { doc, lostLocal } where lostLocal is true if a reset elsewhere discarded local data.
    */
@@ -140,7 +153,8 @@
     if (local.gen !== remote.gen) {
       if (remote.gen > local.gen) {
         const ld = local.data || {};
-        const lostLocal = (ld.workouts || []).length > 0 || Object.keys(ld.levels || {}).length > 0;
+        const lostLocal = (ld.workouts || []).length > 0 || Object.keys(ld.levels || {}).length > 0
+          || (ld.meals || []).length > 0 || Object.keys(ld.hlog || {}).length > 0;
         return { doc: clone(remote), lostLocal };
       }
       return { doc: clone(local), lostLocal: false };
@@ -152,21 +166,24 @@
       if (!deleted[id] || Date.parse(t) > Date.parse(deleted[id])) deleted[id] = t;
     }
 
-    // Workouts: union by id. Same id on both sides: keep remote's copy (they are never edited).
-    const byId = new Map();
-    for (const w of local.data.workouts || []) byId.set(w.id, w);
-    for (const w of remote.data.workouts || []) byId.set(w.id, w);
-    const workouts = [...byId.values()]
-      .filter((w) => !deleted[w.id])
-      .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    // Workouts and meals: union by id. Same id on both sides: keep remote's copy (they are never edited).
+    const unite = (name) => {
+      const byId = new Map();
+      for (const w of local.data[name] || []) byId.set(w.id, w);
+      for (const w of remote.data[name] || []) byId.set(w.id, w);
+      return [...byId.values()]
+        .filter((w) => !deleted[w.id])
+        .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    };
 
     // Levels: highest wins.
     const levels = { ...(local.data.levels || {}) };
     for (const [k, v] of Object.entries(remote.data.levels || {})) levels[k] = Math.max(levels[k] || 0, v);
 
     // Registers: newest stamp wins.
-    const data = { ...clone(remote.data), workouts: clone(workouts), levels };
-    data.current = {}; data.joined = {};
+    const data = { ...clone(remote.data), levels };
+    for (const c of COLLECTIONS) data[c] = clone(unite(c));
+    for (const m of MAP_REGS) data[m] = {};
     const lr = registers(local.data);
     const rr = registers(remote.data);
     const stamps = {};
@@ -206,7 +223,14 @@
     for (const [k, v] of Object.entries(file.levels)) if (Number.isInteger(v)) levels[k] = Math.max(levels[k] || 0, v);
     const current = { ...file.current, ...cur.current };
     const joined = { ...file.joined, ...cur.joined };
-    return { ...clone(state), workouts, levels, current, joined };
+    // Health data: add meals, log entries, saved foods and profile fields this device doesn't have.
+    const mealIds = new Set(cur.meals.map((m) => m.id));
+    const meals = [...cur.meals, ...file.meals.filter((m) => m && typeof m.id === 'string' && Number.isFinite(m.kcal) && !mealIds.has(m.id))]
+      .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+    const hlog = { ...Object.fromEntries(Object.entries(file.hlog).filter(([, v]) => Number.isFinite(v))), ...cur.hlog };
+    const hprofile = { ...file.hprofile, ...cur.hprofile };
+    const foods = { ...file.foods, ...cur.foods };
+    return { ...clone(state), workouts, levels, current, joined, meals, hlog, hprofile, foods };
   }
 
   /** Put a merged document's data back into full app state, keeping device-local fields. */
@@ -214,7 +238,7 @@
     const d = clone(doc.data);
     const s = clone(state);
     s.profile = { ...(s.profile || {}), ...d.profile };
-    for (const k of ['routineId', 'trainingDays', 'restSeconds', 'current', 'levels', 'joined', 'workouts']) {
+    for (const k of ['routineId', 'trainingDays', 'restSeconds', 'current', 'levels', 'joined', 'workouts', 'hprofile', 'hlog', 'foods', 'meals']) {
       if (d[k] !== undefined) s[k] = d[k];
     }
     return s;

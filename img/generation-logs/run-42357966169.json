@@ -1,0 +1,1702 @@
+[
+  {
+    "id": "close-pushups",
+    "file": "img/review/close-pushups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing close pushups in an outdoor calisthenics park: in a pushup on the toes, palms flat and touching under the chest, elbows tucked, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. The arms carry the body weight; forearms stay off the ground (this is not a plank). Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.321Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 202,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 202
+      },
+      "output_tokens": 1983,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 415
+      },
+      "total_tokens": 2185
+    },
+    "cost_usd": 0.03223,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "assisted-one-arm-pushups",
+    "file": "img/review/assisted-one-arm-pushups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing incline one-arm pushups in an outdoor calisthenics park: doing a one-arm pushup on a waist-high bench, feet wide, other hand behind the back. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.323Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 183,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 183
+      },
+      "output_tokens": 1963,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 395
+      },
+      "total_tokens": 2146
+    },
+    "cost_usd": 0.03187,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "close-pullups",
+    "file": "img/review/close-pullups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing close pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, hands side by side and touching, chin above the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Both hands wrap over the bar side by side, palms facing away; the hands are not clasped together. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.323Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 188,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 188
+      },
+      "output_tokens": 1966,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 398
+      },
+      "total_tokens": 2154
+    },
+    "cost_usd": 0.03193,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "uneven-pullups",
+    "file": "img/review/uneven-pullups.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing uneven pullups on a steel pull-up bar in an outdoor calisthenics park: hanging from a high bar, one hand on the bar, other on a towel looped over it. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. The towel hangs from the same high bar about 30 cm below it, gripped firmly; both arms pull. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.324Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 192,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 192
+      },
+      "output_tokens": 1958,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 390
+      },
+      "total_tokens": 2150
+    },
+    "cost_usd": 0.03181,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "squats",
+    "file": "img/review/squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing uneven squats on a paved path in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.324Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 138,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 138
+      },
+      "output_tokens": 1446,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 390
+      },
+      "total_tokens": 1584
+    },
+    "cost_usd": 0.02348,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "jackknife-squats",
+    "file": "img/review/jackknife-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing jackknife squats on a paved path in an outdoor calisthenics park: bent forward with hands on a knee-high bench, squatting deep, thighs below parallel. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.325Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 153,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 153
+      },
+      "output_tokens": 1991,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 423
+      },
+      "total_tokens": 2144
+    },
+    "cost_usd": 0.03224,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "supported-squats",
+    "file": "img/review/supported-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing supported squats on a paved path in an outdoor calisthenics park: holding a pole at waist height for support, squatting deep, heels down. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.326Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 150,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 150
+      },
+      "output_tokens": 1971,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 403
+      },
+      "total_tokens": 2121
+    },
+    "cost_usd": 0.03191,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "half-squats",
+    "file": "img/review/half-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing half squats on a paved path in an outdoor calisthenics park: in a half squat, thighs halfway to parallel, arms forward, back straight. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.328Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 150,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 150
+      },
+      "output_tokens": 1967,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 399
+      },
+      "total_tokens": 2117
+    },
+    "cost_usd": 0.03185,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "full-squats",
+    "file": "img/review/full-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing full squats on a paved path in an outdoor calisthenics park: at the bottom of a deep bodyweight squat, heels down, arms forward, chest up. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.329Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 153,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 153
+      },
+      "output_tokens": 1943,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 375
+      },
+      "total_tokens": 2096
+    },
+    "cost_usd": 0.03147,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "close-squats",
+    "file": "img/review/close-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing close squats on a paved path in an outdoor calisthenics park: in a deep squat with feet together, arms reaching forward for balance. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.329Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 148,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 148
+      },
+      "output_tokens": 1934,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 366
+      },
+      "total_tokens": 2082
+    },
+    "cost_usd": 0.03131,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "uneven-squats",
+    "file": "img/review/uneven-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing uneven squats on a paved path in an outdoor calisthenics park: squatting with one foot raised on a basketball, most weight on the floor leg. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.330Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1978,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 410
+      },
+      "total_tokens": 2129
+    },
+    "cost_usd": 0.03203,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "half-one-leg-squats",
+    "file": "img/review/half-one-leg-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing half one-leg squats on a paved path in an outdoor calisthenics park: standing on one leg, bent to a half squat, free leg straight forward, arms forward. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.331Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 155,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 155
+      },
+      "output_tokens": 2005,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 437
+      },
+      "total_tokens": 2160
+    },
+    "cost_usd": 0.03247,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "assisted-one-leg-squats",
+    "file": "img/review/assisted-one-leg-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing assisted one-leg squats on a paved path in an outdoor calisthenics park: in a deep one-leg squat holding a pole with one hand, free leg straight forward. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.331Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 154,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 154
+      },
+      "output_tokens": 1980,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 412
+      },
+      "total_tokens": 2134
+    },
+    "cost_usd": 0.03207,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "pistol-squats",
+    "file": "img/review/pistol-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing pistol squats on a paved path in an outdoor calisthenics park: at the bottom of a pistol squat on one leg, free leg straight forward, arms forward. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.332Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 153,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 153
+      },
+      "output_tokens": 1976,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 408
+      },
+      "total_tokens": 2129
+    },
+    "cost_usd": 0.032,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "leg-raises",
+    "file": "img/review/leg-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing flat straight leg raises in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.332Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 135,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 135
+      },
+      "output_tokens": 1419,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 363
+      },
+      "total_tokens": 1554
+    },
+    "cost_usd": 0.02304,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "knee-tucks",
+    "file": "img/review/knee-tucks.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing seated knee tucks in an outdoor calisthenics park: seated on a mat, leaning back on the hands, knees tucked toward the chest, feet lifted. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.333Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1955,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 387
+      },
+      "total_tokens": 2106
+    },
+    "cost_usd": 0.03166,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "flat-knee-raises",
+    "file": "img/review/flat-knee-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing flat knee raises in an outdoor calisthenics park: lying flat on a mat, knees bent and lifted toward the chest, hands by the hips. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.334Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 1947,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 379
+      },
+      "total_tokens": 2096
+    },
+    "cost_usd": 0.03152,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "bent-leg-raises",
+    "file": "img/review/bent-leg-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing flat bent leg raises in an outdoor calisthenics park: lying on a mat, legs bent 45 degrees and raised high, lower back flat. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.334Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 2000,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 432
+      },
+      "total_tokens": 2149
+    },
+    "cost_usd": 0.03237,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "frog-raises",
+    "file": "img/review/frog-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing flat frog raises in an outdoor calisthenics park: lying on a mat, knees tucked toward the chest, lower back pressed down. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.335Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 146,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 146
+      },
+      "output_tokens": 1953,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 385
+      },
+      "total_tokens": 2099
+    },
+    "cost_usd": 0.03161,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "straight-flat-leg-raises",
+    "file": "img/review/straight-flat-leg-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing flat straight leg raises in an outdoor calisthenics park: lying flat on a mat, straight legs raised to point at the sky. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.335Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 146,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 146
+      },
+      "output_tokens": 1971,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 403
+      },
+      "total_tokens": 2117
+    },
+    "cost_usd": 0.0319,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "hanging-knee-raises",
+    "file": "img/review/hanging-knee-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing hanging knee raises in an outdoor calisthenics park: hanging from a bar with straight arms, knees raised to hip height. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.336Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 144,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 144
+      },
+      "output_tokens": 1989,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 421
+      },
+      "total_tokens": 2133
+    },
+    "cost_usd": 0.03218,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "hanging-bent-leg-raises",
+    "file": "img/review/hanging-bent-leg-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing hanging bent leg raises in an outdoor calisthenics park: hanging from a bar with straight arms, bent legs raised to hip height. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.337Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 146,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 146
+      },
+      "output_tokens": 1965,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 397
+      },
+      "total_tokens": 2111
+    },
+    "cost_usd": 0.0318,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "hanging-straight-leg-raises",
+    "file": "img/review/hanging-straight-leg-raises.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing hanging straight leg raises in an outdoor calisthenics park: hanging from a bar with straight arms, straight legs raised parallel to the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.337Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 147,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 147
+      },
+      "output_tokens": 1948,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 380
+      },
+      "total_tokens": 2095
+    },
+    "cost_usd": 0.03154,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "bridges",
+    "file": "img/review/bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing half bridges on a mat on grass in a park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.338Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 133,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 133
+      },
+      "output_tokens": 1424,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 368
+      },
+      "total_tokens": 1557
+    },
+    "cost_usd": 0.02312,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "glute-bridges",
+    "file": "img/review/glute-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing glute bridges on a mat on grass in a park: lying on the back, knees bent, hips lifted high in a straight line from knees to shoulders. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.338Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 150,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 150
+      },
+      "output_tokens": 1951,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 383
+      },
+      "total_tokens": 2101
+    },
+    "cost_usd": 0.03159,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "straight-bridges",
+    "file": "img/review/straight-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing straight bridges on a mat on grass in a park: reverse tabletop, hands behind the hips, legs straight, body lifted in one straight line. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.339Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 147,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 147
+      },
+      "output_tokens": 1991,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 423
+      },
+      "total_tokens": 2138
+    },
+    "cost_usd": 0.03222,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "angled-bridges",
+    "file": "img/review/angled-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing angled bridges on a mat on grass in a park: arched backbend with hands on a bench behind, feet on the ground, hips pushed up. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.340Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 1958,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 390
+      },
+      "total_tokens": 2107
+    },
+    "cost_usd": 0.0317,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "head-bridges",
+    "file": "img/review/head-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing head bridges on a mat on grass in a park: arched backbend with the top of the head and hands on a mat, hips pushed high. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.341Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 1950,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 382
+      },
+      "total_tokens": 2099
+    },
+    "cost_usd": 0.03157,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "half-bridges",
+    "file": "img/review/half-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing half bridges on a mat on grass in a park: arched backbend over a padded box, hands and feet pressing, hips high. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.342Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 146,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 146
+      },
+      "output_tokens": 1959,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 391
+      },
+      "total_tokens": 2105
+    },
+    "cost_usd": 0.03171,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "full-bridges",
+    "file": "img/review/full-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing full bridges on a mat on grass in a park: in a full wheel backbend on a mat, arms and legs straight, hips high. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.343Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 147,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 147
+      },
+      "output_tokens": 1943,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 375
+      },
+      "total_tokens": 2090
+    },
+    "cost_usd": 0.03146,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "wall-walking-bridges",
+    "file": "img/review/wall-walking-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing wall walking bridges on a mat on grass in a park: standing with back to a wall, arching backward, hands walking down the wall. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.344Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 147,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 147
+      },
+      "output_tokens": 1969,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 401
+      },
+      "total_tokens": 2116
+    },
+    "cost_usd": 0.03187,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "twists",
+    "file": "img/review/twists.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing bent-leg twists on a mat on grass in a park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.344Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 134,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 134
+      },
+      "output_tokens": 1446,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 390
+      },
+      "total_tokens": 1580
+    },
+    "cost_usd": 0.02347,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "straight-leg-twists",
+    "file": "img/review/straight-leg-twists.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing straight-leg twists on a mat on grass in a park: seated with legs straight, torso twisted, one hand behind the hips, other arm across the knee. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.345Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 150,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 150
+      },
+      "output_tokens": 1955,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 387
+      },
+      "total_tokens": 2105
+    },
+    "cost_usd": 0.03166,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "bent-leg-twists",
+    "file": "img/review/bent-leg-twists.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing bent-leg twists on a mat on grass in a park: seated twist with one leg bent across the other, torso rotated, elbow hooked on the knee. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.345Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 1988,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 420
+      },
+      "total_tokens": 2137
+    },
+    "cost_usd": 0.03218,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "full-twists",
+    "file": "img/review/full-twists.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing full twists on a mat on grass in a park: in a deep twisting bridge: hand and feet on the mat, hips lifted, chest rotated toward the sky. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.346Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1977,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 409
+      },
+      "total_tokens": 2128
+    },
+    "cost_usd": 0.03201,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "grip",
+    "file": "img/review/grip.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing towel hangs on a steel bar in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.347Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 1418,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 362
+      },
+      "total_tokens": 1567
+    },
+    "cost_usd": 0.02306,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "lean-hangs",
+    "file": "img/review/lean-hangs.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing lean hangs on a steel bar in an outdoor calisthenics park: gripping a waist-high bar, leaning back with straight arms and straight body, heels on the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.347Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 165,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 165
+      },
+      "output_tokens": 1989,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 421
+      },
+      "total_tokens": 2154
+    },
+    "cost_usd": 0.03224,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "assisted-bar-hangs",
+    "file": "img/review/assisted-bar-hangs.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing assisted bar hangs on a steel bar in an outdoor calisthenics park: hanging from a head-height bar with knees bent, feet on the ground, arms straight. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.348Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 164,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 164
+      },
+      "output_tokens": 1966,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 398
+      },
+      "total_tokens": 2130
+    },
+    "cost_usd": 0.03187,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "bar-hangs",
+    "file": "img/review/bar-hangs.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing bar hangs on a steel bar in an outdoor calisthenics park: dead hang from a high bar, overhand grip, arms straight, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.349Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 164,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 164
+      },
+      "output_tokens": 1954,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 386
+      },
+      "total_tokens": 2118
+    },
+    "cost_usd": 0.03167,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "towel-hangs",
+    "file": "img/review/towel-hangs.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing towel hangs on a steel bar in an outdoor calisthenics park: hanging from two towels looped over a high bar, arms straight, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.349Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 164,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 164
+      },
+      "output_tokens": 1935,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 367
+      },
+      "total_tokens": 2099
+    },
+    "cost_usd": 0.03137,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "assisted-one-arm-hangs",
+    "file": "img/review/assisted-one-arm-hangs.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing assisted one-arm hangs on a steel bar in an outdoor calisthenics park: hanging from one hand, two fingers of the other hand lightly on the bar for balance. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.350Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 165,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 165
+      },
+      "output_tokens": 1916,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 348
+      },
+      "total_tokens": 2081
+    },
+    "cost_usd": 0.03107,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "one-arm-hangs",
+    "file": "img/review/one-arm-hangs.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing one-arm hangs on a steel bar in an outdoor calisthenics park: hanging from one hand on a high bar, shoulder engaged, free arm by the side. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.351Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 164,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 164
+      },
+      "output_tokens": 1978,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 410
+      },
+      "total_tokens": 2142
+    },
+    "cost_usd": 0.03206,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "lunges",
+    "file": "img/review/lunges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing bulgarian split squats on a paved path in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.351Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 141,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 141
+      },
+      "output_tokens": 1467,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 411
+      },
+      "total_tokens": 1608
+    },
+    "cost_usd": 0.02382,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "split-squats",
+    "file": "img/review/split-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing split squats on a paved path in an outdoor calisthenics park: in a split stance, back knee just above the ground, torso upright. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.352Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 1938,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 370
+      },
+      "total_tokens": 2087
+    },
+    "cost_usd": 0.03138,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "reverse-lunges",
+    "file": "img/review/reverse-lunges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing reverse lunges on a paved path in an outdoor calisthenics park: stepping back into a lunge, both knees bent 90 degrees, torso upright. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.353Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1962,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 394
+      },
+      "total_tokens": 2113
+    },
+    "cost_usd": 0.03177,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "walking-lunges",
+    "file": "img/review/walking-lunges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing walking lunges on a paved path in an outdoor calisthenics park: mid walking lunge, front knee over the ankle, back knee near the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.354Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1967,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 399
+      },
+      "total_tokens": 2118
+    },
+    "cost_usd": 0.03185,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "bulgarian-split-squats",
+    "file": "img/review/bulgarian-split-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing bulgarian split squats on a paved path in an outdoor calisthenics park: rear foot on a bench behind, front leg bent deep, back knee near the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.355Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 155,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 155
+      },
+      "output_tokens": 1976,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 408
+      },
+      "total_tokens": 2131
+    },
+    "cost_usd": 0.032,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "jumping-lunges",
+    "file": "img/review/jumping-lunges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing jumping lunges on a paved path in an outdoor calisthenics park: in mid-air switching legs during a jumping lunge, arms driving. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.356Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 148,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 148
+      },
+      "output_tokens": 1966,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 398
+      },
+      "total_tokens": 2114
+    },
+    "cost_usd": 0.03183,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "shrimp-squats",
+    "file": "img/review/shrimp-squats.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing shrimp squats on a paved path in an outdoor calisthenics park: on one leg, holding the other foot behind, rear knee lowering toward the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.356Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1985,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 417
+      },
+      "total_tokens": 2136
+    },
+    "cost_usd": 0.03214,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "dips",
+    "file": "img/review/dips.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing parallel bar dips on parallel bars in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.357Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 137,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 137
+      },
+      "output_tokens": 1424,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 368
+      },
+      "total_tokens": 1561
+    },
+    "cost_usd": 0.02313,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "bench-dips",
+    "file": "img/review/bench-dips.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing bench dips on parallel bars in an outdoor calisthenics park: hands on a bench behind the hips, legs forward, elbows bent 90 degrees. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.357Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 149,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 149
+      },
+      "output_tokens": 1959,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 391
+      },
+      "total_tokens": 2108
+    },
+    "cost_usd": 0.03172,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "support-holds",
+    "file": "img/review/support-holds.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing support holds on parallel bars in an outdoor calisthenics park: holding the top of parallel bars with straight locked arms, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.358Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 148,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 148
+      },
+      "output_tokens": 1927,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 359
+      },
+      "total_tokens": 2075
+    },
+    "cost_usd": 0.0312,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "negative-dips",
+    "file": "img/review/negative-dips.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing negative dips on parallel bars in an outdoor calisthenics park: slowly lowering on parallel bars, elbows half bent, torso slightly forward. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.359Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 146,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 146
+      },
+      "output_tokens": 1925,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 357
+      },
+      "total_tokens": 2071
+    },
+    "cost_usd": 0.03117,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "parallel-bar-dips",
+    "file": "img/review/parallel-bar-dips.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing parallel bar dips on parallel bars in an outdoor calisthenics park: at the bottom of a dip on parallel bars, elbows at 90 degrees, knees bent behind. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.359Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 153,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 153
+      },
+      "output_tokens": 1949,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 381
+      },
+      "total_tokens": 2102
+    },
+    "cost_usd": 0.03157,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "ring-dips",
+    "file": "img/review/ring-dips.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing ring dips on parallel bars in an outdoor calisthenics park: at the bottom of a dip on gymnastic rings, rings close to the body. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.360Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 150,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 150
+      },
+      "output_tokens": 1990,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 422
+      },
+      "total_tokens": 2140
+    },
+    "cost_usd": 0.03222,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "elbow-levers",
+    "file": "img/review/elbow-levers.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing full elbow levers on a rubber floor in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.361Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 139,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 139
+      },
+      "output_tokens": 1451,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 395
+      },
+      "total_tokens": 1590
+    },
+    "cost_usd": 0.02356,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "frog-stands",
+    "file": "img/review/frog-stands.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing frog stands on a rubber floor in an outdoor calisthenics park: crouched balance on the hands, knees resting on the backs of the elbows, feet lifted. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.361Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 152,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 152
+      },
+      "output_tokens": 1962,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 394
+      },
+      "total_tokens": 2114
+    },
+    "cost_usd": 0.03177,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "elbow-lever-tucks",
+    "file": "img/review/elbow-lever-tucks.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing tucked elbow levers on a rubber floor in an outdoor calisthenics park: balancing on both hands, elbows dug into the hips, knees tucked, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.362Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 154,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 154
+      },
+      "output_tokens": 1967,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 399
+      },
+      "total_tokens": 2121
+    },
+    "cost_usd": 0.03186,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "one-leg-elbow-levers",
+    "file": "img/review/one-leg-elbow-levers.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing one-leg elbow levers on a rubber floor in an outdoor calisthenics park: elbow lever balance on both hands, one leg extended straight back, other tucked. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.363Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 152,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 152
+      },
+      "output_tokens": 1932,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 364
+      },
+      "total_tokens": 2084
+    },
+    "cost_usd": 0.03129,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "full-elbow-levers",
+    "file": "img/review/full-elbow-levers.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing full elbow levers on a rubber floor in an outdoor calisthenics park: full elbow lever: body horizontal and straight, balanced on both hands, elbows in the hips. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.364Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 154,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 154
+      },
+      "output_tokens": 1958,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 390
+      },
+      "total_tokens": 2112
+    },
+    "cost_usd": 0.03171,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "one-arm-elbow-levers",
+    "file": "img/review/one-arm-elbow-levers.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing one-arm elbow levers on a rubber floor in an outdoor calisthenics park: body horizontal, balanced on one hand with elbow in the hip, other arm out. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.365Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 153,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 153
+      },
+      "output_tokens": 1940,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 372
+      },
+      "total_tokens": 2093
+    },
+    "cost_usd": 0.03142,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "straight-arm-planche-leans",
+    "file": "img/review/straight-arm-planche-leans.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing planche leans on a rubber floor in an outdoor calisthenics park: in a pushup position with straight arms, shoulders leaning well past the hands. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.366Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1974,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 406
+      },
+      "total_tokens": 2125
+    },
+    "cost_usd": 0.03196,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "clutch-flag",
+    "file": "img/review/clutch-flag.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete performing straddle clutch flags on a vertical steel pole in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1.",
+    "generated_at": "2026-11-07T09:03:03.366Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 140,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 140
+      },
+      "output_tokens": 1450,
+      "output_tokens_details": {
+        "image_tokens": 1056,
+        "text_tokens": 394
+      },
+      "total_tokens": 1590
+    },
+    "cost_usd": 0.02355,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "side-planks",
+    "file": "img/review/side-planks.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing side planks on a vertical steel pole in an outdoor calisthenics park: side plank on one forearm, feet stacked, body in a straight line. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.367Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 2041,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 473
+      },
+      "total_tokens": 2192
+    },
+    "cost_usd": 0.03303,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "clutch-holds",
+    "file": "img/review/clutch-holds.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing clutch holds on a vertical steel pole in an outdoor calisthenics park: hugging a vertical pole, lower arm wrapped around it, top hand gripping above, feet on the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.368Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 155,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 155
+      },
+      "output_tokens": 1947,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 379
+      },
+      "total_tokens": 2102
+    },
+    "cost_usd": 0.03154,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "tucked-clutch-flags",
+    "file": "img/review/tucked-clutch-flags.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing tucked clutch flags on a vertical steel pole in an outdoor calisthenics park: clutch grip on a vertical pole, body sideways, knees tucked to the chest, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.368Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 156,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 156
+      },
+      "output_tokens": 1968,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 400
+      },
+      "total_tokens": 2124
+    },
+    "cost_usd": 0.03188,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "straddle-clutch-flags",
+    "file": "img/review/straddle-clutch-flags.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing straddle clutch flags on a vertical steel pole in an outdoor calisthenics park: clutch flag on a vertical pole, body horizontal, legs straddled wide. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.369Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 152,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 152
+      },
+      "output_tokens": 1977,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 409
+      },
+      "total_tokens": 2129
+    },
+    "cost_usd": 0.03201,
+    "batch_discount": 0.5
+  },
+  {
+    "id": "full-clutch-flags",
+    "file": "img/review/full-clutch-flags.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "batch_id": "batch_6aee2d4cceb08190af6dfeeceb19bfff",
+    "prompt": "Athlete doing full clutch flags on a vertical steel pole in an outdoor calisthenics park: clutch flag on a vertical pole, body fully horizontal and straight, legs together. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "generated_at": "2026-11-07T09:03:03.370Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 151,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 151
+      },
+      "output_tokens": 1959,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 391
+      },
+      "total_tokens": 2110
+    },
+    "cost_usd": 0.03172,
+    "batch_discount": 0.5
+  }
+]

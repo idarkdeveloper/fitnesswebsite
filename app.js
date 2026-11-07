@@ -207,6 +207,7 @@ function defaultState() {
     foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
     foodsSeededDE: false,               // German everyday foods added on this device (not synced)
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
+    progOrder: 2,                       // progression list version (see migrateProgOrder)
   };
 }
 
@@ -215,16 +216,36 @@ function loadState() {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return defaultState();
     const d = defaultState();
-    return { ...d, ...raw, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) }, planReminder: { ...d.planReminder, ...(raw.planReminder || {}) } };
+    return { ...d, ...raw, progOrder: raw.progOrder ?? 1, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) }, planReminder: { ...d.planReminder, ...(raw.planReminder || {}) } };
   } catch {
     return defaultState();
   }
 }
 
 let state = loadState();
+
+/* Progressions were added in the middle of Bridges and Grip (Nov 2026). "current" stores a position in the list,
+   so move anyone already on those ladders to the same exercise at its new position. */
+const OLD_ORDERS = {
+  bridges: ['glute-bridges', 'straight-bridges', 'angled-bridges', 'head-bridges', 'half-bridges', 'full-bridges', 'wall-walking-bridges'],
+  grip: ['lean-hangs', 'assisted-bar-hangs', 'bar-hangs', 'towel-hangs', 'assisted-one-arm-hangs', 'one-arm-hangs'],
+};
+(function migrateProgOrder() {
+  if ((state.progOrder || 1) >= 2) return;
+  for (const [cat, ids] of Object.entries(OLD_ORDERS)) {
+    const i = state.current[cat];
+    if (i == null || !ids[i]) continue;
+    const c = (window.PF_DATA?.categories || []).find((x) => x.id === cat);
+    const j = c ? c.progressions.findIndex((p) => p.id === ids[i]) : -1;
+    if (j >= 0) state.current[cat] = j;
+  }
+  state.progOrder = 2;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+})();
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* storage full or blocked */ }
   if (window.PFSync) window.PFSync.noteSave(state);   // cloud sync (sync.js), if loaded
+  if (window.PF_widgetPush) window.PF_widgetPush();     // Android home-screen widget, in the app only
 }
 
 /* ---------------------------------------------------------------
@@ -1020,6 +1041,7 @@ VIEWS.profile = () => {
     <h2 class="group-label">Watch &amp; health</h2>
     <div class="list-group">
       ${row('health', 'Galaxy Watch &amp; Samsung Health', isNativeApp() ? (state.health && state.health.enabled ? `Health Connect · synced ${esc(ago(state.health.last))}` : 'Not connected') : 'Needs the PulseFit Android app')}
+      ${isNativeApp() ? row('widget', 'Home screen widget', 'Day streak and today\'s session') : ''}
     </div>
 
     <h2 class="group-label">Data</h2>
@@ -2650,7 +2672,7 @@ function hcLoad() {
     const done = () => {
       const reg = window.capacitorExports && window.capacitorExports.registerPlugin;
       if (!reg) { reject(new Error('Capacitor not available')); return; }
-      hcPlugins = { Health: reg('Health'), App: reg('App') };
+      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget') };
       resolve(hcPlugins);
     };
     if (window.capacitorExports) { done(); return; }
@@ -2781,7 +2803,59 @@ function healthSheet() {
     <p class="small muted m-0"><a href="privacy.html">How PulseFit uses this data</a></p>`);
 }
 
+
+/* ---------- Home-screen widget (Android app) ---------- */
+/** What the widget shows: streak, today's status and a short detail line. */
+function widgetData() {
+  const tk = todayKey(), d = today();
+  const { current } = streakStats();
+  const sess = sessionFor(d);
+  const status = workoutsOn(tk).length ? 'Done today ✓'
+    : sess.length ? `Today: ${sess.map((c) => CAT[c].name).join(' + ')}`
+    : current ? 'Rest day · streak safe' : 'Start today 💪';
+  const T = targets(tk);
+  const eaten = state.meals.filter((m) => m.day === tk).reduce((a, m) => a + m.kcal, 0);
+  const steps = hget(tk, 'steps');
+  const detail = [T ? `${nf(Math.max(0, T.kcal - eaten))} kcal left` : '', steps != null ? `${nf(steps)} steps` : ''].filter(Boolean).join(' · ');
+  return { streak: current, status, detail, asOf: tk };
+}
+let widgetTimer = null, widgetLast = '';
+function widgetPush(now = false) {
+  if (!isNativeApp()) return;
+  clearTimeout(widgetTimer);
+  widgetTimer = setTimeout(async () => {
+    const data = widgetData(), key = JSON.stringify(data);
+    if (key === widgetLast) return;
+    try { await (await hcLoad()).Widget.update(data); widgetLast = key; } catch { /* older app without the widget */ }
+  }, now ? 0 : 800);
+}
+window.PF_widgetPush = () => widgetPush();
+
+async function widgetSheet() {
+  let st = null;
+  try { st = await (await hcLoad()).Widget.status(); } catch { /* the installed app is older than the widget */ }
+  const w = widgetData();
+  const card = `<div class="widget-preview" aria-hidden="true"><div class="wp-k">🔥 Day Streak</div><div class="wp-n">${w.streak}</div><div class="wp-s">${esc(w.status)}</div>${w.detail ? `<div class="wp-d">${esc(w.detail)}</div>` : ''}</div>`;
+  openSheet('Home screen widget', `
+    <p class="m-0">Your streak and today's session on your home screen, so you never miss a day. Tap it to open PulseFit.</p>
+    ${card}
+    ${!st ? `<p class="small m-0">This needs the latest PulseFit app. Download it, uninstall the old app, install the new one and sign in again; your synced data comes back.</p>
+      <a class="btn block lg mt-4" href="${APK_URL}">${icon('download')} Download the latest app</a>`
+    : st.canPin ? `<button class="btn block lg mt-2" data-action="widget-pin">${icon('plus')} Add widget</button>
+      ${st.count ? `<p class="small muted mt-3 m-0">${st.count === 1 ? 'One PulseFit widget is' : `${st.count} PulseFit widgets are`} on your home screen.</p>` : ''}`
+    : ''}
+    ${st ? `<p class="small muted mt-3 m-0">Or: touch and hold an empty spot on your home screen → Widgets → PulseFit.</p>` : ''}`);
+}
+
 const HEALTH_ACTIONS = {
+  'widget': widgetSheet,
+  'widget-pin': async () => {
+    try {
+      const r = await (await hcLoad()).Widget.pin();
+      widgetPush(true);
+      toast(r.requested ? 'Confirm on the next screen to place the widget' : 'Touch and hold your home screen → Widgets → PulseFit');
+    } catch { toast('Touch and hold your home screen → Widgets → PulseFit'); }
+  },
   'health': healthSheet,
   'health-connect': hcConnect,
   'health-sync': () => hcSync(true),
@@ -2794,12 +2868,17 @@ async function hcBoot() {
   if (!isNativeApp()) return;
   try {
     const { App } = await hcLoad();
-    App.addListener('appStateChange', ({ isActive }) => { if (isActive && Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync(); });
+    App.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) return;
+      widgetPush(true);
+      if (Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync();
+    });
     const onUrl = (url) => { if (url && url.startsWith('pulsefit://login') && window.PFSync && window.PFSync.handleAuthLink) window.PFSync.handleAuthLink(url); };
     App.addListener('appUrlOpen', ({ url }) => onUrl(url));
     const launch = await App.getLaunchUrl();
     if (launch && launch.url) setTimeout(() => onUrl(launch.url), 1500);   // let sync.js load first
   } catch { /* plugins missing: an old app version */ }
+  widgetPush(true);
   hcSync();
 }
 

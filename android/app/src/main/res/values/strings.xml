@@ -5,4 +5,7 @@
     <string name="package_name">io.github.idarkdeveloper.pulsefit</string>
     <string name="custom_url_scheme">io.github.idarkdeveloper.pulsefit</string>
     <string name="health_connect_privacy_policy_url">https://idarkdeveloper.github.io/fitnesswebsite/privacy.html</string>
+    <string name="widget_title">🔥 Day Streak</string>
+    <string name="widget_start">Start today 💪</string>
+    <string name="widget_description">Your PulseFit training streak and today\'s session</string>
 </resources>

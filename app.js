@@ -551,6 +551,7 @@ VIEWS.home = () => {
       </ol>
       <button class="btn ghost block" data-action="dismiss-intro">Got it</button>
     </section>` : ''}
+    ${todaySummary()}
     <section class="card challenge-strip" aria-label="30 day workout challenge">
       <div class="row-between">
         <div class="title">${icon('flame')} 30 Day Workout Challenge</div>
@@ -940,6 +941,29 @@ function targets(day) {
     floored: raw < floor,
     protein: Math.round(1.6 * (p.goalWeight || weight)),
   };
+}
+
+/** Compact "Today" card for Home: calories, weight, steps and water, linking to the Track tab. */
+function todaySummary() {
+  const day = todayKey();
+  const p = hp();
+  const T = targets(day);
+  const eaten = state.meals.filter((m) => m.day === day).reduce((a, m) => a + m.kcal, 0);
+  const w = hget(day, 'weight'), a = avg7(day);
+  const steps = hget(day, 'steps'), water = hget(day, 'water');
+  const sg = p.stepGoal || HDEF.stepGoal, wg = p.waterGoal || HDEF.waterGoal;
+  const left = T ? T.kcal - eaten : null;
+  const stat = (k, v, g) => `<div class="ts"><span class="k">${k}</span><span class="v">${v}</span><span class="g">${g}</span></div>`;
+  return `
+    <a class="card today-card" href="#/track" aria-label="Today's health log. Open Track">
+      <div class="row-between"><h2 class="h3">Today</h2><span class="small c-accent fw-bold row gap-2">Track ${icon('chevR', 'class="icon-sm"')}</span></div>
+      <div class="today-grid mt-3">
+        ${T ? stat('Calories', nf(Math.abs(left)), left >= 0 ? `left of ${nf(T.kcal)}` : `over ${nf(T.kcal)}`) : stat('Calories', nf(eaten), 'eaten')}
+        ${stat('Weight', w != null ? kg(w) : '–', w != null ? `kg${a != null ? ` · avg ${kg(a)}` : ''}` : 'not weighed yet')}
+        ${stat('Steps', steps != null ? nf(steps) : '–', `of ${nf(sg)}`)}
+        ${stat('Water', water != null ? `${(water / 1000).toFixed(1)} L` : '–', `of ${(wg / 1000).toFixed(1)} L`)}
+      </div>
+    </a>`;
 }
 
 /* ---------- Track view ---------- */

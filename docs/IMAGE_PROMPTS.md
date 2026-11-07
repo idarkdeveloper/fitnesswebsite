@@ -77,10 +77,10 @@ Athlete doing full pushups in an outdoor calisthenics park: in a straight-body p
 
 ### Pushups 5: Close Pushups
 
-`img/close-pushups.webp` · aspect **16:9** · 54 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/close-pushups.webp` · aspect **16:9** · 59 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing close pushups in an outdoor calisthenics park: in a pushup on the toes, palms flat and touching under the chest, elbows tucked, chest lowered. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. The arms carry the body weight; forearms stay off the ground (this is not a plank). Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing close pushups in an outdoor calisthenics park: at the top of a pushup on the toes, arms straight and vertical, palms flat on the ground touching under the chest. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: hips level, body in one straight line from head to heels (or knees for kneeling pushups); no sagging or piking. Arms fully straight with shoulders directly above the hands; chest and forearms are well off the ground (this is not a plank). Hands lie flat on the ground, not clasped. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Pushups 6: Uneven Pushups
@@ -389,10 +389,10 @@ Athlete doing straight bridges on a mat on grass in a park: reverse tabletop, ha
 
 ### Bridges 3: Angled Bridges
 
-`img/angled-bridges.webp` · aspect **16:9** · 55 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/angled-bridges.webp` · aspect **16:9** · 60 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing angled bridges on a mat on grass in a park: arched backbend with hands on a bench behind, feet on the ground, hips pushed up. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing angled bridges on a mat on grass in a park: arched backbend, straight arms pressing on a park bench seat behind the head, feet flat on the ground, hips high. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. The hands are on top of the bench seat and carry weight; the head and back touch nothing; the body forms an upside-down U. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Bridges 4: Head Bridges
@@ -516,7 +516,7 @@ Athlete doing assisted one-arm hangs on a steel bar in an outdoor calisthenics p
 `img/one-arm-hangs.webp` · aspect **16:9** · 56 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing one-arm hangs on a steel bar in an outdoor calisthenics park: hanging from one hand on a high bar, shoulder engaged, free arm by the side. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing one-arm hangs on a steel bar in an outdoor calisthenics park: hanging from one hand on a high bar, body fully suspended, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. The bar is above head height and one hand is the only support; both feet hang at least 30 cm above the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ## Lunges
@@ -605,10 +605,10 @@ Athlete doing support holds on parallel bars in an outdoor calisthenics park: ho
 
 ### Dips 3: Negative Dips
 
-`img/negative-dips.webp` · aspect **16:9** · 51 words · used in: Home exercise card, progression list, exercise hero, workout session
+`img/negative-dips.webp` · aspect **16:9** · 59 words · used in: Home exercise card, progression list, exercise hero, workout session
 
 ```text
-Athlete doing negative dips on parallel bars in an outdoor calisthenics park: slowly lowering on parallel bars, elbows half bent, torso slightly forward. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
+Athlete doing negative dips on parallel bars in an outdoor calisthenics park: suspended between two parallel dip bars, one hand on each, knees bent, feet off the ground, elbows half bent. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Two parallel bars about hip height, side by side, one in each hand; the feet do not touch the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.
 ```
 
 ### Dips 4: Parallel Bar Dips

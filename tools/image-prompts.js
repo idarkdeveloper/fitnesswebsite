@@ -36,7 +36,10 @@ const FORM_NOTE = {
 };
 /* Per-exercise corrections for faults seen in generated images (outside the 60-word core). */
 const ID_NOTE = {
-  'close-pushups': 'The arms carry the body weight; forearms stay off the ground (this is not a plank).',
+  'close-pushups': 'Arms fully straight with shoulders directly above the hands; chest and forearms are well off the ground (this is not a plank). Hands lie flat on the ground, not clasped.',
+  'angled-bridges': 'The hands are on top of the bench seat and carry weight; the head and back touch nothing; the body forms an upside-down U.',
+  'one-arm-hangs': 'The bar is above head height and one hand is the only support; both feet hang at least 30 cm above the ground.',
+  'negative-dips': 'Two parallel bars about hip height, side by side, one in each hand; the feet do not touch the ground.',
   'close-pullups': 'Both hands wrap over the bar side by side, palms facing away; the hands are not clasped together.',
   'uneven-pullups': 'The towel hangs from the same high bar about 30 cm below it, gripped firmly; both arms pull.',
 };
@@ -62,7 +65,7 @@ const POSE_OVERRIDE = {
   "incline-pushups": "hands on a waist-high bench, body straight and angled, chest lowered to the bench edge",
   "knee-pushups": "knees on a mat, hands on the floor, body straight from knees to head, chest lowered near the floor",
   "full-pushups": "in a straight-body pushup on the toes, knees off the ground, chest just above the floor",
-  "close-pushups": "in a pushup on the toes, palms flat and touching under the chest, elbows tucked, chest lowered",
+  "close-pushups": "at the top of a pushup on the toes, arms straight and vertical, palms flat on the ground touching under the chest",
   "uneven-pushups": "in a full plank pushup on the toes, knees off the ground, one hand on a basketball",
   "half-one-arm-pushups": "in a wide-stance one-arm pushup, other hand behind the back, elbow bent to 90 degrees",
   "lever-pushups": "in a pushup, one hand under the chest, the other arm straight out to the side on a ball",
@@ -96,7 +99,7 @@ const POSE_OVERRIDE = {
   "hanging-straight-leg-raises": "hanging from a bar with straight arms, straight legs raised parallel to the ground",
   "glute-bridges": "lying on the back, knees bent, hips lifted high in a straight line from knees to shoulders",
   "straight-bridges": "reverse tabletop, hands behind the hips, legs straight, body lifted in one straight line",
-  "angled-bridges": "arched backbend with hands on a bench behind, feet on the ground, hips pushed up",
+  "angled-bridges": "arched backbend, straight arms pressing on a park bench seat behind the head, feet flat on the ground, hips high",
   "head-bridges": "arched backbend with the top of the head and hands on a mat, hips pushed high",
   "half-bridges": "arched backbend over a padded box, hands and feet pressing, hips high",
   "full-bridges": "in a full wheel backbend on a mat, arms and legs straight, hips high",
@@ -109,7 +112,7 @@ const POSE_OVERRIDE = {
   "bar-hangs": "dead hang from a high bar, overhand grip, arms straight, feet off the ground",
   "towel-hangs": "hanging from two towels looped over a high bar, arms straight, feet off the ground",
   "assisted-one-arm-hangs": "hanging from one hand, two fingers of the other hand lightly on the bar for balance",
-  "one-arm-hangs": "hanging from one hand on a high bar, shoulder engaged, free arm by the side",
+  "one-arm-hangs": "hanging from one hand on a high bar, body fully suspended, feet off the ground",
   "split-squats": "in a split stance, back knee just above the ground, torso upright",
   "reverse-lunges": "stepping back into a lunge, both knees bent 90 degrees, torso upright",
   "walking-lunges": "mid walking lunge, front knee over the ankle, back knee near the ground",
@@ -118,7 +121,7 @@ const POSE_OVERRIDE = {
   "shrimp-squats": "on one leg, holding the other foot behind, rear knee lowering toward the ground",
   "bench-dips": "hands on a bench behind the hips, legs forward, elbows bent 90 degrees",
   "support-holds": "holding the top of parallel bars with straight locked arms, feet off the ground",
-  "negative-dips": "slowly lowering on parallel bars, elbows half bent, torso slightly forward",
+  "negative-dips": "suspended between two parallel dip bars, one hand on each, knees bent, feet off the ground, elbows half bent",
   "parallel-bar-dips": "at the bottom of a dip on parallel bars, elbows at 90 degrees, knees bent behind",
   "ring-dips": "at the bottom of a dip on gymnastic rings, rings close to the body",
   "frog-stands": "crouched balance on the hands, knees resting on the backs of the elbows, feet lifted",
@@ -148,8 +151,7 @@ const words = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 
 /* Ids whose generated image was rejected for wrong form; their prompts were tightened afterwards.
    Remove an id once a good image for it is in img/. */
-const REDO_IDS = new Set(['full-pushups', 'close-pushups', 'uneven-pushups', 'horizontal-rows', 'full-pullups',
-  'close-pullups', 'uneven-pullups', 'half-one-arm-pullups', 'one-arm-pullups']);
+const REDO_IDS = new Set(['close-pushups', 'angled-bridges', 'one-arm-hangs', 'negative-dips']);
 
 const STYLE_ANCHOR = () => `You are producing a consistent series of exercise photos for a calisthenics app. Every image: ${STYLE} ${COMPOSITION} ${LIGHTING} ${COLOR} Keep the subject centred so the image can be cropped to a square. ${ATHLETE} ${NEGATIVE} Show safe, textbook form.`;
 

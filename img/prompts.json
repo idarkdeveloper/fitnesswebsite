@@ -284,7 +284,7 @@
     "kind": "cover",
     "aspect": "1:1",
     "file": "img/bridges.webp",
-    "prompt": "Athlete performing half bridges on a mat on grass in a park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1."
+    "prompt": "Athlete performing full bridges on a mat on grass in a park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1."
   },
   {
     "id": "glute-bridges",
@@ -308,6 +308,20 @@
     "prompt": "Athlete doing angled bridges on a mat on grass in a park: high arched backbend, elbows locked straight, hands pressing down on a knee-high park bench behind, feet flat, hips highest point. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Arms fully straight like a bridge pose, wrists on the bench edge, shoulders pushed back over the hands; the head hangs between the arms well above the ground; the body forms a tall upside-down U with hips higher than the bench; nothing but hands and feet touch anything. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
+    "id": "wall-bridges",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/wall-bridges.webp",
+    "prompt": "Athlete doing wall bridges on a mat on grass in a park: standing a step in front of a wall, arched backward, palms flat on the wall behind at head height. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Feet flat on the ground a step away from the wall; only the palms touch the wall; no bench or step. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "incline-bridges",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/incline-bridges.webp",
+    "prompt": "Athlete doing incline bridges on a mat on grass in a park: in an arched backbend, arms straight, hands on a shin-height concrete step behind the head, feet flat, hips high. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. The step is low, about shin height (much lower than a bench); arms straight, head between the arms well off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
     "id": "head-bridges",
     "kind": "progression",
     "aspect": "16:9",
@@ -329,11 +343,32 @@
     "prompt": "Athlete doing full bridges on a mat on grass in a park: in a full wheel backbend on a mat, arms and legs straight, hips high. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
+    "id": "wheel-bridges",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/wheel-bridges.webp",
+    "prompt": "Athlete doing wheel bridges on a mat on grass in a park: in a deep wheel backbend on a mat, arms and legs locked straight, shoulders pushed over the wrists. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "tap-bridges",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/tap-bridges.webp",
+    "prompt": "Athlete doing tap bridges on a mat on grass in a park: in a backbend, belly up, hands by the ears, elbows bent, crown of the head lightly touching the mat. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. A backbend: chest and belly face the sky and the back faces the mat; hands flat beside the head, fingers toward the feet; hips high. Not a forward fold, child pose or forearm stand. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
     "id": "wall-walking-bridges",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/wall-walking-bridges.webp",
     "prompt": "Athlete doing wall walking bridges on a mat on grass in a park: standing with back to a wall, arching backward, hands walking down the wall. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "stand-to-stand-bridges",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/stand-to-stand-bridges.webp",
+    "prompt": "Athlete doing stand to stand bridges on a mat on grass in a park: mid drop-back from standing, knees bent, hips pushed forward, back deeply arched, arms reaching back. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. No wall, bench or helper; feet flat; hands not yet touching the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "twists",
@@ -368,7 +403,7 @@
     "kind": "cover",
     "aspect": "1:1",
     "file": "img/grip.webp",
-    "prompt": "Athlete performing towel hangs on a steel bar in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1."
+    "prompt": "Athlete performing rope style hangs on a steel bar in an outdoor calisthenics park, strong and controlled. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 1:1."
   },
   {
     "id": "lean-hangs",
@@ -392,11 +427,25 @@
     "prompt": "Athlete doing bar hangs on a steel bar in an outdoor calisthenics park: dead hang from a high bar, overhand grip, arms straight, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
+    "id": "assisted-towel-hangs",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/assisted-towel-hangs.webp",
+    "prompt": "Athlete doing assisted towel hangs on a steel bar in an outdoor calisthenics park: hanging from a high bar, one hand on the bar, the other on a towel looped over it. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. One hand grips the steel bar, the other grips a towel draped over the bar; both feet clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
     "id": "towel-hangs",
     "kind": "progression",
     "aspect": "16:9",
     "file": "img/towel-hangs.webp",
     "prompt": "Athlete doing towel hangs on a steel bar in an outdoor calisthenics park: hanging from two towels looped over a high bar, arms straight, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "rope-style-hangs",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/rope-style-hangs.webp",
+    "prompt": "Athlete doing rope style hangs on a steel bar in an outdoor calisthenics park: hanging from one towel looped over a high bar, both hands gripping it one above the other. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. A single towel hangs from the bar; both hands grip the towel, not the bar, one above the other. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "assisted-one-arm-hangs",
@@ -411,6 +460,13 @@
     "aspect": "16:9",
     "file": "img/one-arm-hangs.webp",
     "prompt": "Athlete doing one-arm hangs on a steel bar in an outdoor calisthenics park: hanging from one hand on a high bar, body fully suspended, feet off the ground. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. The bar is above head height and one hand is the only support; both feet hang at least 30 cm above the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "one-arm-towel-hangs",
+    "kind": "progression",
+    "aspect": "16:9",
+    "file": "img/one-arm-towel-hangs.webp",
+    "prompt": "Athlete doing one-arm towel hangs on a steel bar in an outdoor calisthenics park: hanging by one hand gripping only a towel looped over a high bar, hand well below the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. The towel hangs down from the bar; the one working hand grips the towel about 30 cm below the bar and does not touch the bar at all; the other arm hangs free; both feet clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   },
   {
     "id": "lunges",

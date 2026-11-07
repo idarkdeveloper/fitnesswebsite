@@ -6,6 +6,7 @@ window.PF_IMAGES = {
   "assisted-one-arm-hangs": "img/assisted-one-arm-hangs.webp",
   "assisted-one-arm-pushups": "img/assisted-one-arm-pushups.webp",
   "assisted-one-leg-squats": "img/assisted-one-leg-squats.webp",
+  "assisted-towel-hangs": "img/assisted-towel-hangs.webp",
   "bar-hangs": "img/bar-hangs.webp",
   "bench-dips": "img/bench-dips.webp",
   "bent-leg-raises": "img/bent-leg-raises.webp",
@@ -43,6 +44,7 @@ window.PF_IMAGES = {
   "hanging-straight-leg-raises": "img/hanging-straight-leg-raises.webp",
   "head-bridges": "img/head-bridges.webp",
   "horizontal-rows": "img/horizontal-rows.webp",
+  "incline-bridges": "img/incline-bridges.webp",
   "incline-pushups": "img/incline-pushups.webp",
   "jackknife-pullups": "img/jackknife-pullups.webp",
   "jackknife-squats": "img/jackknife-squats.webp",
@@ -65,10 +67,12 @@ window.PF_IMAGES = {
   "pushups": "img/pushups.webp",
   "reverse-lunges": "img/reverse-lunges.webp",
   "ring-dips": "img/ring-dips.webp",
+  "rope-style-hangs": "img/rope-style-hangs.webp",
   "shrimp-squats": "img/shrimp-squats.webp",
   "side-planks": "img/side-planks.webp",
   "split-squats": "img/split-squats.webp",
   "squats": "img/squats.webp",
+  "stand-to-stand-bridges": "img/stand-to-stand-bridges.webp",
   "straddle-clutch-flags": "img/straddle-clutch-flags.webp",
   "straight-arm-planche-leans": "img/straight-arm-planche-leans.webp",
   "straight-bridges": "img/straight-bridges.webp",
@@ -84,6 +88,8 @@ window.PF_IMAGES = {
   "uneven-squats": "img/uneven-squats.webp",
   "vertical-pulls": "img/vertical-pulls.webp",
   "walking-lunges": "img/walking-lunges.webp",
+  "wall-bridges": "img/wall-bridges.webp",
   "wall-pushups": "img/wall-pushups.webp",
-  "wall-walking-bridges": "img/wall-walking-bridges.webp"
+  "wall-walking-bridges": "img/wall-walking-bridges.webp",
+  "wheel-bridges": "img/wheel-bridges.webp"
 };

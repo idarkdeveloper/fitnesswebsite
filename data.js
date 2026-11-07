@@ -1165,7 +1165,7 @@ window.PF_DATA = {
           name: 'Incline Bridges',
           type: 'reps',
           perSide: false,
-          overview: 'A full backbend with your hands on a raised surface such as a bench or the bottom stair. Raising the hands takes load off the shoulders so you can practise the complete arch.',
+          overview: 'A deeper backbend with your hands on a low step, about shin height: lower than the bench used for angled bridges. It takes some load off the shoulders while you practise a nearly full arch.',
           primary: ['Lower Back', 'Glutes', 'Shoulders'],
           secondary: ['Triceps', 'Hamstrings', 'Upper Back'],
           levels: [
@@ -1174,14 +1174,14 @@ window.PF_DATA = {
             { sets: 3, target: 15 }
           ],
           steps: [
-            'Lie on your back with your head near a sturdy bench or step, knees bent and feet flat.',
-            'Reach back and place your hands on the edge, fingers pointing toward your shoulders.',
+            'Lie on your back with your head near a sturdy low step, about shin height, knees bent and feet flat.',
+            'Reach back and place your hands on the edge of the step, fingers pointing toward your shoulders.',
             'Press through hands and feet to lift your hips and chest into an arch.',
             'Straighten your arms as far as is comfortable.',
             'Lower slowly onto your back.'
           ],
-          harder: 'Use a lower surface.',
-          easier: 'Use a higher surface.',
+          harder: 'Use an even lower step, or a thick book.',
+          easier: 'Go back to a bench-height surface (angled bridges).',
           cues: [
             'Push your chest toward the wall behind you.',
             'Keep your feet flat and knees pointing forward.',

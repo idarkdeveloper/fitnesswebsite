@@ -39,6 +39,13 @@ const ID_NOTE = {
   'close-pushups': 'Arms fully straight with shoulders directly above the hands; chest and forearms are well off the ground (this is not a plank). Hands lie flat on the ground, not clasped.',
   'angled-bridges': 'Arms fully straight like a bridge pose, wrists on the bench edge, shoulders pushed back over the hands; the head hangs between the arms well above the ground; the body forms a tall upside-down U with hips higher than the bench; nothing but hands and feet touch anything.',
   'one-arm-hangs': 'The bar is above head height and one hand is the only support; both feet hang at least 30 cm above the ground.',
+  'wall-bridges': 'Feet flat on the ground a step away from the wall; only the palms touch the wall; no bench or step.',
+  'incline-bridges': 'The step is low, about shin height (much lower than a bench); arms straight, head between the arms well off the ground.',
+  'tap-bridges': 'A backbend: chest and belly face the sky and the back faces the mat; hands flat beside the head, fingers toward the feet; hips high. Not a forward fold, child pose or forearm stand.',
+  'stand-to-stand-bridges': 'No wall, bench or helper; feet flat; hands not yet touching the ground.',
+  'assisted-towel-hangs': 'One hand grips the steel bar, the other grips a towel draped over the bar; both feet clearly off the ground.',
+  'rope-style-hangs': 'A single towel hangs from the bar; both hands grip the towel, not the bar, one above the other.',
+  'one-arm-towel-hangs': 'The towel hangs down from the bar; the one working hand grips the towel about 30 cm below the bar and does not touch the bar at all; the other arm hangs free; both feet clearly off the ground.',
   'negative-dips': 'Two parallel bars about hip height, side by side, one in each hand; the feet do not touch the ground.',
   'close-pullups': 'Both hands wrap over the bar side by side, palms facing away; the hands are not clasped together.',
   'uneven-pullups': 'The towel hangs from the same high bar about 30 cm below it, gripped firmly; both arms pull.',
@@ -104,6 +111,11 @@ const POSE_OVERRIDE = {
   "half-bridges": "arched backbend over a padded box, hands and feet pressing, hips high",
   "full-bridges": "in a full wheel backbend on a mat, arms and legs straight, hips high",
   "wall-walking-bridges": "standing with back to a wall, arching backward, hands walking down the wall",
+  "wall-bridges": "standing a step in front of a wall, arched backward, palms flat on the wall behind at head height",
+  "incline-bridges": "in an arched backbend, arms straight, hands on a shin-height concrete step behind the head, feet flat, hips high",
+  "wheel-bridges": "in a deep wheel backbend on a mat, arms and legs locked straight, shoulders pushed over the wrists",
+  "tap-bridges": "in a backbend, belly up, hands by the ears, elbows bent, crown of the head lightly touching the mat",
+  "stand-to-stand-bridges": "mid drop-back from standing, knees bent, hips pushed forward, back deeply arched, arms reaching back",
   "straight-leg-twists": "seated with legs straight, torso twisted, one hand behind the hips, other arm across the knee",
   "bent-leg-twists": "seated twist with one leg bent across the other, torso rotated, elbow hooked on the knee",
   "full-twists": "in a deep twisting bridge: hand and feet on the mat, hips lifted, chest rotated toward the sky",
@@ -111,6 +123,9 @@ const POSE_OVERRIDE = {
   "assisted-bar-hangs": "hanging from a head-height bar with knees bent, feet on the ground, arms straight",
   "bar-hangs": "dead hang from a high bar, overhand grip, arms straight, feet off the ground",
   "towel-hangs": "hanging from two towels looped over a high bar, arms straight, feet off the ground",
+  "assisted-towel-hangs": "hanging from a high bar, one hand on the bar, the other on a towel looped over it",
+  "rope-style-hangs": "hanging from one towel looped over a high bar, both hands gripping it one above the other",
+  "one-arm-towel-hangs": "hanging by one hand gripping only a towel looped over a high bar, hand well below the bar",
   "assisted-one-arm-hangs": "hanging from one hand, two fingers of the other hand lightly on the bar for balance",
   "one-arm-hangs": "hanging from one hand on a high bar, body fully suspended, feet off the ground",
   "split-squats": "in a split stance, back knee just above the ground, torso upright",
@@ -151,7 +166,7 @@ const words = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 
 /* Ids whose generated image was rejected for wrong form; their prompts were tightened afterwards.
    Remove an id once a good image for it is in img/. */
-const REDO_IDS = new Set(['angled-bridges']);
+const REDO_IDS = new Set(['angled-bridges', 'tap-bridges', 'one-arm-towel-hangs']);
 
 const STYLE_ANCHOR = () => `You are producing a consistent series of exercise photos for a calisthenics app. Every image: ${STYLE} ${COMPOSITION} ${LIGHTING} ${COLOR} Keep the subject centred so the image can be cropped to a square. ${ATHLETE} ${NEGATIVE} Show safe, textbook form.`;
 

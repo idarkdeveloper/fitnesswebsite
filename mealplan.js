@@ -64,7 +64,7 @@ window.PF_MEALS = (function () {
     idli: ['Idli with sambar', '3 idli + 1 bowl', 340, 13, { idli: 150, dal: 25, mixedveg: 60, tomato: 30, oil: 3 }],
     khichdi: ['Moong dal khichdi', '1 bowl', 320, 13, { rice: 40, moong: 40, mixedveg: 50, oil: 5 }],
     sabzi: ['Mixed veg sabzi', '1 bowl', 120, 3, { mixedveg: 150, onion: 20, oil: 7 }],
-    salad: ['Salad (cucumber, carrot, onion)', '1 bowl', 40, 2, { cucumber: 80, carrot: 40, onion: 20, lemon: 0.25 }],
+    salad: ['Salad', 'cucumber, carrot, onion',  40, 2, { cucumber: 80, carrot: 40, onion: 20, lemon: 0.25 }],
     raita: ['Cucumber raita', '1 bowl', 100, 6, { curd: 150, cucumber: 40 }],
     curd: ['Curd (low-fat)', '1 bowl, 150 g', 90, 6, { curd: 150 }],
     chai: ['Chai', '1 cup, milk + sugar', 100, 3, { milk: 100, sugar: 10, tea: 3 }],

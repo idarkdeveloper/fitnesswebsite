@@ -3,7 +3,7 @@
   "name": "PulseFit — Bodyweight Progressions",
   "short_name": "PulseFit",
   "description": "Master bodyweight training one progression at a time.",
-  "start_url": "./#/home",
+  "start_url": "./#/today",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -17,8 +17,8 @@
     { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [
-    { "name": "Today's workout", "short_name": "Workout", "url": "./#/home", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Today's workout", "short_name": "Workout", "url": "./#/today", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Movements", "url": "./#/movements", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Activity", "url": "./#/activity", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Progress", "url": "./#/progress", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

@@ -139,7 +139,7 @@ const ids = (page) => page.evaluate(() => window.PF_APP.getState().workouts.map(
   await plain.route('**/sync-config.js', (r) => r.fulfill({ contentType: 'text/javascript', body: "window.PF_SYNC_CONFIG = { url: '', anonKey: '' };" }));
   plain.on('pageerror', (e) => errs.push(e.message)); plain.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
   await plain.goto(BASE + '#/profile');
-  await plain.waitForSelector('text=Cloud sync isn\'t set up yet');
+  await plain.waitForSelector('text=Stored on this device');
   assert.deepStrictEqual(errs, []);
   step('without sync settings the app runs fully local');
 

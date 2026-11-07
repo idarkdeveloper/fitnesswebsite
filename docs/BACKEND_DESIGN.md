@@ -1,6 +1,14 @@
 # PulseFit Accounts and Cloud Sync: Backend Design
 
-Status: **proposed — awaiting review**. No backend code exists yet; implementation starts only after approval.
+Status: **proposed — open questions answered (2026-11-07), awaiting approval to build**. No backend code exists yet; implementation starts only after approval.
+
+**Decisions from review (2026-11-07):**
+1. **Origin:** stay on GitHub Pages (`<user>.github.io`); no custom domain. Section 11 records the accepted risk.
+2. **Theme sync:** synced (default). Reminders stay device-local.
+3. **Reset:** reset wins over unsynced work on other devices, with the recovery backup (default).
+4. **Import while signed in:** **merge** into the synced data, not replace (section 10.2).
+5. **Different account on the same device:** start fresh, with local data offered as a backup download (default).
+6. **Audience:** personal use. The owner is the only intended user, so sign-in is restricted to an allowlist (section 0.1).
 Scope: optional accounts, backup, and multi-device merge for the static SPA (`index.html`, `app.js`, `data.js`).
 
 ## 0. Summary and non-goals
@@ -11,7 +19,15 @@ Everything runs through one workflow endpoint, `POST /v1/sync`. The client sends
 
 Two further endpoints cover export and account deletion. A health endpoint covers monitoring.
 
-Scale target: under 1,000 users in year one and under 5 req/s at peak. That means one Postgres, one stateless HTTP function, no queues, no cache, no websockets.
+Scale target: personal use (one owner, a handful of devices). The design still holds up to 1,000 users and 5 req/s, but nothing is sized beyond one Postgres and one stateless HTTP function: no queues, no cache, no websockets. Everything fits in free tiers.
+
+### 0.1 Personal-use profile
+
+Because the owner is the only intended user:
+- **Sign-in allowlist.** The provider is set to invite-only, or the API rejects any verified identity whose email is not in `ALLOWED_EMAILS` (a function secret) with 403 `not_allowed`. Strangers who find the site can still use it signed out, but cannot create accounts or use the database.
+- **No beta stage** (section 15, step 10) and no public sign-up copy.
+- **Privacy sheet** shrinks to a short note on what is stored and where, since no third-party personal data is collected.
+- The account deletion, export and rate-limit paths stay: they are cheap and protect against a lost device or a leaked token.
 
 Non-goals for v1:
 - No social features, leaderboards, or sharing. The `LADDERS` "join" state is a private per-user flag.
@@ -381,6 +397,7 @@ Body: `{"error": {"code": "...", "message": "...", "trace_id": "...", "details":
 | 400 | `bad_request` | Not JSON, missing required fields | Log locally, do not retry the same body |
 | 401 | `unauthenticated` | Missing, malformed, or invalid token. `details.reason` is `expired` / `signature` / `audience` / `issuer`. | Silent token refresh once, retry. Else show "Sign in again". Never drop local data. |
 | 401 | `reauth_required` | Delete needs a fresh login | Prompt for re-authentication |
+| 403 | `not_allowed` | Valid token, but the identity is not on the owner allowlist (section 0.1) | Show "This account can't sync". Keep working signed out. |
 | 403 | `origin_not_allowed` | Origin header present but not the configured one (non-browser guard, defence in depth) | None |
 | 413 | `payload_too_large` | Body over 256 KiB | Split the batch. Never silently drop. |
 | 415 | `unsupported_media_type` | Not JSON | Bug |
@@ -610,7 +627,7 @@ All emits happen next to the existing `save()` call so the local write stays the
 | ACTIONS `set-routine` (`app.js:1180`), `set-rest` (`app.js:1184`), `toggle-day` (`app.js:1278`) | `register.set routineId` / `restSeconds` / `trainingDays` |
 | Wherever `profile.name` is edited | `register.set profile.name` (locate by grep in milestone 4) |
 | ACTION `reset` (`app.js:1302`) | `reset` op (flow 5.4) |
-| Import handler (`app.js:1358-1372`) | While signed in: after a new confirm ("Replace your synced data with this file?"), emit `reset` followed by bootstrap ops for the imported state. Signed out: unchanged. |
+| Import handler (`app.js:1358-1372`) | While signed in: **merge**. After a confirm ("Merge this file into your synced data?"), run the legacy-id migration (10.7) on the file, merge it into local state with the sync rules (union workouts by id, MAX levels, registers keep the newer value), and emit bootstrap ops for what changed, as in 5.1. No `reset` is sent, so nothing on other devices is discarded. Deterministic legacy ids mean importing the same file twice adds nothing. Signed out: unchanged (replaces local state). |
 | ACTION `export` (`app.js:1293`) | Unchanged (exports local state). A separate "Download my server data" action calls `GET /v1/export`. |
 
 Implementation shape: change `save()` into `save(ops = [])`. It writes `pf2_state`, appends ops to `pf2_sync.outbox` in the same synchronous tick, then calls `Sync.kick()`. When signed out, ops are not accumulated (the outbox would grow unbounded); first sign-in rebuilds ops from state instead (5.1).
@@ -674,10 +691,14 @@ An "Account" card at the top of the Profile tab, above the data section that hol
 - Accepted risk: an XSS can read the refresh token. Mitigations are the CSP below, consistent `esc()` use (`app.js:15`), short rotation lifetime, and provider-side revocation.
 - Alternative: a same-site API on a custom domain (`app.example.com` and `api.example.com`) with a BFF issuing an HttpOnly SameSite=Lax cookie. This is safer and is the recommended upgrade if the project gets a custom domain.
 
-**Origin sharing risk.**
+**Origin sharing risk (accepted: no custom domain).**
 - `localStorage` on `<user>.github.io` is shared by every project page of that GitHub account. Any other page there can read `pf2_state` and `pf2_auth`.
-- `tracker.html:10` loads `cdn.tailwindcss.com` (third-party script) on the same origin as the app.
-- Recommendation: before launch, serve PulseFit from a dedicated origin (custom domain), and either remove third-party scripts from the same origin or move `tracker.html` elsewhere.
+- Decision: stay on GitHub Pages. The risk is accepted because every page on that origin belongs to the owner, and the app is for personal use.
+- Conditions that keep it acceptable:
+  - Don't publish untrusted or third-party code as another Pages project on the same account.
+  - Remove the `cdn.tailwindcss.com` script from `tracker.html:10` (replace with plain CSS or a vendored file) before sign-in ships, so no third-party script runs on the origin.
+  - Revisit this decision if the app is ever opened to other users.
+- Consequences: tokens stay in `localStorage` (no HttpOnly cookie), and clickjacking protection (`frame-ancestors`) is not available. The impact is limited to one person's workout data.
 
 **CORS.**
 - `Access-Control-Allow-Origin` is the exact Pages origin (scheme and host, no path). No wildcard.
@@ -799,21 +820,21 @@ Not worth testing: UI snapshots, CSS, the `data.js` catalog on the server (it is
 4. **Client outbox (signed-out safe).** `sync.js` storage layer, `save(ops)` refactor and op emission at all sites in 10.2, UUID ids for new workouts, `state.v = 2`. No network calls yet. Verify the existing app behaviour is unchanged.
 5. **Auth wiring.** Provider tenant, Google and magic link, PKCE flow, in-memory access token, refresh rotation. Account card in Profile.
 6. **Sync engine.** Triggers, backoff, pull apply, bootstrap and legacy-id migration, owner guard, status line. Run the second-device and first-merge scenarios manually.
-7. **Reset, import, and recovery path.** Generation handling, recovery toast and backup download, import-while-signed-in confirm.
+7. **Reset, import, and recovery path.** Generation handling, recovery toast and backup download, import-while-signed-in merge.
 8. **Export and delete.** `GET /v1/export`, `DELETE /v1/account`, pending-identity outbox plus daily job, UI flows.
-9. **Hardening.** CSP, custom-domain decision, edge rate limits, alerts, runbooks (restore, deny-list, manual identity delete), privacy sheet text, ledger-prune job.
-10. **Beta.** 10-20 users, watch the 422 and 401 metrics for a week, then announce.
+9. **Hardening.** CSP, remove the Tailwind CDN from `tracker.html`, sign-in allowlist, edge rate limits, alerts, runbooks (restore, manual identity delete), short privacy note, ledger-prune job.
+10. **Personal rollout.** Use it on your own phone and laptop for a week and watch the 422 and 401 metrics. No public beta.
 
 ## 16. Risks and open questions
 
-Open questions for the user (the design assumes the default in brackets):
-1. **Origin.** Will PulseFit move to a custom domain? [Assumed yes before launch; it removes the shared `github.io` storage risk and unlocks the cookie/BFF upgrade and real security headers.]
-2. **Theme and reminders sync.** Is syncing `theme` desired when devices differ (dark phone, light desktop)? [Synced, per the brief. Reminders stay device-local.]
-3. **Reset semantics.** Is "reset wins over unsynced work on other devices" acceptable, given the recovery backup? [Yes.]
-4. **Import while signed in.** Should importing replace the synced data (design) or merge into it? [Replace, with an extra confirmation.]
-5. **Different account on the same device.** Default to "start fresh" (design) or merge? [Start fresh, with local data saved as a downloadable backup.]
+Questions answered by the owner on 2026-11-07 (see the decisions at the top):
+1. ~~**Origin.**~~ No custom domain; stay on GitHub Pages. Risk accepted in section 11.
+2. ~~**Theme and reminders sync.**~~ Theme synced; reminders device-local.
+3. ~~**Reset semantics.**~~ Reset wins, with the recovery backup.
+4. ~~**Import while signed in.**~~ Merge (section 10.2).
+5. ~~**Different account on the same device.**~~ Start fresh, local data offered as a backup download.
 6. ~~**`challengeStart`.**~~ Resolved during review: it is only initialised in `defaultState()` (`app.js:196`) and never set, so it is dead code and is not synced.
-7. **Retention statement.** Backup retention depends on the chosen host (typically 7-30 days). The privacy text must state the real number once the host is picked.
+7. **Retention statement.** Backup retention depends on the chosen host (typically 7-30 days). The privacy note must state the real number once the host is picked.
 8. **Provider capability check.** Verify the chosen provider supports refresh-token rotation, admin user deletion, and magic link plus Google before committing (especially for Neon Auth, whose feature set I could not verify here).
 
 Risks:

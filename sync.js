@@ -75,6 +75,10 @@
         const { error } = await client.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo() } });
         if (error) throw error;
       },
+      async verifyCode(email, token) {
+        const { error } = await client.auth.verifyOtp({ email, token, type: 'email' });
+        if (error) throw error;
+      },
       async signOut() { await client.auth.signOut(); user = null; },
       async getDoc() {
         const res = await client.from('sync_doc').select('doc,version').maybeSingle();
@@ -227,6 +231,11 @@
     async signInEmail(email) {
       try { await adapter.signInEmail(email); APP().toast('Check your email for the sign-in link'); return true; }
       catch (e) { APP().toast(/signups not allowed|not found|otp_disabled/i.test(e.message || '') ? "That email can't sign in here" : 'Sign-in failed: ' + (e.message || 'try again')); return false; }
+    },
+    /** Sign in with the 6-digit code from the email (works inside an installed app, where links open elsewhere). */
+    async verifyCode(email, code) {
+      try { await adapter.verifyCode(email, code); return true; }
+      catch (e) { APP().toast(/expired|invalid/i.test(e.message || '') ? 'That code is wrong or expired' : 'Sign-in failed: ' + (e.message || 'try again')); return false; }
     },
     async signOut() {
       try { await adapter.signOut(); } catch { /* still signed out locally */ }

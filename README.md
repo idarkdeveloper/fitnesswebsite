@@ -10,6 +10,15 @@ There's no build step, no backend and nothing to install. Open `index.html`
 in a browser, or deploy the folder to any static host. The included workflow
 deploys it to GitHub Pages.
 
+**Install it as a phone app.** PulseFit is an installable web app (PWA): it
+gets a home-screen icon, opens full screen and works offline.
+- **Android (Chrome):** Profile → **Install PulseFit app**, or the browser menu → **Install app**.
+- **iPhone (Safari):** Share → **Add to Home Screen**.
+
+On iPhone, the installed app has its own storage, so sign in to sync again
+inside it. Use Google, or the email code if custom SMTP is set up
+(docs/SUPABASE_SETUP.md, step 7b).
+
 ## Features
 
 | Tab | What it does |
@@ -44,6 +53,7 @@ sync-core.js  Cloud sync merge rules (pure functions)
 sync.js       Cloud sync engine + Supabase adapter (optional)
 sync-config.js  Supabase URL and public key (empty = fully local)
 theme-boot.js Applies the saved theme before first paint
+manifest.webmanifest, sw.js, pwa.js, icons/   Installable app: manifest, offline service worker, install helpers
 vendor/       Pinned supabase-js 2.118.0 (no CDN scripts)
 supabase/     Database migration for cloud sync
 DESIGN.md     Design language: tokens, type, spacing, components, rules

@@ -22,8 +22,9 @@ const fakeAdapter = `
   };`;
 
 async function device(browser, name, errors) {
-  const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+  const ctx = await browser.newContext({ viewport: { width: 420, height: 900 }, serviceWorkers: 'block' });
   const page = await ctx.newPage();
+  await page.route('**/*.supabase.co/**', (r) => r.abort());   // tests never touch the real project
   page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(`${name}: ${m.text()}`); });
   page.on('dialog', (d) => d.accept());
@@ -122,7 +123,8 @@ const ids = (page) => page.evaluate(() => window.PF_APP.getState().workouts.map(
   step('no console errors or CSP violations');
 
   // Not configured: no adapter, empty config → app works, card says not set up.
-  const ctx = await browser.newContext(); const plain = await ctx.newPage(); const errs = [];
+  const ctx = await browser.newContext({ serviceWorkers: 'block' }); const plain = await ctx.newPage(); const errs = [];
+  await plain.route('**/sync-config.js', (r) => r.fulfill({ contentType: 'text/javascript', body: "window.PF_SYNC_CONFIG = { url: '', anonKey: '' };" }));
   plain.on('pageerror', (e) => errs.push(e.message)); plain.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
   await plain.goto(BASE + '#/profile');
   await plain.waitForSelector('text=Cloud sync isn\'t set up yet');

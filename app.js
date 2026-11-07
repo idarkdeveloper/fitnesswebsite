@@ -196,7 +196,7 @@ function defaultState() {
     workouts: [],                       // {id, at, routineId, entries:[{progId, level, values[], passed}]}
     joined: {},                         // ladderId -> ISO date
     reminder: { enabled: false, time: '18:00', lastNotified: '' },
-    planReminder: { enabled: true, day: 6, time: '10:00', lastNotified: '' },  // weekly "shop for next week" (0 = Sun … 6 = Sat)
+    planReminder: { enabled: true, day: 5, time: '18:00', lastNotified: '' },  // weekly "next week's plan is out" (0 = Sun … 6 = Sat)
     challengeStart: null,
     hprofile: {},                       // body profile & targets (Track tab)
     hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
@@ -492,7 +492,7 @@ function reminderBanner() {
 }
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-/** True once the weekly meal-plan reminder is due today (its weekday, past its time). */
+/** True on the reminder's weekday once its time has passed (the moment to notify). */
 function planReminderDue() {
   const pr = state.planReminder;
   if (!pr.enabled || !window.PF_MEALS) return false;
@@ -500,15 +500,23 @@ function planReminderDue() {
   const [hh, mm] = pr.time.split(':').map(Number);
   return now.getDay() === pr.day && now.getHours() * 60 + now.getMinutes() >= hh * 60 + mm;
 }
-/** Which week the reminder is about: Monday–Wednesday it's this week; Thursday–Sunday it's next week. */
-const planReminderWeek = () => { const d = new Date().getDay(); return d === 0 || d >= 4 ? 1 : 0; };
+/** The Today banner stays from the reminder until the end of Saturday, the last shopping day before Sunday. */
+function planBannerDue() {
+  const pr = state.planReminder;
+  if (!pr.enabled || !window.PF_MEALS) return false;
+  const r = (pr.day + 6) % 7, t = planIdx(todayKey());               // Monday = 0 … Saturday = 5
+  return planReminderDue() || (t > r && t <= 5);
+}
+/** Next week's plan comes out on Friday: Friday–Sunday the reminder and Groceries are about next week. */
+const planReminderWeek = () => (planIdx(todayKey()) >= 4 ? 1 : 0);
 function planBanner() {
-  if (!planReminderDue()) return '';
+  if (!planBannerDue()) return '';
   const w = planReminderWeek();
   const start = keyAdd(weekStart(todayKey()), 7 * w);
   if (Object.keys(state.grocery).some((k) => k.startsWith(start + '|'))) return '';   // already shopping from the list
-  const closedTomorrow = new Date().getDay() === 6;
-  return `<div class="banner">${icon('bell')}<span class="grow">${w ? "Next week's meal plan is ready." : "This week's meal plan is ready."}${closedTomorrow ? ' Shops are closed tomorrow, so shop today.' : ''}</span>
+  const wd = new Date().getDay();
+  const when = wd === 6 ? ' Shops are closed tomorrow, so shop today.' : wd === 5 ? ' Shop tomorrow: shops are closed on Sunday.' : '';
+  return `<div class="banner">${icon('bell')}<span class="grow">${w ? "Next week's meal plan is ready." : "This week's meal plan is ready."}${when}</span>
     <button class="btn subtle sm" data-action="open-groceries" data-w="${w}">Groceries</button></div>`;
 }
 
@@ -1672,13 +1680,13 @@ function groceryList(start) {
 }
 
 let planSel = null;   // selected day (0 = Monday) on the Week plan; null = today
-let planWeek = null;  // 0 = this week, 1 = next week; null = automatic (Groceries shows next week from Thursday)
+let planWeek = null;  // 0 = this week, 1 = next week; null = automatic (Groceries shows next week from Friday)
 
 VIEWS.plan = () => {
   if (!window.PF_MEALS) return '<p class="muted">Meal plan data is missing.</p>';
   const tk = todayKey();
   const ti = planIdx(tk);
-  const wkOff = planWeek ?? (planTab === 'groceries' && ti >= 3 ? 1 : 0);   // from Thursday, shop for next week
+  const wkOff = planWeek ?? (planTab === 'groceries' && ti >= 4 ? 1 : 0);   // from Friday, shop for next week
   const start = keyAdd(weekStart(tk), 7 * wkOff);
   const sel = planSel ?? (wkOff ? 0 : ti);
   const T = targets(tk);
@@ -1742,7 +1750,7 @@ VIEWS.plan = () => {
     <h1 class="h1 mt-2 m-0">Meal plan</h1>
     <p class="muted m-0 mt-1">Indian, from German shops · ${esc(short(start))} – ${esc(short(keyAdd(start, 6)))}</p>
     <div class="chips wk-switch mt-3" role="group" aria-label="Which week">
-      ${['This week', 'Next week'].map((n, w) => `<button class="chip ${wkOff === w ? 'on' : ''}" aria-pressed="${wkOff === w}" data-action="plan-week" data-w="${w}">${n}</button>`).join('')}
+      ${['This week', 'Next week'].map((n, w) => `<button class="chip ${wkOff === w ? 'on' : ''}" aria-pressed="${wkOff === w}" data-action="plan-week" data-w="${w}">${n}${w && ti >= 4 ? ' · new' : ''}</button>`).join('')}
     </div>
     <div class="segmented" role="tablist" aria-label="Meal plan" style="--n:2;--i:${planTab === 'week' ? 0 : 1}">
       <button role="tab" aria-selected="${planTab === 'week'}" data-action="plan-tab" data-tab="week">Week plan</button>
@@ -2235,7 +2243,7 @@ function planReminderSheet() {
       <div class="field"><label for="prDay">Day</label><select class="input" id="prDay" data-bind="planRemDay">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<option value="${d}" ${pr.day === d ? 'selected' : ''}>${WEEKDAYS[d]}</option>`).join('')}</select></div>
       <div class="field"><label for="prTime">Time</label><input class="input" id="prTime" type="time" value="${esc(pr.time)}" data-bind="planRemTime" /></div>
     </div>
-    <p class="small muted mt-4 m-0">Saturday works best in Germany: shops are closed on Sunday. From Thursday on, the reminder and the Groceries tab show next week's list.</p>
+    <p class="small muted mt-4 m-0">Next week's plan comes out every Friday, so you can shop on Saturday (shops are closed on Sunday). From Friday, Groceries shows next week's list, and the banner on Today stays until Saturday evening or until you start ticking it off.</p>
     <button class="btn ghost block mt-4" data-action="plan-ics">${icon('calendar')} Add to my calendar</button>
     <p class="small muted mt-2 m-0">Adds a repeating event with an alert to your phone's calendar, so it reminds you even when PulseFit is closed.</p>
     <p class="small muted mt-4 m-0">${perm === 'granted' ? 'In-app: you get a notification while PulseFit is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
@@ -2693,8 +2701,8 @@ function checkPlanReminder() {
   if (!planReminderDue() || !('Notification' in window) || Notification.permission !== 'granted') return;
   const k = dayKey(today());
   if (pr.lastNotified === k) return;
-  const next = planReminderWeek() === 1;
-  try { new Notification('PulseFit', { body: `${next ? "Next week's" : "This week's"} meal plan is ready.${new Date().getDay() === 6 ? ' Shops are closed tomorrow, so get the groceries today.' : ' Time to get the groceries.'}` }); } catch { /* ignore */ }
+  const next = planReminderWeek() === 1, wd = new Date().getDay();
+  try { new Notification('PulseFit', { body: `${next ? "Next week's" : "This week's"} meal plan is ready.${wd === 6 ? ' Shops are closed tomorrow, so get the groceries today.' : wd === 5 ? ' Check the grocery list and shop tomorrow.' : ' Time to get the groceries.'}` }); } catch { /* ignore */ }
   pr.lastNotified = k;
   save();
 }

@@ -2,7 +2,7 @@
    - App files: network first (you always get the latest when online), cached copy when offline.
    - Exercise images and fonts: served from cache, refreshed in the background.
    - Never touches Supabase or any other site's requests (sync must always hit the network). */
-const SHELL = 'pf-shell-v10';
+const SHELL = 'pf-shell-v11';
 const MEDIA = 'pf-media-v1';
 const SHELL_FILES = [
   './', './index.html', './styles.css', './app.js', './data.js', './theme-boot.js', './pwa.js',

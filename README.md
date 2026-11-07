@@ -61,6 +61,8 @@ The last 14 days are read when the app opens and when it comes back to the front
 never overwritten. PulseFit only reads; every Health Connect write permission is removed in `AndroidManifest.xml`.
 Privacy page: `privacy.html`.
 
+**Home-screen widget:** a Day Streak widget (`StreakWidget.java`) shows your streak, today's session or "Done today ✓", and calories left and steps. The page sends it fresh numbers through the `PulseFitWidget` plugin whenever your data changes; add it from Profile → Home screen widget.
+
 **Install:** on the phone, open
 [the latest APK](https://github.com/idarkdeveloper/fitnesswebsite/releases/latest/download/pulsefit.apk), open the file
 and allow installing from your browser. In PulseFit: Profile → Account to sign in, then Profile → Galaxy Watch &

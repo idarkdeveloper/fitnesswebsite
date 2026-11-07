@@ -13,7 +13,11 @@ The site address used below is `https://idarkdeveloper.github.io/fitnesswebsite/
    - **Name:** `pulsefit`
    - **Database password:** click **Generate**, then save it in your password manager. The app never uses it; you'd only need it for direct database access.
    - **Region:** the one closest to you.
-3. Click **Create new project** and wait about 2 minutes.
+3. Under **Security**, set:
+   - **Enable Data API:** on. The app talks to the database through it.
+   - **Automatically expose new tables:** off. The SQL in step 2 grants exactly the access the app needs, nothing more.
+   - **Enable automatic RLS:** on. This is a safety net; the SQL turns row-level security on anyway.
+4. Click **Create new project** and wait about 2 minutes.
 
 ## 2. Create the table and security rules
 

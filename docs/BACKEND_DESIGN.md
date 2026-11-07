@@ -76,7 +76,11 @@ create trigger sync_doc_bump before update on public.sync_doc
 create table public.allowed_emails (email text primary key);
 insert into public.allowed_emails values ('<owner email, lower case>');
 
-create function public.is_allowed() returns boolean
+create schema if not exists private;          -- not exposed by the REST API
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
+
+create function private.is_allowed() returns boolean
   language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.allowed_emails
                  where email = lower(auth.jwt() ->> 'email'))
@@ -88,12 +92,12 @@ alter table public.allowed_emails enable row level security;   -- no policies: c
 -- Explicit privileges, so this works whether or not "Automatically expose new tables" is on.
 revoke all on public.sync_doc, public.allowed_emails from anon, authenticated;
 grant select, insert, update, delete on public.sync_doc to authenticated;
-revoke all on function public.is_allowed() from public, anon;
-grant execute on function public.is_allowed() to authenticated;
+revoke all on function private.is_allowed() from public, anon;
+grant execute on function private.is_allowed() to authenticated;
 
 create policy own_doc on public.sync_doc for all to authenticated
-  using      (user_id = (select auth.uid()) and public.is_allowed())
-  with check (user_id = (select auth.uid()) and public.is_allowed());
+  using      (user_id = (select auth.uid()) and private.is_allowed())
+  with check (user_id = (select auth.uid()) and private.is_allowed());
 ```
 
 The client makes two calls:

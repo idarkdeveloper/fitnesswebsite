@@ -1,0 +1,28 @@
+[
+  {
+    "id": "angled-bridges",
+    "file": "img/review/angled-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "size": "1536x1024",
+    "prompt_sha256": "5f31bab267cebf60",
+    "prompt": "Athlete doing angled bridges on a mat on grass in a park: high arched backbend, elbows locked straight, hands pressing down on a knee-high park bench behind, feet flat, hips highest point. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Arms fully straight like a bridge pose, wrists on the bench edge, shoulders pushed back over the hands; the head hangs between the arms well above the ground; the body forms a tall upside-down U with hips higher than the bench; nothing but hands and feet touch anything. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "revised_prompt": null,
+    "generated_at": "2026-11-07T13:26:09.751Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 212,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 212
+      },
+      "output_tokens": 1983,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 415
+      },
+      "total_tokens": 2195
+    },
+    "cost_usd": 0.06452
+  }
+]

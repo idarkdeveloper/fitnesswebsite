@@ -589,7 +589,7 @@ VIEWS.today = () => {
     next = j < 0
       ? '<p class="small muted m-0 mt-2">All of today\'s plan is logged. Nice work.</p>'
       : `<div class="next-meal mt-2"><span class="plan-k accent">${dmeals[j].label}</span>
-          <span class="grow">${esc(dmeals[j].text)}<span class="d-block small muted">${nf(dmeals[j].kcal)} kcal · ${nf(dmeals[j].protein)} g protein</span></span>
+          <span class="grow">${dishLinks(dmeals[j], weekStart(tk))}<span class="d-block small muted">${nf(dmeals[j].kcal)} kcal · ${nf(dmeals[j].protein)} g protein</span></span>
           <button class="btn subtle sm" data-action="plan-log" data-day="${di}" data-wk="${weekStart(tk)}" data-m="${j}" aria-label="Log ${dmeals[j].label.toLowerCase()} today">${icon('plus')} Log</button></div>`;
   }
   const p = hp();
@@ -1604,13 +1604,70 @@ function subsFor(wk) {
 
 function mealInfo(items, subs) {
   let kcal = 0, protein = 0;
+  const dishes = items.map(([id, n]) => ({ id, n, name: dishOf(id, subs)[0] }));
   const parts = items.map(([id, n]) => {
     const [name, , k, p] = dishOf(id, subs);
     kcal += k * n; protein += p * n;
     return n === 1 ? name : `${n} × ${name}`;
   });
-  return { text: parts.join(' + '), kcal, protein };
+  return { text: parts.join(' + '), kcal, protein, dishes };
 }
+
+/* ---------- Recipes (recipes.js) ---------- */
+// Dishes that cook the same way with a different protein: a swapped dish borrows the matching one's method.
+const RECIPE_STYLES = [
+  { chicken: 'chickencurry', fish: 'fishcurry', eggs: 'eggcurry', turkey: 'keema', tuna: 'tunamasala' },
+  { chicken: 'tikka', fish: 'fishtikka', paneer: 'paneertikka' },
+  { paneer: 'paneerbhurji', eggs: 'eggbhurji', turkey: 'keema', tuna: 'tunamasala' },
+];
+const RECIPE_NAMES = { curd: 'yoghurt', mixedveg: 'mixed vegetables', fish: 'fish', tuna: 'tuna', chicken: 'chicken', turkey: 'turkey mince', fruit: 'fruit', tinnedtom: 'chopped tomatoes', rajma: 'kidney beans', chana: 'chickpeas', spinach: 'spinach', atta: 'atta' };
+const recipeName = (ing) => RECIPE_NAMES[ing] || ingShort(ing).toLowerCase().replace(/^frozen /, '').replace(/, tin$/, '');
+const FRACTIONS = [[0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
+/** Amount for a recipe ingredient line: "130 g", "½ tin", "¼ lemon", "3 eggs". */
+function recipeAmt(ing, v) {
+  const unit = window.PF_MEALS.ING[ing][2];
+  if (unit === 'g' || unit === 'ml') return `${Math.max(5, Math.round(v / 5) * 5)} ${unit}`;
+  const whole = Math.floor(v + 1e-6), rest = v - whole;
+  const frac = rest < 0.08 ? '' : FRACTIONS.reduce((a, b) => (Math.abs(b[0] - rest) < Math.abs(a[0] - rest) ? b : a))[1];
+  const num = `${whole || ''}${frac}` || '1';
+  const noun = { eggs: v > 1 ? 'eggs' : 'egg', bread: v > 1 ? 'slices' : 'slice', lemon: 'lemon', cucumber: 'cucumber', fruit: '' }[ing];
+  if (unit === 'tin') return `${num} tin`;
+  return noun === undefined ? num : `${num}${noun ? ' ' + noun : ''}`;
+}
+function recipeSheet(id, n, wk) {
+  const R = window.PF_RECIPES;
+  if (!R || !window.PF_MEALS.DISH[id]) return;
+  const subs = subsFor(wk) || {};
+  const [name, serving, kcal, protein, ings] = dishOf(id, subs);
+  const swapped = Object.keys(window.PF_MEALS.DISH[id][4]).filter((i) => subs[i]);
+  // A swapped protein cooks like the dish built around it (egg curry with chicken uses the chicken curry method).
+  let rid = id;
+  for (const i of swapped) for (const st of RECIPE_STYLES) if (Object.values(st).includes(id) && st[subs[i]]) rid = st[subs[i]];
+  const r = R[rid] || R[id];
+  if (!r) return;
+  const word = (ing) => recipeName(subs[ing] || ing);
+  const fill = (t) => t.replace(/\{cook:(\w+)\}/g, (m, ing) => (window.PF_COOK || {})[subs[ing] || ing] || 'until cooked')
+    .replace(/\{(\w+)\}/g, (m, ing) => (window.PF_MEALS.ING[ing] ? word(ing) : m));
+  const steps = r.steps.map(fill);
+  if (rid !== id) {                                                    // borrowed method: mention anything it leaves out
+    const said = new Set([...r.steps.join(' ').matchAll(/\{(?:cook:)?(\w+)\}/g)].map((m) => subs[m[1]] || m[1]));
+    const left = Object.keys(ings).filter((i) => i !== 'oil' && !said.has(i));
+    if (left.includes('curd')) steps.push('Off the heat, stir in the yoghurt so it doesn\'t split.');
+    const rest = left.filter((i) => i !== 'curd');
+    if (rest.length) steps.push(`Add the ${rest.map(recipeName).join(' and ')} along with the onions.`);
+  }
+  const lines = Object.entries(ings).map(([ing, v]) => `<li><b>${esc(recipeAmt(ing, v * n))}</b> ${esc(window.PF_MEALS.ING[ing][0])}</li>`).join('');
+  openSheet(name, `
+    <p class="small muted m-0 sheet-meta">${n > 1 ? `${n} servings, ${esc(serving)} each` : esc(serving)} · ${nf(kcal * n)} kcal · ${nf(protein * n)} g protein · about ${r.t} min</p>
+    ${swapped.length ? `<p class="small m-0 mt-2 accent-text">Made with ${esc(swapped.map((i) => `${recipeName(subs[i])} instead of ${recipeName(i)}`).join(', '))}, from what you bought.</p>` : ''}
+    <h3 class="sheet-sub">Ingredients${n > 1 ? ` for ${n}` : ''}</h3>
+    <ul class="recipe-ings">${lines}${r.sp ? `<li class="muted">${esc(r.sp)}</li>` : ''}</ul>
+    <h3 class="sheet-sub">Method</h3>
+    <ol class="recipe-steps">${steps.map((st) => `<li>${esc(st)}</li>`).join('')}</ol>
+    ${r.tip ? `<div class="note-box mt-3">${esc(fill(r.tip))}</div>` : ''}`);
+}
+/** A meal's dishes as recipe links: "2 × Roti + Dal saag + Salad". */
+const dishLinks = (m, wk) => m.dishes.map((d) => `<button class="dish-link" data-action="recipe" data-dish="${d.id}" data-n="${d.n}" data-wk="${wk}">${d.n === 1 ? '' : `${d.n} × `}${esc(d.name)}</button>`).join(' + ');
 
 /** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week. */
 function dayInfo(i, wk = weekStart(todayKey()), raw = false) {
@@ -1792,7 +1849,7 @@ VIEWS.plan = () => {
     const upInfo = ups.length ? mealInfo(ups, d.subs) : null;
     const meals = d.meals.map((m, j) => {
       const logged = isToday && planLogged(tk, m.label);
-      return `<li><span class="plan-k">${m.label}</span><span class="grow">${esc(m.text)}<span class="d-block small muted">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
+      return `<li><span class="plan-k">${m.label}</span><span class="grow">${dishLinks(m, start)}<span class="d-block small muted">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
         ${isToday ? (logged ? `<span class="logged">${icon('check', 'class="icon-sm"')} Logged</span>` : `<button class="btn subtle sm" data-action="plan-log" data-day="${sel}" data-wk="${start}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} today">${icon('plus')} Log</button>`) : ''}</li>`;
     }).join('');
     const nextDays = [1, 2].map((n) => sel + n).filter((i) => i < 7).map((i) => {
@@ -1883,6 +1940,7 @@ const PLAN_ACTIONS = {
     addMeal(`${m.label}: ${m.text}`.slice(0, 120), m.kcal, m.protein);
   },
   'plan-tab': (el) => { if (planWeek == null && el.dataset.tab === 'week') planWeek = planWkShown; if (planTab !== el.dataset.tab) planSel = null; planTab = el.dataset.tab; rerender(); },
+  'recipe': (el) => recipeSheet(el.dataset.dish, Number(el.dataset.n) || 1, el.dataset.wk || weekStart(todayKey())),
   'grocery-edit': (el) => groceryEditSheet(el.dataset.k, el.dataset.ing, Number(el.dataset.need)),
   'grocery-amt': (el) => { const i = $('#gbAmt'); if (i) i.value = el.dataset.v; },
   'grocery-sub': (el) => {

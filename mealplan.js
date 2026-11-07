@@ -259,7 +259,7 @@ window.PF_MEALS = (function () {
   const ROLE = {
     dal: '{dal} dal', dalpalak: 'Dal {spinach}', rajma: '{rajma} masala', chana: '{chana} masala',
     chickencurry: '{chicken} curry', tikka: '{chicken} tikka', keema: '{turkey} keema matar', fishcurry: '{fish} curry',
-    fishtikka: 'Tandoori {fish}', tunamasala: '{tuna} masala', eggcurry: '{eggs} curry', paneerbhurji: '{paneer} bhurji',
+    fishtikka: 'Tandoori {fish}', tunamasala: '{tuna} masala', eggcurry: '{eggs} curry', paneerbhurji: '{paneer} bhurji', eggbhurji: '{eggs} bhurji',
     paneertikka: '{paneer} tikka with {capsicum}', palakpaneer: '{spinach} {paneer}', khichdi: '{moong} dal khichdi',
     sabzi: '{mixedveg} sabzi', gobi: '{cauliflower} sabzi', pattagobhi: '{cabbage} sabzi', kaddu: '{pumpkin} sabzi',
     gajarmatar: '{carrot} {peas}', zucchini: '{zucchini} sabzi', beans: '{beans} sabzi', moongchilla: '{moong} dal chilla',

@@ -27,7 +27,12 @@ create table public.allowed_emails (email text primary key);
 -- Add your own email (lower case) in step 3 of docs/SUPABASE_SETUP.md:
 --   insert into public.allowed_emails values ('you@example.com');
 
-create function public.is_allowed() returns boolean
+-- Helpers live in a schema the REST API doesn't expose, so they can't be called via /rest/v1/rpc.
+create schema if not exists private;
+revoke all on schema private from public, anon;
+grant usage on schema private to authenticated;
+
+create function private.is_allowed() returns boolean
   language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.allowed_emails
                  where email = lower(auth.jwt() ->> 'email'))
@@ -41,9 +46,9 @@ alter table public.allowed_emails enable row level security;   -- no policies: c
 -- Nobody gets the allowlist table, and signed-out visitors get nothing.
 revoke all on public.sync_doc, public.allowed_emails from anon, authenticated;
 grant select, insert, update, delete on public.sync_doc to authenticated;
-revoke all on function public.is_allowed() from public, anon;
-grant execute on function public.is_allowed() to authenticated;
+revoke all on function private.is_allowed() from public, anon;
+grant execute on function private.is_allowed() to authenticated;
 
 create policy own_doc on public.sync_doc for all to authenticated
-  using      (user_id = (select auth.uid()) and public.is_allowed())
-  with check (user_id = (select auth.uid()) and public.is_allowed());
+  using      (user_id = (select auth.uid()) and private.is_allowed())
+  with check (user_id = (select auth.uid()) and private.is_allowed());

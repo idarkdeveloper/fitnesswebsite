@@ -1,8 +1,7 @@
-/* Cloud sync settings. Leave empty to keep PulseFit fully local.
-   Fill these in after creating the Supabase project (docs/SUPABASE_SETUP.md, step 4).
-   Both values are PUBLIC by design: the anon key only works within the database's row-level
-   security rules. Never put the service_role key (or any other secret) here. */
+/* Cloud sync settings (docs/SUPABASE_SETUP.md, step 7). Empty values keep PulseFit fully local.
+   Both values are PUBLIC by design: the publishable key only works within the database's
+   row-level security rules. Never put the service_role / secret key (or any other secret) here. */
 window.PF_SYNC_CONFIG = {
-  url: '',      // e.g. 'https://abcdefghijklm.supabase.co'
-  anonKey: '',  // Project Settings → API → "anon public" key
+  url: 'https://ojfkaauancoydrsulpph.supabase.co',
+  anonKey: 'sb_publishable_ngAczA03DS88vhh22htHkA_z8yagnbT',  // publishable key (public by design)
 };

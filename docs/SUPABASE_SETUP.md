@@ -74,7 +74,9 @@ The client secret goes **only** into the Supabase dashboard. Never put it in the
 
 ## 7b. Add the sign-in code to the email (for the installed app)
 
-On iPhone, an app installed to the home screen keeps its storage separate from Safari, so a sign-in **link** opens in Safari instead of the app. Add the 6-digit **code** to the email so you can type it into the app:
+On iPhone, an app installed to the home screen keeps its storage separate from Safari, so a sign-in **link** opens in Safari instead of the app. Add the 6-digit **code** to the email so you can type it into the app.
+
+This only matters on iPhone; on Android, links work in the installed app. Supabase's built-in email service doesn't allow editing templates, so this step needs **custom SMTP** first (**Authentication → Emails → Set up SMTP**, for example with a free Resend or Brevo account). Until then, sign in to the iPhone app with Google.
 
 1. Open **Authentication → Emails → Templates → Magic Link**. On some projects the path is **Email Templates**.
 2. Below the existing link, add this line, then save:

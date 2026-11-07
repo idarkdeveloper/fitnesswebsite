@@ -1254,12 +1254,12 @@ function signInSheet() {
     <div class="field mt-6"><label for="syncEmail">Or get a sign-in link by email</label>
       <input class="input" id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120" /></div>
     <button class="btn ghost block mt-3" data-action="sync-email">Email me a link</button>
-    <p class="muted small m-0 mt-3">Open the link in this same browser${window.PFInstall?.installed() ? ', or use the code from the email' : ''}.</p>`);
+    <p class="muted small m-0 mt-3">Open the link in this same browser.</p>`);
 }
 
 function codeSheet(email) {
   openSheet('Check your email', `
-    <p class="muted m-0 mb-4">We sent a sign-in email to <strong>${esc(email)}</strong>. Open its link in this browser, or type the 6-digit code from the email here (handy in the installed app).</p>
+    <p class="muted m-0 mb-4">We sent a sign-in email to <strong>${esc(email)}</strong>. Open its link in this browser. If the email also shows a 6-digit code, you can type it here instead.</p>
     <div class="field"><label for="syncCode">Code</label>
       <input class="input" id="syncCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" data-email="${esc(email)}" /></div>
     <button class="btn block mt-3" data-action="sync-code">Sign in with code</button>`);

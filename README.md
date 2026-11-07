@@ -16,7 +16,8 @@ gets a home-screen icon, opens full screen and works offline.
 - **iPhone (Safari):** Share → **Add to Home Screen**.
 
 On iPhone, the installed app has its own storage, so sign in to sync again
-inside it, using the 6-digit code from the sign-in email.
+inside it. Use Google, or the email code if custom SMTP is set up
+(docs/SUPABASE_SETUP.md, step 7b).
 
 ## Features
 

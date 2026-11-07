@@ -196,6 +196,7 @@ function defaultState() {
     workouts: [],                       // {id, at, routineId, entries:[{progId, level, values[], passed}]}
     joined: {},                         // ladderId -> ISO date
     reminder: { enabled: false, time: '18:00', lastNotified: '' },
+    planReminder: { enabled: true, day: 5, time: '18:00', lastNotified: '' },  // weekly "next week's plan is out" (0 = Sun … 6 = Sat)
     challengeStart: null,
     hprofile: {},                       // body profile & targets (Track tab)
     hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
@@ -203,6 +204,7 @@ function defaultState() {
     meals: [],                          // {id, day, at, name, kcal, protein?}
     grocery: {},                        // ticked grocery items: "weekMonday|ingredient" -> 1
     foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
+    foodsSeededDE: false,               // German everyday foods added on this device (not synced)
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
   };
 }
@@ -212,7 +214,7 @@ function loadState() {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return defaultState();
     const d = defaultState();
-    return { ...d, ...raw, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) } };
+    return { ...d, ...raw, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) }, planReminder: { ...d.planReminder, ...(raw.planReminder || {}) } };
   } catch {
     return defaultState();
   }
@@ -489,6 +491,35 @@ function reminderBanner() {
   return `<div class="banner">${icon('bell')}<span>It's past ${esc(rm.time)} — today's session is still waiting for you.</span></div>`;
 }
 
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+/** True on the reminder's weekday once its time has passed (the moment to notify). */
+function planReminderDue() {
+  const pr = state.planReminder;
+  if (!pr.enabled || !window.PF_MEALS) return false;
+  const now = new Date();
+  const [hh, mm] = pr.time.split(':').map(Number);
+  return now.getDay() === pr.day && now.getHours() * 60 + now.getMinutes() >= hh * 60 + mm;
+}
+/** The Today banner stays from the reminder until the end of Saturday, the last shopping day before Sunday. */
+function planBannerDue() {
+  const pr = state.planReminder;
+  if (!pr.enabled || !window.PF_MEALS) return false;
+  const r = (pr.day + 6) % 7, t = planIdx(todayKey());               // Monday = 0 … Saturday = 5
+  return planReminderDue() || (t > r && t <= 5);
+}
+/** Next week's plan comes out on Friday: Friday–Sunday the reminder and Groceries are about next week. */
+const planReminderWeek = () => (planIdx(todayKey()) >= 4 ? 1 : 0);
+function planBanner() {
+  if (!planBannerDue()) return '';
+  const w = planReminderWeek();
+  const start = keyAdd(weekStart(todayKey()), 7 * w);
+  if (Object.keys(state.grocery).some((k) => k.startsWith(start + '|'))) return '';   // already shopping from the list
+  const wd = new Date().getDay();
+  const when = wd === 6 ? ' Shops are closed tomorrow, so shop today.' : wd === 5 ? ' Shop tomorrow: shops are closed on Sunday.' : '';
+  return `<div class="banner">${icon('bell')}<span class="grow">${w ? "Next week's meal plan is ready." : "This week's meal plan is ready."}${when}</span>
+    <button class="btn subtle sm" data-action="open-groceries" data-w="${w}">Groceries</button></div>`;
+}
+
 /* ---------- shared bits for the redesigned views ---------- */
 /** Row of small segments: 'done' (success), 'cur' (primary), anything else is off. */
 const segBar = (states, cls = '') => `<span class="segs ${cls}" aria-hidden="true">${states.map((s) => `<i class="${s}"></i>`).join('')}</span>`;
@@ -553,13 +584,13 @@ VIEWS.today = () => {
   let next = '';
   if (window.PF_MEALS) {
     const di = planIdx(tk);
-    const dmeals = dayInfo(di).meals;
+    const dmeals = dayInfo(di, weekStart(tk)).meals;
     const j = dmeals.findIndex((m) => !planLogged(tk, m.label));
     next = j < 0
       ? '<p class="small muted m-0 mt-2">All of today\'s plan is logged. Nice work.</p>'
       : `<div class="next-meal mt-2"><span class="plan-k accent">${dmeals[j].label}</span>
           <span class="grow">${esc(dmeals[j].text)}<span class="d-block small muted">${nf(dmeals[j].kcal)} kcal · ${nf(dmeals[j].protein)} g protein</span></span>
-          <button class="btn subtle sm" data-action="plan-log" data-day="${di}" data-m="${j}" aria-label="Log ${dmeals[j].label.toLowerCase()} today">${icon('plus')} Log</button></div>`;
+          <button class="btn subtle sm" data-action="plan-log" data-day="${di}" data-wk="${weekStart(tk)}" data-m="${j}" aria-label="Log ${dmeals[j].label.toLowerCase()} today">${icon('plus')} Log</button></div>`;
   }
   const p = hp();
   const w = hget(tk, 'weight'), wl = latestOn('weight', tk), a = avg7(tk), rate = weeklyRate(tk);
@@ -582,6 +613,7 @@ VIEWS.today = () => {
       <button class="streak-pill" data-action="info-streak" aria-label="${streak} day streak">${icon('flame')} ${streak}</button>
     </div>
     ${reminderBanner()}
+    ${planBanner()}
     <div class="wk-strip">${week}</div>
     ${!state.workouts.length && !state.seenIntro ? `
     <section class="card howto mt-4" aria-label="How PulseFit works">
@@ -967,6 +999,8 @@ VIEWS.profile = () => {
     <div class="list-group">
       ${row('track-setup', 'Calorie target', T ? `${nf(T.kcal)} kcal${T.losing ? ` · losing ${T.rate} kg a week` : ''}` : 'Not set up yet')}
       ${row('track-setup', 'Goals', goals)}
+      <div class="list-item static"><button class="grow text-left plain" data-action="plan-reminder"><span>Meal plan reminder<span class="li-sub">${state.planReminder.enabled ? `${WEEKDAYS[state.planReminder.day]}s at ${esc(state.planReminder.time)} · plan &amp; groceries` : 'Off'}</span></span></button>
+        <button class="toggle" role="switch" aria-checked="${state.planReminder.enabled}" data-action="toggle-plan-reminder" aria-label="Weekly meal plan reminder"></button></div>
     </div>
 
     <h2 class="group-label">Appearance</h2>
@@ -1357,10 +1391,10 @@ function foodSheet() {
   let planRows = '';
   if (window.PF_MEALS) {
     const di = planIdx(day);
-    planRows = dayInfo(di).meals.map((m, j) => (planLogged(day, m.label) ? '' : `
+    planRows = dayInfo(di, weekStart(day)).meals.map((m, j) => (planLogged(day, m.label) ? '' : `
       <div class="plan-pick" data-name="${esc((m.label + ' ' + m.text).toLowerCase())}">
         <span class="plan-k accent">${m.label}</span><span class="grow">${esc(m.text)}<span class="d-block small muted">${nf(m.kcal)} kcal · ${nf(m.protein)} g</span></span>
-        <button class="icon-btn round" data-action="plan-log" data-day="${di}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} from the plan">${icon('plus')}</button>
+        <button class="icon-btn round" data-action="plan-log" data-day="${di}" data-wk="${weekStart(day)}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} from the plan">${icon('plus')}</button>
       </div>`)).join('');
   }
   openSheet('Add food', `
@@ -1393,11 +1427,11 @@ function filterFoodSheet(q) {
 
 /** Starter "My foods": the everyday foods from mealplan.js. Fixed ids, so two devices seeding them don't duplicate. */
 function seedQuickFoods() {
-  if (state.foodsSeeded || !window.PF_MEALS) return;
-  state.foodsSeeded = true;
-  for (const [id, name, kcal, protein] of window.PF_MEALS.QUICK) {
-    if (!state.foods[id]) state.foods[id] = { name, kcal, ...(protein ? { protein } : {}) };
-  }
+  if ((state.foodsSeeded && state.foodsSeededDE) || !window.PF_MEALS) return;
+  const add = (list) => { for (const [id, name, kcal, protein] of list) if (!state.foods[id]) state.foods[id] = { name, kcal, ...(protein ? { protein } : {}) }; };
+  if (!state.foodsSeeded) add(window.PF_MEALS.QUICK);
+  if (!state.foodsSeededDE) add(window.PF_MEALS.QUICK_DE || []);
+  state.foodsSeeded = true; state.foodsSeededDE = true;
   save();
 }
 
@@ -1568,8 +1602,9 @@ function mealInfo(items) {
   return { text: parts.join(' + '), kcal, protein };
 }
 
-function dayInfo(i) {
-  const meals = window.PF_MEALS.PLAN[i].map(([label, items]) => ({ label, items, ...mealInfo(items) }));
+/** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week. */
+function dayInfo(i, wk = weekStart(todayKey())) {
+  const meals = window.PF_MEALS.weekPlan(wk)[i].map(([label, items]) => ({ label, items, ...mealInfo(items) }));
   return { meals, kcal: meals.reduce((a, m) => a + m.kcal, 0), protein: meals.reduce((a, m) => a + m.protein, 0) };
 }
 
@@ -1591,7 +1626,7 @@ const topUpText = (list) => list.map(([id, n]) => { const [name, serving] = dish
 function planCard(key) {
   if (!window.PF_MEALS) return '';
   const i = planIdx(key);
-  const d = dayInfo(i);
+  const d = dayInfo(i, weekStart(key));
   const T = targets(key) || targets(todayKey());
   const ups = topUps(d, T);
   const upInfo = ups.length ? mealInfo(ups) : null;
@@ -1601,7 +1636,7 @@ function planCard(key) {
       <ul class="plan-list mt-3">${d.meals.map((m, j) => `
         <li>
           <span class="grow"><span class="plan-k">${m.label}</span><span class="d-block">${esc(m.text)}</span><span class="d-block muted small">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
-          <button class="btn subtle sm" data-action="plan-log" data-day="${i}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} ${esc(onDayLabel())}">${icon('plus')} Log</button>
+          <button class="btn subtle sm" data-action="plan-log" data-day="${i}" data-wk="${weekStart(key)}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} ${esc(onDayLabel())}">${icon('plus')} Log</button>
         </li>`).join('')}</ul>
       <p class="small m-0 mt-3">Plan: <b>${nf(d.kcal)} kcal</b> · <b>${nf(d.protein)} g protein</b>${T ? ` (your target ${nf(T.kcal)} kcal · ${T.protein} g)` : ''}.</p>
       ${upInfo ? `<p class="small muted m-0 mt-1">To reach your target, add: ${esc(topUpText(ups))}. That's about +${nf(upInfo.kcal)} kcal, +${nf(upInfo.protein)} g protein.</p>` : ''}
@@ -1619,59 +1654,64 @@ function groceryList(start) {
   let withTopUps = false;
   const T = targets(todayKey());                                    // today's target applies to the whole week
   for (let i = 0; i < 7; i++) {
-    const d = dayInfo(i);
+    const d = dayInfo(i, start);
     d.meals.forEach((m) => addItems(m.items));
     const ups = topUps(d, T);
     if (ups.length) { withTopUps = true; addItems(ups); }
   }
   const fmt = (ing, v) => {
-    const unit = M.ING[ing][2];
-    if (unit === 'pc') return `${Math.ceil(v - 0.001)}${ing === 'bread' ? ' slices' : ''}`;
+    const [, , unit, pack] = M.ING[ing];
+    const n = Math.ceil(v - 0.001);
+    if (unit === 'tin') return [`${n} ${n === 1 ? 'tin' : 'tins'}`, ''];
+    // How many shop packs that is, e.g. "3 × 400 g pack". Only when it's more than one pack.
+    const packs = pack && v > pack[0] * 1.05 ? `${Math.ceil(v / pack[0] - 0.05)} × ${pack[1]}` : '';
+    if (unit === 'pc') return [`${n}${ing === 'bread' ? (n === 1 ? ' slice' : ' slices') : ''}`, packs];
     const small = Math.ceil(v / 50 - 0.001) * 50;                  // round up to 50 g / 50 ml
     const big = (Math.ceil(v / 100 - 0.001) * 100 / 1000).toFixed(1).replace(/\.0$/, '');
-    if (unit === 'ml') return small >= 1000 ? `${big} L` : `${small} ml`;
-    return small >= 1000 ? `${big} kg` : `${small} g`;
+    if (unit === 'ml') return [small >= 1000 ? `${big} L` : `${small} ml`, packs];
+    return [small >= 1000 ? `${big} kg` : `${small} g`, packs];
   };
   const sections = M.SECTIONS.map((s) => ({
     name: s,
     items: Object.keys(tot).filter((ing) => M.ING[ing][1] === s).sort((a, b) => M.ING[a][0].localeCompare(M.ING[b][0]))
-      .map((ing) => ({ id: ing, name: M.ING[ing][0], qty: fmt(ing, tot[ing]) })),
+      .map((ing) => { const [qty, packs] = fmt(ing, tot[ing]); return { id: ing, name: M.ING[ing][0], qty, packs }; }),
   })).filter((s) => s.items.length);
   return { sections, withTopUps };
 }
 
 let planSel = null;   // selected day (0 = Monday) on the Week plan; null = today
+let planWeek = null;  // 0 = this week, 1 = next week; null = automatic (Groceries shows next week from Friday)
 
 VIEWS.plan = () => {
   if (!window.PF_MEALS) return '<p class="muted">Meal plan data is missing.</p>';
   const tk = todayKey();
-  const start = weekStart(tk);
   const ti = planIdx(tk);
-  const sel = planSel ?? ti;
+  const wkOff = planWeek ?? (planTab === 'groceries' && ti >= 4 ? 1 : 0);   // from Friday, shop for next week
+  const start = keyAdd(weekStart(tk), 7 * wkOff);
+  const sel = planSel ?? (wkOff ? 0 : ti);
   const T = targets(tk);
-  const short = (k) => fromKey(k).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const range = `${short(start)} – ${short(keyAdd(start, 6))}`;
+  const short = (k) => fromKey(k).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const { sections, withTopUps } = groceryList(start);
   const all = sections.flatMap((s) => s.items);
   const ticked = all.filter((it) => state.grocery[`${start}|${it.id}`]).length;
   let body;
   if (planTab === 'week') {
     const strip = PLAN_DAYS.map((name, i) => {
-      const d = dayInfo(i);
+      const d = dayInfo(i, start);
       return `<button class="pd ${i === sel ? 'sel' : ''}" data-action="plan-sel" data-i="${i}" aria-pressed="${i === sel}" aria-label="${name}, ${nf(d.kcal)} kcal"><span class="wd">${name.slice(0, 3)}</span><span class="kc">${(d.kcal / 1000).toFixed(2).replace(/0$/, '')}k</span></button>`;
     }).join('');
-    const d = dayInfo(sel);
-    const isToday = sel === ti;
+    const d = dayInfo(sel, start);
+    const isToday = !wkOff && sel === ti;
     const dayK = keyAdd(start, sel);
     const ups = topUps(d, T);
     const upInfo = ups.length ? mealInfo(ups) : null;
     const meals = d.meals.map((m, j) => {
       const logged = isToday && planLogged(tk, m.label);
       return `<li><span class="plan-k">${m.label}</span><span class="grow">${esc(m.text)}<span class="d-block small muted">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
-        ${isToday ? (logged ? `<span class="logged">${icon('check', 'class="icon-sm"')} Logged</span>` : `<button class="btn subtle sm" data-action="plan-log" data-day="${sel}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} today">${icon('plus')} Log</button>`) : ''}</li>`;
+        ${isToday ? (logged ? `<span class="logged">${icon('check', 'class="icon-sm"')} Logged</span>` : `<button class="btn subtle sm" data-action="plan-log" data-day="${sel}" data-wk="${start}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} today">${icon('plus')} Log</button>`) : ''}</li>`;
     }).join('');
-    const nextDays = [1, 2].map((n) => (sel + n) % 7).map((i) => {
-      const x = dayInfo(i);
+    const nextDays = [1, 2].map((n) => sel + n).filter((i) => i < 7).map((i) => {
+      const x = dayInfo(i, start);
       return `<button class="card plan-mini mt-3" data-action="plan-sel" data-i="${i}">
         <span class="row-between"><span class="h3">${PLAN_DAYS[i]}</span><span class="small muted">${nf(x.kcal)} kcal · ${nf(x.protein)} g</span></span>
         ${x.meals.map((m) => `<span class="pm"><span class="plan-k">${m.label}</span><span>${esc(m.text)}</span></span>`).join('')}
@@ -1692,15 +1732,15 @@ VIEWS.plan = () => {
     body = `
       <section class="card groc-head mt-4">
         <div class="ring-wrap sm">${ringSvg(all.length ? ticked / all.length : 0, 52, 6)}<div class="ring-c"><b class="small">${ticked}/${all.length}</b></div></div>
-        <div class="grow"><div class="fw-bold">This week, one person</div><div class="small muted">${withTopUps ? 'Includes your daily top-ups · ' : ''}ticks reset Monday</div></div>
-        ${ticked ? '<button class="link-btn" data-action="grocery-clear">Clear</button>' : ''}
+        <div class="grow"><div class="fw-bold">${wkOff ? 'Next week' : 'This week'}, one person</div><div class="small muted">${withTopUps ? 'Includes your daily top-ups · ' : ''}new plan every Monday</div></div>
+        ${ticked ? `<button class="link-btn" data-action="grocery-clear" data-wk="${start}">Clear</button>` : ''}
       </section>
       ${sections.map((s) => {
         const n = s.items.filter((it) => state.grocery[`${start}|${it.id}`]).length;
         return `<div class="sec-head sm"><h2 class="group-label m-0">${esc(s.name)}</h2><span class="small muted">${n} / ${s.items.length}</span></div>
         <ul class="grocery card list-card">${s.items.map((it) => {
           const k = `${start}|${it.id}`;
-          return `<li><label class="check grow"><input type="checkbox" data-grocery="${esc(k)}" ${state.grocery[k] ? 'checked' : ''} /><span class="${state.grocery[k] ? 'done' : ''}">${esc(it.name)}</span></label><span class="fw-bold">${esc(it.qty)}</span></li>`;
+          return `<li><label class="check grow"><input type="checkbox" data-grocery="${esc(k)}" ${state.grocery[k] ? 'checked' : ''} /><span class="${state.grocery[k] ? 'done' : ''}">${esc(it.name)}</span></label><span class="text-right qty"><b>${esc(it.qty)}</b>${it.packs ? `<span class="d-block small muted">${esc(it.packs)}</span>` : ''}</span></li>`;
         }).join('')}</ul>`;
       }).join('')}
       <p class="muted small mt-4">${esc(window.PF_MEALS.PANTRY_NOTE)}</p>`;
@@ -1708,7 +1748,10 @@ VIEWS.plan = () => {
   return `
     <a class="link-plain small" href="#/today">${icon('chevL', 'class="icon-sm"')} Today</a>
     <h1 class="h1 mt-2 m-0">Meal plan</h1>
-    <p class="muted m-0 mt-1">Indian · steady weight loss · ${esc(range)}</p>
+    <p class="muted m-0 mt-1">Indian, from German shops · ${esc(short(start))} – ${esc(short(keyAdd(start, 6)))}</p>
+    <div class="chips wk-switch mt-3" role="group" aria-label="Which week">
+      ${['This week', 'Next week'].map((n, w) => `<button class="chip ${wkOff === w ? 'on' : ''}" aria-pressed="${wkOff === w}" data-action="plan-week" data-w="${w}">${n}${w && ti >= 4 ? ' · new' : ''}</button>`).join('')}
+    </div>
     <div class="segmented" role="tablist" aria-label="Meal plan" style="--n:2;--i:${planTab === 'week' ? 0 : 1}">
       <button role="tab" aria-selected="${planTab === 'week'}" data-action="plan-tab" data-tab="week">Week plan</button>
       <button role="tab" aria-selected="${planTab === 'groceries'}" data-action="plan-tab" data-tab="groceries">Groceries · ${all.length}</button>
@@ -1745,14 +1788,15 @@ const PLAN_ACTIONS = {
   },
   'track-food-rough': (el) => addMeal(el.dataset.name, Number(el.dataset.kcal), null),
   'plan-log': (el) => {
-    const m = dayInfo(Number(el.dataset.day)).meals[Number(el.dataset.m)];
+    const m = dayInfo(Number(el.dataset.day), el.dataset.wk || undefined).meals[Number(el.dataset.m)];
     if (!m) return;
     if (parseRoute().name !== 'track') trackDay = null;           // only the day log adds to another day
     addMeal(`${m.label}: ${m.text}`.slice(0, 120), m.kcal, m.protein);
   },
   'plan-tab': (el) => { planTab = el.dataset.tab; rerender(); },
-  'grocery-clear': () => {
-    const start = weekStart(todayKey());
+  'plan-week': (el) => { planWeek = Number(el.dataset.w); planSel = null; rerender(); },
+  'grocery-clear': (el) => {
+    const start = el.dataset.wk || weekStart(todayKey());
     for (const k of Object.keys(state.grocery)) if (k.startsWith(start + '|')) delete state.grocery[k];
     save(); rerender();
   },
@@ -2189,6 +2233,51 @@ function remindersSheet() {
     <p class="small muted mt-4">${perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
 }
 
+function planReminderSheet() {
+  const pr = state.planReminder;
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  openSheet('Meal plan reminder', `
+    <div class="row-between mb-4"><div><div class="t fw-bold">Weekly reminder</div><div class="small muted">A new plan starts every Monday. Get a nudge to shop for it.</div></div>
+      <button class="toggle" role="switch" aria-checked="${pr.enabled}" data-action="toggle-plan-reminder" aria-label="Weekly meal plan reminder"></button></div>
+    <div class="grid2">
+      <div class="field"><label for="prDay">Day</label><select class="input" id="prDay" data-bind="planRemDay">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<option value="${d}" ${pr.day === d ? 'selected' : ''}>${WEEKDAYS[d]}</option>`).join('')}</select></div>
+      <div class="field"><label for="prTime">Time</label><input class="input" id="prTime" type="time" value="${esc(pr.time)}" data-bind="planRemTime" /></div>
+    </div>
+    <p class="small muted mt-4 m-0">Next week's plan comes out every Friday, so you can shop on Saturday (shops are closed on Sunday). From Friday, Groceries shows next week's list, and the banner on Today stays until Saturday evening or until you start ticking it off.</p>
+    <button class="btn ghost block mt-4" data-action="plan-ics">${icon('calendar')} Add to my calendar</button>
+    <p class="small muted mt-2 m-0">Adds a repeating event with an alert to your phone's calendar, so it reminds you even when PulseFit is closed.</p>
+    <p class="small muted mt-4 m-0">${perm === 'granted' ? 'In-app: you get a notification while PulseFit is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
+}
+
+/** A weekly repeating calendar event (.ics) for the meal plan reminder, in German time. */
+function planReminderIcs() {
+  const pr = state.planReminder;
+  const by = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][pr.day];
+  const d = new Date();
+  d.setDate(d.getDate() + ((pr.day - d.getDay() + 7) % 7));
+  const [hh, mm] = pr.time.split(':').map(Number);
+  const p2 = (n) => String(n).padStart(2, '0');
+  const start = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}T${p2(hh)}${p2(mm)}00`;
+  const end = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}T${p2(Math.min(23, hh + 1))}${p2(mm)}00`;
+  const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const url = location.href.split('#')[0] + '#/plan';
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PulseFit//Meal plan//EN', 'CALSCALE:GREGORIAN',
+    'BEGIN:VTIMEZONE', 'TZID:Europe/Berlin',
+    'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
+    'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
+    'END:VTIMEZONE',
+    'BEGIN:VEVENT', 'UID:pulsefit-meal-plan-reminder@idarkdeveloper.github.io', `DTSTAMP:${now}`,
+    `DTSTART;TZID=Europe/Berlin:${start}`, `DTEND;TZID=Europe/Berlin:${end}`, `RRULE:FREQ=WEEKLY;BYDAY=${by}`,
+    'SUMMARY:PulseFit: meal plan & groceries', `DESCRIPTION:Check next week's PulseFit meal plan and buy the groceries. ${url}`, `URL:${url}`,
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Meal plan & groceries', 'TRIGGER:PT0M', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  a.download = 'pulsefit-meal-plan.ics';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 function proSheet() {
   openSheet('PulseFit Pro', `
     <p>Pro unlocks the advanced movement families — <strong>Lunges, Dips, Elbow Levers and the Clutch Flag</strong> — plus the <strong>Strength Builder</strong> routine.</p>
@@ -2469,6 +2558,16 @@ const ACTIONS = {
     save(); routineDaysSheet(); rerender();
   },
   'reminders': remindersSheet,
+  'plan-reminder': planReminderSheet,
+  'toggle-plan-reminder': async () => {
+    state.planReminder.enabled = !state.planReminder.enabled;
+    if (state.planReminder.enabled && 'Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission(); } catch { /* ignore */ }
+    }
+    save(); if (sheetOpen()) planReminderSheet(); rerender();
+  },
+  'plan-ics': () => { planReminderIcs(); toast('Calendar file downloaded. Open it to add the reminder'); },
+  'open-groceries': (el) => { planTab = 'groceries'; planWeek = Number(el.dataset.w); planSel = null; location.hash = '#/plan'; },
   'toggle-reminder': async () => {
     state.reminder.enabled = !state.reminder.enabled;
     if (state.reminder.enabled && 'Notification' in window && Notification.permission === 'default') {
@@ -2542,6 +2641,14 @@ document.addEventListener('input', (ev) => {
   } else if (t.dataset.bind === 'reminderTime') {
     state.reminder.time = t.value || '18:00';
     save();
+  } else if (t.dataset.bind === 'planRemTime') {
+    state.planReminder.time = t.value || '10:00';
+    state.planReminder.lastNotified = '';
+    save(); rerender();
+  } else if (t.dataset.bind === 'planRemDay') {
+    state.planReminder.day = Number(t.value);
+    state.planReminder.lastNotified = '';
+    save(); rerender();
   }
 });
 
@@ -2568,7 +2675,7 @@ document.addEventListener('change', async (ev) => {
       save(); rerender(); toast('Backup merged');
       return;
     }
-    state = { ...d, ...data, profile: { ...d.profile, ...(data.profile || {}) }, reminder: { ...d.reminder, ...(data.reminder || {}) } };
+    state = { ...d, ...data, profile: { ...d.profile, ...(data.profile || {}) }, reminder: { ...d.reminder, ...(data.reminder || {}) }, planReminder: { ...d.planReminder, ...(data.planReminder || {}) } };
     save(); applyTheme(); rerender(); toast('Data imported');
   } catch {
     toast("That file doesn't look like a PulseFit backup");
@@ -2589,7 +2696,19 @@ function applyTheme() {
   if (meta) meta.content = { midnight: '#1c2a55', light: '#ffffff', dark: '#13161d' }[t];
 }
 
+function checkPlanReminder() {
+  const pr = state.planReminder;
+  if (!planReminderDue() || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const k = dayKey(today());
+  if (pr.lastNotified === k) return;
+  const next = planReminderWeek() === 1, wd = new Date().getDay();
+  try { new Notification('PulseFit', { body: `${next ? "Next week's" : "This week's"} meal plan is ready.${wd === 6 ? ' Shops are closed tomorrow, so get the groceries today.' : wd === 5 ? ' Check the grocery list and shop tomorrow.' : ' Time to get the groceries.'}` }); } catch { /* ignore */ }
+  pr.lastNotified = k;
+  save();
+}
+
 function checkReminder() {
+  checkPlanReminder();
   const rm = state.reminder;
   if (!rm.enabled || !('Notification' in window) || Notification.permission !== 'granted') return;
   const k = dayKey(today());

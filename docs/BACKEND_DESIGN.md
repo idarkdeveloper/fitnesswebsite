@@ -1,6 +1,6 @@
 # PulseFit Accounts and Cloud Sync: Backend Design (light version)
 
-Status: **proposed: light version chosen 2026-11-07, awaiting approval to build**. No backend code exists yet. Implementation starts only after approval.
+Status: **approved 2026-11-07 and implemented** (`sync-core.js`, `sync.js`, `supabase/0001_sync.sql`). Setup steps: [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md).
 
 Scope: optional sign-in, cloud backup and phone-and-laptop sync for one person. The SPA files are `index.html`, `app.js` and `data.js`.
 
@@ -62,7 +62,8 @@ create table public.sync_doc (
 );
 
 -- The version is bumped by the server, never trusted from the client.
-create function public.bump_version() returns trigger language plpgsql as $$
+create function public.bump_version() returns trigger
+  language plpgsql set search_path = '' as $$
 begin
   new.version := old.version + 1;
   new.updated_at := now();
@@ -145,8 +146,8 @@ Keeping these out of `pf2_state` means Export and Import never see them.
 | `current.<cat>`, `joined.<id>` | Newer stamp wins. Leaving a ladder is stored as `null` with a stamp. | The user can move these down or remove them. |
 | `profile.name`, `profile.theme`, `profile.pro`, `routineId`, `trainingDays`, `restSeconds` | Newer stamp wins | These are settings, so the latest choice wins. |
 
-- A stamp more than 5 minutes in the future is treated as now, so a device with a wrong clock can't win forever.
-- If two stamps are equal, the cloud copy wins, so both devices end up with the same result.
+- A stamp more than 5 minutes ahead of the merging device's clock is clamped to now + 5 minutes, and the clamped time is what gets stored, so a device with a wrong clock can't win forever.
+- If two stamps are equal, a value beats no value (so a progression started before sign-in isn't dropped); otherwise the cloud copy wins. Every device ends up with the same result.
 - Workout ids stay as they are today: 8 random base-36 characters. With one person logging a few hundred workouts a year, a collision is practically impossible. Keeping the ids also means existing backups and history work without any migration.
 
 ### 3.3 Reset (decision 3)

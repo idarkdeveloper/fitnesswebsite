@@ -46,6 +46,7 @@ const ICONS = {
   download: 'M12 4v11.5M7 10.5l5 5 5-5M4.5 20h15',
   upload: 'M12 20V8.5M7 13.5l5-5 5 5M4.5 4h15',
   reset: 'M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 3.5v5.1h5.1',
+  cloud: 'M7 18.5h10.5a4 4 0 0 0 .4-7.98A6 6 0 0 0 6.3 9.1 4.75 4.75 0 0 0 7 18.5z',
   dumbbell: 'M6.5 6.5l11 11M3.5 9.5l6-6M14.5 20.5l6-6M2 11l2 2M11 2l2 2M20 11l2 2M11 20l2 2',
   star: 'M12 3.2l2.7 5.6 6.1.8-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.8z',
   sprout: 'M12 21v-8.5M12 12.5C12 8.6 9.2 6.4 5 6.4c0 4 2.8 6.1 7 6.1zm0-2C12 7.3 14.6 5 18.6 5c0 3.6-2.6 5.5-6.6 5.5z',
@@ -211,6 +212,7 @@ function loadState() {
 let state = loadState();
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* storage full or blocked */ }
+  if (window.PFSync) window.PFSync.noteSave(state);   // cloud sync (sync.js), if loaded
 }
 
 /* ---------------------------------------------------------------
@@ -834,6 +836,7 @@ VIEWS.profile = () => {
       <button class="list-item" data-action="rest-settings"><span>Rest Timer<span class="li-sub">${state.restSeconds} seconds between sets</span></span>${icon('chevR')}</button>
       <button class="list-item" data-action="reminders"><span>Reminders<span class="li-sub">${state.reminder.enabled ? 'Daily at ' + esc(state.reminder.time) : 'Off'}</span></span>${icon('chevR')}</button>
     </div>
+    ${accountCard()}
     <div class="list-group">
       <button class="list-item" data-action="export"><span>Export Data</span>${icon('download')}</button>
       <button class="list-item" data-action="import"><span>Import Data</span>${icon('upload')}</button>
@@ -1149,7 +1152,8 @@ function faqSheet() {
 }
 function privacySheet() {
   openSheet('Privacy & Terms', `
-    <p><strong>Privacy.</strong> PulseFit has no servers and no accounts. Everything you enter — your name, email, workouts and settings — is stored in your browser's local storage and never transmitted. Clearing your browser data or using Reset All Progress deletes it.</p>
+    <p><strong>Privacy.</strong> Everything you enter is stored in your browser's local storage. Clearing your browser data or using Reset All Progress deletes it.</p>
+    <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, progressions, joined ladders, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
     <p><strong>Imagery.</strong> Exercise photos are AI-generated illustrations, not photographs of real athletes. Follow the written cues for exact form.</p>
     <p><strong>Terms.</strong> PulseFit is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);
 }
@@ -1173,7 +1177,95 @@ function workoutSheet(id) {
 /* ---------------------------------------------------------------
    12. Event delegation
    --------------------------------------------------------------- */
+/* ---------- cloud sync UI (engine in sync.js) ---------- */
+function downloadJson(obj, name) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}-${dayKey(today())}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function ago(iso) {
+  if (!iso) return 'not yet';
+  const s = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  return fmtShort(new Date(iso));
+}
+
+function syncLine(st) {
+  switch (st.state) {
+    case 'syncing': return 'Syncing…';
+    case 'ok': return `Synced ${ago(st.lastSynced)}`;
+    case 'offline': return 'Offline: changes are saved on this device';
+    case 'unreachable': return "Can't reach the cloud (it may be paused). Changes are saved on this device.";
+    case 'auth': return 'Sign in again to sync';
+    case 'not_allowed': return "This account can't sync";
+    case 'error': return st.detail || 'Sync failed. Will retry.';
+    default: return st.lastSynced ? `Last synced ${ago(st.lastSynced)}` : 'Connecting…';
+  }
+}
+
+function accountCard() {
+  const S = window.PFSync;
+  const st = S ? S.status() : { configured: false };
+  if (!st.configured) {
+    return `<div class="list-group"><div class="list-item static"><span>Back up &amp; sync<span class="li-sub">Cloud sync isn't set up yet (see docs/SUPABASE_SETUP.md)</span></span>${icon('cloud')}</div></div>`;
+  }
+  const rec = S.recovery();
+  const recRow = rec ? `<button class="list-item" data-action="sync-recovery"><span>Download this device's data from before the reset<span class="li-sub">Saved ${esc(ago(rec.at))}</span></span>${icon('download')}</button>` : '';
+  if (!st.user) {
+    return `<div class="list-group">
+      <button class="list-item" data-action="sync-signin"><span>Back up &amp; sync<span class="li-sub">${st.ready ? 'Sign in to sync your phone and computer' : 'Loading…'}</span></span>${icon('cloud')}</button>${recRow}</div>`;
+  }
+  return `<div class="list-group">
+    <button class="list-item" data-action="sync-now"><span>${esc(st.user.email || 'Signed in')}<span class="li-sub" data-sync-line>${esc(syncLine(st))}</span></span>${icon('cloud')}</button>
+    ${recRow}
+    <button class="list-item" data-action="sync-signout"><span>Sign out<span class="li-sub">Your data stays on this device</span></span>${icon('chevR')}</button>
+    <button class="list-item danger" data-action="sync-delete"><span>Delete cloud data</span>${icon('trash')}</button>
+  </div>`;
+}
+
+function signInSheet() {
+  openSheet('Back up & sync', `
+    <p class="muted m-0 mb-4">Sign in to keep your workouts and progress in sync across your devices. This app works fully without signing in.</p>
+    <button class="btn block lg" data-action="sync-google">Continue with Google</button>
+    <div class="field mt-6"><label for="syncEmail">Or get a sign-in link by email</label>
+      <input class="input" id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120" /></div>
+    <button class="btn ghost block mt-3" data-action="sync-email">Email me a link</button>
+    <p class="muted small m-0 mt-3">Open the link in this same browser.</p>`);
+}
+
+window.PF_APP = {
+  getState: () => state,
+  setState: (s) => { state = s; save(); applyTheme(); if (!sheetOpen() && !document.activeElement?.matches('input, textarea')) rerender(); },
+  freshState: () => { const s = defaultState(); s.profile.theme = state.profile.theme; return s; },
+  downloadJson,
+  toast,
+};
+
 const ACTIONS = {
+  'sync-signin': signInSheet,
+  'sync-google': () => window.PFSync.signInGoogle(),
+  'sync-email': async () => {
+    const email = ($('#syncEmail')?.value || '').trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Enter a valid email'); return; }
+    if (await window.PFSync.signInEmail(email)) closeSheet();
+  },
+  'sync-now': () => window.PFSync.syncNow(),
+  'sync-signout': () => { if (confirm('Sign out of cloud sync? Your data stays on this device.')) window.PFSync.signOut(); },
+  'sync-delete': () => {
+    if (confirm('Delete your cloud copy and sign out? Data on this device is not affected.')) window.PFSync.deleteCloud();
+  },
+  'sync-recovery': () => {
+    const r = window.PFSync.recovery();
+    if (!r) return;
+    downloadJson(r.state, 'pulsefit-before-reset');
+    if (confirm('Downloaded. Remove the saved copy from this device?')) { window.PFSync.clearRecovery(); rerender(); }
+  },
   'overlay': (el, ev) => { if (ev.target === el) closeSheet(); },
   'close-sheet': () => closeSheet(),
   'pick-routine': routineSheet,
@@ -1290,19 +1382,14 @@ const ACTIONS = {
     }
     save(); remindersSheet(); rerender();
   },
-  'export': () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `pulsefit-backup-${dayKey(today())}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  },
+  'export': () => downloadJson(state, 'pulsefit-backup'),
   'import': () => $('#importFile').click(),
   'reset': () => {
     if (!confirm('Reset all progress, workouts and settings? This cannot be undone.')) return;
     const theme = state.profile.theme;
-    state = defaultState(); state.profile.theme = theme; save(); rerender(); toast('All progress reset');
+    state = defaultState(); state.profile.theme = theme;
+    if (window.PFSync) window.PFSync.noteReset(state);   // a reset replaces older data on synced devices too
+    save(); rerender(); toast('All progress reset');
   },
   'faq': faqSheet,
   'privacy': privacySheet,
@@ -1364,6 +1451,13 @@ document.addEventListener('change', async (ev) => {
     const data = JSON.parse(await file.text());
     if (!data || typeof data !== 'object' || !Array.isArray(data.workouts) || typeof data.levels !== 'object') throw new Error('bad');
     const d = defaultState();
+    if (window.PFSync && window.PFSync.signedIn()) {
+      // Signed in: merge the file into the synced data instead of replacing it.
+      if (!confirm('Merge this file into your synced data? Workouts are combined and the highest levels are kept. Your settings stay as they are.')) return;
+      state = window.PFSync.mergeImport(state, data);
+      save(); rerender(); toast('Backup merged');
+      return;
+    }
     state = { ...d, ...data, profile: { ...d.profile, ...(data.profile || {}) }, reminder: { ...d.reminder, ...(data.reminder || {}) } };
     save(); applyTheme(); rerender(); toast('Data imported');
   } catch {
@@ -1402,6 +1496,13 @@ function checkReminder() {
 $$('[data-icon]').forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
 
 window.addEventListener('hashchange', () => { closeSheet(); stopRest(); render(); });
+// Called by sync.js once it loads: refresh the Account card when sync status changes.
+window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
+  if (parseRoute().name !== 'profile' || sheetOpen()) return;
+  const line = $('[data-sync-line]');
+  if (line && st.user) line.textContent = syncLine(st);                  // same card, new status
+  else if (!document.activeElement?.matches('input, textarea')) rerender(); // signed in/out: redraw the card
+});
 applyTheme();
 if (!location.hash) history.replaceState(null, '', '#/home');
 render();

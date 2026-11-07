@@ -6,6 +6,8 @@
   <title>PulseFit — Bodyweight Progressions</title>
   <meta name="description" content="Master bodyweight training one progression at a time. Guided routines, exercise tutorials, level tracking, challenges and badges — free, in your browser." />
   <meta name="theme-color" content="#1c2a55" />
+  <!-- Only this site's own scripts may run; network calls only to this site and Supabase. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,15 +15,7 @@
   <link rel="stylesheet" href="styles.css" />
 
   <!-- Apply saved theme before first paint -->
-  <script>
-    (function () {
-      try {
-        var s = JSON.parse(localStorage.getItem('pf2_state') || '{}');
-        var t = s.profile && s.profile.theme;
-        if (t) document.documentElement.setAttribute('data-theme', t);
-      } catch (e) {}
-    })();
-  </script>
+  <script src="theme-boot.js"></script>
 </head>
 <body>
   <div class="backdrop" aria-hidden="true"></div>
@@ -51,6 +45,9 @@
 
   <script src="data.js"></script>
   <script src="img/manifest.js"></script>
+  <script src="sync-config.js"></script>
+  <script src="sync-core.js"></script>
   <script src="app.js"></script>
+  <script src="sync.js"></script>
 </body>
 </html>

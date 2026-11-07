@@ -166,7 +166,9 @@ const words = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 
 /* Ids whose generated image was rejected for wrong form; their prompts were tightened afterwards.
    Remove an id once a good image for it is in img/. */
-const REDO_IDS = new Set(['angled-bridges', 'tap-bridges', 'one-arm-towel-hangs']);
+// tap-bridges uses a copy of head-bridges.webp: the tap moment is the head-bridge position, and three generations
+// (gpt-image-1.5 twice, gpt-image-2 once) all came out face-down.
+const REDO_IDS = new Set(['angled-bridges']);
 
 const STYLE_ANCHOR = () => `You are producing a consistent series of exercise photos for a calisthenics app. Every image: ${STYLE} ${COMPOSITION} ${LIGHTING} ${COLOR} Keep the subject centred so the image can be cropped to a square. ${ATHLETE} ${NEGATIVE} Show safe, textbook form.`;
 

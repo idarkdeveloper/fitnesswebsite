@@ -200,6 +200,8 @@ function defaultState() {
     hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
     foods: {},                          // saved foods: id -> { name, kcal, protein? }
     meals: [],                          // {id, day, at, name, kcal, protein?}
+    grocery: {},                        // ticked grocery items: "weekMonday|ingredient" -> 1
+    foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
   };
 }
@@ -551,6 +553,7 @@ VIEWS.home = () => {
       </ol>
       <button class="btn ghost block" data-action="dismiss-intro">Got it</button>
     </section>` : ''}
+    ${todaySummary()}
     <section class="card challenge-strip" aria-label="30 day workout challenge">
       <div class="row-between">
         <div class="title">${icon('flame')} 30 Day Workout Challenge</div>
@@ -942,6 +945,29 @@ function targets(day) {
   };
 }
 
+/** Compact "Today" card for Home: calories, weight, steps and water, linking to the Track tab. */
+function todaySummary() {
+  const day = todayKey();
+  const p = hp();
+  const T = targets(day);
+  const eaten = state.meals.filter((m) => m.day === day).reduce((a, m) => a + m.kcal, 0);
+  const w = hget(day, 'weight'), a = avg7(day);
+  const steps = hget(day, 'steps'), water = hget(day, 'water');
+  const sg = p.stepGoal || HDEF.stepGoal, wg = p.waterGoal || HDEF.waterGoal;
+  const left = T ? T.kcal - eaten : null;
+  const stat = (k, v, g) => `<div class="ts"><span class="k">${k}</span><span class="v">${v}</span><span class="g">${g}</span></div>`;
+  return `
+    <a class="card today-card" href="#/track" aria-label="Today's health log. Open Track">
+      <div class="row-between"><h2 class="h3">Today</h2><span class="small c-accent fw-bold row gap-2">Track ${icon('chevR', 'class="icon-sm"')}</span></div>
+      <div class="today-grid mt-3">
+        ${T ? stat('Calories', nf(Math.abs(left)), left >= 0 ? `left of ${nf(T.kcal)}` : `over ${nf(T.kcal)}`) : stat('Calories', nf(eaten), 'eaten')}
+        ${stat('Weight', w != null ? kg(w) : '–', w != null ? `kg${a != null ? ` · avg ${kg(a)}` : ''}` : 'not weighed yet')}
+        ${stat('Steps', steps != null ? nf(steps) : '–', `of ${nf(sg)}`)}
+        ${stat('Water', water != null ? `${(water / 1000).toFixed(1)} L` : '–', `of ${(wg / 1000).toFixed(1)} L`)}
+      </div>
+    </a>`;
+}
+
 /* ---------- Track view ---------- */
 VIEWS.track = () => {
   const day = tKey();
@@ -969,6 +995,7 @@ VIEWS.track = () => {
         <button class="btn block" data-action="track-setup">Set up targets</button>
       </section>` : ''}
     ${trackFoodCard(day, T, thisDay)}
+    ${planCard(day)}
     ${trackWeightCard(day, T, thisDay, isToday)}
     ${trackHabits(day)}
     ${trackMeasureCard(day)}
@@ -1166,6 +1193,8 @@ function onDayLabel() {
   return day === todayKey() ? 'today' : `on ${fmtShort(fromKey(day))}`;
 }
 
+let foodPick = null;   // { id, qty, edit } while choosing servings in the Add food sheet
+
 function foodSheet() {
   const saved = Object.entries(state.foods).sort((a, b) => a[1].name.localeCompare(b[1].name));
   const savedNames = new Set(saved.map(([, f]) => f.name.toLowerCase()));
@@ -1175,18 +1204,55 @@ function foodSheet() {
     if (seen.has(k) || savedNames.has(k)) return false;
     seen.add(k); return true;
   }).slice(0, 6);
+  const f = foodPick && state.foods[foodPick.id];
+  const pickPanel = f ? `
+    <div class="pick card flat soft">
+      <div class="row-between"><span class="fw-bold">${esc(f.name)}</span><span class="muted small">${nf(f.kcal)} kcal${f.protein ? ` · ${nf(f.protein)} g protein` : ''} each</span></div>
+      ${foodPick.edit ? `
+        <div class="grid3">
+          <div class="field"><label for="qeName">Name</label><input class="input" id="qeName" maxlength="60" value="${esc(f.name)}" /></div>
+          <div class="field"><label for="qeKcal">kcal</label><input class="input" id="qeKcal" type="number" inputmode="numeric" min="0" max="5000" value="${f.kcal}" /></div>
+          <div class="field"><label for="qeProt">Protein (g)</label><input class="input" id="qeProt" type="number" inputmode="decimal" min="0" max="500" value="${f.protein ?? ''}" /></div>
+        </div>
+        <button class="btn block mt-3" data-action="track-pick-save">Save values</button>` : `
+        <div class="row-between mt-3">
+          <div class="stepper" aria-label="Servings">
+            <button data-action="track-pick-qty" data-d="-0.5" aria-label="Fewer servings">${icon('minus')}</button>
+            <span class="pick-qty" id="pickQty" aria-live="polite">× ${foodPick.qty}</span>
+            <button data-action="track-pick-qty" data-d="0.5" aria-label="More servings">${icon('plus')}</button>
+          </div>
+          <span class="fw-bold" id="pickTotal">${nf(f.kcal * foodPick.qty)} kcal</span>
+        </div>
+        <button class="btn block lg mt-3" data-action="track-pick-add">Add to ${esc(onDayLabel())}</button>
+        <div class="row-between mt-2"><button class="link-btn small" data-action="track-pick-edit">Edit values</button><button class="link-btn small" data-action="track-food-forget" data-food="${esc(foodPick.id)}">Remove from my foods</button></div>`}
+    </div>` : '';
   openSheet('Add food', `
-    ${saved.length ? `<h3 class="sheet-sub">My foods <span class="muted">· tap to add</span></h3><div class="chips">${saved.map(([id, f]) => `
-      <span class="chip-pair"><button class="chip" data-action="track-food-quick" data-food="${esc(id)}">${esc(f.name)} · ${nf(f.kcal)}</button><button class="chip-x" data-action="track-food-forget" data-food="${esc(id)}" aria-label="Remove ${esc(f.name)} from my foods">${icon('x')}</button></span>`).join('')}</div>` : ''}
+    ${pickPanel}
+    <h3 class="sheet-sub">My foods <span class="muted">· tap, choose servings, add</span></h3>
+    ${saved.length ? `<div class="chips">${saved.map(([id, x]) => `<button class="chip ${foodPick && foodPick.id === id ? 'on' : ''}" data-action="track-pick" data-food="${esc(id)}">${esc(x.name)} · ${nf(x.kcal)}</button>`).join('')}</div>` : '<p class="muted small m-0">No saved foods yet. Add one below and tick "Save to my foods".</p>'}
     ${recent.length ? `<h3 class="sheet-sub">Recent</h3><div class="chips">${recent.map((m) => `<button class="chip" data-action="track-food-recent" data-id="${esc(m.id)}">${esc(m.name)} · ${nf(m.kcal)}</button>`).join('')}</div>` : ''}
-    <div class="field"><label for="fName">Food</label><input class="input" id="fName" maxlength="60" placeholder="e.g. Chicken and rice" autocomplete="off" /></div>
-    <div class="grid2">
-      <div class="field"><label for="fKcal">Calories (kcal)</label><input class="input" id="fKcal" type="number" inputmode="numeric" min="0" max="5000" /></div>
-      <div class="field"><label for="fProt">Protein (g), optional</label><input class="input" id="fProt" type="number" inputmode="decimal" min="0" max="500" /></div>
-    </div>
-    <label class="check mt-4"><input type="checkbox" id="fSave" /> Save to my foods for one-tap logging</label>
-    <button class="btn block lg mt-5" data-action="track-food-add">Add to ${esc(onDayLabel())}</button>
-    <p class="muted small mt-3 m-0">Calories are on the pack label, or search the food online. A rough number logged every day beats a perfect one logged sometimes.</p>`);
+    <h3 class="sheet-sub">Eating out, or not sure?</h3>
+    <div class="chips">${[['Small meal', 400], ['Normal meal', 700], ['Big meal', 1000]].map(([n, k]) => `<button class="chip" data-action="track-food-rough" data-name="${n}" data-kcal="${k}">${n} · ${nf(k)}</button>`).join('')}</div>
+    <details class="mt-4" ${saved.length ? '' : 'open'}><summary class="fw-bold">Other food</summary>
+      <div class="field"><label for="fName">Food</label><input class="input" id="fName" maxlength="60" placeholder="e.g. Chicken biryani" autocomplete="off" /></div>
+      <div class="grid2">
+        <div class="field"><label for="fKcal">Calories (kcal)</label><input class="input" id="fKcal" type="number" inputmode="numeric" min="0" max="5000" /></div>
+        <div class="field"><label for="fProt">Protein (g), optional</label><input class="input" id="fProt" type="number" inputmode="decimal" min="0" max="500" /></div>
+      </div>
+      <label class="check mt-4"><input type="checkbox" id="fSave" checked /> Save to my foods</label>
+      <button class="btn block lg mt-4" data-action="track-food-add">Add to ${esc(onDayLabel())}</button>
+    </details>
+    <p class="muted small mt-3 m-0">Rough is fine. A rough number logged every day beats an exact one logged sometimes; your weekly weight trend shows if your numbers are off.</p>`);
+}
+
+/** Starter "My foods": the everyday foods from mealplan.js. Fixed ids, so two devices seeding them don't duplicate. */
+function seedQuickFoods() {
+  if (state.foodsSeeded || !window.PF_MEALS) return;
+  state.foodsSeeded = true;
+  for (const [id, name, kcal, protein] of window.PF_MEALS.QUICK) {
+    if (!state.foods[id]) state.foods[id] = { name, kcal, ...(protein ? { protein } : {}) };
+  }
+  save();
 }
 
 function addMeal(name, kcal, protein) {
@@ -1275,7 +1341,7 @@ const TRACK_ACTIONS = {
     p.waterGoal = clamp(Math.round((v('#tpWater') || HDEF.waterGoal / 1000) * 1000), 500, 6000);
     save(); closeSheet(); rerender(); toast('Targets saved');
   },
-  'track-food': foodSheet,
+  'track-food': () => { foodPick = null; foodSheet(); },
   'track-food-add': () => {
     const name = ($('#fName').value || '').trim();
     const kcal = parseNum($('#fKcal').value), protein = parseNum($('#fProt').value);
@@ -1337,6 +1403,185 @@ const TRACK_ACTIONS = {
     save(); closeSheet(); rerender(); toast(n ? 'Measurements saved' : 'Nothing changed');
   },
   'track-clear': (el) => { hset(tKey(), el.dataset.f, null); save(); closeSheet(); rerender(); toast('Entry removed'); },
+};
+
+/* ---------- Meal plan & groceries ---------- */
+const PLAN_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+let planTab = 'week';
+const planIdx = (key) => (fromKey(key).getDay() + 6) % 7;          // Monday = 0
+const weekStart = (key) => keyAdd(key, -planIdx(key));
+const dishOf = (id) => window.PF_MEALS.DISH[id];
+
+function mealInfo(items) {
+  let kcal = 0, protein = 0;
+  const parts = items.map(([id, n]) => {
+    const [name, , k, p] = dishOf(id);
+    kcal += k * n; protein += p * n;
+    return n === 1 ? name : `${n} × ${name}`;
+  });
+  return { text: parts.join(' + '), kcal, protein };
+}
+
+function dayInfo(i) {
+  const meals = window.PF_MEALS.PLAN[i].map(([label, items]) => ({ label, items, ...mealInfo(items) }));
+  return { meals, kcal: meals.reduce((a, m) => a + m.kcal, 0), protein: meals.reduce((a, m) => a + m.protein, 0) };
+}
+
+/** Protein-first extras that bring a plan day up to your calorie and protein targets. */
+function topUps(day, T) {
+  if (!T) return [];
+  let gap = T.kcal - day.kcal, pgap = T.protein - day.protein;
+  const out = [];
+  const add = (id, n) => { const [, , k, p] = dishOf(id); out.push([id, n]); gap -= k * n; pgap -= p * n; };
+  if (pgap >= 25 && gap >= 250) add('tikka', 1);
+  if (pgap >= 8 && gap >= 150) add('boiled2', 1);
+  if (pgap >= 4 && gap >= 90) add('curd', 1);
+  const roti = Math.min(3, Math.floor(gap / 110));
+  if (roti > 0) add('roti', roti);
+  return out;
+}
+const topUpText = (list) => list.map(([id, n]) => { const [name, serving] = dishOf(id); return n === 1 ? `${name} (${serving})` : `${n} × ${name}`; }).join(', ');
+
+function planCard(key) {
+  if (!window.PF_MEALS) return '';
+  const i = planIdx(key);
+  const d = dayInfo(i);
+  const T = targets(key) || targets(todayKey());
+  const ups = topUps(d, T);
+  const upInfo = ups.length ? mealInfo(ups) : null;
+  return `
+    <section class="card mt-4" aria-labelledby="planH">
+      <div class="row-between"><h2 class="h3" id="planH">Meal plan · ${PLAN_DAYS[i]}</h2><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
+      <ul class="plan-list mt-3">${d.meals.map((m, j) => `
+        <li>
+          <span class="grow"><span class="plan-k">${m.label}</span><span class="d-block">${esc(m.text)}</span><span class="d-block muted small">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
+          <button class="btn subtle sm" data-action="plan-log" data-day="${i}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} ${esc(onDayLabel())}">${icon('plus')} Log</button>
+        </li>`).join('')}</ul>
+      <p class="small m-0 mt-3">Plan: <b>${nf(d.kcal)} kcal</b> · <b>${nf(d.protein)} g protein</b>${T ? ` (your target ${nf(T.kcal)} kcal · ${T.protein} g)` : ''}.</p>
+      ${upInfo ? `<p class="small muted m-0 mt-1">To reach your target, add: ${esc(topUpText(ups))}. That's about +${nf(upInfo.kcal)} kcal, +${nf(upInfo.protein)} g protein.</p>` : ''}
+      ${T && T.kcal < d.kcal - 100 ? '<p class="small muted m-0 mt-1">Your target is below this plan. Skip a roti at lunch or dinner.</p>' : ''}
+    </section>`;
+}
+
+/** This week's shopping list from the plan (plus daily top-ups when targets are set), grouped by section. */
+function groceryList(start) {
+  const M = window.PF_MEALS;
+  const tot = {};
+  const addItems = (items) => items.forEach(([id, n]) => {
+    for (const [ing, amt] of Object.entries(dishOf(id)[4])) tot[ing] = (tot[ing] || 0) + amt * n;
+  });
+  let withTopUps = false;
+  const T = targets(todayKey());                                    // today's target applies to the whole week
+  for (let i = 0; i < 7; i++) {
+    const d = dayInfo(i);
+    d.meals.forEach((m) => addItems(m.items));
+    const ups = topUps(d, T);
+    if (ups.length) { withTopUps = true; addItems(ups); }
+  }
+  const fmt = (ing, v) => {
+    const unit = M.ING[ing][2];
+    if (unit === 'pc') return `${Math.ceil(v - 0.001)}${ing === 'bread' ? ' slices' : ''}`;
+    const small = Math.ceil(v / 50 - 0.001) * 50;                  // round up to 50 g / 50 ml
+    const big = (Math.ceil(v / 100 - 0.001) * 100 / 1000).toFixed(1).replace(/\.0$/, '');
+    if (unit === 'ml') return small >= 1000 ? `${big} L` : `${small} ml`;
+    return small >= 1000 ? `${big} kg` : `${small} g`;
+  };
+  const sections = M.SECTIONS.map((s) => ({
+    name: s,
+    items: Object.keys(tot).filter((ing) => M.ING[ing][1] === s).sort((a, b) => M.ING[a][0].localeCompare(M.ING[b][0]))
+      .map((ing) => ({ id: ing, name: M.ING[ing][0], qty: fmt(ing, tot[ing]) })),
+  })).filter((s) => s.items.length);
+  return { sections, withTopUps };
+}
+
+VIEWS.plan = () => {
+  if (!window.PF_MEALS) return '<p class="muted">Meal plan data is missing.</p>';
+  const tk = todayKey();
+  const start = weekStart(tk);
+  const ti = planIdx(tk);
+  const range = `${fmtShort(fromKey(start))} – ${fmtShort(fromKey(keyAdd(start, 6)))}`;
+  const T = targets(tk);
+  let body;
+  if (planTab === 'week') {
+    body = `
+      <p class="muted mt-4">A 7-day Indian plan for steady weight loss, built around everyday foods: about 1,550–1,800 kcal and 80–95 g protein a day before top-ups. Swap any day's meals for another day's if you prefer.</p>
+      ${PLAN_DAYS.map((name, i) => {
+        const d = dayInfo(i);
+        const ups = topUps(d, T);
+        return `<section class="card mt-4 ${i === ti ? 'callout' : ''}" aria-label="${name}">
+          <div class="row-between"><h2 class="h3">${name}${i === ti ? ' <span class="pill">Today</span>' : ''}</h2><span class="muted small">${nf(d.kcal)} kcal · ${nf(d.protein)} g</span></div>
+          <ul class="plan-list mt-2">${d.meals.map((m, j) => `<li><span class="grow"><span class="plan-k">${m.label}</span><span class="d-block">${esc(m.text)}</span></span>
+            ${i === ti ? `<button class="btn subtle sm" data-action="plan-log" data-day="${i}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} today">${icon('plus')} Log</button>` : `<span class="muted small">${nf(m.kcal)}</span>`}</li>`).join('')}</ul>
+          ${ups.length ? `<p class="small muted m-0 mt-2">Top-ups for your target: ${esc(topUpText(ups))}.</p>` : ''}
+        </section>`;
+      }).join('')}`;
+  } else {
+    const { sections, withTopUps } = groceryList(start);
+    const all = sections.flatMap((s) => s.items);
+    const done = all.filter((it) => state.grocery[`${start}|${it.id}`]).length;
+    body = `
+      <div class="row-between mt-4"><p class="m-0"><b>This week</b> <span class="muted">· ${esc(range)}</span></p><span class="muted small">${done} / ${all.length} ticked</span></div>
+      <p class="muted small mt-1 mb-3">For one person for the whole week${withTopUps ? ', including your daily top-ups' : ''}. Ticks reset every Monday.</p>
+      ${sections.map((s) => `
+        <section class="card mt-3" aria-label="${esc(s.name)}">
+          <h2 class="h3">${esc(s.name)}</h2>
+          <ul class="grocery mt-2">${s.items.map((it) => {
+            const k = `${start}|${it.id}`;
+            return `<li><label class="check grow"><input type="checkbox" data-grocery="${esc(k)}" ${state.grocery[k] ? 'checked' : ''} /><span class="${state.grocery[k] ? 'done' : ''}">${esc(it.name)}</span></label><span class="fw-bold">${esc(it.qty)}</span></li>`;
+          }).join('')}</ul>
+        </section>`).join('')}
+      <p class="muted small mt-4">${esc(window.PF_MEALS.PANTRY_NOTE)}</p>
+      ${done ? '<button class="btn ghost block mt-3" data-action="grocery-clear">Clear ticks</button>' : ''}`;
+  }
+  return `
+    <a class="link-btn small" href="#/track">‹ Track</a>
+    <h1 class="h1 mt-2">Meal plan</h1>
+    <div class="segmented" role="tablist" aria-label="Meal plan" style="--n:2;--i:${planTab === 'week' ? 0 : 1}">
+      <button role="tab" aria-selected="${planTab === 'week'}" data-action="plan-tab" data-tab="week">Week plan</button>
+      <button role="tab" aria-selected="${planTab === 'groceries'}" data-action="plan-tab" data-tab="groceries">Groceries</button>
+    </div>
+    <div role="tabpanel">${body}</div>
+    <p class="muted small mt-5">General healthy-eating guidance, not medical advice. If you have diabetes, kidney problems or take regular medication, check the plan with your doctor or a dietitian first.</p>`;
+};
+
+const PLAN_ACTIONS = {
+  'track-pick': (el) => { foodPick = { id: el.dataset.food, qty: 1 }; foodSheet(); },
+  'track-pick-qty': (el) => {
+    const f = foodPick && state.foods[foodPick.id];
+    if (!f) return;
+    foodPick.qty = clamp(Math.round((foodPick.qty + Number(el.dataset.d)) * 2) / 2, 0.5, 10);
+    $('#pickQty').textContent = `× ${foodPick.qty}`;
+    $('#pickTotal').textContent = `${nf(f.kcal * foodPick.qty)} kcal`;
+  },
+  'track-pick-add': () => {
+    const f = foodPick && state.foods[foodPick.id];
+    if (!f) return;
+    const q = foodPick.qty;
+    foodPick = null;
+    addMeal(q === 1 ? f.name : `${q} × ${f.name}`, f.kcal * q, f.protein ? f.protein * q : null);
+  },
+  'track-pick-edit': () => { if (foodPick) { foodPick.edit = true; foodSheet(); } },
+  'track-pick-save': () => {
+    const f = foodPick && state.foods[foodPick.id];
+    if (!f) return;
+    const name = ($('#qeName').value || '').trim(), kcal = parseNum($('#qeKcal').value), protein = parseNum($('#qeProt').value);
+    if (!name || kcal == null || kcal < 0 || kcal > 5000 || (protein != null && (protein < 0 || protein > 500))) { toast('Check the name, kcal (0–5,000) and protein (0–500 g)'); return; }
+    state.foods[foodPick.id] = { name, kcal: Math.round(kcal), ...(protein ? { protein } : {}) };
+    save(); foodPick.edit = false; foodSheet(); toast('Saved');
+  },
+  'track-food-rough': (el) => addMeal(el.dataset.name, Number(el.dataset.kcal), null),
+  'plan-log': (el) => {
+    const m = dayInfo(Number(el.dataset.day)).meals[Number(el.dataset.m)];
+    if (!m) return;
+    if (parseRoute().name === 'plan') trackDay = null;            // the plan page logs to today
+    addMeal(`${m.label}: ${m.text}`.slice(0, 120), m.kcal, m.protein);
+  },
+  'plan-tab': (el) => { planTab = el.dataset.tab; rerender(); },
+  'grocery-clear': () => {
+    const start = weekStart(todayKey());
+    for (const k of Object.keys(state.grocery)) if (k.startsWith(start + '|')) delete state.grocery[k];
+    save(); rerender();
+  },
 };
 
 /** One-time import from the old standalone tracker (tracker.html), which kept its data under pf_* keys. */
@@ -1949,6 +2194,7 @@ const ACTIONS = {
     if (!confirm('Reset all progress, workouts, health logs and settings? This cannot be undone.')) return;
     const theme = state.profile.theme;
     state = defaultState(); state.profile.theme = theme; state.hmigrated = true;
+    seedQuickFoods();
     if (window.PFSync) window.PFSync.noteReset(state);   // a reset replaces older data on synced devices too
     save(); rerender(); toast('All progress reset');
   },
@@ -1962,7 +2208,7 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, TRACK_ACTIONS);
+Object.assign(ACTIONS, TRACK_ACTIONS, PLAN_ACTIONS);
 
 document.addEventListener('click', (ev) => {
   const el = ev.target.closest('[data-action]');
@@ -2006,6 +2252,13 @@ document.addEventListener('input', (ev) => {
 });
 
 document.addEventListener('change', async (ev) => {
+  if (ev.target.dataset && ev.target.dataset.grocery) {
+    const k = ev.target.dataset.grocery, week = k.split('|')[0];
+    for (const old of Object.keys(state.grocery)) if (!old.startsWith(week + '|')) delete state.grocery[old];   // keep only this week
+    if (ev.target.checked) state.grocery[k] = 1; else delete state.grocery[k];
+    save(); rerender();
+    return;
+  }
   if (ev.target.id !== 'importFile') return;
   const file = ev.target.files[0];
   ev.target.value = '';
@@ -2069,6 +2322,7 @@ window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
   else if (!document.activeElement?.matches('input, textarea')) rerender(); // signed in/out: redraw the card
 });
 importOldTracker();
+seedQuickFoods();
 applyTheme();
 if (!location.hash) history.replaceState(null, '', '#/home');
 render();

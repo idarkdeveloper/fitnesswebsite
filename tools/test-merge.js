@@ -243,6 +243,15 @@ test('documents written before the Track tab still merge', () => {
   assert.strictEqual(b.state.meals.length, 1);
 });
 
+test('grocery ticks sync and unticking sticks', () => {
+  const c = cloud(); const a = device(hbase()); const b = device(hbase());
+  edit(a, (s) => { s.grocery = { '2026-11-02|eggs': 1, '2026-11-02|onion': 1 }; });
+  sync(a, c); sync(b, c);
+  assert.deepStrictEqual(Object.keys(b.state.grocery).sort(), ['2026-11-02|eggs', '2026-11-02|onion']);
+  edit(b, (s) => { delete s.grocery['2026-11-02|eggs']; }); sync(b, c); sync(a, c);
+  assert.deepStrictEqual(Object.keys(a.state.grocery), ['2026-11-02|onion']);
+});
+
 test('validateDoc rejects malformed health data', () => {
   const good = C.toDoc(hbase(), C.emptyMeta());
   assert.strictEqual(C.validateDoc(good), null);

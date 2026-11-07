@@ -168,6 +168,21 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Chip with remove | `.chip-pair > .chip + .chip-x` | Saved foods: tap to add, ✕ to forget |
 | Weight chart | `.wchart` | Inline SVG, 30 days. 7-day average = 2px `--accent` line; weigh-ins = muted dots; goal = dashed muted reference shown only when in range. Hover, tap or ←/→ shows a crosshair and `.chart-tip`; "Show as table" `<details>` gives the data as `.data-table`. Single series, so no legend box, just a small `.chart-key` |
 | Form grids | `.grid2`, `.grid3`, `.input-unit`, `.check` | Two- and three-column field rows in sheets |
+| Navigation | `.tabbar` / `.sidebar` | Four tabs: Today, Movements, Progress, Profile. Hidden during a workout (`body[data-route="workout"]`) |
+| Week strip | `.wk-strip > .wk-day` | Mon–Sun; `.sel` (accent outline), `.done` (success ✓), dumbbell = training day, dot = rest |
+| Session row | `.sess-row` | Thumbnail, name, meta, level dots (`.segs.dots`) |
+| Segment bar | `.segs` (+ `.wide`, `.dots`) | `i.done` success, `i.cur` primary, `i.lock` dimmed, others `--track` |
+| Ring | `ringSvg()` + `.ring-wrap > .ring-c` | `--accent` arc on `--track`; calories left on Today, grocery progress |
+| Quick tile | `.q-grid > .q-tile` | Label, + chip, value, sub, 5px bar |
+| Status list | `.mv-list > .mv-row` | Movements; `.fchip` filter chips |
+| Hero header | `.ex-hero2`, `.wo-hero` | Photo with fade, glass controls (`.glass`, `.glass-chip`, `.glass-btn`) |
+| Level card | `.lvl-card .lv-row > .lv` | Three bars: done / current (sets hit) / off |
+| Set card | `.set-card .big-step` | 64px number, 56px round steppers; main button `.done-btn` (success) or `.rest-btn` (countdown) |
+| Stat trio | `.stat3 > .s3` | Progress header; `.hot` accent border for the streak |
+| Ladder row | `.lad-row` | Family dot (`--h` hue), name, wide segment bar, count or "Pro" |
+| Group label | `.group-label` | Uppercase section label above list groups (Profile, Groceries) |
+| Food picker | `.search`, `.pick .pill-step`, `.plan-pick`, `.rough` | Add food sheet |
+| Plan day strip | `.pd-strip > .pd` | Day + kcal; `.logged` state on planned meals |
 | Utilities | `.m-0`, `.mt-*`, `.mb-*`, `.ml-*`, `.gap-*`, `.wrap`, `.text-center`, `.fw-*`, `.t-*`, `.c-*`, `.static`, `.icon-sm`, `.d-block`, `.btn.sm` | Token-backed one-liners defined last in the cascade. Use them instead of `style=""` |
 
 ## 8. Imagery

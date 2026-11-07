@@ -1604,7 +1604,13 @@ function subsFor(wk) {
   const out = {};
   for (const [k, v] of Object.entries(state.grocery)) {
     if (!k.startsWith(wk + '|') || !v || typeof v !== 'object' || !v.sub) continue;
-    out[k.slice(wk.length + 1)] = v.sub;
+    const ing = k.slice(wk.length + 1);
+    if (v.sub === 'other') {                                          // something not on any list, named by you
+      if (!v.cn) continue;
+      const id = `x:${wk}:${ing}`;
+      window.PF_MEALS.registerCustom(id, ing, v.cn, v.ck ?? null, v.cp ?? null);
+      out[ing] = id;
+    } else out[ing] = v.sub;
   }
   return Object.keys(out).length ? out : null;
 }
@@ -1770,7 +1776,10 @@ function groceryStatus(ing, v) {
   const parts = [];
   if (v.b === 0 && !v.sub) parts.push('Not bought');
   else if (v.b > 0) parts.push(`Bought ${fmtAmt(ing, v.b)}`);
-  if (v.sub) parts.push(`${v.b > 0 ? '+' : 'Instead:'} ${ingShort(v.sub)}${v.sb ? ` ${fmtAmt(v.sub, v.sb)}` : ''}`);
+  if (v.sub) {
+    const other = v.sub === 'other';
+    parts.push(`${v.b > 0 ? '+' : 'Instead:'} ${other ? v.cn || 'something else' : ingShort(v.sub)}${v.sb ? ` ${fmtAmt(other ? ing : v.sub, v.sb)}` : ''}`);
+  }
   return parts.join(' ');
 }
 /** Drop grocery records from weeks that are over (this week's and next week's stay). */
@@ -1795,6 +1804,7 @@ function grocerySubBox() {
   if (!sub) return '';
   const wk = k.split('|')[0];
   const v = state.grocery[k];
+  if (sub === 'other') return groceryOtherBox(wk, ing, need, v && v.sub === 'other' ? v : {});
   const unit = window.PF_MEALS.ING[sub][2];
   const def = roundQty(sub, window.PF_MEALS.swapAmount(ing, sub, need));
   const prev = swapPreview(wk, ing, sub);
@@ -1802,6 +1812,35 @@ function grocerySubBox() {
     <div class="field mt-3"><label for="gbSubAmt">How much ${esc(ingShort(sub).toLowerCase())} (${unit === 'pc' ? 'pieces' : unit === 'tin' ? 'tins' : unit})</label>
       <input class="input" id="gbSubAmt" type="number" inputmode="decimal" min="0" step="any" value="${v && v.sub === sub && v.sb != null ? v.sb : def}" /></div>
     ${prev.length ? `<div class="note-box mt-3"><b>Your meals that week:</b><ul class="swap-list">${prev.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : `<p class="small muted mt-3 m-0">Your meals use it in place of ${esc(ingShort(ing).toLowerCase())}.</p>`}`;
+}
+/** "Other…": you name what you bought; kcal and protein are optional (the original's are used otherwise). */
+function groceryOtherBox(wk, ing, need, rec) {
+  const M = window.PF_MEALS, unit = M.ING[ing][2], sw = M.SWAP[ing];
+  const per = unit === 'g' ? '100 g' : unit === 'ml' ? '100 ml' : unit === 'tin' ? 'tin' : 'piece';
+  const base = (i) => (sw ? Math.round(unit === 'g' || unit === 'ml' ? sw[i] * 100 : sw[i]) : '');
+  return `
+    <div class="field mt-3"><label for="gbCustName">What did you buy?</label>
+      <input class="input" id="gbCustName" maxlength="30" placeholder="e.g. Lamb chops, Methi, Halloumi" value="${esc(rec.cn || '')}" autocomplete="off" /></div>
+    <div class="grid3">
+      <div class="field"><label for="gbSubAmt">Amount (${unit === 'pc' ? 'pieces' : unit === 'tin' ? 'tins' : unit})</label><input class="input" id="gbSubAmt" type="number" inputmode="decimal" min="0" step="any" value="${rec.sb ?? need}" /></div>
+      <div class="field"><label for="gbCustK">kcal / ${per}</label><input class="input" id="gbCustK" type="number" inputmode="decimal" min="0" step="any" placeholder="${base(1)}" value="${rec.ck ?? ''}" /></div>
+      <div class="field"><label for="gbCustP">Protein g / ${per}</label><input class="input" id="gbCustP" type="number" inputmode="decimal" min="0" step="any" placeholder="${base(2)}" value="${rec.cp ?? ''}" /></div>
+    </div>
+    <p class="small muted m-0 mt-2">Leave kcal and protein empty to keep the ${esc(ingShort(ing).toLowerCase())} values. The packet's nutrition label has them per 100 g.</p>
+    <div class="note-box mt-3" id="gbCustPrev">${otherPreview(wk, ing, rec.cn)}</div>`;
+}
+function otherPreview(wk, ing, name) {
+  const n = (name || '').trim();
+  if (!n) return `Meals that use ${esc(ingShort(ing).toLowerCase())} that week will use what you bought, renamed to match.`;
+  const id = `x:preview:${ing}`;
+  window.PF_MEALS.registerCustom(id, ing, n, null, null);
+  const out = new Set();
+  for (let i = 0; i < 7; i++) for (const [, items] of window.PF_MEALS.weekPlan(wk)[i]) for (const [d] of items) {
+    if (!dishOf(d)[4][ing]) continue;
+    const a = dishOf(d)[0], b = dishOf(d, { ...(subsFor(wk) || {}), [ing]: id })[0];
+    if (a !== b) out.add(`${a} → ${b}`);
+  }
+  return out.size ? `<b>Your meals that week:</b><ul class="swap-list">${[...out].map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : 'No planned dish uses it that week.';
 }
 function groceryEditSheet(k, ing, need) {
   const M = window.PF_MEALS;
@@ -1818,10 +1857,10 @@ function groceryEditSheet(k, ing, need) {
     <div class="field mt-4"><label for="gbAmt">What you bought (${unitLabel})</label>
       <input class="input" id="gbAmt" type="number" inputmode="decimal" min="0" step="any" value="${rec.b ?? ''}" placeholder="${need}" /></div>
     <div class="chips mt-2"><button class="chip" data-action="grocery-amt" data-v="${need}">As suggested</button><button class="chip" data-action="grocery-amt" data-v="0">Not available</button>${pack && unit !== 'pc' ? `<button class="chip" data-action="grocery-amt" data-v="${pack[0] * Math.max(1, Math.round(need / pack[0]))}">${Math.max(1, Math.round(need / pack[0]))} × ${esc(pack[1])}</button>` : ''}</div>
-    ${alts.length ? `<h3 class="sheet-sub">Bought something else instead?</h3>
+    <h3 class="sheet-sub">Bought something else instead?</h3>
       <p class="small muted m-0">Pick it and that week's meals switch to it.</p>
-      <div class="chips mt-2" id="gbSubs">${alts.map((a) => `<button class="chip ${groEdit.sub === a ? 'on' : ''}" aria-pressed="${groEdit.sub === a}" data-action="grocery-sub" data-sub="${a}">${esc(ingShort(a))}</button>`).join('')}</div>
-      <div id="gbSubBox">${grocerySubBox()}</div>` : ''}
+      <div class="chips mt-2" id="gbSubs">${[...alts, 'other'].map((a) => `<button class="chip ${groEdit.sub === a ? 'on' : ''}" aria-pressed="${groEdit.sub === a}" data-action="grocery-sub" data-sub="${a}">${a === 'other' ? 'Other…' : esc(ingShort(a))}</button>`).join('')}</div>
+      <div id="gbSubBox">${grocerySubBox()}</div>
     <button class="btn block lg mt-4" data-action="grocery-save">Save</button>
     ${v ? '<button class="link-btn small danger-text mt-3" data-action="grocery-reset">Clear this item</button>' : ''}`);
 }
@@ -1961,11 +2000,19 @@ const PLAN_ACTIONS = {
     const amt = parseNum($('#gbAmt').value);
     const subAmt = sub && $('#gbSubAmt') ? parseNum($('#gbSubAmt').value) : null;
     if ((amt != null && (amt < 0 || amt > 100000)) || (subAmt != null && (subAmt < 0 || subAmt > 100000))) { toast('Check the amounts'); return; }
+    let custom = {};
+    if (sub === 'other') {
+      const cn = ($('#gbCustName').value || '').trim().replace(/\s+/g, ' ');
+      const ck = parseNum($('#gbCustK').value), cp = parseNum($('#gbCustP').value);
+      if (!cn) { toast('Type what you bought'); $('#gbCustName').focus(); return; }
+      if ((ck != null && (ck < 0 || ck > 2000)) || (cp != null && (cp < 0 || cp > 100))) { toast('Check kcal (0–2,000) and protein (0–100 g)'); return; }
+      custom = { cn, ...(ck != null ? { ck } : {}), ...(cp != null ? { cp } : {}) };
+    }
     pruneGrocery();
     if (amt == null && !sub) delete state.grocery[k];
-    else state.grocery[k] = { ...(amt != null ? { b: amt } : sub ? { b: 0 } : {}), ...(sub ? { sub, ...(subAmt != null ? { sb: subAmt } : {}) } : {}) };
+    else state.grocery[k] = { ...(amt != null ? { b: amt } : sub ? { b: 0 } : {}), ...(sub ? { sub, ...custom, ...(subAmt != null ? { sb: subAmt } : {}) } : {}) };
     save(); closeSheet(); rerender();
-    toast(sub ? `Meals that week now use ${ingShort(sub).toLowerCase()}` : 'Saved');
+    toast(sub ? `Meals that week now use ${(sub === 'other' ? custom.cn : ingShort(sub)).toLowerCase()}` : 'Saved');
   },
   'grocery-reset': () => { if (!groEdit) return; delete state.grocery[groEdit.k]; save(); closeSheet(); rerender(); toast('Cleared'); },
   'plan-week': (el) => { planWeek = Number(el.dataset.w); planSel = null; rerender(); },
@@ -2982,6 +3029,9 @@ document.addEventListener('input', (ev) => {
   } else if (t.dataset.bind === 'name' || t.dataset.bind === 'email') {
     state.profile[t.dataset.bind] = t.value;
     save();
+  } else if (t.id === 'gbCustName' && groEdit) {
+    const box = $('#gbCustPrev');
+    if (box) box.innerHTML = otherPreview(groEdit.k.split('|')[0], groEdit.ing, t.value);
   } else if (t.dataset.bind === 'reminderTime') {
     state.reminder.time = t.value || '18:00';
     save();

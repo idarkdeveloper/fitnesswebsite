@@ -83,7 +83,7 @@ styles.css    Theme tokens and components
 app.js        Router, views, progress model, workout logic
 mealplan.js   Quick foods, weekly Indian meal plan generator (German shop ingredients), dish nutrition and grocery ingredients
 recipes.js    One-person recipes for every meal plan dish
-data.js       Exercise database: 11 families, 74 progressions
+data.js       Exercise database: 11 families, 83 progressions
 sync-core.js  Cloud sync merge rules (pure functions)
 sync.js       Cloud sync engine + Supabase adapter (optional)
 sync-config.js  Supabase URL and public key (empty = fully local)

@@ -207,6 +207,7 @@ function defaultState() {
     foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
     foodsSeededDE: false,               // German everyday foods added on this device (not synced)
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
+    progOrder: 2,                       // progression list version (see migrateProgOrder)
   };
 }
 
@@ -215,13 +216,32 @@ function loadState() {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return defaultState();
     const d = defaultState();
-    return { ...d, ...raw, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) }, planReminder: { ...d.planReminder, ...(raw.planReminder || {}) } };
+    return { ...d, ...raw, progOrder: raw.progOrder ?? 1, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) }, planReminder: { ...d.planReminder, ...(raw.planReminder || {}) } };
   } catch {
     return defaultState();
   }
 }
 
 let state = loadState();
+
+/* Progressions were added in the middle of Bridges and Grip (Nov 2026). "current" stores a position in the list,
+   so move anyone already on those ladders to the same exercise at its new position. */
+const OLD_ORDERS = {
+  bridges: ['glute-bridges', 'straight-bridges', 'angled-bridges', 'head-bridges', 'half-bridges', 'full-bridges', 'wall-walking-bridges'],
+  grip: ['lean-hangs', 'assisted-bar-hangs', 'bar-hangs', 'towel-hangs', 'assisted-one-arm-hangs', 'one-arm-hangs'],
+};
+(function migrateProgOrder() {
+  if ((state.progOrder || 1) >= 2) return;
+  for (const [cat, ids] of Object.entries(OLD_ORDERS)) {
+    const i = state.current[cat];
+    if (i == null || !ids[i]) continue;
+    const c = (window.PF_DATA?.categories || []).find((x) => x.id === cat);
+    const j = c ? c.progressions.findIndex((p) => p.id === ids[i]) : -1;
+    if (j >= 0) state.current[cat] = j;
+  }
+  state.progOrder = 2;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+})();
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* storage full or blocked */ }
   if (window.PFSync) window.PFSync.noteSave(state);   // cloud sync (sync.js), if loaded

@@ -1046,7 +1046,7 @@ window.PF_DATA = {
       id: 'bridges',
       name: 'Bridges',
       premium: false,
-      blurb: 'Arching the body backward to build a strong, mobile spine and hips, ending in walking down and up a wall into a bridge.',
+      blurb: 'Arching the body backward to build a strong, mobile spine and hips, ending in standing up out of a bridge without a wall.',
       progressions: [
         {
           id: 'glute-bridges',
@@ -1130,6 +1130,62 @@ window.PF_DATA = {
             'Push hips high.',
             'Straighten your arms fully.',
             'Move gently; never force the arch.'
+          ]
+        },
+        {
+          id: 'wall-bridges',
+          name: 'Wall Bridges',
+          type: 'reps',
+          perSide: false,
+          overview: 'Standing a step from a wall and arching back until your hands reach it. The wall holds most of your weight while your spine and shoulders learn to open overhead.',
+          primary: ['Lower Back', 'Shoulders'],
+          secondary: ['Glutes', 'Hip Flexors', 'Upper Back'],
+          levels: [
+            { sets: 1, target: 8 },
+            { sets: 2, target: 12 },
+            { sets: 3, target: 20 }
+          ],
+          steps: [
+            'Stand with your back to a wall, about one step away, feet hip-width apart.',
+            'Raise your arms overhead and squeeze your glutes.',
+            'Arch back slowly and place your palms flat on the wall, fingers pointing down.',
+            'Press into the wall to lift your chest, then push back up to standing.',
+            'Return to standing with control.'
+          ],
+          harder: 'Stand a little farther from the wall.',
+          easier: 'Stand closer to the wall.',
+          cues: [
+            'Push your hips forward as you arch.',
+            'Look back at the wall before you reach it.',
+            'Keep the movement slow; never drop into it.'
+          ]
+        },
+        {
+          id: 'incline-bridges',
+          name: 'Incline Bridges',
+          type: 'reps',
+          perSide: false,
+          overview: 'A full backbend with your hands on a raised surface such as a bench or the bottom stair. Raising the hands takes load off the shoulders so you can practise the complete arch.',
+          primary: ['Lower Back', 'Glutes', 'Shoulders'],
+          secondary: ['Triceps', 'Hamstrings', 'Upper Back'],
+          levels: [
+            { sets: 1, target: 6 },
+            { sets: 2, target: 10 },
+            { sets: 3, target: 15 }
+          ],
+          steps: [
+            'Lie on your back with your head near a sturdy bench or step, knees bent and feet flat.',
+            'Reach back and place your hands on the edge, fingers pointing toward your shoulders.',
+            'Press through hands and feet to lift your hips and chest into an arch.',
+            'Straighten your arms as far as is comfortable.',
+            'Lower slowly onto your back.'
+          ],
+          harder: 'Use a lower surface.',
+          easier: 'Use a higher surface.',
+          cues: [
+            'Push your chest toward the wall behind you.',
+            'Keep your feet flat and knees pointing forward.',
+            'Breathe out as you press up.'
           ]
         },
         {
@@ -1217,6 +1273,62 @@ window.PF_DATA = {
           ]
         },
         {
+          id: 'wheel-bridges',
+          name: 'Wheel Bridges',
+          type: 'hold',
+          perSide: false,
+          overview: 'A deeper full bridge held with straight arms and legs, shoulders pushed over the hands. It builds end-range strength and open shoulders.',
+          primary: ['Lower Back', 'Shoulders'],
+          secondary: ['Glutes', 'Triceps', 'Quads', 'Upper Back'],
+          levels: [
+            { sets: 1, target: 10 },
+            { sets: 2, target: 20 },
+            { sets: 3, target: 30 }
+          ],
+          steps: [
+            'Press up into a full bridge.',
+            'Straighten your arms completely.',
+            'Shift your shoulders toward and over your hands.',
+            'Push your knees toward straight while keeping your feet flat.',
+            'Hold, then lower slowly onto your back.'
+          ],
+          harder: 'Walk your hands and feet closer together.',
+          easier: 'Hold a regular full bridge instead.',
+          cues: [
+            'Lock your elbows.',
+            'Shoulders over the wrists.',
+            'Keep breathing; do not hold your breath.'
+          ]
+        },
+        {
+          id: 'tap-bridges',
+          name: 'Tap Bridges',
+          type: 'reps',
+          perSide: false,
+          overview: 'From a full bridge, lowering under control until the top of your head taps the floor, then pressing back up. It teaches control on the way down, needed for wall walking.',
+          primary: ['Lower Back', 'Shoulders', 'Triceps'],
+          secondary: ['Glutes', 'Quads', 'Upper Back'],
+          levels: [
+            { sets: 1, target: 5 },
+            { sets: 2, target: 10 },
+            { sets: 3, target: 15 }
+          ],
+          steps: [
+            'Press up into a full bridge with straight arms.',
+            'Bend your elbows slowly and lower toward the floor.',
+            'Lightly tap the top of your head on the floor without resting weight on it.',
+            'Press straight back up to the top.',
+            'Repeat, then lower onto your back.'
+          ],
+          harder: 'Pause for two seconds just above the floor.',
+          easier: 'Lower only halfway.',
+          cues: [
+            'The head only touches lightly.',
+            'Lower slowly, press up strongly.',
+            'Keep elbows pointing up, not out.'
+          ]
+        },
+        {
           id: 'wall-walking-bridges',
           name: 'Wall Walking Bridges',
           type: 'reps',
@@ -1242,6 +1354,34 @@ window.PF_DATA = {
             'Push hips forward as you arch.',
             'Keep your feet planted.',
             'Move slowly and stay in control.'
+          ]
+        },
+        {
+          id: 'stand-to-stand-bridges',
+          name: 'Stand to Stand Bridges',
+          type: 'reps',
+          perSide: false,
+          overview: 'Dropping back from standing into a bridge and coming back up to standing, without a wall. The final bridge skill: strength, flexibility and control together.',
+          primary: ['Lower Back', 'Glutes', 'Quads'],
+          secondary: ['Shoulders', 'Hip Flexors', 'Core', 'Upper Back'],
+          levels: [
+            { sets: 1, target: 3 },
+            { sets: 2, target: 5 },
+            { sets: 3, target: 8 }
+          ],
+          steps: [
+            'Stand with feet a little wider than hip-width, arms overhead.',
+            'Push your hips forward and arch back slowly, looking for the floor.',
+            'Land softly on your hands in a bridge.',
+            'Rock your weight toward your feet and push off your hands.',
+            'Drive your hips forward to come back up to standing.'
+          ],
+          harder: 'Keep your arms crossed until the last moment before landing.',
+          easier: 'Go down a wall and stand up without it, or have a spotter.',
+          cues: [
+            'Hips forward first, then arch.',
+            'Land on the hands softly with bent elbows.',
+            'Practise over a soft surface at first.'
           ]
         }
       ]
@@ -1429,6 +1569,34 @@ window.PF_DATA = {
           ]
         },
         {
+          id: 'assisted-towel-hangs',
+          name: 'Assisted Towel Hangs',
+          type: 'hold',
+          perSide: true,
+          overview: 'Hanging with one hand on the bar and the other on a towel looped over it. One hand gets the harder towel grip while the bar hand helps.',
+          primary: ['Forearms'],
+          secondary: ['Biceps', 'Lats', 'Upper Back'],
+          levels: [
+            { sets: 1, target: 10 },
+            { sets: 2, target: 20 },
+            { sets: 3, target: 30 }
+          ],
+          steps: [
+            'Loop a strong towel over a pullup bar.',
+            'Grip the towel with one hand and the bar with the other.',
+            'Lift your feet off the floor.',
+            'Keep both arms straight and shoulders engaged.',
+            'Hold, step down and switch hands.'
+          ],
+          harder: 'Hold the bar with only three fingers.',
+          easier: 'Keep your toes lightly on a box.',
+          cues: [
+            'Check the towel for wear first.',
+            'Squeeze the towel with the whole hand.',
+            'Stay still; do not swing.'
+          ]
+        },
+        {
           id: 'towel-hangs',
           name: 'Towel Hangs',
           type: 'hold',
@@ -1454,6 +1622,34 @@ window.PF_DATA = {
             'Check the towels for wear first.',
             'Squeeze with the whole hand.',
             'Stay still.'
+          ]
+        },
+        {
+          id: 'rope-style-hangs',
+          name: 'Rope Style Hangs',
+          type: 'hold',
+          perSide: false,
+          overview: 'Hanging from a single towel or rope with both hands stacked one above the other, like climbing a rope. Both hands share one thick vertical grip.',
+          primary: ['Forearms'],
+          secondary: ['Biceps', 'Lats', 'Shoulders'],
+          levels: [
+            { sets: 1, target: 10 },
+            { sets: 2, target: 20 },
+            { sets: 3, target: 30 }
+          ],
+          steps: [
+            'Loop one strong towel over the bar, or use a climbing rope.',
+            'Grip it with both hands, one above the other.',
+            'Lift your feet off the floor.',
+            'Keep your arms slightly bent and shoulders engaged.',
+            'Hold, then lower your feet to release.'
+          ],
+          harder: 'Hold for longer or wear a light backpack.',
+          easier: 'Hold the towel with one hand and the bar with the other.',
+          cues: [
+            'Thumbs wrap around the towel.',
+            'Swap which hand is on top each set.',
+            'Stay compact and still.'
           ]
         },
         {
@@ -1510,6 +1706,34 @@ window.PF_DATA = {
             'Shoulder stays active.',
             'Brace the trunk.',
             'Land softly when you let go.'
+          ]
+        },
+        {
+          id: 'one-arm-towel-hangs',
+          name: 'One-Arm Towel Hangs',
+          type: 'hold',
+          perSide: true,
+          overview: 'Hanging from a single towel with one hand. The hardest grip hold here: the whole body hangs from one thick, vertical grip.',
+          primary: ['Forearms'],
+          secondary: ['Lats', 'Shoulders', 'Biceps', 'Core'],
+          levels: [
+            { sets: 1, target: 5 },
+            { sets: 2, target: 10 },
+            { sets: 3, target: 20 }
+          ],
+          steps: [
+            'Loop a strong towel over a pullup bar.',
+            'Grip the towel high with one hand.',
+            'Lift your feet and hang, keeping the shoulder engaged.',
+            'Keep your free hand close in case you need it.',
+            'Hold, step down and switch hands.'
+          ],
+          harder: 'Hold lower on the towel so it can swing.',
+          easier: 'Touch the towel lightly with two fingers of the other hand.',
+          cues: [
+            'Never hang with a slack shoulder.',
+            'Release before the grip fails completely.',
+            'Use a towel you trust.'
           ]
         }
       ]

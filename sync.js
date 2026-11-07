@@ -25,6 +25,7 @@
   const nowIso = () => new Date().toISOString();
 
   /* ---------- status, shown in Profile → Account ---------- */
+  let ready = Promise.resolve();   // settles once the auth client is set up
   const status = { configured, ready: false, user: null, state: configured ? 'idle' : 'off', detail: '', lastSynced: store.lastSynced };
   const listeners = [];
   function setStatus(state, detail = '') {
@@ -53,7 +54,9 @@
     let client = null;
     let user = null;
     const toUser = (session) => (session && session.user ? { id: session.user.id, email: session.user.email || '' } : null);
-    const redirectTo = () => location.origin + location.pathname;
+    // In the PulseFit Android app, email links come back through pulsefit://login (see AndroidManifest.xml).
+    const inApp = () => !!(window.androidBridge || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+    const redirectTo = () => (inApp() ? 'pulsefit://login' : location.origin + location.pathname);
     return {
       async init(onAuth) {
         await loadScript('vendor/supabase-2.118.0.js');
@@ -73,6 +76,16 @@
       },
       async signInEmail(email) {
         const { error } = await client.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo() } });
+        if (error) throw error;
+      },
+      /** Finish sign-in from a pulsefit://login?code=... link (PKCE: this app started the flow, so it holds the verifier). */
+      async exchangeLink(url) {
+        const q = new URL(url.replace('pulsefit://login', 'https://x/login'));
+        const code = q.searchParams.get('code');
+        const err = q.searchParams.get('error_description') || new URLSearchParams(q.hash.slice(1)).get('error_description');
+        if (err) throw new Error(err);
+        if (!code) throw new Error('The sign-in link is incomplete');
+        const { error } = await client.auth.exchangeCodeForSession(code);
         if (error) throw error;
       },
       async verifyCode(email, token) {
@@ -232,6 +245,11 @@
       try { await adapter.signInEmail(email); APP().toast('Check your email for the sign-in link'); return true; }
       catch (e) { APP().toast(/signups not allowed|not found|otp_disabled/i.test(e.message || '') ? "That email can't sign in here" : 'Sign-in failed: ' + (e.message || 'try again')); return false; }
     },
+    /** The Android app was opened from the email's sign-in link. */
+    async handleAuthLink(url) {
+      try { await ready; await adapter.exchangeLink(url); APP().toast('Signed in'); }
+      catch (e) { APP().toast('Sign-in failed: ' + (/verifier|expired|invalid/i.test(e.message || '') ? 'request a new link from this app and open it on this phone' : e.message || 'try again')); }
+    },
     /** Sign in with the 6-digit code from the email (works inside an installed app, where links open elsewhere). */
     async verifyCode(email, code) {
       try { await adapter.verifyCode(email, code); return true; }
@@ -268,7 +286,7 @@
   const onFocus = () => { if (document.visibilityState === 'visible' && Date.now() - lastRun > 15000) schedule(0); };
   window.addEventListener('focus', onFocus);
   document.addEventListener('visibilitychange', onFocus);
-  adapter.init(onUser)
+  ready = adapter.init(onUser)
     .then((user) => { status.ready = true; onUser(user); })
     .catch(() => { status.ready = true; setStatus('unreachable'); });
 })();

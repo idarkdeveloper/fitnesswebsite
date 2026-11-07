@@ -42,6 +42,37 @@ streak.
 
 The old standalone tracker (`tracker.html`) now redirects to the Track tab. Its saved profile, steps, sleep and meals are imported once, automatically, the first time PulseFit opens on that device.
 
+
+## Android app: Galaxy Watch & Samsung Health
+
+A website can't read Health Connect, so PulseFit also comes as a small Android app. It is the same site inside a
+[Capacitor](https://capacitorjs.com) shell (`android/`, `capacitor.config.json`), so every site update reaches the app
+without a new install. Inside the app, PulseFit reads **Health Connect**, where Samsung Health stores what your Galaxy
+Watch records:
+
+| From Health Connect | Goes to |
+| --- | --- |
+| Steps (daily total) | Steps on Today and in the daily log |
+| Sleep sessions (time asleep, without awake stages) | Sleep, on the day you woke up |
+| Weight | Weight log |
+| Exercise sessions, active calories | "Watch today" line on Today (this phone only) |
+
+The last 14 days are read when the app opens and when it comes back to the front. A value you typed in yourself is
+never overwritten. PulseFit only reads; every Health Connect write permission is removed in `AndroidManifest.xml`.
+Privacy page: `privacy.html`.
+
+**Install:** on the phone, open
+[the latest APK](https://github.com/idarkdeveloper/fitnesswebsite/releases/latest/download/pulsefit.apk), open the file
+and allow installing from your browser. In PulseFit: Profile → Account to sign in, then Profile → Galaxy Watch &
+Samsung Health → Connect. In Samsung Health: Settings → Health Connect, allow Steps, Sleep, Weight and Exercise.
+
+**Sign-in inside the app** uses the email link, which comes back to the app through `pulsefit://login`. Add
+`pulsefit://login` to Supabase → Authentication → URL Configuration → Redirect URLs once.
+
+**Builds:** `.github/workflows/android.yml` builds the APK on every change to the Android shell and publishes it as the
+`android` release. To let new builds install over the old one, add repository secrets `ANDROID_KEYSTORE_BASE64` and
+`ANDROID_KEYSTORE_PASSWORD` (key alias `pulsefit`); without them each build has its own key and needs an uninstall first.
+
 ## Project structure
 
 ```

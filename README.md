@@ -40,11 +40,17 @@ index.html    App shell (sidebar on desktop, bottom tab bar on mobile)
 styles.css    Theme tokens and components
 app.js        Router, views, progress model, workout logic
 data.js       Exercise database: 11 families, 74 progressions
+sync-core.js  Cloud sync merge rules (pure functions)
+sync.js       Cloud sync engine + Supabase adapter (optional)
+sync-config.js  Supabase URL and public key (empty = fully local)
+theme-boot.js Applies the saved theme before first paint
+vendor/       Pinned supabase-js 2.118.0 (no CDN scripts)
+supabase/     Database migration for cloud sync
 DESIGN.md     Design language: tokens, type, spacing, components, rules
 img/          Optional exercise images + manifest.js + prompts.json
 tools/        image-prompts.js (prompts, manifest), generate-images.js (OpenAI generation)
-docs/         IMAGE_PROMPTS.md (Gemini prompts)
-tracker.*     The original PulseFit daily health tracker
+docs/         IMAGE_PROMPTS.md, BACKEND_DESIGN.md, SUPABASE_SETUP.md
+tracker.*     The original PulseFit daily health tracker (tracker.tw.css is prebuilt Tailwind)
 ```
 
 ## Run locally
@@ -128,6 +134,20 @@ To regenerate the prompts after editing `data.js`, run `node tools/image-prompts
 
 Everything is stored in the browser's `localStorage` under `pf2_state`. Use
 **Profile → Export Data** to back it up or move it to another device.
+
+**Cloud sync (optional).** Sign in under **Profile → Back up & sync** to keep
+your phone and computer in sync. It's built for one person: data lives in
+your own free Supabase project, and only your email can read or write it. Your
+devices merge changes themselves: workouts are combined, the highest level
+wins, the most recent setting wins, and a reset wins everywhere (other devices
+offer a backup of what they lose). Set it up with
+[docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md); the design is in
+[docs/BACKEND_DESIGN.md](docs/BACKEND_DESIGN.md). Until `sync-config.js` is
+filled in, the app stays fully local.
+
+Tests: `node tools/test-merge.js` (merge rules) and
+`node tools/test-sync-browser.js` (two simulated devices; needs Playwright and
+a local server on port 8765).
 
 ## Editing content
 

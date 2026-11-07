@@ -72,6 +72,18 @@ The client secret goes **only** into the Supabase dashboard. Never put it in the
    - These two values are **public by design**. They only work within the database's security rules, so it's fine for them to be in the site.
    - **Never** use the `service_role` or **secret** key anywhere in the site. That key bypasses every rule.
 
+## 7b. Add the sign-in code to the email (for the installed app)
+
+On iPhone, an app installed to the home screen keeps its storage separate from Safari, so a sign-in **link** opens in Safari instead of the app. Add the 6-digit **code** to the email so you can type it into the app:
+
+1. Open **Authentication → Emails → Templates → Magic Link**. On some projects the path is **Email Templates**.
+2. Below the existing link, add this line, then save:
+   ```html
+   <p>Or enter this code in PulseFit: <strong>{{ .Token }}</strong></p>
+   ```
+
+After sending a link, the app shows a code box. The link and the code both work, and each can be used once.
+
 ## 8. Try it
 
 1. On your phone and on your computer, open the site and go to **Profile → Back up & sync**.

@@ -829,6 +829,7 @@ VIEWS.profile = () => {
 
     <div class="list-group mt-5">
       <button class="list-item" data-action="pro"><span>PulseFit Pro<span class="li-sub">${pf.pro ? 'Unlocked' : 'Advanced movements & routines'}</span></span>${icon('chevR')}</button>
+      ${installRow()}
       <a class="list-item" href="tracker.html"><span>Daily Health Tracker<span class="li-sub">Steps, sleep, calories &amp; BMI tools</span></span>${icon('external')}</a>
     </div>
     <div class="list-group">
@@ -1229,6 +1230,23 @@ function accountCard() {
   </div>`;
 }
 
+/* ---------- installable app (helpers in pwa.js) ---------- */
+function installRow() {
+  const I = window.PFInstall;
+  if (!I || I.installed()) return '';
+  return `<button class="list-item" data-action="install"><span>Install PulseFit app<span class="li-sub">Home-screen icon, full screen, works offline</span></span>${icon('download')}</button>`;
+}
+
+function installSheet() {
+  const I = window.PFInstall;
+  const steps = I && I.isIOS
+    ? ['Open this page in <strong>Safari</strong>.', 'Tap the <strong>Share</strong> button (square with an arrow).', 'Choose <strong>Add to Home Screen</strong>, then <strong>Add</strong>.']
+    : ['Open the browser menu (<strong>⋮</strong>, top right in Chrome).', 'Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.', 'Confirm with <strong>Install</strong>.'];
+  openSheet('Install PulseFit', `
+    <p class="muted m-0 mb-4">PulseFit becomes an app on your home screen: it opens full screen, works offline, and keeps your data and sync.</p>
+    <ol class="m-0">${steps.map((s) => `<li class="mb-2">${s}</li>`).join('')}</ol>`);
+}
+
 function signInSheet() {
   openSheet('Back up & sync', `
     <p class="muted m-0 mb-4">Sign in to keep your workouts and progress in sync across your devices. This app works fully without signing in.</p>
@@ -1236,7 +1254,15 @@ function signInSheet() {
     <div class="field mt-6"><label for="syncEmail">Or get a sign-in link by email</label>
       <input class="input" id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120" /></div>
     <button class="btn ghost block mt-3" data-action="sync-email">Email me a link</button>
-    <p class="muted small m-0 mt-3">Open the link in this same browser.</p>`);
+    <p class="muted small m-0 mt-3">Open the link in this same browser${window.PFInstall?.installed() ? ', or use the code from the email' : ''}.</p>`);
+}
+
+function codeSheet(email) {
+  openSheet('Check your email', `
+    <p class="muted m-0 mb-4">We sent a sign-in email to <strong>${esc(email)}</strong>. Open its link in this browser, or type the 6-digit code from the email here (handy in the installed app).</p>
+    <div class="field"><label for="syncCode">Code</label>
+      <input class="input" id="syncCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" data-email="${esc(email)}" /></div>
+    <button class="btn block mt-3" data-action="sync-code">Sign in with code</button>`);
 }
 
 window.PF_APP = {
@@ -1248,12 +1274,23 @@ window.PF_APP = {
 };
 
 const ACTIONS = {
+  'install': async () => {
+    const I = window.PFInstall;
+    if (I && I.canPrompt()) { if (await I.prompt()) toast('PulseFit installed'); rerender(); }
+    else installSheet();
+  },
   'sync-signin': signInSheet,
   'sync-google': () => window.PFSync.signInGoogle(),
   'sync-email': async () => {
     const email = ($('#syncEmail')?.value || '').trim();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Enter a valid email'); return; }
-    if (await window.PFSync.signInEmail(email)) closeSheet();
+    if (await window.PFSync.signInEmail(email)) codeSheet(email);
+  },
+  'sync-code': async () => {
+    const el = $('#syncCode');
+    const code = (el?.value || '').replace(/\s/g, '');
+    if (!/^\d{6,10}$/.test(code)) { toast('Enter the code from the email'); return; }
+    if (await window.PFSync.verifyCode(el.dataset.email, code)) { closeSheet(); toast('Signed in'); }
   },
   'sync-now': () => window.PFSync.syncNow(),
   'sync-signout': () => { if (confirm('Sign out of cloud sync? Your data stays on this device.')) window.PFSync.signOut(); },
@@ -1496,6 +1533,8 @@ function checkReminder() {
 $$('[data-icon]').forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
 
 window.addEventListener('hashchange', () => { closeSheet(); stopRest(); render(); });
+// Refresh Profile when the install option appears or the app gets installed (pwa.js).
+if (window.PFInstall) window.PFInstall.onChange(() => { if (parseRoute().name === 'profile' && !sheetOpen()) rerender(); });
 // Called by sync.js once it loads: refresh the Account card when sync status changes.
 window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
   if (parseRoute().name !== 'profile' || sheetOpen()) return;

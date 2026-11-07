@@ -105,6 +105,18 @@ const ids = (page) => page.evaluate(() => window.PF_APP.getState().workouts.map(
   assert.deepStrictEqual(await ids(laptop), ['f1', 'l1', 'l2', 'p2']);
   step('import while signed in merges and syncs (settings kept)');
 
+  // Track tab data: a weigh-in and a meal on the phone appear on the laptop.
+  await phone.evaluate(() => {
+    const st = window.PF_APP.getState();
+    st.hlog['2026-11-07|weight'] = 114.6;
+    st.meals.push({ id: 'meal-1', day: '2026-11-07', at: new Date().toISOString(), name: 'Oats', kcal: 380, protein: 13 });
+    window.save();
+  });
+  await sync(phone); await sync(laptop);
+  assert.strictEqual(await laptop.evaluate(() => window.PF_APP.getState().hlog['2026-11-07|weight']), 114.6);
+  assert.deepStrictEqual(await laptop.evaluate(() => window.PF_APP.getState().meals.map((m) => m.name)), ['Oats']);
+  step('Track tab weigh-ins and meals sync between devices');
+
   // Reset on the phone beats unsynced work on the laptop, which gets a backup.
   await addWorkout(laptop, 'l3', 'lunges', 1);       // not synced yet
   await phone.click('button[data-action="reset"]');

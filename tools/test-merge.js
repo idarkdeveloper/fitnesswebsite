@@ -28,6 +28,7 @@ const device = (state = base()) => {
 const edit = (d, fn) => { fn(d.state); d.meta = C.noteSave(d.meta, d.state, tick()); };
 const reset = (d) => { const t = d.state.profile.theme; d.state = base(); d.state.profile.theme = t; d.meta = C.noteReset(d.meta, d.state); };
 let wid = 0;
+let mid = 0;
 const logWorkout = (d, progId = 'wall-pushups', level = 1) => {
   const w = { id: 'w' + (++wid), at: tick(), routineName: 'R', entries: [{ progId, level, values: [10], passed: true }] };
   edit(d, (s) => { s.workouts.push(w); s.levels[progId] = Math.max(s.levels[progId] || 0, level); });
@@ -170,7 +171,9 @@ test('random edits on three devices converge without losing workouts', () => {
     const logged = new Set(); const deleted = new Set(); const maxLevel = {};
     for (let step = 0; step < 40; step++) {
       const d = ds[rnd(3)];
-      switch (rnd(6)) {
+      switch (rnd(8)) {
+        case 5: edit(d, (s) => { (s.meals = s.meals || []).push({ id: 'z' + (++mid), day: '2026-11-0' + (1 + rnd(7)), at: tick(), name: 'x', kcal: 100 + rnd(500) }); }); break;
+        case 6: edit(d, (s) => { s.hlog = s.hlog || {}; const k = '2026-11-0' + (1 + rnd(3)) + '|' + ['weight', 'steps', 'water'][rnd(3)]; if (rnd(4) === 0) delete s.hlog[k]; else s.hlog[k] = 100 + rnd(50); }); break;
         case 0: case 1: { const lv = 1 + rnd(3); const p = ['a', 'b', 'c'][rnd(3)]; logged.add(logWorkout(d, p, lv)); maxLevel[p] = Math.max(maxLevel[p] || 0, lv); break; }
         case 2: if (d.state.workouts.length) { const id = d.state.workouts[rnd(d.state.workouts.length)].id; deleted.add(id); edit(d, (s) => { s.workouts = s.workouts.filter((w) => w.id !== id); }); } break;
         case 3: edit(d, (s) => { s.profile.theme = ['light', 'dark', 'midnight'][rnd(3)]; }); break;
@@ -185,6 +188,78 @@ test('random edits on three devices converge without losing workouts', () => {
     for (const id of logged) assert.strictEqual(ids.has(id), !deleted.has(id), `workout ${id} wrong in round ${round}`);
     for (const [p, lv] of Object.entries(maxLevel)) assert.strictEqual(ds[0].state.levels[p], lv);
   }
+});
+
+
+/* ---- Health tracking (Track tab) ---- */
+const hbase = () => ({ ...base(), hprofile: {}, hlog: {}, foods: {}, meals: [] });
+const logMeal = (d, kcal, day = '2026-11-07') => {
+  const m = { id: 'm' + (++mid), day, at: tick(), name: 'Food ' + mid, kcal, protein: 10 };
+  edit(d, (s) => { s.meals.push(m); });
+  return m.id;
+};
+
+test('meals from two devices combine; a deleted meal stays deleted', () => {
+  const c = cloud(); const a = device(hbase()); const b = device(hbase());
+  const x = logMeal(a, 500); const y = logMeal(b, 300);
+  sync(a, c); sync(b, c); sync(a, c);
+  assert.deepStrictEqual(a.state.meals.map((m) => m.id).sort(), [x, y].sort());
+  edit(b, (s) => { s.meals = s.meals.filter((m) => m.id !== x); });
+  sync(b, c); sync(a, c);
+  assert.deepStrictEqual(a.state.meals.map((m) => m.id), [y]);
+});
+
+test('daily values merge per field: weight on one device, steps on the other', () => {
+  const c = cloud(); const a = device(hbase()); const b = device(hbase());
+  edit(a, (s) => { s.hlog['2026-11-07|weight'] = 114.6; });
+  edit(b, (s) => { s.hlog['2026-11-07|steps'] = 8200; });
+  sync(a, c); sync(b, c); sync(a, c);
+  for (const d of [a, b]) assert.deepStrictEqual(d.state.hlog, { '2026-11-07|weight': 114.6, '2026-11-07|steps': 8200 });
+  edit(b, (s) => { s.hlog['2026-11-07|weight'] = 114.2; });          // a later correction wins
+  sync(b, c); sync(a, c);
+  assert.strictEqual(a.state.hlog['2026-11-07|weight'], 114.2);
+  edit(a, (s) => { delete s.hlog['2026-11-07|steps']; });            // clearing a value syncs too
+  sync(a, c); sync(b, c);
+  assert.ok(!('2026-11-07|steps' in b.state.hlog));
+});
+
+test('profile targets and saved foods sync; removing a saved food sticks', () => {
+  const c = cloud(); const a = device(hbase()); const b = device(hbase());
+  edit(a, (s) => { s.hprofile.goalWeight = 90; s.foods.f1 = { name: 'Oats', kcal: 380, protein: 13 }; });
+  sync(a, c); sync(b, c);
+  assert.strictEqual(b.state.hprofile.goalWeight, 90);
+  assert.strictEqual(b.state.foods.f1.name, 'Oats');
+  edit(b, (s) => { delete s.foods.f1; }); sync(b, c); sync(a, c);
+  assert.ok(!('f1' in a.state.foods));
+});
+
+test('documents written before the Track tab still merge', () => {
+  const c = cloud(); const a = device(base());                       // old shape, no health fields
+  logWorkout(a); sync(a, c);
+  delete c.doc.data.meals; delete c.doc.data.hlog; delete c.doc.data.hprofile; delete c.doc.data.foods;
+  assert.strictEqual(C.validateDoc(c.doc), null);
+  const b = device(hbase()); logMeal(b, 250); sync(b, c);
+  assert.strictEqual(b.state.workouts.length, 1);
+  assert.strictEqual(b.state.meals.length, 1);
+});
+
+test('validateDoc rejects malformed health data', () => {
+  const good = C.toDoc(hbase(), C.emptyMeta());
+  assert.strictEqual(C.validateDoc(good), null);
+  assert.ok(C.validateDoc({ ...good, data: { ...good.data, meals: [{ id: 'x', at: 'y', kcal: 'lots' }] } }));
+  assert.ok(C.validateDoc({ ...good, data: { ...good.data, hlog: { 'd|weight': '115' } } }));
+});
+
+test('importing a backup merges health data without overwriting local values', () => {
+  const s = hbase(); s.hlog['2026-11-07|weight'] = 114; s.hprofile.goalWeight = 90;
+  s.meals.push({ id: 'a', day: '2026-11-07', at: '2026-11-07T08:00:00Z', name: 'Eggs', kcal: 150 });
+  const file = hbase(); file.hlog['2026-11-07|weight'] = 120; file.hlog['2026-11-01|weight'] = 116; file.hprofile.goalWeight = 80;
+  file.meals.push({ id: 'a', day: '2026-11-07', at: '2026-11-07T08:00:00Z', name: 'Eggs', kcal: 150 }, { id: 'b', day: '2026-11-01', at: '2026-11-01T08:00:00Z', name: 'Rice', kcal: 300 });
+  const out = C.mergeImport(s, file);
+  assert.strictEqual(out.hlog['2026-11-07|weight'], 114);
+  assert.strictEqual(out.hlog['2026-11-01|weight'], 116);
+  assert.strictEqual(out.hprofile.goalWeight, 90);
+  assert.deepStrictEqual(out.meals.map((m) => m.id), ['b', 'a']);
 });
 
 console.log(`\n${passed} passed${process.exitCode ? ', some FAILED' : ''}`);

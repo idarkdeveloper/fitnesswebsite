@@ -25,6 +25,7 @@ inside it. Use Google, or the email code if custom SMTP is set up
 |-----|--------------|
 | **Home** | Greeting, a 30-day workout challenge bar, and the routine card. The card has a routine picker, a swipeable carousel of today's exercises showing your current progression and level, swap-progression and rest-timer buttons, **Start**, and a day navigator ("Day 3 of 7", status). Also shows 14 upcoming days and a "micro fitness hit" tip. |
 | **Movements** | A library of 11 movement families and 74 progressions. Each family page lists its progressions with your level status. Each exercise page has an overview, primary and secondary muscles, and three tabs: **Levels**, **Tutorial** (steps, plus how to make it harder or easier) and **Form Cues**. **Log sets** records a single exercise. |
+| **Track** | Your daily health log. **Food**: calories left against a daily target, quick add with optional protein, one-tap saved and recent foods. **Weight**: daily weigh-in, 7-day average, weekly rate from the last 4 weeks, distance to goal and an estimated goal date, and a 30-day chart. **Steps, sleep and water** tiles with goals, plus a one-tap glass of water. **Measurements** (waist, chest, hips, arm, thigh, neck) with change since your first entry. Browse earlier days with ‹ ›. Targets come from your age, height, sex and activity (Mifflin–St Jeor), minus your chosen weekly loss, never below 1,500 kcal (men) or 1,200 kcal (women). |
 | **Activity** | Activity streak, total workouts, an achievements summary, "X / 74 Progressions Mastered" with a dot ladder per family, and workout history grouped by month. You can open and delete past workouts. |
 | **Challenges** | Streak badges (3 / 5 / 10 / 30 days) and joinable Pushup, Pullup and Squat ladders (15 steps each, with a badge per progression), plus the full set of 14 badges. |
 | **Profile** | Achievements, name and email (kept locally), three themes (Midnight, Light, Dark), PulseFit Pro (a demo toggle that unlocks four advanced families and a routine), training days, rest timer, reminders, data export, import and reset, FAQ, and Privacy. |
@@ -39,8 +40,7 @@ progression and shows any new badges.
 those days, and the other days are rest days. Rest days never break your
 streak.
 
-The older steps, sleep, calorie and BMI tracker still works at
-`tracker.html`. Profile links to it as "Daily Health Tracker".
+The old standalone tracker (`tracker.html`) now redirects to the Track tab. Its saved profile, steps, sleep and meals are imported once, automatically, the first time PulseFit opens on that device.
 
 ## Project structure
 
@@ -60,7 +60,7 @@ DESIGN.md     Design language: tokens, type, spacing, components, rules
 img/          Optional exercise images + manifest.js + prompts.json
 tools/        image-prompts.js (prompts, manifest), generate-images.js (OpenAI generation)
 docs/         IMAGE_PROMPTS.md, BACKEND_DESIGN.md, SUPABASE_SETUP.md
-tracker.*     The original PulseFit daily health tracker (tracker.tw.css is prebuilt Tailwind)
+tracker.html  Redirect from the retired standalone tracker to #/track
 ```
 
 ## Run locally

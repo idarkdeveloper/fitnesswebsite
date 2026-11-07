@@ -159,7 +159,16 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Stepper | `.stepper` | − / number / + with a unit suffix. Press and hold ± to repeat (after 400ms, every 70ms) |
 | Figure art | `.art` | Gradient by `--h` hue per movement family, plus a stick-figure SVG |
 | Toast, banner, rest bar | `.toast`, `.banner`, `.rest-bar` | |
-| Utilities | `.m-0`, `.mt-*`, `.mb-*`, `.ml-*`, `.gap-*`, `.wrap`, `.text-center`, `.fw-*`, `.t-*`, `.c-*`, `.static`, `.icon-sm` | Token-backed one-liners defined last in the cascade. Use them instead of `style=""` |
+| Day navigator | `.day-nav` | ‹ date › inside a `.card.flat.soft`; "next" is disabled on today; "Back to today" is a `.link-btn` |
+| KPI number | `.kpi > .kpi-v + .kpi-u` | One headline number per card (calories left, today's weight); `.faint` for "not logged" |
+| Fact row | `.facts` | Secondary numbers under a KPI, values in `<b>` |
+| Habit tile | `.tiles > .tile` | Three tappable tiles (label, value, goal, `.progress.thin`) |
+| Key–value list | `.kv-list` | Latest measurement + change (`.delta`, always signed, text colour only) |
+| Food list | `.food-list` | Name, kcal · protein, trailing delete icon button |
+| Chip with remove | `.chip-pair > .chip + .chip-x` | Saved foods: tap to add, ✕ to forget |
+| Weight chart | `.wchart` | Inline SVG, 30 days. 7-day average = 2px `--accent` line; weigh-ins = muted dots; goal = dashed muted reference shown only when in range. Hover, tap or ←/→ shows a crosshair and `.chart-tip`; "Show as table" `<details>` gives the data as `.data-table`. Single series, so no legend box, just a small `.chart-key` |
+| Form grids | `.grid2`, `.grid3`, `.input-unit`, `.check` | Two- and three-column field rows in sheets |
+| Utilities | `.m-0`, `.mt-*`, `.mb-*`, `.ml-*`, `.gap-*`, `.wrap`, `.text-center`, `.fw-*`, `.t-*`, `.c-*`, `.static`, `.icon-sm`, `.d-block`, `.btn.sm` | Token-backed one-liners defined last in the cascade. Use them instead of `style=""` |
 
 ## 8. Imagery
 

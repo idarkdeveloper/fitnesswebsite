@@ -94,9 +94,12 @@ jobs:
           set -euo pipefail
           # Direct runs are capped at 30. A batch should hold everything you want in one go: separate
           # batches would pick the same first N images, because each run starts from a fresh checkout.
-          max=30; [[ "$IN_MODE" == "batch-submit" ]] && max=85
-          [[ "$IN_LIMIT" =~ ^[0-9]+$ ]] && (( IN_LIMIT >= 1 && IN_LIMIT <= max )) \
-            || { echo "::error::limit must be a number from 1 to $max for mode $IN_MODE"; exit 1; }
+          # batch-collect ignores the limit (it downloads whatever the batch produced), so don't check it.
+          if [[ "$IN_MODE" != "batch-collect" ]]; then
+            max=30; [[ "$IN_MODE" == "batch-submit" ]] && max=85
+            [[ "$IN_LIMIT" =~ ^[0-9]+$ ]] && (( IN_LIMIT >= 1 && IN_LIMIT <= max )) \
+              || { echo "::error::limit must be a number from 1 to $max for mode $IN_MODE"; exit 1; }
+          fi
           if [[ -n "$IN_ONLY" && ! "$IN_ONLY" =~ ^[a-z0-9,-]+$ ]]; then
             echo "::error::only may contain lowercase ids separated by commas"; exit 1
           fi

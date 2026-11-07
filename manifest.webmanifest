@@ -18,7 +18,7 @@
   ],
   "shortcuts": [
     { "name": "Today's workout", "short_name": "Workout", "url": "./#/today", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Movements", "url": "./#/movements", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Exercises", "url": "./#/exercises", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Progress", "url": "./#/progress", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

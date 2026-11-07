@@ -413,7 +413,7 @@ const sheetOpen = () => !!$('#layer .overlay');
    --------------------------------------------------------------- */
 const NAV = [
   { id: 'today', label: 'Today', icon: 'home' },
-  { id: 'movements', label: 'Movements', icon: 'run' },
+  { id: 'exercises', label: 'Exercises', icon: 'run' },
   { id: 'progress', label: 'Progress', icon: 'activity' },
   { id: 'profile', label: 'Profile', icon: 'user' },
 ];
@@ -426,7 +426,7 @@ function parseRoute() {
 }
 
 function renderNav(active) {
-  const section = { category: 'movements', exercise: 'movements', workout: 'today', home: 'today', track: 'today', plan: 'today', activity: 'progress', challenges: 'progress' }[active] || active;
+  const section = { movements: 'exercises', category: 'exercises', exercise: 'exercises', workout: 'today', home: 'today', track: 'today', plan: 'today', activity: 'progress', challenges: 'progress' }[active] || active;
   const html = NAV.map((n) => `
     <a class="tab" href="#/${n.id}" ${section === n.id ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $$('[data-nav]').forEach((el) => { el.innerHTML = html; });
@@ -663,9 +663,10 @@ VIEWS.today = () => {
       <button class="icon-btn round bare" data-action="next-tip" aria-label="Another tip">${icon('reset')}</button>
     </div>`;
 };
+VIEWS.exercises = (...a) => VIEWS.movements(...a);
 VIEWS.home = VIEWS.today;
 
-/* ---------- Movements: status list ---------- */
+/* ---------- Exercises: status list (#/exercises; the old #/movements still works) ---------- */
 let movFilter = 'all';
 VIEWS.movements = () => {
   const open = CATS.filter((c) => !isLocked(c));
@@ -683,7 +684,7 @@ VIEWS.movements = () => {
   }).join('');
   const chip = (id, label) => `<button class="fchip ${movFilter === id ? 'on' : ''}" data-action="mov-filter" data-f="${id}" aria-pressed="${movFilter === id}">${label}</button>`;
   return `
-    <h1 class="h1 m-0">Movements</h1>
+    <h1 class="h1 m-0">Exercises</h1>
     <p class="muted m-0 mt-1">${CATS.length} families · ${TOTAL_PROGS} progressions · ${masteredCount()} mastered</p>
     <div class="row gap-2 mt-4 wrap">${chip('all', 'All')}${chip('progress', 'In progress')}${chip('new', 'Not started')}</div>
     ${shown.length ? `<div class="mv-list mt-4">${rows}</div>` : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick a family and start with progression 1.' : 'You have started every family.'}</p>`}
@@ -700,7 +701,7 @@ VIEWS.category = (r) => {
   const cur = isStarted(c.id) ? currentIdx(c.id) : -1;
   return `
     <div class="topbar">
-      <a class="icon-btn bare round" href="#/movements" aria-label="Back to Movement Library">${icon('chevL')}</a>
+      <a class="icon-btn bare round" href="#/exercises" aria-label="Back to Exercises">${icon('chevL')}</a>
       <div class="title">${esc(c.name)}</div>
     </div>
     <div class="art cat-hero" style="--h:${CAT_HUE[c.id] ?? 210}">

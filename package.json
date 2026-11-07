@@ -1,0 +1,15 @@
+{
+  "name": "pulsefit-android",
+  "private": true,
+  "description": "PulseFit Android app: a Capacitor shell around the PulseFit site that reads Health Connect (Samsung Health, Galaxy Watch).",
+  "scripts": {
+    "android:sync": "cap sync android"
+  },
+  "devDependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/cli": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capgo/capacitor-health": "8.12.0"
+  }
+}

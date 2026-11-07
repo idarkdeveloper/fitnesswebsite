@@ -1,0 +1,12 @@
+{
+  "appId": "io.github.idarkdeveloper.pulsefit",
+  "appName": "PulseFit",
+  "webDir": "www",
+  "server": {
+    "url": "https://idarkdeveloper.github.io/fitnesswebsite/#/today",
+    "errorPath": "offline.html"
+  },
+  "android": {
+    "backgroundColor": "#13161d"
+  }
+}

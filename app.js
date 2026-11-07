@@ -44,6 +44,7 @@ const ICONS = {
   help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.2a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4M12 16.8v.01"/>',
   shield: 'M12 3l7.5 2.8V12c0 4.6-3.2 7.8-7.5 9-4.3-1.2-7.5-4.4-7.5-9V5.8z',
   download: 'M12 4v11.5M7 10.5l5 5 5-5M4.5 20h15',
+  refresh: 'M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4.2h-4.2',
   upload: 'M12 20V8.5M7 13.5l5-5 5 5M4.5 4h15',
   reset: 'M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 3.5v5.1h5.1',
   heartPulse: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
@@ -655,6 +656,7 @@ VIEWS.today = () => {
       ${tile('track-sleep', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', `of ${fmtSleep(lg)}`, sleep != null ? sleep / lg : 0, false, 'Log sleep')}
       ${tile('track-water-add', 'Water', water != null ? (water / 1000).toFixed(1) : '0', 'L', 'tap + for a glass', (water || 0) / wg, false, 'Add a glass of water (250 ml)', 'data-ml="250"')}
     </div>
+    ${watchLine(tk)}
     <div class="tip-card mt-5">
       ${icon('bolt')}
       <p class="grow m-0"><b>60-second hit.</b> <span class="muted">${esc(TIPS[tipIdx % TIPS.length])}</span></p>
@@ -1012,6 +1014,11 @@ VIEWS.profile = () => {
       <span class="pill">${icon('crown')} Pro</span>
       <p class="grow m-0 small"><b>Free demo toggle.</b> <span class="muted">Unlocks 4 advanced families and the Strength Builder routine.</span></p>
       <button class="toggle" role="switch" aria-checked="${pf.pro}" data-action="toggle-pro" aria-label="PulseFit Pro"></button>
+    </div>
+
+    <h2 class="group-label">Watch &amp; health</h2>
+    <div class="list-group">
+      ${row('health', 'Galaxy Watch &amp; Samsung Health', isNativeApp() ? (state.health && state.health.enabled ? `Health Connect · synced ${esc(ago(state.health.last))}` : 'Not connected') : 'Needs the PulseFit Android app')}
     </div>
 
     <h2 class="group-label">Data</h2>
@@ -2578,6 +2585,176 @@ function codeSheet(email) {
     <button class="btn block mt-3" data-action="sync-code">Sign in with code</button>`);
 }
 
+/* ---------------------------------------------------------------
+   Health Connect (Android app only)
+   The PulseFit Android app is this same site inside a Capacitor shell. There, Health Connect gives us what
+   Samsung Health (and the Galaxy Watch) recorded: steps, sleep, weight, workouts and active calories.
+   Values fill your daily log; anything you typed in yourself is never overwritten.
+   --------------------------------------------------------------- */
+const APK_URL = 'https://github.com/idarkdeveloper/fitnesswebsite/releases/latest/download/pulsefit.apk';
+const HC_READ = ['steps', 'sleep', 'weight', 'calories', 'workouts'];
+const isNativeApp = () => !!(window.androidBridge || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
+let hcPlugins = null;          // { Health, App } once the Capacitor core script is loaded
+let hcBusy = false;
+function hcLoad() {
+  if (hcPlugins) return Promise.resolve(hcPlugins);
+  return new Promise((resolve, reject) => {
+    const done = () => {
+      const reg = window.capacitorExports && window.capacitorExports.registerPlugin;
+      if (!reg) { reject(new Error('Capacitor not available')); return; }
+      hcPlugins = { Health: reg('Health'), App: reg('App') };
+      resolve(hcPlugins);
+    };
+    if (window.capacitorExports) { done(); return; }
+    const sc = document.createElement('script');
+    sc.src = 'vendor/capacitor-8.6.0.js'; sc.onload = done; sc.onerror = () => reject(new Error('Capacitor script'));
+    document.head.appendChild(sc);
+  });
+}
+const hcState = () => (state.health = state.health || { enabled: false, last: '', imported: {}, day: {} });
+const localKey = (iso) => dayKey(new Date(iso));
+
+/** Set a log value from Health Connect unless you've changed it by hand since the last import. */
+function hcPut(day, field, v, imported) {
+  const k = hk(day, field), cur = state.hlog[k];
+  if (cur != null && imported[k] !== cur) return false;            // typed in by you: keep it
+  if (cur === v) { imported[k] = v; return false; }
+  state.hlog[k] = v; imported[k] = v;
+  return true;
+}
+
+/** Pull the last two weeks from Health Connect into the log. Quiet unless `loud`. */
+async function hcSync(loud = false) {
+  const h = hcState();
+  if (!isNativeApp() || !h.enabled || hcBusy) return;
+  hcBusy = true;
+  try {
+    const { Health } = await hcLoad();
+    const end = new Date(), start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 13);
+    const span = { startDate: start.toISOString(), endDate: end.toISOString() };
+    const imported = h.imported;
+    let changed = 0;
+    const got = await Promise.allSettled([
+      Health.queryAggregated({ dataType: 'steps', ...span, bucket: 'day', aggregation: 'sum' }),
+      Health.readSamples({ dataType: 'sleep', startDate: new Date(start.getTime() - 864e5).toISOString(), endDate: span.endDate, limit: 500 }),
+      Health.readSamples({ dataType: 'weight', ...span, limit: 500 }),
+      Health.queryAggregated({ dataType: 'calories', ...span, bucket: 'day', aggregation: 'sum' }),
+      Health.queryWorkouts({ ...span, limit: 200 }),
+    ]);
+    const ok = (i) => (got[i].status === 'fulfilled' ? got[i].value : null);
+    for (const b of (ok(0)?.samples || [])) {
+      const v = Math.round(b.values?.sum ?? b.value ?? 0);
+      if (v > 0 && hcPut(localKey(b.startDate), 'steps', v, imported)) changed++;
+    }
+    const sleep = {};                                                  // minutes asleep, counted on the day you woke up
+    for (const sm of (ok(1)?.samples || [])) {
+      // With sleep stages (Samsung Health writes them), count time asleep; otherwise the whole session.
+      const staged = (sm.stages || []).filter((st) => !/awake|inbed|out/i.test(st.stage)).reduce((a, st) => a + (st.durationMinutes || 0), 0);
+      const mins = staged > 0 ? staged : sm.value > 0 ? sm.value : (Date.parse(sm.endDate) - Date.parse(sm.startDate)) / 60000;
+      if (mins > 0 && mins < 24 * 60) { const d = localKey(sm.endDate); sleep[d] = (sleep[d] || 0) + mins; }
+    }
+    for (const [d, m] of Object.entries(sleep)) if (d >= dayKey(start) && hcPut(d, 'sleep', Math.round(m), imported)) changed++;
+    const wt = {};
+    for (const sm of (ok(2)?.samples || [])) { const d = localKey(sm.endDate || sm.startDate); if (!wt[d] || sm.endDate > wt[d].at) wt[d] = { v: sm.value, at: sm.endDate }; }
+    for (const [d, x] of Object.entries(wt)) if (x.v > 20 && x.v < 400 && hcPut(d, 'weight', Math.round(x.v * 10) / 10, imported)) changed++;
+    const day = {};                                                    // watch activity per day (this device only)
+    for (const b of (ok(3)?.samples || [])) { const d = localKey(b.startDate); (day[d] = day[d] || {}).kcal = Math.round(b.values?.sum ?? b.value ?? 0); }
+    for (const w of (ok(4)?.workouts || [])) {
+      const d = localKey(w.startDate), x = (day[d] = day[d] || {});
+      x.workouts = (x.workouts || 0) + 1;
+      x.min = (x.min || 0) + Math.round((w.duration ?? (Date.parse(w.endDate) - Date.parse(w.startDate)) / 1000) / 60);
+    }
+    h.day = day;
+    for (const k of Object.keys(imported)) if (k.slice(0, 10) < dayKey(start)) delete imported[k];   // forget old bookkeeping
+    h.last = new Date().toISOString();
+    const failed = got.filter((g) => g.status === 'rejected').length;
+    save();
+    if (!sheetOpen() && !document.activeElement?.matches('input, textarea')) rerender();
+    if (loud) toast(failed === got.length ? 'Could not read Health Connect. Check its permissions.' : changed ? `Updated ${changed} ${changed === 1 ? 'entry' : 'entries'} from Health Connect` : 'Up to date with Health Connect');
+  } catch (e) {
+    if (loud) toast('Health Connect: ' + (e.message || 'something went wrong'));
+  } finally { hcBusy = false; }
+}
+
+async function hcConnect() {
+  try {
+    const { Health } = await hcLoad();
+    const av = await Health.isAvailable();
+    if (!av.available) { toast(/install|update|not_installed|unavailable/i.test(av.reason || '') ? 'Install or update "Health Connect" from the Play Store first' : `Health Connect isn't available: ${av.reason || 'unknown reason'}`); return; }
+    const res = await Health.requestAuthorization({ read: HC_READ });
+    if (!res.readAuthorized || !res.readAuthorized.length) { toast('No access given. You can allow it in Health Connect settings.'); return; }
+    hcState().enabled = true; save();
+    toast(`Connected: ${res.readAuthorized.join(', ')}`);
+    await hcSync(true);
+    if (sheetOpen()) healthSheet();
+  } catch (e) { toast('Health Connect: ' + (e.message || 'something went wrong')); }
+}
+
+/** One line on Today with what the watch recorded. */
+function watchLine(tk) {
+  const h = state.health;
+  if (!isNativeApp() || !h || !h.enabled) return '';
+  const x = (h.day || {})[tk] || {};
+  const bits = [x.workouts ? `${x.workouts} ${x.workouts === 1 ? 'workout' : 'workouts'}, ${x.min} min` : '', x.kcal ? `${nf(x.kcal)} active kcal` : ''].filter(Boolean);
+  return `<button class="watch-line mt-3" data-action="health">${icon('activity')}<span class="grow">${bits.length ? `<b>Watch today:</b> ${bits.join(' · ')}` : 'Steps, sleep and weight come from Samsung Health'}<span class="d-block small muted">Health Connect · synced ${esc(ago(h.last))}</span></span>${icon('chevR')}</button>`;
+}
+
+function healthSheet() {
+  const h = hcState();
+  if (!isNativeApp()) {
+    openSheet('Galaxy Watch & Samsung Health', `
+      <p class="m-0">Your watch syncs to <b>Samsung Health</b>, and Samsung Health shares with <b>Health Connect</b> on your phone. The <b>PulseFit Android app</b> reads Health Connect and fills in your steps, sleep and weight every time you open it, and shows your watch workouts on Today.</p>
+      <p class="small muted">A website can't read Health Connect, so this needs the app. It is this same PulseFit, with the same data once you sign in.</p>
+      <a class="btn block lg mt-4" href="${APK_URL}">${icon('download')} Download the Android app (APK)</a>
+      <ol class="recipe-steps small mt-4">
+        <li>Open the downloaded file and allow "Install unknown apps" for your browser when Android asks.</li>
+        <li>Open PulseFit, go to Profile → Account and sign in, so your data comes along.</li>
+        <li>Profile → Galaxy Watch &amp; Samsung Health → Connect, and allow access.</li>
+        <li>In Samsung Health: Settings → Health Connect, and allow Samsung Health to share Steps, Sleep, Weight and Exercise.</li>
+      </ol>`);
+    return;
+  }
+  const d = (h.day || {})[todayKey()] || {};
+  openSheet('Galaxy Watch & Samsung Health', h.enabled ? `
+    <div class="card flat soft row-between"><span><b>Connected</b><span class="d-block small muted">Health Connect · synced ${esc(ago(h.last))}</span></span><span class="pill">${icon('check')} On</span></div>
+    <p class="small mt-3 m-0">Steps, sleep and weight for the last 14 days fill in automatically when you open PulseFit. Anything you type in yourself stays as you wrote it.</p>
+    ${d.workouts || d.kcal ? `<p class="small m-0 mt-2">Today from your watch: ${[d.workouts ? `${d.workouts} workouts, ${d.min} min` : '', d.kcal ? `${nf(d.kcal)} active kcal` : ''].filter(Boolean).join(' · ')}.</p>` : ''}
+    <button class="btn block lg mt-4" data-action="health-sync">${icon('refresh')} Sync now</button>
+    <button class="btn ghost block mt-2" data-action="health-settings">Health Connect permissions</button>
+    <p class="small muted mt-4 m-0">Missing steps or sleep? In Samsung Health open Settings → Health Connect and allow Samsung Health to share them. Keep the Galaxy Wearable app connected so the watch syncs to your phone.</p>
+    <button class="link-btn small danger-text mt-3" data-action="health-off">Stop using Health Connect</button>` : `
+    <p class="m-0">Read what Samsung Health and your Galaxy Watch recorded: <b>steps, sleep, weight, workouts and active calories</b>. PulseFit only reads; it never writes to Health Connect.</p>
+    <button class="btn block lg mt-4" data-action="health-connect">${icon('activity')} Connect Health Connect</button>
+    <ol class="recipe-steps small mt-4">
+      <li>Tap Connect and allow the data types in the Health Connect screen.</li>
+      <li>In Samsung Health: Settings → Health Connect, and allow Samsung Health to share Steps, Sleep, Weight and Exercise.</li>
+      <li>Values you type in yourself are never overwritten.</li>
+    </ol>
+    <p class="small muted m-0"><a href="privacy.html">How PulseFit uses this data</a></p>`);
+}
+
+const HEALTH_ACTIONS = {
+  'health': healthSheet,
+  'health-connect': hcConnect,
+  'health-sync': () => hcSync(true),
+  'health-settings': async () => { try { (await hcLoad()).Health.openHealthConnectSettings(); } catch { toast('Open Health Connect from your phone settings'); } },
+  'health-off': () => { const h = hcState(); h.enabled = false; h.day = {}; save(); closeSheet(); rerender(); toast('Stopped. To remove access fully, open Health Connect permissions.'); },
+};
+
+/** Native app: sync on start and whenever the app comes back to the front; handle the email sign-in link. */
+async function hcBoot() {
+  if (!isNativeApp()) return;
+  try {
+    const { App } = await hcLoad();
+    App.addListener('appStateChange', ({ isActive }) => { if (isActive && Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync(); });
+    const onUrl = (url) => { if (url && url.startsWith('pulsefit://login') && window.PFSync && window.PFSync.handleAuthLink) window.PFSync.handleAuthLink(url); };
+    App.addListener('appUrlOpen', ({ url }) => onUrl(url));
+    const launch = await App.getLaunchUrl();
+    if (launch && launch.url) setTimeout(() => onUrl(launch.url), 1500);   // let sync.js load first
+  } catch { /* plugins missing: an old app version */ }
+  hcSync();
+}
+
 window.PF_APP = {
   getState: () => state,
   setState: (s) => { state = s; save(); applyTheme(); if (!sheetOpen() && !document.activeElement?.matches('input, textarea')) rerender(); },
@@ -2762,7 +2939,7 @@ const ACTIONS = {
   },
 };
 
-Object.assign(ACTIONS, TRACK_ACTIONS, PLAN_ACTIONS, WORKOUT_ACTIONS, PROFILE_ACTIONS, {
+Object.assign(ACTIONS, TRACK_ACTIONS, PLAN_ACTIONS, WORKOUT_ACTIONS, PROFILE_ACTIONS, HEALTH_ACTIONS, {
   'mov-filter': (el) => { movFilter = el.dataset.f; rerender(); },
   'prog-tab': (el) => { progTab = el.dataset.tab; rerender(); if (el.closest('.card, .stat3')) window.scrollTo(0, 0); },
   'plan-sel': (el) => { planSel = Number(el.dataset.i); rerender(); },
@@ -2907,4 +3084,5 @@ applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');
 render();
 checkReminder();
+hcBoot();
 setInterval(checkReminder, 60000);

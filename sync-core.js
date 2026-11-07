@@ -11,7 +11,7 @@
   // Maps of single values (one register per key), merged by newest stamp.
   // hprofile: body profile and targets; hlog: "YYYY-MM-DD|field" -> number (weight, steps, sleep, water,
   // measurements); foods: saved foods by id.
-  const MAP_REGS = ['current', 'joined', 'hprofile', 'hlog', 'foods', 'grocery'];
+  const MAP_REGS = ['current', 'joined', 'hprofile', 'hlog', 'foods', 'grocery', 'videos'];
   // Append-only lists of records with ids, merged by union minus tombstones.
   const COLLECTIONS = ['workouts', 'meals'];
 
@@ -42,6 +42,7 @@
       hlog: isObj(s.hlog) ? s.hlog : {},
       foods: isObj(s.foods) ? s.foods : {},
       grocery: isObj(s.grocery) ? s.grocery : {},
+      videos: isObj(s.videos) ? s.videos : {},        // your own tutorial video per progression: progId -> YouTube id
       meals: Array.isArray(s.meals) ? s.meals : [],
     });
   }
@@ -127,7 +128,7 @@
     // Health fields are optional (documents written before the Track tab don't have them).
     if (d.meals !== undefined && (!Array.isArray(d.meals) || d.meals.some((m) => !isObj(m) || typeof m.id !== 'string' || typeof m.at !== 'string' || !Number.isFinite(m.kcal)))) return 'bad meals';
     if (d.hlog !== undefined && (!isObj(d.hlog) || Object.values(d.hlog).some((v) => !Number.isFinite(v)))) return 'bad hlog';
-    for (const k of ['hprofile', 'foods', 'grocery']) if (d[k] !== undefined && !isObj(d[k])) return 'bad ' + k;
+    for (const k of ['hprofile', 'foods', 'grocery', 'videos']) if (d[k] !== undefined && !isObj(d[k])) return 'bad ' + k;
     return null;
   }
 

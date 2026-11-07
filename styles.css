@@ -1480,3 +1480,8 @@ svg.icon-sm { width: 16px; height: 16px; }
 .widget-preview .wp-n { flex: 1; display: flex; align-items: center; font-size: 52px; font-weight: 800; line-height: 1; }
 .widget-preview .wp-s { font-weight: 700; font-size: 14px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .widget-preview .wp-d { color: #a9b6e0; font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* "Watch how" video */
+.ex-hero2 .watch-btn { position: absolute; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 68px); z-index: 2; }
+.video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r-md); overflow: hidden; background: #000; }
+.video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }

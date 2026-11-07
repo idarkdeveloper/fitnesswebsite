@@ -1,0 +1,54 @@
+[
+  {
+    "id": "tap-bridges",
+    "file": "img/review/tap-bridges.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "size": "1536x1024",
+    "prompt_sha256": "d0a790ddfb7fa47e",
+    "prompt": "Athlete doing tap bridges on a mat on grass in a park: in a backbend, belly up, hands by the ears, elbows bent, crown of the head lightly touching the mat. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. A backbend: chest and belly face the sky and the back faces the mat; hands flat beside the head, fingers toward the feet; hips high. Not a forward fold, child pose or forearm stand. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "revised_prompt": null,
+    "generated_at": "2026-11-07T18:12:10.652Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 197,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 197
+      },
+      "output_tokens": 1957,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 389
+      },
+      "total_tokens": 2154
+    },
+    "cost_usd": 0.06361
+  },
+  {
+    "id": "one-arm-towel-hangs",
+    "file": "img/review/one-arm-towel-hangs.webp",
+    "model": "gpt-image-1.5",
+    "quality": "medium",
+    "size": "1536x1024",
+    "prompt_sha256": "d77cfb6e43722915",
+    "prompt": "Athlete doing one-arm towel hangs on a steel bar in an outdoor calisthenics park: hanging by one hand gripping only a towel looped over a high bar, hand well below the bar. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Form: when hanging, feet are clearly off the ground. The towel hangs down from the bar; the one working hand grips the towel about 30 cm below the bar and does not touch the bar at all; the other arm hangs free; both feet clearly off the ground. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9.",
+    "revised_prompt": null,
+    "generated_at": "2026-11-07T18:12:24.781Z",
+    "ai_generated": true,
+    "usage": {
+      "input_tokens": 212,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 212
+      },
+      "output_tokens": 1963,
+      "output_tokens_details": {
+        "image_tokens": 1568,
+        "text_tokens": 395
+      },
+      "total_tokens": 2175
+    },
+    "cost_usd": 0.06388
+  }
+]

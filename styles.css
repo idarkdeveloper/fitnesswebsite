@@ -1458,3 +1458,7 @@ svg.icon-sm { width: 16px; height: 16px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Meal plan: week switch and grocery quantities */
+.wk-switch { margin-bottom: 0; }
+.grocery .qty { flex-shrink: 0; max-width: 45%; line-height: 1.25; }

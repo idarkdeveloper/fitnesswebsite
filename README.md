@@ -24,6 +24,7 @@ inside it. Use Google, or the email code if custom SMTP is set up
 | Tab | What it does |
 |-----|--------------|
 | **Today** | Home and daily tracking in one screen. Greeting and streak, this week's strip (done ✓, training day, rest), and **today's session**: your current progression for each exercise with its level dots, **Start · about N min**, and the rest timer. **Today's log**: a calorie ring (left against your target), what you've eaten, **Add food**, and the next meal from your plan with one-tap **Log**. Tiles for weight (7-day trend, distance to goal), steps, sleep and water (+ adds a glass), and a 60-second tip. **All days** opens the detailed daily log (past days, food list, measurements), and **Week & groceries** opens the meal plan. |
+| **Meal plan** | A new 7-day Indian weight-loss plan every Monday, built from what German supermarkets sell (Magerquark, Hähnchenbrust, rote Linsen, TK Gemüse) plus seasonal vegetables, the same on every device. Switch between this week and next week. **Groceries** lists the week's shopping with German names, pack counts and a separate Asia / Indian shop section. A weekly **meal plan reminder** (Saturday 10:00 by default, since shops close on Sunday) shows a banner on Today, sends a notification while the app is open, and can be added to your phone's calendar as a repeating event. |
 | **Movements** | 11 movement families as a status list: current progression, level and position, with a segment bar (mastered / current / not yet). Filter by All, In progress or Not started. Pro families are shown separately. Each exercise page has a photo header, a three-level progress card (sets hit in your last workout), muscles, and **How to**, **Form cues** and **Easier / harder** tabs, with **Log sets** and **Swap** kept within reach. |
 | **Workout** | One set at a time: a big stepper for reps or seconds, then **Set done**, which turns into the rest countdown (tap to skip) and moves on to the next set. The set list shows done, current and remaining sets; tap one to jump to it or redo it. Add a set, time holds, or finish early. |
 | **Progress** | Streak, total workouts and progressions mastered. **Strength**: mastery ladders for every family, challenges (Pushup, Pullup and Squat ladders) and badges. **Body**: weight with the 30-day chart and an "on track" verdict, measurements with change since your first entry, and 7-day averages for food, steps and sleep. **History**: every workout by month, each one openable. |
@@ -47,7 +48,7 @@ The old standalone tracker (`tracker.html`) now redirects to the Track tab. Its 
 index.html    App shell (sidebar on desktop, bottom tab bar on mobile)
 styles.css    Theme tokens and components
 app.js        Router, views, progress model, workout logic
-mealplan.js   Quick foods, 7-day Indian meal plan, dish nutrition and grocery ingredients
+mealplan.js   Quick foods, weekly Indian meal plan generator (German shop ingredients), dish nutrition and grocery ingredients
 data.js       Exercise database: 11 families, 74 progressions
 sync-core.js  Cloud sync merge rules (pure functions)
 sync.js       Cloud sync engine + Supabase adapter (optional)

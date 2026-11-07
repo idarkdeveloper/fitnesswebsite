@@ -37,7 +37,7 @@ const FORM_NOTE = {
 /* Per-exercise corrections for faults seen in generated images (outside the 60-word core). */
 const ID_NOTE = {
   'close-pushups': 'Arms fully straight with shoulders directly above the hands; chest and forearms are well off the ground (this is not a plank). Hands lie flat on the ground, not clasped.',
-  'angled-bridges': 'The hands are on top of the bench seat and carry weight; the head and back touch nothing; the body forms an upside-down U.',
+  'angled-bridges': 'Arms fully straight like a bridge pose, wrists on the bench edge, shoulders pushed back over the hands; the head hangs between the arms well above the ground; the body forms a tall upside-down U with hips higher than the bench; nothing but hands and feet touch anything.',
   'one-arm-hangs': 'The bar is above head height and one hand is the only support; both feet hang at least 30 cm above the ground.',
   'negative-dips': 'Two parallel bars about hip height, side by side, one in each hand; the feet do not touch the ground.',
   'close-pullups': 'Both hands wrap over the bar side by side, palms facing away; the hands are not clasped together.',
@@ -99,7 +99,7 @@ const POSE_OVERRIDE = {
   "hanging-straight-leg-raises": "hanging from a bar with straight arms, straight legs raised parallel to the ground",
   "glute-bridges": "lying on the back, knees bent, hips lifted high in a straight line from knees to shoulders",
   "straight-bridges": "reverse tabletop, hands behind the hips, legs straight, body lifted in one straight line",
-  "angled-bridges": "arched backbend, straight arms pressing on a park bench seat behind the head, feet flat on the ground, hips high",
+  "angled-bridges": "high arched backbend, elbows locked straight, hands pressing down on a knee-high park bench behind, feet flat, hips highest point",
   "head-bridges": "arched backbend with the top of the head and hands on a mat, hips pushed high",
   "half-bridges": "arched backbend over a padded box, hands and feet pressing, hips high",
   "full-bridges": "in a full wheel backbend on a mat, arms and legs straight, hips high",
@@ -151,7 +151,7 @@ const words = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 
 /* Ids whose generated image was rejected for wrong form; their prompts were tightened afterwards.
    Remove an id once a good image for it is in img/. */
-const REDO_IDS = new Set(['close-pushups', 'angled-bridges', 'one-arm-hangs', 'negative-dips']);
+const REDO_IDS = new Set(['angled-bridges']);
 
 const STYLE_ANCHOR = () => `You are producing a consistent series of exercise photos for a calisthenics app. Every image: ${STYLE} ${COMPOSITION} ${LIGHTING} ${COLOR} Keep the subject centred so the image can be cropped to a square. ${ATHLETE} ${NEGATIVE} Show safe, textbook form.`;
 

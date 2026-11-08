@@ -1741,7 +1741,7 @@ window.PF_DATA = {
     {
       id: 'lunges',
       name: 'Lunges',
-      premium: true,
+      premium: false,
       blurb: 'Split-stance leg work that builds single-leg strength, balance and hip stability.',
       progressions: [
         {
@@ -1917,7 +1917,7 @@ window.PF_DATA = {
     {
       id: 'dips',
       name: 'Dips',
-      premium: true,
+      premium: false,
       blurb: 'Lowering and pressing your body between supports to build strong triceps, chest and shoulders.',
       progressions: [
         {
@@ -2065,7 +2065,7 @@ window.PF_DATA = {
     {
       id: 'elbow-levers',
       name: 'Elbow Levers',
-      premium: true,
+      premium: false,
       blurb: 'Balancing your body horizontally on your bent arms to build wrist, shoulder and core control.',
       progressions: [
         {
@@ -2241,7 +2241,7 @@ window.PF_DATA = {
     {
       id: 'clutch-flag',
       name: 'Clutch Flag',
-      premium: true,
+      premium: false,
       blurb: 'Holding your body out sideways from a pole using a clutch grip to build powerful obliques and lats.',
       progressions: [
         {

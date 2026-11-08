@@ -1227,7 +1227,6 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .segs i { width: 14px; height: 4px; border-radius: 2px; background: var(--track); }
 .segs i.done { background: var(--success); }
 .segs i.cur { background: var(--primary); }
-.segs i.lock { opacity: 0.35; }
 .segs.wide { flex: 1; min-width: 0; margin-top: 0; }
 .segs.wide i { flex: 1; width: auto; }
 .segs.dots { margin: 0; gap: 4px; flex-shrink: 0; }
@@ -1249,7 +1248,7 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .streak-pill svg { width: 18px; height: 18px; }
 .wk-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: var(--space-5); }
 .wk-day { display: flex; flex-direction: column; align-items: center; padding: var(--space-3) 0 var(--space-2); border-radius: var(--r-sm); border: 1.5px solid transparent; background: transparent; }
-.wk-day .wd { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.wk-day .wd { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 .wk-day .dn { font-size: var(--fs-lg); font-weight: 800; margin: 2px 0 4px; }
 .wk-day .mk { height: 16px; display: grid; place-items: center; color: var(--muted); }
 .wk-day .mk svg { width: 14px; height: 14px; }
@@ -1257,6 +1256,8 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .wk-day .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--faint); }
 .wk-day.sel { background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: var(--accent); }
 .wk-day.sel .wd { color: var(--accent); }
+/* Light theme: teal on the teal-tinted selected day is only 4.05:1 at 11px; use body text there. */
+:root[data-theme="light"] .wk-day.sel .wd, :root[data-theme="light"] .pd.sel .wd { color: var(--text); }
 .session-card { border-radius: var(--r-lg); padding: var(--space-5); }
 .sess-title { font-size: var(--fs-xl); font-weight: 700; margin: 2px 0 0; }
 .sess-list { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-4); }
@@ -1267,7 +1268,8 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .art.thumb.sq { width: 56px; height: 56px; }
 .start-btn { margin-top: var(--space-4); }
 .rest-day { display: flex; gap: var(--space-4); align-items: center; padding: var(--space-4); margin-top: var(--space-4); border-radius: var(--r-md); background: var(--surface-2); }
-.rest-day > svg { width: 32px; height: 32px; color: var(--accent); flex-shrink: 0; }
+.rest-day > svg { width: 32px; height: 32px; margin: 0; color: var(--accent); flex-shrink: 0; }
+.rest-day { text-align: left; }
 .food-sum { padding: var(--space-4) var(--space-5); }
 .next-meal { display: flex; align-items: center; gap: var(--space-3); }
 .q-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
@@ -1295,9 +1297,6 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .mv-row .nm { display: block; font-size: var(--fs-lg); font-weight: 700; }
 .mv-row .sub { display: block; font-size: var(--fs-sm); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mv-row > svg { color: var(--muted); width: 22px; height: 22px; flex-shrink: 0; }
-.pro-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
-.pro-tile { background: none; border: 0; padding: 0; text-align: center; color: inherit; font-size: var(--fs-xs); font-weight: 600; }
-.pro-tile .art { aspect-ratio: 1 / 1; margin-bottom: var(--space-2); }
 
 /* Exercise */
 .ex-hero2 { position: relative; height: 300px; margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-4)) 0; overflow: hidden; }
@@ -1324,7 +1323,7 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .num-steps { list-style: none; counter-reset: st; padding: 0; margin: var(--space-4) 0 0; }
 .num-steps li { counter-increment: st; position: relative; padding-left: 40px; margin-bottom: var(--space-4); font-size: var(--fs-lg); line-height: 1.45; }
 .num-steps li::before { content: counter(st); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; font-size: var(--fs-sm); font-weight: 700; color: var(--muted); }
-.ex-actions { position: sticky; bottom: calc(84px + env(safe-area-inset-bottom)); display: flex; gap: var(--space-3); margin-top: var(--space-6); padding: var(--space-3) 0; background: linear-gradient(180deg, transparent, var(--surface-2) 40%); z-index: 5; }
+.ex-actions { position: sticky; bottom: calc(84px + env(safe-area-inset-bottom)); display: flex; gap: var(--space-3); margin-top: var(--space-6); padding: var(--space-2) 0; background: linear-gradient(180deg, transparent, var(--surface-2) 40%); z-index: 5; }
 @media (min-width: 960px) { .ex-actions { bottom: var(--space-4); } }
 
 /* Workout: one set at a time */
@@ -1365,9 +1364,7 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .lad-row:last-child { border-bottom: 0; }
 .lad-row .nm { font-weight: 700; font-size: var(--fs-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lad-row .cnt { text-align: right; font-size: var(--fs-xs); color: var(--muted); }
-.lad-row.locked .nm { color: var(--muted); }
 .lad-dot { width: 10px; height: 10px; border-radius: 50%; background: hsl(var(--h) 75% 58%); }
-.lad-row.locked .lad-dot { background: var(--track); }
 .legend { display: flex; gap: var(--space-4); }
 .legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .legend i { width: 14px; height: 4px; border-radius: 2px; background: var(--track); }
@@ -1401,7 +1398,6 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: var(--primary-ink); display: grid; place-items: center; font-size: var(--fs-xl); font-weight: 800; flex-shrink: 0; }
 .theme-seg button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
 .tdot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--border); display: inline-block; }
-.pro-card { display: flex; align-items: center; gap: var(--space-3); }
 
 /* Add food */
 .sheet-meta { margin-top: calc(-1 * var(--space-2)); }
@@ -1427,8 +1423,8 @@ button.chip.on { background: var(--primary); border-color: var(--primary); color
 /* Meal plan */
 .pd-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .pd { display: flex; flex-direction: column; align-items: center; padding: var(--space-2) 0; border-radius: var(--r-sm); border: 1.5px solid transparent; background: none; }
-.pd .wd { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
-.pd .kc { font-size: var(--fs-sm); font-weight: 800; }
+.pd .wd { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); }
+.pd .kc { font-size: var(--fs-xs); font-weight: 700; }
 .pd.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .pd.sel .wd { color: var(--accent); }
 .logged { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--success); font-weight: 700; font-size: var(--fs-sm); white-space: nowrap; }
@@ -1467,7 +1463,7 @@ svg.icon-sm { width: 16px; height: 16px; }
 .accent-text { color: var(--accent); }
 .swap-list { margin: var(--space-2) 0 0; padding-left: 1.1em; }
 .swap-list li { margin-top: 2px; }
-.dish-link { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent); text-underline-offset: 3px; }
+.dish-link { background: none; border: 0; padding: 2px 0; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent); text-underline-offset: 3px; }
 .dish-link:hover, .dish-link:focus-visible { color: var(--accent); }
 .recipe-ings, .recipe-steps { margin: var(--space-2) 0 0; padding-left: 1.2em; }
 .recipe-ings li, .recipe-steps li { margin-top: var(--space-2); line-height: 1.45; }

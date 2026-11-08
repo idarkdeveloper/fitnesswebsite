@@ -141,10 +141,10 @@ function art(catId, { cls = '', locked = false, shift = 0, inner = '', img = nul
    2. Routines, badges, tips
    --------------------------------------------------------------- */
 const ROUTINES = [
-  { id: 'foundation', name: 'Foundation Routine', desc: 'Two movements a session, rotating through the core six.', sessions: [['pushups', 'leg-raises'], ['pullups', 'squats'], ['bridges', 'twists']] },
+  { id: 'foundation', name: 'Foundation Routine', desc: 'Two exercises a session, rotating through the core six.', sessions: [['pushups', 'leg-raises'], ['pullups', 'squats'], ['bridges', 'twists']] },
   { id: 'push-pull-legs', name: 'Push · Pull · Legs', desc: 'Classic three-way split with grip and core finishers.', sessions: [['pushups', 'twists'], ['pullups', 'grip'], ['squats', 'leg-raises', 'bridges']] },
-  { id: 'full-body', name: 'Full Body Circuit', desc: 'Four big movements every session. Best on 2–3 days a week.', sessions: [['pushups', 'pullups', 'squats', 'leg-raises']] },
-  { id: 'strength-pro', name: 'Strength Builder', desc: 'Adds dips, lunges, levers and the flag. Pro routine.', pro: true, sessions: [['pushups', 'dips', 'elbow-levers'], ['pullups', 'grip', 'clutch-flag'], ['squats', 'lunges', 'bridges']] },
+  { id: 'full-body', name: 'Full Body Circuit', desc: 'Four big exercises every session. Best on 2–3 days a week.', sessions: [['pushups', 'pullups', 'squats', 'leg-raises']] },
+  { id: 'strength-pro', name: 'Strength Builder', desc: 'Adds dips, lunges, levers and the flag.', sessions: [['pushups', 'dips', 'elbow-levers'], ['pullups', 'grip', 'clutch-flag'], ['squats', 'lunges', 'bridges']] },
 ];
 const ROUTINE = Object.fromEntries(ROUTINES.map((r) => [r.id, r]));
 
@@ -274,8 +274,7 @@ const fmtShort = (d) => `${WEEKDAY_LONG[d.getDay()].slice(0, 3)}, ${MONTHS[d.get
 const fmtTime = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
 
 function routine() {
-  const r = ROUTINE[state.routineId] || ROUTINES[0];
-  return r.pro && !state.profile.pro ? ROUTINES[0] : r;
+  return ROUTINE[state.routineId] || ROUTINES[0];
 }
 
 function isTrainingDay(d) { return state.trainingDays.includes(d.getDay()); }
@@ -294,7 +293,6 @@ function sessionFor(d) {
 /* ---------------------------------------------------------------
    5. Progress model
    --------------------------------------------------------------- */
-const isLocked = (cat) => cat.premium && !state.profile.pro;
 const isStarted = (catId) => Object.prototype.hasOwnProperty.call(state.current, catId);
 const currentIdx = (catId) => clamp(state.current[catId] ?? 0, 0, CAT[catId].progressions.length - 1);
 const currentProg = (catId) => CAT[catId].progressions[currentIdx(catId)];
@@ -352,7 +350,7 @@ function achievements() {
     { id: 'm1', name: 'First Mastery', icon: 'check', earned: mastered >= 1, hint: 'Complete level 3 of any progression' },
     { id: 'm5', name: 'Five Mastered', num: 5, icon: 'award', earned: mastered >= 5, hint: 'Master 5 progressions' },
     { id: 'm20', name: 'Twenty Mastered', num: 20, icon: 'trophy', earned: mastered >= 20, hint: 'Master 20 progressions' },
-    { id: 'x6', name: 'Explorer', num: 6, icon: 'sparkle', earned: started >= 6, hint: 'Start 6 movement families' },
+    { id: 'x6', name: 'Explorer', num: 6, icon: 'sparkle', earned: started >= 6, hint: 'Start 6 exercises' },
     ...LADDERS.map((l) => { const s = ladderSteps(l); return { id: l.id, name: l.name, icon: l.icon, earned: s.done >= s.total, hint: `Finish all ${s.total} steps of the ${l.name}` }; }),
   ];
   return list;
@@ -395,6 +393,7 @@ function openSheet(title, body, { onClose } = {}) {
       </div>
     </div>`;
   enableSheetDrag($('#layer .sheet'));
+  setBackgroundInert(true);
   const first = $('#layer .sheet button:not([data-action="close-sheet"]), #layer .sheet input, #layer .sheet select');
   (first || $('#layer [data-action="close-sheet"]')).focus();
 }
@@ -432,11 +431,16 @@ function enableSheetDrag(sheet) {
 function closeSheet() {
   if (!$('#layer').innerHTML) return;
   $('#layer').innerHTML = '';
+  setBackgroundInert(false);
   const cb = onSheetClose; onSheetClose = null;
   if (cb) cb();
   if (sheetReturnFocus && document.contains(sheetReturnFocus)) sheetReturnFocus.focus();
 }
 const sheetOpen = () => !!$('#layer .overlay');
+/** While a sheet is open the page behind it can't take focus or be read, so Tab stays inside the dialog. */
+function setBackgroundInert(on) {
+  $$('.shell, .tabbar').forEach((el) => { el.inert = on; });
+}
 
 /* ---------------------------------------------------------------
    7. Router
@@ -460,6 +464,13 @@ function renderNav(active) {
   const html = NAV.map((n) => `
     <a class="tab" href="#/${n.id}" ${section === n.id ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $$('[data-nav]').forEach((el) => { el.innerHTML = html; });
+  updateSidebarFoot();
+}
+
+/** Desktop sidebar footer: says where data lives, which depends on whether sync is signed in. */
+function updateSidebarFoot() {
+  const foot = $('.sidebar-foot');
+  if (foot) foot.textContent = window.PFSync && window.PFSync.signedIn() ? 'Saved on this device and synced to your account.' : 'Saved on this device. Sign in under Profile to back up and sync.';
 }
 
 const VIEWS = {};
@@ -591,7 +602,7 @@ VIEWS.today = () => {
     const c = CAT[cid], p = currentProg(cid), lvl = workingLevel(p.id), L = p.levels[lvl - 1];
     return `<a class="sess-row" href="#/exercise/${p.id}">
       ${art(cid, { cls: 'thumb', shift: currentIdx(cid) * 4, img: p.id })}
-      <span class="grow"><span class="nm">${esc(p.name)}</span><span class="meta">${esc(c.name)} ${currentIdx(cid) + 1} · ${isMastered(p.id) ? 'Mastered' : `Level ${lvl}`} · ${L.sets} × ${L.target}${p.type === 'hold' ? ' s' : ''}</span></span>
+      <span class="grow"><span class="nm">${esc(p.name)}</span><span class="meta">${esc(c.name)} · ${currentIdx(cid) + 1} of ${c.progressions.length} · ${isMastered(p.id) ? 'Mastered' : `Level ${lvl}`} · ${L.sets} × ${L.target}${p.type === 'hold' ? ' s' : ''}</span></span>
       ${segBar(levelStates(p), 'dots')}
     </a>`;
   }).join('');
@@ -636,7 +647,7 @@ VIEWS.today = () => {
       <span class="bar"><span class="${accent ? 'accent' : ''}" style="width:${clamp(pct, 0, 1) * 100}%"></span></span></button>`;
   const wsub = wl == null ? 'Log your morning weight'
     : [rate != null && Math.abs(rate) >= 0.05 ? `${rate < 0 ? '↓' : '↑'} ${Math.abs(rate).toFixed(1)} kg a week` : '',
-      p.goalWeight && cur != null && cur - p.goalWeight > 0.05 ? `${kg(cur - p.goalWeight)} to goal` : ''].filter(Boolean).join(' · ') || (w != null ? 'Logged today' : `Last: ${fmtShort(fromKey(wl.day))}`);
+      p.goalWeight && cur != null && cur - p.goalWeight > 0.05 ? `${kg(cur - p.goalWeight)} kg to goal` : ''].filter(Boolean).join(' · ') || (w != null ? 'Logged today' : `Last: ${fmtShort(fromKey(wl.day))}`);
 
   return `
     <div class="today-head">
@@ -651,14 +662,14 @@ VIEWS.today = () => {
       <div class="row-between"><h2 class="h3">How PulseFit works</h2>
         <button class="icon-btn round bare" data-action="dismiss-intro" aria-label="Dismiss">${icon('x')}</button></div>
       <ol>
-        <li>${icon('dumbbell')}<span><b>Each movement is a ladder.</b> Start with an exercise you can do with clean form, progression 1 if unsure.</span></li>
-        <li>${icon('check')}<span><b>Hit a level's target</b> (e.g. 2 sets of 15) to complete it. Finish level 3 to unlock the next exercise.</span></li>
+        <li>${icon('dumbbell')}<span><b>Each exercise is a ladder of progressions.</b> Start on a progression you can do with clean form, progression 1 if unsure.</span></li>
+        <li>${icon('check')}<span><b>Hit a level's target</b> (e.g. 2 sets of 15) to complete it. Finish level 3 to move up to the next progression.</span></li>
         <li>${icon('calendar')}<span><b>Train on your scheduled days.</b> Rest days never break your streak.</span></li>
       </ol>
     </section>` : ''}
     <section class="card session-card mt-4" aria-labelledby="sessH">
       <div class="row-between">
-        <div><div class="eyebrow">${isToday ? "Today's session" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">${esc(routineShort(r))} · Day ${mondayIndex(sel) + 1} of 7</h2></div>
+        <div><div class="eyebrow">${isToday ? "Today's session" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">${esc(routineShort(r))} · ${cats.length ? `${plural(cats.length, 'exercise')}` : 'Rest day'}</h2></div>
         <button class="icon-btn round" data-action="pick-routine" aria-label="Change routine (${esc(r.name)})">${icon('swap')}</button>
       </div>
       ${session}
@@ -699,9 +710,7 @@ VIEWS.home = VIEWS.today;
 /* ---------- Exercises: status list (#/exercises; the old #/movements still works) ---------- */
 let movFilter = 'all';
 VIEWS.movements = () => {
-  const open = CATS.filter((c) => !isLocked(c));
-  const locked = CATS.filter(isLocked);
-  const shown = open.filter((c) => movFilter === 'all' || (movFilter === 'progress' ? isStarted(c.id) : !isStarted(c.id)));
+  const shown = CATS.filter((c) => movFilter === 'all' || (movFilter === 'progress' ? isStarted(c.id) : !isStarted(c.id)));
   const rows = shown.map((c) => {
     const started = isStarted(c.id), cur = currentIdx(c.id), p = c.progressions[cur], n = c.progressions.length;
     const sub = started ? `${p.name} · ${isMastered(p.id) ? 'Mastered' : `Level ${workingLevel(p.id)}`} · ${cur + 1} of ${n}` : `Not started · ${n} progressions`;
@@ -715,19 +724,14 @@ VIEWS.movements = () => {
   const chip = (id, label) => `<button class="fchip ${movFilter === id ? 'on' : ''}" data-action="mov-filter" data-f="${id}" aria-pressed="${movFilter === id}">${label}</button>`;
   return `
     <h1 class="h1 m-0">Exercises</h1>
-    <p class="muted m-0 mt-1">${CATS.length} families · ${TOTAL_PROGS} progressions · ${masteredCount()} mastered</p>
+    <p class="muted m-0 mt-1">${CATS.length} exercises · ${TOTAL_PROGS} progressions · ${masteredCount()} mastered</p>
     <div class="row gap-2 mt-4 wrap">${chip('all', 'All')}${chip('progress', 'In progress')}${chip('new', 'Not started')}</div>
-    ${shown.length ? `<div class="mv-list mt-4">${rows}</div>` : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick a family and start with progression 1.' : 'You have started every family.'}</p>`}
-    ${locked.length ? `
-      <div class="sec-head"><h2 class="h2 m-0">Pro families</h2><span class="pill">${icon('crown')} Pro</span></div>
-      <div class="pro-grid">${locked.map((c) => `<button class="pro-tile" data-action="locked" data-cat="${c.id}" aria-label="${esc(c.name)} (Pro)">${art(c.id, { locked: true, img: c.id })}<span>${esc(c.name)}</span></button>`).join('')}</div>
-      <button class="btn ghost block mt-4" data-action="pro">See PulseFit Pro</button>` : ''}`;
+    ${shown.length ? `<div class="mv-list mt-4">${rows}</div>` : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick an exercise and start with progression 1.' : 'You have started every exercise.'}</p>`}`;
 };
 
 VIEWS.category = (r) => {
   const c = CAT[r.arg];
   if (!c) return notFound();
-  if (isLocked(c)) return lockedView(c);
   const cur = isStarted(c.id) ? currentIdx(c.id) : -1;
   return `
     <div class="topbar">
@@ -737,7 +741,7 @@ VIEWS.category = (r) => {
     <div class="art cat-hero" style="--h:${CAT_HUE[c.id] ?? 210}">
       ${media(c.id, c.id)}
     </div>
-    <h1 class="h2">${esc(c.name)} Progressions</h1>
+    <h1 class="h2">${esc(c.name)} progressions</h1>
     <p class="muted t-lg m-0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
     <div class="prog-list">
       ${c.progressions.map((p, i) => {
@@ -771,7 +775,6 @@ VIEWS.exercise = (r) => {
   const ref = PROG[r.arg];
   if (!ref) return notFound();
   const { p, cat, idx } = ref;
-  if (isLocked(cat)) return lockedView(cat);
   const done = levelDone(p.id), lvl = workingLevel(p.id), mastered = isMastered(p.id);
   const isCurrent = isStarted(cat.id) && currentIdx(cat.id) === idx;
   const prev = cat.progressions[idx - 1], next = cat.progressions[idx + 1];
@@ -829,8 +832,8 @@ VIEWS.exercise = (r) => {
       ${next ? `<a class="link-plain" href="#/exercise/${next.id}">${esc(next.name)} ${icon('chevR', 'class="icon-sm"')}</a>` : ''}
     </div>
     <div class="ex-actions">
-      <button class="btn lg grow" data-action="log-sets" data-prog="${p.id}">Log sets</button>
-      <button class="btn subtle lg" data-action="swap-prog" data-cat="${cat.id}">Swap</button>
+      <button class="btn grow" data-action="log-sets" data-prog="${p.id}">Log sets</button>
+      <button class="btn subtle" data-action="swap-prog" data-cat="${cat.id}" aria-label="Swap to another ${esc(cat.name)} progression">Swap</button>
     </div>`;
 };
 
@@ -886,11 +889,11 @@ function historyRow(w) {
 
 function progressStrength() {
   const ladders = CATS.map((c) => {
-    const locked = isLocked(c), started = isStarted(c.id), cur = currentIdx(c.id);
+    const started = isStarted(c.id), cur = currentIdx(c.id);
     const m = c.progressions.filter((q) => isMastered(q.id)).length;
-    const segs = c.progressions.map((q, i) => (locked ? 'lock' : isMastered(q.id) ? 'done' : started && i === cur ? 'cur' : 'off'));
-    return `<a class="lad-row ${locked ? 'locked' : ''}" href="#/category/${c.id}" ${locked ? `data-action="locked" data-cat="${c.id}"` : ''}>
-      <i class="lad-dot" style="--h:${CAT_HUE[c.id] ?? 210}"></i><span class="nm">${esc(c.name)}</span>${segBar(segs, 'wide')}<span class="cnt">${locked ? 'Pro' : `${m}/${c.progressions.length}`}</span></a>`;
+    const segs = c.progressions.map((q, i) => (isMastered(q.id) ? 'done' : started && i === cur ? 'cur' : 'off'));
+    return `<a class="lad-row" href="#/category/${c.id}">
+      <i class="lad-dot" style="--h:${CAT_HUE[c.id] ?? 210}"></i><span class="nm">${esc(c.name)}</span>${segBar(segs, 'wide')}<span class="cnt">${m}/${c.progressions.length}</span></a>`;
   }).join('');
   const ch = LADDERS.map((l) => {
     const s = ladderSteps(l), joined = !!state.joined[l.id], done = s.done >= s.total;
@@ -1082,11 +1085,6 @@ VIEWS.profile = () => {
       ${THEMES.map((t) => `<button role="radio" aria-checked="${pf.theme === t.id}" aria-selected="${pf.theme === t.id}" data-action="theme" data-theme="${t.id}"><i class="tdot" style="background:${t.dot}"></i>${t.name}</button>`).join('')}
     </div>
 
-    <div class="card pro-card mt-5">
-      <span class="pill">${icon('crown')} Pro</span>
-      <p class="grow m-0 small"><b>Free demo toggle.</b> <span class="muted">Unlocks 4 advanced families and the Strength Builder routine.</span></p>
-      <button class="toggle" role="switch" aria-checked="${pf.pro}" data-action="toggle-pro" aria-label="PulseFit Pro"></button>
-    </div>
 
     <h2 class="group-label">Watch &amp; health</h2>
     <div class="list-group">
@@ -1479,7 +1477,7 @@ function foodSheet() {
   }
   openSheet('Add food', `
     <p class="small muted m-0 sheet-meta">to ${esc(onDayLabel())}${T ? ` · ${nf(Math.max(0, T.kcal - eaten))} kcal left` : ''}</p>
-    <label class="search mt-3">${icon('search')}<input id="foodSearch" type="search" placeholder="Search my foods, recent, or the plan" autocomplete="off" /></label>
+    <label class="search mt-3">${icon('search')}<input id="foodSearch" type="search" aria-label="Search foods" placeholder="Search my foods, recent, or the plan" autocomplete="off" /></label>
     ${pickPanel}
     <div class="row-between mt-4"><h3 class="sheet-sub m-0">My foods</h3><span class="small muted">tap · choose servings · add</span></div>
     ${saved.length ? `<div class="chips mt-2">${saved.map(([id, x]) => `<button class="chip ${foodPick && foodPick.id === id ? 'on' : ''}" data-name="${esc(x.name.toLowerCase())}" data-action="track-pick" data-food="${esc(id)}">${esc(x.name)} · ${nf(x.kcal)}</button>`).join('')}</div>` : '<p class="muted small m-0 mt-2">No saved foods yet. Add one under "Other food".</p>'}
@@ -1985,7 +1983,7 @@ VIEWS.plan = () => {
   if (planTab === 'week') {
     const strip = PLAN_DAYS.map((name, i) => {
       const d = dayInfo(i, start);
-      return `<button class="pd ${i === sel ? 'sel' : ''}" data-action="plan-sel" data-i="${i}" aria-pressed="${i === sel}" aria-label="${name}, ${nf(d.kcal)} kcal"><span class="wd">${name.slice(0, 3)}</span><span class="kc">${(d.kcal / 1000).toFixed(2).replace(/0$/, '')}k</span></button>`;
+      return `<button class="pd ${i === sel ? 'sel' : ''}" data-action="plan-sel" data-i="${i}" aria-pressed="${i === sel}" aria-label="${name}, ${nf(d.kcal)} kcal"><span class="wd">${name.slice(0, 3)}</span><span class="kc">${nf(d.kcal)}</span></button>`;
     }).join('');
     const d = dayInfo(sel, start);
     const isToday = !wkOff && sel === ti;
@@ -2175,7 +2173,7 @@ function entryEditor(e, i) {
     <div class="top">
       ${art(cat.id, { shift: idx * 4, img: p.id })}
       <div class="grow">
-        <div class="small muted">${esc(cat.name)} ${idx + 1}</div>
+        <div class="small muted">${esc(cat.name)} · ${idx + 1} of ${cat.progressions.length}</div>
         <div class="h3">${esc(p.name)}</div>
         <div class="target-line">${isMastered(p.id) ? 'Mastered · ' : `Level ${lvl} target: `}${targetText(p, lvl)}</div>
       </div>
@@ -2257,7 +2255,7 @@ VIEWS.workout = () => {
     <div class="wo-hero mt-4">
       ${art(cat.id, { cls: 'hero-art', shift: idx * 4, img: p.id, alt: `Athlete demonstrating ${p.name}` })}
       <div class="wo-hero-txt">
-        <div class="eyebrow light">${esc(cat.name)} ${idx + 1} · ${isMastered(p.id) ? 'Mastered' : `Level ${lvl}`}</div>
+        <div class="eyebrow light">${esc(cat.name)} · ${idx + 1} of ${cat.progressions.length} · ${isMastered(p.id) ? 'Mastered' : `Level ${lvl}`}</div>
         <div class="row-between gap-3"><h1 class="m-0">${esc(p.name)}</h1><button class="glass-btn" data-action="wo-howto" data-prog="${p.id}">${icon('info', 'class="icon-sm"')} How to</button></div>
       </div>
     </div>
@@ -2333,12 +2331,6 @@ const WORKOUT_ACTIONS = {
   },
 };
 
-function lockedView(c) {
-  return `<div class="empty">${art(c.id, { locked: true, img: c.id, cls: 'locked-hero' })}
-    <div class="h3">${esc(c.name)} is a Pro movement</div>
-    <p>Unlock it, along with the other advanced families, with PulseFit Pro.</p>
-    <button class="btn" data-action="pro">See PulseFit Pro</button></div>`;
-}
 const notFound = () => `<div class="empty">${icon('help')}<p>That page doesn't exist.</p><a class="btn" href="#/today">Go home</a></div>`;
 
 /* ---------------------------------------------------------------
@@ -2496,8 +2488,8 @@ function refreshDraftView() {
 
 function quickLogBody() {
   return `${entryEditor(draft.entries[0], 0)}
-    <button class="btn block lg" data-action="save-quick" ${draft.entries[0].done.some(Boolean) ? '' : 'disabled'}>Save sets</button>
-    <p class="faint small text-center">Mark each set ✓ to include it.</p>`;
+    <button class="btn block lg" data-action="save-quick" ${draft.entries[0].done.some(Boolean) || draft.entries[0].values.some((v) => Number(v) > 0) ? '' : 'disabled'}>Save sets</button>
+    <p class="faint small text-center">Saves every set with reps. Tick ✓ only some sets to save just those.</p>`;
 }
 
 /* ---------------------------------------------------------------
@@ -2506,11 +2498,10 @@ function quickLogBody() {
 function routineSheet() {
   openSheet('Choose a routine', `<div class="opt-list" role="radiogroup">
     ${ROUTINES.map((r) => {
-      const locked = r.pro && !state.profile.pro;
-      return `<button class="opt" role="radio" aria-checked="${routine().id === r.id}" data-action="${locked ? 'pro' : 'set-routine'}" data-id="${r.id}">
-        <div><div class="t">${esc(r.name)} ${r.pro ? `<span class="pill ml-2">${icon('crown')} Pro</span>` : ''}</div>
+      return `<button class="opt" role="radio" aria-checked="${routine().id === r.id}" data-action="set-routine" data-id="${r.id}">
+        <div><div class="t">${esc(r.name)}</div>
         <div class="s">${esc(r.desc)} ${r.sessions.length > 1 ? `${r.sessions.length} rotating sessions.` : ''}</div></div>
-        ${locked ? icon('lock') : routine().id === r.id ? icon('check') : ''}
+        ${routine().id === r.id ? icon('check') : ''}
       </button>`;
     }).join('')}</div>`);
 }
@@ -2598,16 +2589,9 @@ function planReminderIcs() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
-function proSheet() {
-  openSheet('PulseFit Pro', `
-    <p>Pro unlocks the advanced movement families — <strong>Lunges, Dips, Elbow Levers and the Clutch Flag</strong> — plus the <strong>Strength Builder</strong> routine.</p>
-    <p class="muted small">This site is a demo with no payments or accounts. Flip the switch to try Pro features for free.</p>
-    <div class="row-between card flat soft mt-4 mb-4"><div><div class="fw-bold">Pro features</div><div class="small muted">${state.profile.pro ? 'Unlocked' : 'Locked'}</div></div>
-      <button class="toggle" role="switch" aria-checked="${state.profile.pro}" data-action="toggle-pro" aria-label="Pro features"></button></div>`);
-}
 
 const FAQ = [
-  ['How do progressions work?', 'Each movement family is a ladder of exercises from easiest to hardest. Every exercise has three levels. Hit a level\'s target (for example, 2 sets of 15) and it is marked complete. Finish level 3 and the next progression unlocks as your current one.'],
+  ['How do progressions work?', 'Each exercise (Pushups, Squats…) is a ladder of progressions from easiest to hardest. Every progression has three levels. Hit a level\'s target (for example, 2 sets of 15) and it is marked complete. Finish level 3 and the next progression unlocks as your current one.'],
   ['Where should I start?', 'Pick the progression you can do comfortably for the level 1 target with clean form. If in doubt, start at progression 1 — the early steps build tendon strength and technique.'],
   ['What counts toward my streak?', 'Any workout logged on a scheduled training day. Rest days never break your streak.'],
   ['How do I log a single exercise?', 'Open any exercise and tap "Log sets". It is saved like a workout and counts toward levels and badges.'],
@@ -3043,6 +3027,9 @@ const ACTIONS = {
   },
   'save-quick': () => {
     stopRest();
+    for (const e of draft.entries) {                     // nothing ticked: count every set that has a value
+      if (!e.done.some(Boolean)) e.done = e.values.map((v) => Number(v) > 0);
+    }
     const s = commitWorkout(draft.date, draft.entries, 'Quick log');
     draft = null;
     closeSheet();
@@ -3084,9 +3071,6 @@ const ACTIONS = {
     if (sel) sel.focus();
   },
   'set-current': (el) => { const { cat, idx, p } = PROG[el.dataset.prog]; state.current[cat.id] = idx; save(); rerender(); toast(`${p.name} is now your current ${cat.name.toLowerCase()} progression`); },
-  'locked': (el, ev) => { ev.preventDefault(); proSheet(); },
-  'pro': proSheet,
-  'toggle-pro': () => { state.profile.pro = !state.profile.pro; save(); closeSheet(); rerender(); toast(state.profile.pro ? 'Pro features unlocked' : 'Pro features turned off'); },
   'join': (el) => {
     const l = LADDERS.find((x) => x.id === el.dataset.id);
     state.joined[l.id] = dayKey(today());
@@ -3279,6 +3263,7 @@ window.addEventListener('hashchange', () => { closeSheet(); stopRest(); render()
 if (window.PFInstall) window.PFInstall.onChange(() => { if (parseRoute().name === 'profile' && !sheetOpen()) rerender(); });
 // Called by sync.js once it loads: refresh the Account card when sync status changes.
 window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
+  updateSidebarFoot();
   if (parseRoute().name !== 'profile' || sheetOpen()) return;
   const line = $('[data-sync-line]');
   if (line && st.user) line.textContent = syncLine(st);                  // same card, new status

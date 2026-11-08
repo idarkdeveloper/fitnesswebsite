@@ -1434,6 +1434,9 @@ button.chip.on { background: var(--primary); border-color: var(--primary); color
 .pd.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .pd.sel .wd { color: var(--accent); }
 .logged { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--success); font-weight: 700; font-size: var(--fs-sm); white-space: nowrap; }
+button.logged { font: inherit; font-weight: 700; font-size: var(--fs-sm); background: var(--surface-3); border: 1px solid var(--border-soft); border-radius: var(--r-pill, 999px); min-height: 40px; padding: 0 var(--space-2); gap: 2px; cursor: pointer; }
+button.logged:hover { border-color: var(--danger); }
+.logged .unlog-x { color: var(--muted); width: 14px; height: 14px; }
 .plan-mini { display: block; width: 100%; text-align: left; }
 .plan-mini .pm { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: var(--space-2); margin-top: var(--space-2); font-size: var(--fs-sm); }
 .groc-head { display: flex; align-items: center; gap: var(--space-4); }

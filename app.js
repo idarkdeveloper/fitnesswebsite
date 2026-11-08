@@ -612,6 +612,8 @@ function ringSvg(pct, size = 88, stroke = 9) {
 }
 const routineShort = (r) => r.name.replace(/\s*Routine$/i, '');
 const planLogged = (key, label) => state.meals.some((m) => m.day === key && m.name.startsWith(label + ':'));
+/** "✓ Logged" on a plan meal: tap it to remove that logged meal again (with Undo). */
+const loggedBtn = (key, label) => `<button class="logged" data-action="plan-unlog" data-day="${key}" data-label="${esc(label)}" aria-label="${esc(label)} logged. Remove it">${icon('check', 'class="icon-sm"')} Logged ${icon('x', 'class="icon-sm unlog-x"')}</button>`;
 
 /** Level states for a progression: done levels, the working level, the rest. */
 const levelStates = (p) => [0, 1, 2].map((i) => (levelDone(p.id) > i ? 'done' : i === workingLevel(p.id) - 1 ? 'cur' : 'off'));
@@ -1851,7 +1853,7 @@ function planCard(key) {
       <ul class="plan-list mt-3">${d.meals.map((m, j) => `
         <li>
           <span class="grow"><span class="plan-k">${m.label}</span><span class="d-block">${esc(m.text)}</span><span class="d-block muted small">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
-          <button class="btn subtle sm" data-action="plan-log" data-day="${i}" data-wk="${weekStart(key)}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} ${esc(onDayLabel())}">${icon('plus')} Log</button>
+          ${planLogged(key, m.label) ? loggedBtn(key, m.label) : `<button class="btn subtle sm" data-action="plan-log" data-day="${i}" data-wk="${weekStart(key)}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} ${esc(onDayLabel())}">${icon('plus')} Log</button>`}
         </li>`).join('')}</ul>
       <p class="small m-0 mt-3">Plan: <b>${nf(d.kcal)} kcal</b> · <b>${nf(d.protein)} g protein</b>${T ? ` (your target ${nf(T.kcal)} kcal · ${T.protein} g)` : ''}.</p>
       ${upInfo ? `<p class="small muted m-0 mt-1">To reach your target, add: ${esc(topUpText(ups, d.subs))}. That's about +${nf(upInfo.kcal)} kcal, +${nf(upInfo.protein)} g protein.</p>` : ''}
@@ -2030,7 +2032,7 @@ VIEWS.plan = () => {
     const meals = d.meals.map((m, j) => {
       const logged = isToday && planLogged(tk, m.label);
       return `<li><span class="plan-k">${m.label}</span><span class="grow">${dishLinks(m, start)}<span class="d-block small muted">${nf(m.kcal)} kcal · ${nf(m.protein)} g protein</span></span>
-        ${isToday ? (logged ? `<span class="logged">${icon('check', 'class="icon-sm"')} Logged</span>` : `<button class="btn subtle sm" data-action="plan-log" data-day="${sel}" data-wk="${start}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} today">${icon('plus')} Log</button>`) : ''}</li>`;
+        ${isToday ? (logged ? loggedBtn(tk, m.label) : `<button class="btn subtle sm" data-action="plan-log" data-day="${sel}" data-wk="${start}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()} today">${icon('plus')} Log</button>`) : ''}</li>`;
     }).join('');
     const nextDays = [1, 2].map((n) => sel + n).filter((i) => i < 7).map((i) => {
       const x = dayInfo(i, start);
@@ -2113,6 +2115,11 @@ const PLAN_ACTIONS = {
     save(); foodPick.edit = false; foodSheet(); toast('Saved');
   },
   'track-food-rough': (el) => addMeal(el.dataset.name, Number(el.dataset.kcal), null),
+  'plan-unlog': (el) => {
+    const day = el.dataset.day, label = el.dataset.label;
+    const m = [...state.meals].reverse().find((x) => x.day === day && x.name.startsWith(label + ':'));
+    if (m) deleteMeal(m.id);
+  },
   'plan-log': (el) => {
     const m = dayInfo(Number(el.dataset.day), el.dataset.wk || undefined).meals[Number(el.dataset.m)];
     if (!m) return;

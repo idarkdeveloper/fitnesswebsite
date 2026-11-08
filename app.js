@@ -360,42 +360,76 @@ function achievements() {
    6. UI primitives: toast, sheet
    --------------------------------------------------------------- */
 let toastTimer;
-/** Short message at the bottom; with `action` ({ label, run }) it gets a button, e.g. Undo, and stays a bit longer. */
+const HAS_POPOVER = 'popover' in HTMLElement.prototype;
+/** Show or hide the toast. It is a manual popover so it sits in the top layer, above an open sheet. */
+function setToast(el, show) {
+  if (!HAS_POPOVER) { el.hidden = !show; return; }
+  if (el.matches(':popover-open')) el.hidePopover();
+  if (show) el.showPopover();          // re-showing puts it on top of anything opened since
+}
+/**
+ * Short message at the top; with `action` ({ label, run }) it gets a button, e.g. Undo, and stays a bit longer.
+ * While a sheet is open the toast lives inside it: a modal dialog makes the rest of the page inert,
+ * so an Undo button outside it could not be pressed.
+ */
 function toast(msg, action) {
   let el = $('#toast');
-  if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  if (!el) {
+    el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status');
+    if (HAS_POPOVER) el.popover = 'manual'; else el.hidden = true;
+  }
+  const host = $('#layer dialog.sheet[open]') || document.body;
+  if (el.parentElement !== host) host.appendChild(el);
   el.textContent = msg;
   if (action) {
     const b = document.createElement('button');
     b.className = 'toast-btn'; b.type = 'button'; b.textContent = action.label;
-    b.addEventListener('click', () => { el.hidden = true; action.run(); });
+    b.addEventListener('click', () => { setToast(el, false); action.run(); });
     el.appendChild(b);
   }
-  el.hidden = false;
+  setToast(el, true);
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, action ? 5000 : 2600);
+  toastTimer = setTimeout(() => setToast(el, false), action ? 5000 : 2600);
 }
 
-let sheetReturnFocus = null;
 let onSheetClose = null;
+/**
+ * Bottom sheet = native modal <dialog> opened with showModal(). The browser makes the page inert, keeps focus
+ * inside, closes it on Esc and the Android back gesture, and returns focus to the opener on close.
+ * Calling it while a sheet is open swaps the content of the open sheet.
+ */
 function openSheet(title, body, { onClose } = {}) {
-  sheetReturnFocus = document.activeElement;
   onSheetClose = onClose || null;
-  $('#layer').innerHTML = `
-    <div class="overlay" data-action="overlay">
-      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  let dlg = $('#layer dialog.sheet');
+  if (!dlg) {
+    $('#layer').innerHTML = `
+      <dialog class="sheet" aria-labelledby="sheetTitle" closedby="any">
         <span class="sheet-handle" aria-hidden="true"></span>
         <div class="sheet-head">
-          <h2 id="sheetTitle">${esc(title)}</h2>
+          <h2 id="sheetTitle"></h2>
           <button class="icon-btn round bare" data-action="close-sheet" aria-label="Close">${icon('x')}</button>
         </div>
-        <div id="sheetBody">${body}</div>
-      </div>
-    </div>`;
-  enableSheetDrag($('#layer .sheet'));
-  setBackgroundInert(true);
-  const first = $('#layer .sheet button:not([data-action="close-sheet"]), #layer .sheet input, #layer .sheet select');
-  (first || $('#layer [data-action="close-sheet"]')).focus();
+        <div id="sheetBody"></div>
+      </dialog>`;
+    dlg = $('#layer dialog.sheet');
+    dlg.addEventListener('close', () => sheetClosed(dlg));   // Esc, back gesture, tap outside
+    enableSheetDrag(dlg);
+    lightDismissFallback(dlg);
+  }
+  $('#sheetTitle').textContent = title;
+  $('#sheetBody').innerHTML = body;
+  const first = $('#sheetBody button, #sheetBody input, #sheetBody select') || $('#layer [data-action="close-sheet"]');
+  if (dlg.open) { first.focus(); return; }
+  first.autofocus = true;                                    // showModal() focuses this
+  dlg.showModal();
+}
+/** Safari has no closedby yet: close on a press and release both outside the sheet (not on a drag that ends there). */
+function lightDismissFallback(dlg) {
+  if ('closedBy' in HTMLDialogElement.prototype) return;
+  const outside = (e) => { const r = dlg.getBoundingClientRect(); return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom; };
+  let pressedOutside = false;
+  dlg.addEventListener('pointerdown', (e) => { pressedOutside = outside(e); });
+  dlg.addEventListener('pointerup', (e) => { if (pressedOutside && outside(e)) closeSheet(); });
 }
 /** Drag the handle or header down to dismiss (touch and mouse). Past 90px or a fast flick closes. */
 function enableSheetDrag(sheet) {
@@ -429,18 +463,21 @@ function enableSheetDrag(sheet) {
 }
 
 function closeSheet() {
-  if (!$('#layer').innerHTML) return;
-  $('#layer').innerHTML = '';
-  setBackgroundInert(false);
+  const dlg = $('#layer dialog.sheet');
+  if (!dlg) return;
+  if (dlg.open) dlg.close();                                 // the browser returns focus to the opener
+  sheetClosed(dlg);
+}
+/** Runs once per sheet, however it was closed. */
+function sheetClosed(dlg) {
+  if (!dlg.isConnected) return;
+  const t = $('#toast', dlg);                                // keep an Undo toast alive after the sheet goes
+  if (t) { const wasOpen = HAS_POPOVER ? t.matches(':popover-open') : !t.hidden; document.body.appendChild(t); if (wasOpen) setToast(t, true); }
+  dlg.remove();
   const cb = onSheetClose; onSheetClose = null;
   if (cb) cb();
-  if (sheetReturnFocus && document.contains(sheetReturnFocus)) sheetReturnFocus.focus();
 }
-const sheetOpen = () => !!$('#layer .overlay');
-/** While a sheet is open the page behind it can't take focus or be read, so Tab stays inside the dialog. */
-function setBackgroundInert(on) {
-  $$('.shell, .tabbar').forEach((el) => { el.inert = on; });
-}
+const sheetOpen = () => !!$('#layer dialog.sheet[open]');
 
 /* ---------------------------------------------------------------
    7. Router
@@ -2980,7 +3017,6 @@ const ACTIONS = {
     downloadJson(r.state, 'pulsefit-before-reset');
     if (confirm('Downloaded. Remove the saved copy from this device?')) { window.PFSync.clearRecovery(); rerender(); }
   },
-  'overlay': (el, ev) => { if (ev.target === el) closeSheet(); },
   'close-sheet': () => closeSheet(),
   'pick-routine': routineSheet,
   'set-routine': (el) => { state.routineId = el.dataset.id; carouselIdx = 0; save(); closeSheet(); rerender(); toast(`Routine: ${ROUTINE[el.dataset.id].name}`); },
@@ -3139,7 +3175,6 @@ document.addEventListener('click', (ev) => {
   const fn = ACTIONS[el.dataset.action];
   if (!fn) return;
   if (el.dataset.action === 'step' && suppressStepClick) { suppressStepClick = false; return; }
-  if (el.dataset.action === 'overlay') { fn(el, ev); return; }
   fn(el, ev);
 });
 
@@ -3216,9 +3251,6 @@ document.addEventListener('change', async (ev) => {
   }
 });
 
-document.addEventListener('keydown', (ev) => {
-  if (ev.key === 'Escape' && sheetOpen()) closeSheet();
-});
 
 /* ---------------------------------------------------------------
    13. Theme, reminders, boot

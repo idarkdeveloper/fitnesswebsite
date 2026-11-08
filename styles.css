@@ -906,19 +906,13 @@ hr.sep { border: 0; border-top: 1px solid var(--border-soft); margin: var(--spac
 .rest-bar .btn { margin-left: auto; min-height: 40px; background: rgba(0, 0, 0, 0.18); color: inherit; }
 
 /* ---------- modal / sheet ---------- */
-.overlay {
-  position: fixed; inset: 0;
-  z-index: 60;
-  background: var(--scrim);
-  backdrop-filter: blur(3px);
-  display: flex; align-items: flex-end; justify-content: center;
-  animation: fadeOnly var(--dur-fast) var(--ease);
-}
-@keyframes fadeOnly { from { opacity: 0; } to { opacity: 1; } }
-@media (min-width: 700px) { .overlay { align-items: center; } }
-.sheet {
+/* Native modal <dialog> in the top layer: bottom sheet on phones, centred card from 700px. */
+dialog.sheet {
+  inset: 0;
+  margin: auto auto 0;
+  color: var(--text);
   width: 100%;
-  max-width: 560px;
+  max-width: min(560px, 100%);
   max-height: 88vh;
   overflow-y: auto;
   background: var(--surface);
@@ -927,7 +921,17 @@ hr.sep { border: 0; border-top: 1px solid var(--border-soft); margin: var(--spac
   padding: var(--space-5) var(--space-5) calc(var(--space-6) + env(safe-area-inset-bottom));
   animation: slideUp var(--dur-base) var(--ease);
 }
-@media (min-width: 700px) { .sheet { border-radius: var(--r-lg); padding-bottom: var(--space-6); } }
+@media (min-width: 700px) { dialog.sheet { margin: auto; border-radius: var(--r-lg); padding-bottom: var(--space-6); } }
+/* Stop scroll gestures in the sheet or on the backdrop from scrolling the page behind it. */
+dialog.sheet:modal { overscroll-behavior: contain; }
+dialog.sheet::backdrop {
+  background: var(--scrim, rgba(5, 8, 25, 0.6));   /* fallback: older engines don't inherit vars into ::backdrop */
+  backdrop-filter: blur(3px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+  animation: fadeOnly var(--dur-fast) var(--ease);
+}
+@keyframes fadeOnly { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
 .sheet-head h2 { margin: 0; font-size: var(--fs-2xl); }
@@ -988,7 +992,9 @@ hr.sep { border: 0; border-top: 1px solid var(--border-soft); margin: var(--spac
 /* ---------- toast & banner ---------- */
 .toast {
   position: fixed;
-  left: 50%; top: 18px;
+  inset: 18px auto auto 50%;
+  margin: 0;
+  border: 0;
   transform: translateX(-50%);
   z-index: 80;
   padding: var(--space-3) var(--space-4);
@@ -1484,6 +1490,9 @@ svg.icon-sm { width: 16px; height: 16px; }
 
 /* Toast action (Undo) and the tappable food chips on Today */
 .toast { display: flex; align-items: center; gap: var(--space-3); }
+/* .toast sets display, which would beat the UA rule that hides closed popovers and [hidden]. */
+.toast[hidden] { display: none; }
+.toast[popover]:not(:popover-open) { display: none; }
 .toast-btn { background: none; border: 0; padding: 4px 6px; margin: -4px -6px -4px 0; font: inherit; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: .04em; cursor: pointer; }
 .chips-btn { display: block; width: 100%; background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; }
 .chips-btn .edit-chip { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }

@@ -35,6 +35,7 @@ const ICONS = {
   plus: 'M12 5v14M5 12h14',
   minus: 'M5 12h14',
   trash: 'M4 7h16M9.5 7V4.5h5V7M6.2 7l1 13h9.6l1-13M10 11v5.5M14 11v5.5',
+  edit: 'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
   x: 'M6 6l12 12M18 6 6 18',
   play: 'M7.5 4.5 19 12 7.5 19.5z',
   pause: 'M8 5v14M16 5v14',
@@ -361,13 +362,20 @@ function achievements() {
    6. UI primitives: toast, sheet
    --------------------------------------------------------------- */
 let toastTimer;
-function toast(msg) {
+/** Short message at the bottom; with `action` ({ label, run }) it gets a button, e.g. Undo, and stays a bit longer. */
+function toast(msg, action) {
   let el = $('#toast');
   if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
   el.textContent = msg;
+  if (action) {
+    const b = document.createElement('button');
+    b.className = 'toast-btn'; b.type = 'button'; b.textContent = action.label;
+    b.addEventListener('click', () => { el.hidden = true; action.run(); });
+    el.appendChild(b);
+  }
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+  toastTimer = setTimeout(() => { el.hidden = true; }, action ? 5000 : 2600);
 }
 
 let sheetReturnFocus = null;
@@ -663,7 +671,7 @@ VIEWS.today = () => {
         <div class="grow">
           <div class="h3">Food</div>
           <div class="small muted">${T ? `${nf(eaten)} of ${nf(T.kcal)} kcal · ${nf(protein)} / ${T.protein} g protein` : `${nf(eaten)} kcal today · <button class="link-btn" data-action="track-setup">set your target</button>`}</div>
-          ${meals.length ? `<div class="chips m-0 mt-2">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<a class="chip sm" href="#/track">+${meals.length - 3}</a>` : ''}</div>` : ''}
+          ${meals.length ? `<button class="chips-btn m-0 mt-2" data-action="food-list" data-today="1" aria-label="See or delete today's food (${meals.length} ${meals.length === 1 ? 'item' : 'items'})"><span class="chips m-0">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<span class="chip sm">+${meals.length - 3}</span>` : ''}<span class="chip sm edit-chip">${icon('edit', 'class="icon-sm"')} Edit</span></span></button>` : ''}
         </div>
       </div>
       <button class="btn ghost block mt-4" data-action="track-food" data-today="1">${icon('plus')} Add food</button>
@@ -1508,9 +1516,38 @@ function seedQuickFoods() {
 }
 
 function addMeal(name, kcal, protein) {
-  state.meals.push({ id: newId('m'), day: tKey(), at: new Date().toISOString(), name, kcal: Math.round(kcal), ...(protein ? { protein: Math.round(protein * 10) / 10 } : {}) });
+  const id = newId('m');
+  state.meals.push({ id, day: tKey(), at: new Date().toISOString(), name, kcal: Math.round(kcal), ...(protein ? { protein: Math.round(protein * 10) / 10 } : {}) });
   save(); closeSheet(); rerender();
-  toast(`Added ${name} · ${nf(kcal)} kcal`);
+  toast(`Added ${name} · ${nf(kcal)} kcal`, { label: 'Undo', run: () => { state.meals = state.meals.filter((x) => x.id !== id); save(); rerender(); toast('Removed'); } });
+}
+
+/** Delete a logged food at once, with Undo (it goes back where it was). */
+function deleteMeal(id, after) {
+  const i = state.meals.findIndex((x) => x.id === id);
+  if (i < 0) return;
+  const [m] = state.meals.splice(i, 1);
+  save(); rerender(); if (after) after();
+  // A new id on undo: if the delete already synced, its tombstone would otherwise drop the restored item again.
+  toast(`Deleted ${m.name}`, { label: 'Undo', run: () => { state.meals.splice(Math.min(i, state.meals.length), 0, { ...m, id: newId('m') }); save(); rerender(); if (after) after(); } });
+}
+
+/** Today's (or the chosen day's) food, each with a delete button. */
+function mealsSheet() {
+  const day = tKey();
+  const meals = state.meals.filter((m) => m.day === day);
+  const total = meals.reduce((a, m) => a + m.kcal, 0);
+  const time = (iso) => { try { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
+  openSheet(`Food ${onDayLabel()}`, meals.length ? `
+    <p class="small muted m-0 sheet-meta">${meals.length} ${meals.length === 1 ? 'item' : 'items'} · ${nf(total)} kcal</p>
+    <ul class="food-list mt-3">${meals.map((m) => `
+      <li>
+        <span class="grow"><span class="fw-bold">${esc(m.name)}</span><span class="d-block muted small">${nf(m.kcal)} kcal${m.protein ? ` · ${nf(m.protein)} g protein` : ''}${m.at ? ` · ${esc(time(m.at))}` : ''}</span></span>
+        <button class="icon-btn round bare" data-action="meal-del-sheet" data-id="${esc(m.id)}" aria-label="Delete ${esc(m.name)}">${icon('trash')}</button>
+      </li>`).join('')}</ul>
+    <button class="btn ghost block mt-4" data-action="track-food">${icon('plus')} Add food</button>` : `
+    <p class="muted m-0">Nothing logged yet.</p>
+    <button class="btn block mt-4" data-action="track-food">${icon('plus')} Add food</button>`);
 }
 
 function numberSheet({ title, field, label, value, unit, step = 1, min = 0, max = 100000, hint = '' }) {
@@ -1609,12 +1646,9 @@ const TRACK_ACTIONS = {
   'track-food-quick': (el) => { const f = state.foods[el.dataset.food]; if (f) addMeal(f.name, f.kcal, f.protein); },
   'track-food-recent': (el) => { const m = state.meals.find((x) => x.id === el.dataset.id); if (m) addMeal(m.name, m.kcal, m.protein); },
   'track-food-forget': (el) => { delete state.foods[el.dataset.food]; save(); foodSheet(); },
-  'track-meal-del': (el) => {
-    const m = state.meals.find((x) => x.id === el.dataset.id);
-    if (!m || !confirm(`Delete ${m.name} (${nf(m.kcal)} kcal)?`)) return;
-    state.meals = state.meals.filter((x) => x.id !== m.id);
-    save(); rerender(); toast('Deleted');
-  },
+  'track-meal-del': (el) => deleteMeal(el.dataset.id),
+  'meal-del-sheet': (el) => deleteMeal(el.dataset.id, () => { if (sheetOpen()) mealsSheet(); }),
+  'food-list': mealsSheet,
   'track-weight': () => numberSheet({
     title: 'Weight', field: 'weight', label: `Weight (kg) ${onDayLabel()}`, unit: 'kg', step: 0.1, min: 30, max: 350,
     value: hget(tKey(), 'weight') ?? latestOn('weight', tKey())?.v,

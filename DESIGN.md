@@ -153,12 +153,12 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Dot ladder | `.dots .dot` (+ `.done`, `.current`) | One dot per progression |
 | Badge / medal | `.badge` (+ `.earned`) | Optional `.num` (top) and `.tier` (bottom) |
 | Option row | `.opt` | Radio-style choices in sheets |
-| Bottom sheet | `.overlay > .sheet` | Grab handle on mobile. Drag the handle or header down more than 90px (or flick) to close; shorter drags snap back. Esc, the scrim and ✕ also close it, and focus returns to the trigger |
+| Bottom sheet | `dialog.sheet` (native, `showModal()`) | Grab handle on mobile; centred card from 700px. Drag the handle or header down more than 90px (or flick) to close; shorter drags snap back. Esc, the Android back gesture, tapping the scrim (`closedby="any"`, with a fallback for Safari) and ✕ also close it. The browser makes the page inert, keeps focus inside and returns it to the trigger, so there is no hand-written focus trap. Scroll on the scrim doesn't move the page (`overscroll-behavior: contain`) |
 | Field | `.field > label + .input` | Static label above the input |
 | Toggle | `.toggle[role=switch]` | |
 | Stepper | `.stepper` | − / number / + with a unit suffix. Press and hold ± to repeat (after 400ms, every 70ms) |
 | Figure art | `.art` | Gradient by `--h` hue per movement family, plus a stick-figure SVG |
-| Toast, banner, rest bar | `.toast`, `.banner`, `.rest-bar` | |
+| Toast, banner, rest bar | `.toast` (`popover="manual"`), `.banner`, `.rest-bar` | The toast is a top-layer popover. While a sheet is open it is placed inside the sheet so its Undo button stays usable, and moves back to the page when the sheet closes |
 | Day navigator | `.day-nav` | ‹ date › inside a `.card.flat.soft`; "next" is disabled on today; "Back to today" is a `.link-btn` |
 | KPI number | `.kpi > .kpi-v + .kpi-u` | One headline number per card (calories left, today's weight); `.faint` for "not logged" |
 | Fact row | `.facts` | Secondary numbers under a KPI, values in `<b>` |

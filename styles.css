@@ -1499,3 +1499,13 @@ svg.icon-sm { width: 16px; height: 16px; }
 .toast-btn { background: none; border: 0; padding: 4px 6px; margin: -4px -6px -4px 0; font: inherit; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: .04em; cursor: pointer; }
 .chips-btn { display: block; width: 100%; background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; }
 .chips-btn .edit-chip { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ---------- nutrients (Daily log, Nutrients sheet) ---------- */
+.nut-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.nut-row { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); align-items: baseline; font-size: var(--fs-sm); }
+.nut-row .nm { font-weight: 600; }
+.nut-row.sub .nm { font-weight: 400; color: var(--muted); padding-left: var(--space-3); }
+.nut-row .val { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nut-row .progress { grid-column: 1 / -1; margin: 0; }
+.nut-row.sub .progress { margin-left: var(--space-3); }
+.nowrap { white-space: nowrap; }

@@ -113,6 +113,39 @@ window.PF_MEALS = (function () {
     chanachaat: ['Chana chaat', '1 bowl', 190, 9, { chana: 0.33, onion: 20, tomato: 30, lemon: 0.25 }],
   };
 
+  // Label nutrients per serving, estimated for home cooking: [fat, of which saturates, sugar, salt] in g.
+  // Carbohydrate is not listed: it is derived from kcal, protein and fat (4/4/9 kcal per g), so the numbers always add up.
+  const NUT = {
+    roti: [2.5, 0.4, 0.5, 0.2], bread: [1, 0.2, 1.5, 0.5], rice: [0.5, 0.1, 0.1, 0],
+    dal: [5.5, 0.6, 3, 1], dalpalak: [5.5, 0.6, 2.5, 1], rajma: [6, 0.7, 4, 1.1], chana: [7.5, 0.8, 5, 1.1],
+    chickencurry: [15, 2.5, 5, 1.3], tikka: [9, 2, 3, 1.2], keema: [15, 3.5, 6, 1.2], fishcurry: [10, 1, 5, 1.2],
+    fishtikka: [7, 1.5, 2, 1], tunamasala: [6, 0.8, 3, 1], eggcurry: [22, 5, 6, 1.3],
+    paneerbhurji: [25, 13, 4, 1], paneertikka: [22, 12, 7, 1], palakpaneer: [24, 12, 4, 1.1],
+    omelette: [21, 5, 2.5, 1], eggbhurji: [21, 5, 2.5, 1], boiled2: [10, 3, 0.5, 0.3],
+    oatsquark: [7, 2.5, 22, 0.2], masalaoats: [9, 1.3, 3, 0.9], moongchilla: [7, 0.8, 2, 0.9], besanchilla: [10, 1, 3, 0.9],
+    poha: [11, 1.3, 3, 0.9], upma: [6, 0.7, 3, 0.9], khichdi: [6, 1, 2, 1],
+    sabzi: [7.5, 0.8, 5, 0.8], gobi: [7.5, 0.8, 5, 0.8], pattagobhi: [6.5, 0.7, 6, 0.7], kaddu: [6.5, 0.7, 8, 0.7],
+    gajarmatar: [6.5, 0.7, 9, 0.7], zucchini: [6.5, 0.7, 4, 0.7], beans: [6.5, 0.7, 4, 0.7],
+    salad: [0.2, 0, 5, 0.1], raita: [2.5, 1.6, 7, 0.5], curd: [2.3, 1.5, 6, 0.2], quarkfruit: [0.5, 0.2, 18, 0.1],
+    chai: [3.5, 2.2, 13, 0.1], tea: [0.7, 0.4, 1, 0], roastchana: [1.8, 0.3, 3, 0.3], fruit: [0.3, 0, 16, 0],
+    chanachaat: [3, 0.3, 5, 0.9],
+    // starter "My foods"
+    'q-roti': [2.5, 0.4, 0.5, 0.2], 'q-rice': [0.7, 0.2, 0.1, 0], 'q-daal': [5, 0.6, 3, 1],
+    'q-chicken-curry': [15, 2.5, 5, 1.3], 'q-chicken-dish': [9, 2, 3, 1.2], 'q-paneer': [26, 13, 5, 1.1],
+    'q-egg': [5, 1.6, 0.3, 0.2], 'q-chai': [3.5, 2.2, 13, 0.1], 'q-tea': [0.7, 0.4, 1, 0], 'q-biscuit': [1.5, 0.7, 2.5, 0.1],
+    'q-bread': [1, 0.2, 1.5, 0.4], 'q-chai-biscuits': [6.5, 3.6, 18, 0.3], 'q-quark': [0.5, 0.2, 10, 0.2],
+    'q-vollkorn': [1, 0.2, 1.5, 0.5], 'q-doener': [30, 11, 8, 3.5], 'q-brezel': [2, 0.5, 1, 2.2], 'q-skyr': [0.3, 0.2, 5, 0.1],
+  };
+  /** Full label nutrients for something with `kcal` and `protein` and an estimate row [fat, sat, sugar, salt]. */
+  function nutFrom(kcal, protein, row) {
+    if (!row) return null;
+    const [fat, sat, sugar, salt] = row;
+    const carbs = Math.max(0, (kcal - 4 * (protein || 0) - 9 * fat) / 4);
+    return { fat, sat: Math.min(sat, fat), carbs: Math.round(carbs * 10) / 10, sugar: Math.min(sugar, Math.round(carbs * 10) / 10), salt };
+  }
+  /** Nutrients of one serving of dish `id` (base recipe), or null if unknown. */
+  const dishNut = (id) => (DISH[id] ? nutFrom(DISH[id][2], DISH[id][3], NUT[id]) : null);
+
   // Your everyday foods, preloaded into "My foods" (values editable in the app). Ids are fixed so devices don't duplicate.
   const QUICK = [
     ['q-roti', 'Roti', 110, 3], ['q-rice', 'Rice (1 plate)', 300, 6], ['q-daal', 'Daal (1 bowl)', 170, 9],
@@ -321,5 +354,5 @@ window.PF_MEALS = (function () {
 
   const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday.';
 
-  return { SECTIONS, ING, DISH, QUICK, QUICK_DE, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
+  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
 })();

@@ -721,6 +721,7 @@ VIEWS.today = () => {
         <div class="grow">
           <div class="h3">Food</div>
           <div class="small muted">${T ? `${nf(eaten)} of ${nf(T.kcal)} kcal · ${nf(protein)} / ${T.protein} g protein` : `${nf(eaten)} kcal today · <button class="link-btn" data-action="track-setup">set your target</button>`}</div>
+          ${meals.length ? todayNutLine(tk, T) : ''}
           ${meals.length ? `<button class="chips-btn m-0 mt-2" data-action="food-list" data-today="1" aria-label="See or delete today's food (${meals.length} ${meals.length === 1 ? 'item' : 'items'})"><span class="chips m-0">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<span class="chip sm">+${meals.length - 3}</span>` : ''}<span class="chip sm edit-chip">${icon('edit', 'class="icon-sm"')} Edit</span></span></button>` : ''}
         </div>
       </div>
@@ -1280,6 +1281,68 @@ VIEWS.track = () => {
     <p class="muted small mt-4">Targets are estimates from the Mifflin–St Jeor formula. If your weekly trend is slower or faster than planned for 2–3 weeks, adjust the target. Check with a doctor before big changes to your diet or exercise.</p>`;
 };
 
+/** " · fat 6 g · carbs 12 g · sugar 5 g · salt 0.1 g" for a meal or food that has them. */
+function nutLine(o) {
+  const n = nutOf(o);
+  if (!n) return '';
+  return [['fat', 'fat'], ['carbs', 'carbs'], ['sugar', 'sugar'], ['salt', 'salt']].filter(([k]) => n[k] != null)
+    .map(([k, w]) => ` · ${w} ${k === 'salt' ? n[k].toFixed(1) : nf(n[k])} g`).join('');
+}
+
+/**
+ * Daily reference amounts. EU labels print "% RI / % RM" against 2,000 kcal: fat 70 g, saturates 20 g, carbs 260 g,
+ * sugars 90 g, protein 50 g, salt 6 g. With a personal calorie target the energy-based ones scale to it;
+ * salt stays 6 g and protein uses your own target.
+ */
+function nutReference(T) {
+  const kcal = T ? T.kcal : 2000, f = kcal / 2000;
+  return { kcal, scaled: !!T, protein: T ? T.protein : 50, fat: Math.round(70 * f), sat: Math.round(20 * f), carbs: Math.round(260 * f), sugar: Math.round(90 * f), salt: 6 };
+}
+/** What a day's logged food adds up to, and how many items had no nutrient details. */
+function dayNutrients(day) {
+  const meals = state.meals.filter((m) => m.day === day);
+  const tot = { kcal: 0, protein: 0, fat: 0, sat: 0, carbs: 0, sugar: 0, salt: 0 };
+  let missing = 0;
+  for (const m of meals) {
+    tot.kcal += m.kcal; tot.protein += m.protein || 0;
+    const n = nutOf(m);
+    if (!n) { missing++; continue; }
+    for (const k of NUT_KEYS) tot[k] += n[k] || 0;
+  }
+  return { tot, count: meals.length, missing };
+}
+// [key, name, kind]: 'goal' = aim to reach, 'max' = stay under, 'about' = rough guide.
+const NUT_VIEW = [['protein', 'Protein', 'goal'], ['fat', 'Fat', 'max'], ['sat', 'of which saturates', 'max'], ['carbs', 'Carbs', 'about'], ['sugar', 'of which sugar', 'max'], ['salt', 'Salt', 'max']];
+function nutrientsPanel(day, T) {
+  const { tot, count, missing } = dayNutrients(day), ref = nutReference(T);
+  const g = (k, v) => (k === 'salt' ? (Math.round(v * 10) / 10).toFixed(1) : nf(v));
+  const rows = NUT_VIEW.map(([k, name, kind]) => {
+    const v = tot[k], r = ref[k], over = kind === 'max' && v > r;
+    const word = kind === 'goal' ? 'aim' : kind === 'max' ? 'max' : 'about';
+    return `<li class="nut-row ${k === 'sat' || k === 'sugar' ? 'sub' : ''}">
+      <span class="nm">${name}</span>
+      <span class="val ${over ? 'c-warn' : ''}"><b>${g(k, v)}</b> / ${g(k, r)} g <span class="muted">${word}</span></span>
+      <span class="progress thin ${over ? 'over' : ''}" role="progressbar" aria-label="${name}: ${g(k, v)} of ${g(k, r)} g" aria-valuemin="0" aria-valuemax="${r}" aria-valuenow="${Math.round(v * 10) / 10}"><span style="width:${Math.min(100, r ? (v / r) * 100 : 0)}%"></span></span>
+    </li>`;
+  }).join('');
+  return `<ul class="nut-list">${rows}</ul>
+    ${missing ? `<p class="small muted m-0 mt-3">${missing === count ? (count === 1 ? 'This item has' : 'These items have') : `${missing} of ${count} items ${missing === 1 ? 'has' : 'have'}`} no fat, carbs or salt details, so those totals are low. Add the label values under Add food → Other food.</p>` : ''}
+    <details class="faq mt-3"><summary class="small">What are these daily amounts?</summary>
+      <p class="small">They are the EU reference intakes printed on food labels as <b>% RI</b> or <b>% RM</b> (Referenzmenge): fat 70 g, saturates 20 g, carbs 260 g, sugar 90 g and salt 6 g for 2,000 kcal.
+      ${ref.scaled ? `Fat, saturates, carbs and sugar are scaled to your ${nf(ref.kcal)} kcal target. Protein is your own target (1.6 g per kg of goal weight).` : 'Set your calorie target to scale them to you. Protein uses 50 g until then.'}
+      Fat, saturates, sugar and salt are upper limits, not goals. Less sugar and salt is better.</p></details>`;
+}
+/** Today card: fat, sugar and salt so far against the daily amounts, and a link to the full list. */
+function todayNutLine(day, T) {
+  const { tot } = dayNutrients(day), ref = nutReference(T);
+  const part = (k, w) => `<span class="nowrap ${tot[k] > ref[k] ? 'c-warn' : ''}">${w} ${k === 'salt' ? (Math.round(tot[k] * 10) / 10).toFixed(1) : nf(tot[k])}/${ref[k]} g</span>`;
+  return `<div class="small muted mt-1">${part('fat', 'Fat')} · ${part('sugar', 'Sugar')} · ${part('salt', 'Salt')} · <button class="link-btn" data-action="nutrients" data-today="1">All nutrients</button></div>`;
+}
+function nutrientsSheet() {
+  const day = tKey();
+  openSheet('Nutrients', `<p class="small muted m-0 sheet-meta">${esc(onDayLabel())} · ${nf(dayNutrients(day).tot.kcal)} kcal eaten</p><div class="mt-3">${nutrientsPanel(day, targets(day))}</div>`);
+}
+
 function trackFoodCard(day, T, thisDay) {
   const meals = state.meals.filter((m) => m.day === day);
   const eaten = meals.reduce((a, m) => a + m.kcal, 0);
@@ -1293,10 +1356,11 @@ function trackFoodCard(day, T, thisDay) {
       ${T ? `
         <div class="progress mt-3 ${left < 0 ? 'over' : ''}" role="progressbar" aria-label="Calories eaten" aria-valuemin="0" aria-valuemax="${T.kcal}" aria-valuenow="${Math.round(eaten)}"><span style="width:${pct}%"></span></div>
         <div class="row-between small muted mt-2"><span>Eaten ${nf(eaten)} kcal</span><span>Protein ${nf(protein)} / ${T.protein} g</span></div>` : ''}
+      ${meals.length ? `<h3 class="sheet-sub">Nutrients</h3><div class="mt-2">${nutrientsPanel(day, T)}</div>` : ''}
       <button class="btn block mt-4" data-action="track-food">${icon('plus')} Add food</button>
       ${meals.length ? `<ul class="food-list mt-3">${meals.map((m) => `
         <li>
-          <span class="grow"><span class="fw-bold">${esc(m.name)}</span><span class="d-block muted small">${nf(m.kcal)} kcal${m.protein ? ` · ${nf(m.protein)} g protein` : ''}</span></span>
+          <span class="grow"><span class="fw-bold">${esc(m.name)}</span><span class="d-block muted small">${nf(m.kcal)} kcal${m.protein ? ` · ${nf(m.protein)} g protein` : ''}${nutLine(m)}</span></span>
           <button class="icon-btn round bare" data-action="track-meal-del" data-id="${esc(m.id)}" aria-label="Delete ${esc(m.name)}">${icon('trash')}</button>
         </li>`).join('')}</ul>` : `<p class="muted small mt-3 m-0">No food logged ${thisDay} yet.</p>`}
     </section>`;
@@ -1486,7 +1550,7 @@ function foodSheet() {
   const pickPanel = f ? `
     <div class="pick">
       <div class="row-between"><span class="fw-bold t-lg">${esc(f.name)}</span>${foodPick.edit ? '' : '<button class="link-btn small" data-action="track-pick-edit">Edit values</button>'}</div>
-      <div class="small muted">${nf(f.kcal)} kcal${f.protein ? ` · ${nf(f.protein)} g protein` : ''} each</div>
+      <div class="small muted">${nf(f.kcal)} kcal${f.protein ? ` · ${nf(f.protein)} g protein` : ''}${nutLine(f)} each</div>
       ${foodPick.edit ? `
         <div class="grid3">
           <div class="field"><label for="qeName">Name</label><input class="input" id="qeName" maxlength="60" value="${esc(f.name)}" /></div>
@@ -1524,11 +1588,19 @@ function foodSheet() {
     ${planRows ? `<h3 class="sheet-sub">From ${day === todayKey() ? "today's" : "this day's"} plan</h3><div class="plan-picks mt-2">${planRows}</div>` : ''}
     <h3 class="sheet-sub">Eating out, or not sure?</h3>
     <div class="rough-grid mt-2">${[['Small', 400], ['Normal', 700], ['Big', 1000]].map(([n, k]) => `<button class="rough" data-action="track-food-rough" data-name="${n} meal" data-kcal="${k}"><b>${n}</b><span class="small muted">${nf(k)} kcal</span></button>`).join('')}</div>
-    <details class="other-food mt-3"><summary><span class="fw-bold">Other food</span><span class="small muted">name · kcal · protein</span></summary>
-      <div class="field"><label for="fName">Food</label><input class="input" id="fName" maxlength="60" placeholder="e.g. Chicken biryani" autocomplete="off" /></div>
+    <details class="other-food mt-3"><summary><span class="fw-bold">Other food</span><span class="small muted">name · kcal · label nutrients</span></summary>
+      <div class="field"><label for="fName">Food</label><input class="input" id="fName" maxlength="60" placeholder="e.g. Butter-Spritzgebäck" autocomplete="off" /></div>
+      <div class="grid2">
+        <div class="field"><label for="fBasis">Label values are</label><select class="input" id="fBasis"><option value="serving">per serving / piece</option><option value="100g">per 100 g</option></select></div>
+        <div class="field" id="fGramsField" hidden><label for="fGrams">You ate (g)</label><input class="input" id="fGrams" type="number" inputmode="decimal" min="1" max="5000" /></div>
+      </div>
       <div class="grid2">
         <div class="field"><label for="fKcal">Calories (kcal)</label><input class="input" id="fKcal" type="number" inputmode="numeric" min="0" max="5000" /></div>
-        <div class="field"><label for="fProt">Protein (g), optional</label><input class="input" id="fProt" type="number" inputmode="decimal" min="0" max="500" /></div>
+        <div class="field"><label for="fProt">Protein · Eiweiß (g)</label><input class="input" id="fProt" type="number" inputmode="decimal" min="0" max="500" /></div>
+      </div>
+      <p class="small muted m-0 mt-4">Optional, from the nutrition label (Nährwerte):</p>
+      <div class="grid2">
+        ${NUT_ROWS.map(([k, label]) => `<div class="field"><label for="fN-${k}">${label} (g)</label><input class="input" id="fN-${k}" type="number" inputmode="decimal" min="0" max="1000" step="0.01" /></div>`).join('')}
       </div>
       <label class="check mt-4"><input type="checkbox" id="fSave" checked /> Save to my foods</label>
       <button class="btn block lg mt-4" data-action="track-food-add">Add to ${esc(onDayLabel())}</button>
@@ -1544,17 +1616,44 @@ function filterFoodSheet(q) {
 
 /** Starter "My foods": the everyday foods from mealplan.js. Fixed ids, so two devices seeding them don't duplicate. */
 function seedQuickFoods() {
-  if ((state.foodsSeeded && state.foodsSeededDE) || !window.PF_MEALS) return;
-  const add = (list) => { for (const [id, name, kcal, protein] of list) if (!state.foods[id]) state.foods[id] = { name, kcal, ...(protein ? { protein } : {}) }; };
-  if (!state.foodsSeeded) add(window.PF_MEALS.QUICK);
-  if (!state.foodsSeededDE) add(window.PF_MEALS.QUICK_DE || []);
-  state.foodsSeeded = true; state.foodsSeededDE = true;
-  save();
+  if (!window.PF_MEALS) return;
+  const M = window.PF_MEALS;
+  const nutFor = (id, kcal, protein) => M.nutFrom(kcal, protein, M.NUT[id]) || {};
+  let changed = false;
+  if (!state.foodsSeeded || !state.foodsSeededDE) {
+    const add = (list) => { for (const [id, name, kcal, protein] of list) if (!state.foods[id]) state.foods[id] = { name, kcal, ...(protein ? { protein } : {}), ...nutFor(id, kcal, protein) }; };
+    if (!state.foodsSeeded) add(M.QUICK);
+    if (!state.foodsSeededDE) add(M.QUICK_DE || []);
+    state.foodsSeeded = true; state.foodsSeededDE = true; changed = true;
+  }
+  // Starter foods saved before nutrients existed get them, unless you changed their kcal or protein.
+  if (!state.foodsNutFilled) {
+    for (const [id, name, kcal, protein] of [...M.QUICK, ...(M.QUICK_DE || [])]) {
+      const f = state.foods[id];
+      if (f && f.fat == null && f.kcal === kcal && (f.protein || 0) === (protein || 0)) state.foods[id] = { ...f, ...nutFor(id, kcal, protein) };
+    }
+    state.foodsNutFilled = true; changed = true;
+  }
+  if (changed) save();
 }
 
-function addMeal(name, kcal, protein) {
+/* Label nutrients beyond kcal and protein, in grams. Stored on meals and saved foods when known. */
+const NUT_KEYS = ['fat', 'sat', 'carbs', 'sugar', 'salt'];
+/** Display names, in the order of a German nutrition label (Fett, davon gesättigte, Kohlenhydrate, davon Zucker, Salz). */
+const NUT_ROWS = [['fat', 'Fat · Fett'], ['sat', 'of which saturates'], ['carbs', 'Carbs · Kohlenhydrate'], ['sugar', 'of which sugar · Zucker'], ['salt', 'Salt · Salz']];
+const r1 = (v) => Math.round(v * 10) / 10;
+const r2 = (v) => Math.round(v * 100) / 100;
+/** The known nutrients of `o` (a meal, a saved food, or { fat, … }), times `q`. Returns null when none are known. */
+function nutOf(o, q = 1) {
+  if (!o) return null;
+  const out = {};
+  for (const k of NUT_KEYS) if (Number.isFinite(o[k])) out[k] = k === 'salt' ? r2(o[k] * q) : r1(o[k] * q);
+  return Object.keys(out).length ? out : null;
+}
+
+function addMeal(name, kcal, protein, nut) {
   const id = newId('m');
-  state.meals.push({ id, day: tKey(), at: new Date().toISOString(), name, kcal: Math.round(kcal), ...(protein ? { protein: Math.round(protein * 10) / 10 } : {}) });
+  state.meals.push({ id, day: tKey(), at: new Date().toISOString(), name, kcal: Math.round(kcal), ...(protein ? { protein: Math.round(protein * 10) / 10 } : {}), ...(nutOf(nut) || {}) });
   save(); closeSheet(); rerender();
   toast(`Added ${name} · ${nf(kcal)} kcal`, { label: 'Undo', run: () => { state.meals = state.meals.filter((x) => x.id !== id); save(); rerender(); toast('Removed'); } });
 }
@@ -1674,18 +1773,31 @@ const TRACK_ACTIONS = {
     if (!name) { toast('Name the food'); return; }
     if (kcal == null || kcal < 0 || kcal > 5000) { toast('Enter calories between 0 and 5,000'); return; }
     if (protein != null && (protein < 0 || protein > 500)) { toast('Protein should be between 0 and 500 g'); return; }
+    const per = {};
+    for (const k of NUT_KEYS) { const v = parseNum($(`#fN-${k}`)?.value); if (v != null) per[k] = v; }
+    if (Object.values(per).some((v) => v < 0 || v > 1000)) { toast('Nutrient values should be between 0 and 1,000 g'); return; }
+    if (per.sat != null && per.fat != null && per.sat > per.fat) { toast('Saturates are part of fat, so they can\'t be more than fat'); return; }
+    if (per.sugar != null && per.carbs != null && per.sugar > per.carbs) { toast('Sugar is part of carbs, so it can\'t be more than carbs'); return; }
+    // Label values per 100 g: scale by the grams you ate. Per serving: one serving.
+    const per100 = $('#fBasis')?.value === '100g';
+    const grams = parseNum($('#fGrams')?.value);
+    if (per100 && (grams == null || grams <= 0 || grams > 5000)) { toast('Enter how many grams you ate'); return; }
+    const q = per100 ? grams / 100 : 1;
+    const eatenName = per100 ? `${name} (${nf(grams)} g)` : name;
     if ($('#fSave').checked) {
-      const exists = Object.values(state.foods).some((f) => f.name.toLowerCase() === name.toLowerCase());
-      if (!exists) state.foods[newId('f')] = { name, kcal: Math.round(kcal), ...(protein ? { protein } : {}) };
+      const saveName = per100 ? `${name} (100 g)` : name;           // one serving of the saved food = what the label column says
+      const exists = Object.values(state.foods).some((f) => f.name.toLowerCase() === saveName.toLowerCase());
+      if (!exists) state.foods[newId('f')] = { name: saveName, kcal: Math.round(kcal), ...(protein ? { protein } : {}), ...(nutOf(per) || {}) };
     }
-    addMeal(name, kcal, protein);
+    addMeal(eatenName, kcal * q, protein ? protein * q : null, nutOf(per, q));
   },
-  'track-food-quick': (el) => { const f = state.foods[el.dataset.food]; if (f) addMeal(f.name, f.kcal, f.protein); },
-  'track-food-recent': (el) => { const m = state.meals.find((x) => x.id === el.dataset.id); if (m) addMeal(m.name, m.kcal, m.protein); },
+  'track-food-quick': (el) => { const f = state.foods[el.dataset.food]; if (f) addMeal(f.name, f.kcal, f.protein, nutOf(f)); },
+  'track-food-recent': (el) => { const m = state.meals.find((x) => x.id === el.dataset.id); if (m) addMeal(m.name, m.kcal, m.protein, nutOf(m)); },
   'track-food-forget': (el) => { delete state.foods[el.dataset.food]; save(); foodSheet(); },
   'track-meal-del': (el) => deleteMeal(el.dataset.id),
   'meal-del-sheet': (el) => deleteMeal(el.dataset.id, () => { if (sheetOpen()) mealsSheet(); }),
   'food-list': mealsSheet,
+  'nutrients': nutrientsSheet,
   'track-weight': () => numberSheet({
     title: 'Weight', field: 'weight', label: `Weight (kg) ${onDayLabel()}`, unit: 'kg', step: 0.1, min: 30, max: 350,
     value: hget(tKey(), 'weight') ?? latestOn('weight', tKey())?.v,
@@ -1753,13 +1865,20 @@ function subsFor(wk) {
 
 function mealInfo(items, subs) {
   let kcal = 0, protein = 0;
+  const nut = { fat: 0, sat: 0, carbs: 0, sugar: 0, salt: 0 };
+  const M = window.PF_MEALS;
   const dishes = items.map(([id, n]) => ({ id, n, name: dishOf(id, subs)[0] }));
   const parts = items.map(([id, n]) => {
     const [name, , k, p] = dishOf(id, subs);
     kcal += k * n; protein += p * n;
+    // A stand-in changes kcal: scale the base dish's fat with it and let carbs follow from the new totals.
+    const base = M.DISH[id], row = M.NUT[id];
+    const ratio = base && base[2] ? k / base[2] : 1;
+    const x = row ? M.nutFrom(k, p, [row[0] * ratio, row[1] * ratio, row[2], row[3]]) : null;
+    if (x) for (const key of NUT_KEYS) nut[key] += x[key] * n;
     return n === 1 ? name : `${n} × ${name}`;
   });
-  return { text: parts.join(' + '), kcal, protein, dishes };
+  return { text: parts.join(' + '), kcal, protein, dishes, nut: nutOf(nut) };
 }
 
 /* ---------- Recipes (recipes.js) ---------- */
@@ -2103,7 +2222,7 @@ const PLAN_ACTIONS = {
     if (!f) return;
     const q = foodPick.qty;
     foodPick = null;
-    addMeal(q === 1 ? f.name : `${q} × ${f.name}`, f.kcal * q, f.protein ? f.protein * q : null);
+    addMeal(q === 1 ? f.name : `${q} × ${f.name}`, f.kcal * q, f.protein ? f.protein * q : null, nutOf(f, q));
   },
   'track-pick-edit': () => { if (foodPick) { foodPick.edit = true; foodSheet(); } },
   'track-pick-save': () => {
@@ -2111,7 +2230,7 @@ const PLAN_ACTIONS = {
     if (!f) return;
     const name = ($('#qeName').value || '').trim(), kcal = parseNum($('#qeKcal').value), protein = parseNum($('#qeProt').value);
     if (!name || kcal == null || kcal < 0 || kcal > 5000 || (protein != null && (protein < 0 || protein > 500))) { toast('Check the name, kcal (0–5,000) and protein (0–500 g)'); return; }
-    state.foods[foodPick.id] = { name, kcal: Math.round(kcal), ...(protein ? { protein } : {}) };
+    state.foods[foodPick.id] = { ...nutOf(f), name, kcal: Math.round(kcal), ...(protein ? { protein } : {}) };   // keeps fat, carbs … 
     save(); foodPick.edit = false; foodSheet(); toast('Saved');
   },
   'track-food-rough': (el) => addMeal(el.dataset.name, Number(el.dataset.kcal), null),
@@ -2124,7 +2243,7 @@ const PLAN_ACTIONS = {
     const m = dayInfo(Number(el.dataset.day), el.dataset.wk || undefined).meals[Number(el.dataset.m)];
     if (!m) return;
     if (parseRoute().name !== 'track') trackDay = null;           // only the day log adds to another day
-    addMeal(`${m.label}: ${m.text}`.slice(0, 120), m.kcal, m.protein);
+    addMeal(`${m.label}: ${m.text}`.slice(0, 120), m.kcal, m.protein, m.nut);
   },
   'plan-tab': (el) => { if (planWeek == null && el.dataset.tab === 'week') planWeek = planWkShown; if (planTab !== el.dataset.tab) planSel = null; planTab = el.dataset.tab; rerender(); },
   'recipe': (el) => recipeSheet(el.dataset.dish, Number(el.dataset.n) || 1, el.dataset.wk || weekStart(todayKey())),
@@ -3229,6 +3348,12 @@ document.addEventListener('input', (ev) => {
 });
 
 document.addEventListener('change', async (ev) => {
+  if (ev.target.id === 'fBasis') {                                  // per 100 g needs the grams you ate
+    const per100 = ev.target.value === '100g', f = $('#fGramsField');
+    if (f) f.hidden = !per100;
+    if (per100) $('#fGrams')?.focus();
+    return;
+  }
   if (ev.target.dataset && ev.target.dataset.grocery) {
     const k = ev.target.dataset.grocery;
     pruneGrocery();                                                 // past weeks only; this and next week stay

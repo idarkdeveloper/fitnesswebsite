@@ -9,8 +9,8 @@
 
 1. **One next step.** Every screen answers "what do I do now?" Home leads with today's exercise and a single primary **Start** button.
 2. **Progress is visible.** Levels, dot ladders, streaks and badges always show where you stand and what earns the next step.
-3. **Honest and local.** Data stays in the browser, and so does the copy: Pro is labelled as a free demo toggle and nothing is promised that the app can't do.
-4. **Forgiving.** Destructive actions ask for confirmation, workouts can be cancelled, and rest days never break a streak.
+3. **Honest and local.** Data is saved on the device first and only synced when you sign in, and the copy says so. Nothing is promised that the app can't do. Every feature is unlocked; there is no paid tier.
+4. **Forgiving.** Destructive actions either ask for confirmation or offer Undo, workouts can be cancelled, and rest days never break a streak.
 5. **Calm, sporty surface.** Deep gradient backdrop, rounded cards, one bright accent. Colour signals state and is never the only signal.
 
 ## 2. Colour
@@ -132,7 +132,7 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 
 - **Touch targets ≥ 44 × 44px** (WCAG 2.5.8 floor is 24px; we target 44). Small visuals such as carousel dots and the info icon get an invisible padded hit area.
 - **One primary button per view.** Use `.btn` for the primary action, `.btn.ghost` or `.btn.subtle` for secondary actions, and `.link-btn` only inside text.
-- **Destructive actions** (reset, delete workout, discard workout with ticked sets) always confirm.
+- **Destructive actions** that lose a lot (reset, delete workout, discard workout with ticked sets) always confirm. Small, quick removals (a logged food) skip the confirm and show an **Undo** toast for 5 s instead.
 - **Feedback:** every save shows a toast or a summary sheet. Ticking a set starts the rest timer.
 - **Motion:** tokens `--dur-press` (80ms, pressed scale), `--dur-fast` (150ms, colour and border), `--dur-base` (220ms, tab indicator, sheet settle, page fade) and `--dur-slow` (400ms, progress fill), all on `--ease` (`cubic-bezier(0.2, 0.8, 0.2, 1)`). Everything is disabled under `prefers-reduced-motion`.
 - **States:** every clickable surface (options, theme options, day chips, stats, callouts, routine picker, list items, progression and mastery rows, library tiles, buttons, icon buttons, steppers, weekday buttons) has a hover style (tint toward `--accent`, only on hover-capable devices), a pressed style (`scale(0.98)`) and the global focus ring. Text inputs use an accent border plus a 3px ring instead of the outline.
@@ -179,7 +179,7 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Level card | `.lvl-card .lv-row > .lv` | Three bars: done / current (sets hit) / off |
 | Set card | `.set-card .big-step` | 64px number, 56px round steppers; main button `.done-btn` (success) or `.rest-btn` (countdown) |
 | Stat trio | `.stat3 > .s3` | Progress header; `.hot` accent border for the streak |
-| Ladder row | `.lad-row` | Family dot (`--h` hue), name, wide segment bar, count or "Pro" |
+| Ladder row | `.lad-row` | Family dot (`--h` hue), name, wide segment bar, count (mastered / total) |
 | Group label | `.group-label` | Uppercase section label above list groups (Profile, Groceries) |
 | Food picker | `.search`, `.pick .pill-step`, `.plan-pick`, `.rough` | Add food sheet |
 | Plan day strip | `.pd-strip > .pd` | Day + kcal; `.logged` state on planned meals |
@@ -221,3 +221,16 @@ Measured by a script over `styles.css` and `app.js`. Re-run it after each cleanu
 | States | 7 clickable components without hover or pressed styles | Shared hover, pressed and focus rules (§6) | ✅ |
 
 Other gaps: no illustrations for empty states beyond icons.
+
+## Words
+
+One name per thing, everywhere in the app:
+
+| Say | Means | Not |
+|---|---|---|
+| **Exercise** | A family such as Pushups or Squats (the Exercises tab) | movement, family |
+| **Progression** | One step on an exercise's ladder, such as Incline Pushups | exercise, variation |
+| **Level** | One of the three targets inside a progression | stage |
+| Position | `Pushups · 2 of 10` | `Pushups 2`, `Day 7 of 7` |
+
+Numbers use `toLocaleString('en-US')` (`1,775 kcal`), and weights always carry their unit (`25.2 kg to goal`).

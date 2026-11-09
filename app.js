@@ -199,6 +199,7 @@ function defaultState() {
     joined: {},                         // ladderId -> ISO date
     reminder: { enabled: false, time: '18:00', lastNotified: '' },
     planReminder: { enabled: true, day: 5, time: '18:00', lastNotified: '' },  // weekly "next week's plan is out" (0 = Sun … 6 = Sat)
+    warmup: true,                       // guided warm-up before each workout
     waterReminder: { enabled: false, every: 2, from: '09:00', to: '21:00', lastSlot: '' },    // every N hours in that window, until the day's goal
     challengeStart: null,
     hprofile: {},                       // body profile & targets (Track tab)
@@ -648,7 +649,7 @@ VIEWS.today = () => {
     </a>`;
   }).join('');
   const sets = cats.reduce((a, cid) => { const p = currentProg(cid); return a + p.levels[workingLevel(p.id) - 1].sets; }, 0);
-  const mins = Math.max(5, Math.round((sets * (state.restSeconds + 45)) / 60));
+  const mins = Math.max(5, Math.round((sets * (state.restSeconds + 45)) / 60)) + (state.warmup !== false && cats.length ? warmupMinutes(cats) : 0);
   const isFuture = sel > today();
   const session = cats.length ? `
       <div class="sess-list">${rows}</div>
@@ -1110,6 +1111,8 @@ VIEWS.profile = () => {
       ${row('pick-routine', 'Routine', esc(routine().name))}
       ${row('routine-days', 'Training days', days)}
       ${row('rest-settings', 'Rest timer', `${state.restSeconds} seconds`)}
+      <div class="list-item static"><span class="grow"><span>Warm-up<span class="li-sub">${state.warmup !== false ? 'A few minutes of moves for that day, before each workout' : 'Off'}</span></span></span>
+        <button class="toggle" role="switch" aria-checked="${state.warmup !== false}" data-action="toggle-warmup" aria-label="Warm-up before workouts"></button></div>
       <div class="list-item static"><button class="grow text-left plain" data-action="reminders"><span>Reminder<span class="li-sub">${state.reminder.enabled ? `Daily at ${esc(state.reminder.time)}` : 'Off'}</span></span></button>
         <button class="toggle" role="switch" aria-checked="${state.reminder.enabled}" data-action="toggle-reminder" aria-label="Daily reminder"></button></div>
     </div>
@@ -2379,7 +2382,80 @@ function curSet() {
 }
 const fmtClock = (s) => `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}`;
 
+/* ---------- Warm-up ----------
+   About 4 minutes before the first set: a few general moves to raise your pulse and loosen joints,
+   then two or three that prepare what today's session trains. Timed moves count down; rep moves are done at your pace. */
+// id: [name, how, seconds | null, reps | null, perSide]
+const WARMUPS = {
+  march: ['March on the spot', 'Drive your knees up and swing your arms. Speed up for the last 15 seconds.', 45, null, false],
+  armcircles: ['Arm circles', 'Arms out to the sides. Small circles growing bigger, forwards, then backwards.', 30, null, false],
+  hipcircles: ['Hip circles', 'Hands on hips, feet apart. Slow, big circles, both directions.', 30, null, false],
+  catcow: ['Cat–cow', 'On hands and knees. Round your back up, then let it sag and lift your chest. Slowly, with your breath.', 40, null, false],
+  wrists: ['Wrist circles and rocks', 'Circle your wrists, then on hands and knees gently rock forwards and back over your palms.', 30, null, false],
+  scappush: ['Scapular pushups', 'In a plank with straight arms, let your chest sink between your shoulder blades, then push the floor away.', null, 10, false],
+  scappull: ['Scapular pulls', 'Hang from the bar with straight arms. Pull your shoulder blades down and back without bending your elbows.', null, 8, false],
+  shoulderopen: ['Doorway chest stretch', 'Forearm on a door frame, step through gently until you feel your chest open. Easy, no bouncing.', 20, null, true],
+  legswings: ['Leg swings', 'Hold a wall. Swing one leg forwards and back, relaxed and growing bigger.', null, 10, true],
+  bwsquat: ['Slow air squats', 'Three seconds down, pause at the bottom, stand up. Heels down, knees out.', null, 8, false],
+  deadbug: ['Dead bug', 'On your back, arms up, knees bent at 90°. Lower opposite arm and leg slowly, lower back pressed down.', null, 8, true],
+  glutebridge: ['Glute bridges', 'On your back, feet flat. Squeeze your glutes to lift your hips, pause, lower slowly.', null, 10, false],
+  trunkrot: ['Standing trunk rotations', 'Feet apart, arms loose. Turn side to side and let your arms swing around you.', 30, null, false],
+};
+const WARMUP_FOR = {
+  pushups: ['wrists', 'scappush'], dips: ['wrists', 'shoulderopen'], 'elbow-levers': ['wrists', 'scappush'], 'clutch-flag': ['wrists', 'trunkrot'],
+  pullups: ['scappull', 'shoulderopen'], grip: ['wrists', 'scappull'],
+  squats: ['legswings', 'bwsquat'], lunges: ['legswings', 'bwsquat'],
+  'leg-raises': ['deadbug'], twists: ['trunkrot', 'deadbug'], bridges: ['glutebridge', 'catcow'],
+};
+/** Today's warm-up: march, arm circles and hip circles, then one move for each of the session's exercises
+    (a second one each while there's room), at most four extra. */
+function warmupFor(cats) {
+  const extra = [];
+  for (let round = 0; round < 2; round++) {
+    for (const cid of cats) {
+      const w = (WARMUP_FOR[cid] || [])[round];
+      if (w && !extra.includes(w) && extra.length < 4) extra.push(w);
+    }
+  }
+  return ['march', 'armcircles', 'hipcircles', ...extra];
+}
+const warmupMinutes = (cats) => Math.round(warmupFor(cats).reduce((a, id) => { const [, , sec, reps, side] = WARMUPS[id]; return a + (sec || reps * 4) * (side ? 2 : 1) + 10; }, 0) / 60);
+let warmTimer = null;          // { end, i } while a timed warm-up move counts down
+function stopWarmTimer() { if (warmTimer) { clearInterval(warmTimer.iv); warmTimer = null; } }
+
+function warmupView() {
+  const w = draft.warm, id = w.list[w.i], [name, how, sec, reps, side] = WARMUPS[id];
+  const last = w.i === w.list.length - 1;
+  const running = warmTimer && warmTimer.i === w.i;
+  const left = running ? Math.max(0, Math.ceil((warmTimer.end - Date.now()) / 1000)) : sec;
+  const amount = sec ? `${sec} s${side ? ' each side' : ''}` : `${reps}${side ? ' each side' : ''}`;
+  return `
+    <div class="wo-top">
+      <button class="icon-btn round bare" data-action="cancel-workout" aria-label="Cancel workout">${icon('x')}</button>
+      <div class="text-center"><div class="fw-bold">Warm-up</div><div class="small muted">${w.i + 1} of ${w.list.length} · about ${warmupMinutes(draft.entries.map((e) => PROG[e.progId].cat.id))} min</div></div>
+      <button class="link-btn small" data-action="warm-skip">Skip</button>
+    </div>
+    ${segBar(w.list.map((_, i) => (i < w.i ? 'done' : i === w.i ? 'cur' : 'off')), 'wo-segs')}
+    <section class="card set-card warm-card mt-4" aria-labelledby="warmH">
+      <div class="eyebrow muted text-center">${sec ? 'Timed' : 'Reps'}${side ? ' · each side' : ''}</div>
+      <h1 class="text-center m-0 mt-2" id="warmH">${esc(name)}</h1>
+      <p class="text-center muted mt-3">${esc(how)}</p>
+      <div class="warm-amount text-center" ${sec ? 'id="warmTime" aria-live="off"' : ''}>${sec ? fmtClock(left * (side && !running ? 2 : 1)) : esc(amount)}</div>
+      ${sec ? (side ? `<div class="text-center small muted">${sec} s each side</div>` : '') : '<div class="text-center small muted">reps, slow and controlled</div>'}
+      <div class="mt-4">
+        ${sec && !running && !w.timed[w.i] ? `<button class="btn lg block" data-action="warm-timer">${icon('play')} Start ${side ? `${sec * 2} s timer (switch sides halfway)` : 'timer'}</button>`
+          : `<button class="btn lg block done-btn" data-action="warm-next">${last ? `${icon('play')} Start workout` : `Next: ${esc(WARMUPS[w.list[w.i + 1]][0])}`}</button>`}
+      </div>
+      ${sec && running ? '<p class="small muted text-center m-0 mt-3">Next starts when you tap, or when the timer ends.</p>' : ''}
+    </section>
+    <section class="card set-list mt-4" aria-label="Warm-up moves">
+      ${w.list.map((x, i) => `<button class="set-li ${i < w.i ? 'done' : ''} ${i === w.i ? 'cur' : ''}" data-action="warm-goto" data-i="${i}" aria-current="${i === w.i ? 'step' : 'false'}"><span class="st">${i < w.i ? icon('check') : ''}</span><span class="grow">${esc(WARMUPS[x][0])}</span><span>${WARMUPS[x][2] ? `${WARMUPS[x][2] * (WARMUPS[x][4] ? 2 : 1)} s` : `${WARMUPS[x][3]}${WARMUPS[x][4] ? '/side' : ''}`}</span></button>`).join('')}
+    </section>
+    <p class="small muted text-center mt-4">You can turn the warm-up off under Profile → Training.</p>`;
+}
+
 VIEWS.workout = () => {
+  if (draft && draft.mode === 'session' && draft.warm && !draft.warm.done) return warmupView();
   if (!draft || draft.mode !== 'session') {
     return `<div class="empty">${icon('dumbbell')}<p>No workout in progress.</p><a class="btn" href="#/today">Back to Today</a></div>`;
   }
@@ -2465,7 +2541,41 @@ function wireWorkout(active) {
   }, 1000);
 }
 
+/** Warm-up done or skipped: the workout clock starts now, so it measures the training itself. */
+function endWarmup() {
+  stopWarmTimer();
+  draft.warm.done = true;
+  draft.started = Date.now();
+  saveDraft(); rerender(); window.scrollTo(0, 0);
+}
 const WORKOUT_ACTIONS = {
+  'warm-timer': () => {
+    const w = draft && draft.warm; if (!w) return;
+    const [, , sec, , side] = WARMUPS[w.list[w.i]];
+    stopWarmTimer();
+    const i = w.i, total = sec * (side ? 2 : 1), half = side ? Date.now() + sec * 1000 : 0;
+    w.timed[i] = true;
+    warmTimer = { i, end: Date.now() + total * 1000, iv: setInterval(() => {
+      const el = $('#warmTime');
+      const left = Math.max(0, Math.ceil((warmTimer.end - Date.now()) / 1000));
+      if (el) el.textContent = fmtClock(left);
+      if (half && Date.now() >= half && !warmTimer.switched) { warmTimer.switched = true; beep(); toast('Switch sides'); }
+      if (left <= 0) {
+        stopWarmTimer(); beep(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch { /* ignore */ }
+        if (draft && draft.warm && draft.warm.i === i) WORKOUT_ACTIONS['warm-next']();
+      }
+    }, 250) };
+    saveDraft(); rerender();
+  },
+  'warm-next': () => {
+    const w = draft && draft.warm; if (!w) return;
+    stopWarmTimer();
+    if (w.i >= w.list.length - 1) { endWarmup(); return; }
+    w.i += 1; saveDraft(); rerender();
+  },
+  'warm-goto': (el) => { const w = draft && draft.warm; if (!w) return; stopWarmTimer(); w.i = Number(el.dataset.i); saveDraft(); rerender(); },
+  'warm-skip': () => { if (draft && draft.warm) endWarmup(); },
+  'toggle-warmup': () => { state.warmup = state.warmup === false; save(); rerender(); toast(state.warmup ? 'Warm-up on' : 'Warm-up off'); },
   'wo-step': (el) => {
     const c = curSet();
     if (!c) return;
@@ -3200,6 +3310,7 @@ async function hcBoot() {
     const { App } = await hcLoad();
     App.addListener('appStateChange', ({ isActive }) => {
       if (!isActive) return;
+      checkForUpdate();
       widgetPush(true);
       syncNativeReminders();
       if (Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync();
@@ -3290,13 +3401,14 @@ const ACTIONS = {
     cats.forEach((c) => { if (!isStarted(c)) state.current[c] = 0; });
     save();
     draft = { mode: 'session', date: selectedDay, started: Date.now(), entries: cats.map((c) => newEntry(currentProg(c).id)) };
+    if (state.warmup !== false) draft.warm = { list: warmupFor(cats), i: 0, done: false, timed: {} };
     saveDraft();
     go('#/workout');
   },
   'cancel-workout': () => {
     const any = draft && draft.entries.some((e) => e.done.some(Boolean));
     if (any && !confirm('Discard this workout? Sets you marked will not be saved.')) return;
-    draft = null; saveDraft(); stopRest(); go('#/today');
+    stopWarmTimer(); draft = null; saveDraft(); stopRest(); go('#/today');
   },
   'finish-workout': () => {
     stopRest();
@@ -3653,5 +3765,25 @@ applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');
 render();
 checkReminder();
+/* ---------- Picking up a new version ----------
+   Android keeps the app's page alive in the background, so a site update didn't show until the app was
+   fully closed. When PulseFit comes back to the front, compare the live version (the service worker's cache
+   name) with the one this page loaded, and reload once if it changed. Never mid-workout, with a sheet open,
+   or while typing. */
+let loadedVersion = null, lastVersionCheck = 0;
+async function siteVersion() {
+  try { const t = await (await fetch('sw.js', { cache: 'no-store' })).text(); return (t.match(/pf-shell-v\d+/) || [])[0] || null; } catch { return null; }
+}
+siteVersion().then((v) => { loadedVersion = v; });
+async function checkForUpdate() {
+  if (!loadedVersion || Date.now() - lastVersionCheck < 30e3) return;
+  lastVersionCheck = Date.now();
+  const v = await siteVersion();
+  if (!v || v === loadedVersion) return;
+  if (draft || sheetOpen() || parseRoute().name === 'workout' || document.activeElement?.matches('input, textarea, select')) return;
+  location.reload();
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+
 hcBoot();
 setInterval(checkReminder, 60000);

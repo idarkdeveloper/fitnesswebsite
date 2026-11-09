@@ -1509,3 +1509,7 @@ svg.icon-sm { width: 16px; height: 16px; }
 .nut-row .progress { grid-column: 1 / -1; margin: 0; }
 .nut-row.sub .progress { margin-left: var(--space-3); }
 .nowrap { white-space: nowrap; }
+
+/* ---------- warm-up (start of a workout) ---------- */
+.warm-card h1 { font-size: var(--fs-2xl); }
+.warm-amount { font-size: 56px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.1; margin-top: var(--space-4); }

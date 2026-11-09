@@ -2,7 +2,7 @@
    - App files: network first (you always get the latest when online), cached copy when offline.
    - Exercise images and fonts: served from cache, refreshed in the background.
    - Never touches Supabase or any other site's requests (sync must always hit the network). */
-const SHELL = 'pf-shell-v27';
+const SHELL = 'pf-shell-v29';
 const MEDIA = 'pf-media-v1';
 const SHELL_FILES = [
   './', './index.html', './styles.css', './app.js', './data.js', './theme-boot.js', './pwa.js',
@@ -25,7 +25,7 @@ self.addEventListener('activate', (ev) => {
 async function networkFirst(req) {
   const cache = await caches.open(SHELL);
   try {
-    const res = await fetch(req);
+    const res = await fetch(req, { cache: 'no-cache' });   // revalidate with the server, so a new version shows at once
     if (res.ok) cache.put(req, res.clone());
     return res;
   } catch {

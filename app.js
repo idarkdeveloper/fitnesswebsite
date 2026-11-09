@@ -982,7 +982,9 @@ function progressBody() {
   } else if (toGo != null && toGo <= 0.05) verdict = '<div class="note-box mt-3"><b>Goal reached.</b> Set a new goal in Profile → Goals.</div>';
 
   const firstDay = MEASURES.map(([f]) => firstOf(f)?.day).filter(Boolean).sort()[0];
-  const mtiles = MEASURES.map(([f, label]) => {
+  // Waist, chest, hips and neck always show; a limb pair only once either side has been measured.
+  const shown = MEASURES.filter(([f], i) => i < 4 || [MEASURES[i - (i % 2)][0], MEASURES[i - (i % 2) + 1][0]].some((x) => firstOf(x)));
+  const mtiles = shown.map(([f, label]) => {
     const l = latestOn(f, tk), f0 = firstOf(f);
     const diff = l && f0 && f0.day !== l.day ? l.v - f0.v : null;
     const dtxt = diff == null ? '' : Math.abs(diff) < 0.05 ? '<span class="d muted">no change</span>' : `<span class="d ${diff < 0 ? 'c-success' : ''}">${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)}</span>`;
@@ -1169,7 +1171,15 @@ const PROFILE_ACTIONS = {
    - state.hlog: { "YYYY-MM-DD|field": number }  fields: weight (kg), steps, sleep (min), water (ml), MEASURES (cm)
    - state.meals: [{ id, day, at, name, kcal, protein? }]
    - state.foods: { id: { name, kcal, protein? } }   saved foods */
-const MEASURES = [['waist', 'Waist'], ['chest', 'Chest'], ['hips', 'Hips'], ['arm', 'Upper arm'], ['thigh', 'Thigh'], ['neck', 'Neck']];
+// Body measurements in cm, in pairs so left and right sit side by side. 'arm' and 'thigh' are the original
+// one-side fields: earlier entries are kept and shown as the right side.
+const MEASURES = [
+  ['waist', 'Waist'], ['chest', 'Chest'], ['hips', 'Hips'], ['neck', 'Neck'],
+  ['armL', 'Upper arm · left'], ['arm', 'Upper arm · right'],
+  ['forearmL', 'Forearm · left'], ['forearm', 'Forearm · right'],
+  ['thighL', 'Thigh · left'], ['thigh', 'Thigh · right'],
+  ['calfL', 'Calf · left'], ['calf', 'Calf · right'],
+];
 const ACTIVITY = [
   [1.2, 'Mostly sitting, little exercise'],
   [1.375, 'Light: exercise 1–3 days a week'],
@@ -1722,7 +1732,7 @@ function measureSheet() {
       const last = latestOn(f, day);
       return `<div class="field"><label for="ms-${f}">${label}</label><input class="input" id="ms-${f}" data-measure="${f}" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${hget(day, f) ?? ''}" placeholder="${last ? kg(last.v) : ''}" /></div>`;
     }).join('')}</div>
-    <p class="muted small mt-3 m-0">Waist: around your belly button, relaxed, after breathing out. Use the same spot every time.</p>
+    <p class="muted small mt-3 m-0">Waist: around your belly button, relaxed, after breathing out. Upper arm: the widest part, arm relaxed by your side. Forearm: just below the elbow. Thigh: halfway between hip and knee. Calf: the widest part, standing. Use the same spot every time.</p>
     <button class="btn block lg mt-5" data-action="track-measure-save">Save</button>`);
 }
 

@@ -7,7 +7,7 @@
   const SCHEMA = 1;
   const SKEW_MS = 5 * 60 * 1000;          // future stamps beyond this are clamped
   // Single-value settings, merged by newest stamp.
-  const FIXED_REGS = ['profile.name', 'profile.theme', 'profile.pro', 'routineId', 'trainingDays', 'restSeconds', 'reminders'];
+  const FIXED_REGS = ['profile.name', 'profile.theme', 'profile.pro', 'routineId', 'trainingDays', 'restSeconds', 'reminders', 'warmup'];
   // Maps of single values (one register per key), merged by newest stamp.
   // hprofile: body profile and targets; hlog: "YYYY-MM-DD|field" -> number (weight, steps, sleep, water,
   // measurements); foods: saved foods by id.
@@ -45,6 +45,7 @@
       trainingDays: Array.isArray(s.trainingDays) ? s.trainingDays : [],
       restSeconds: s.restSeconds,
       reminders: pickReminders(s),
+      warmup: s.warmup !== false,
       current: isObj(s.current) ? s.current : {},
       levels: isObj(s.levels) ? s.levels : {},
       joined: isObj(s.joined) ? s.joined : {},
@@ -251,7 +252,7 @@
     const d = clone(doc.data);
     const s = clone(state);
     s.profile = { ...(s.profile || {}), ...d.profile };
-    for (const k of ['routineId', 'trainingDays', 'restSeconds', 'current', 'levels', 'joined', 'workouts', 'hprofile', 'hlog', 'foods', 'meals', 'grocery', 'videos']) {
+    for (const k of ['routineId', 'trainingDays', 'restSeconds', 'current', 'levels', 'joined', 'workouts', 'hprofile', 'hlog', 'foods', 'meals', 'grocery', 'videos', 'warmup']) {
       if (d[k] !== undefined) s[k] = d[k];
     }
     // Reminder settings: keep this device's "last fired" bookkeeping.

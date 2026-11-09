@@ -2699,22 +2699,40 @@ function routineDaysSheet() {
 }
 
 /** Reminder sheets in the Android app: whether Android lets PulseFit post notifications. */
+// App builds from 9 on declare the exact-alarm permission, so Android's "Alarms & reminders" switch works.
+const EXACT_ALARM_BUILD = 9;
 function nativeNotifLine() {
-  if (notifPerm === 'granted') return 'Phone notifications are on. They arrive even when PulseFit is closed (Android may deliver them a few minutes late to save battery).';
-  if (notifPerm === 'denied') return 'Notifications are turned off for PulseFit. Turn them on in Android Settings → Apps → PulseFit → Notifications.';
+  if (notifPerm === 'granted') {
+    const onTime = notifExact === 'granted'
+      ? ' They arrive on time.'
+      : ' Android may deliver them a few minutes late to save battery.';
+    return `Phone notifications are on. They arrive even when PulseFit is closed.${onTime}`;
+  }
+  if (notifPerm === 'denied') return 'Notifications are turned off for PulseFit. Turn them on in Android Settings → Apps → PulseFit → Notifications → Allow notifications.';
   return 'Turning a reminder on asks Android to allow notifications.';
 }
+/** Test and on-time buttons under the reminder settings, in the app only. */
+function nativeNotifButtons() {
+  if (!isNativeApp()) return '';
+  return `<button class="btn ghost block mt-3" data-action="notif-test">${icon('bell')} Send a test notification</button>
+    ${notifPerm === 'granted' && notifExact !== 'granted' && appBuild >= EXACT_ALARM_BUILD ? `<button class="btn ghost block mt-2" data-action="notif-exact">${icon('timer')} Deliver reminders on time</button>
+    <p class="small muted mt-2 m-0">Opens Android's "Alarms and reminders" switch for PulseFit.</p>` : ''}`;
+}
+let reminderSheetKind = 'daily';
+const refreshReminderSheet = () => (reminderSheetKind === 'plan' ? planReminderSheet() : remindersSheet());
 function remindersSheet() {
+  reminderSheetKind = 'daily';
   const rm = state.reminder;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   openSheet('Reminders', `
     <div class="row-between mb-4"><div><div class="t fw-bold">Daily reminder</div><div class="small muted">${isNativeApp() ? 'A phone notification on training days, skipped once you have trained' : 'On training days, while PulseFit is open'}</div></div>
       <button class="toggle" role="switch" aria-checked="${rm.enabled}" data-action="toggle-reminder" aria-label="Daily reminder"></button></div>
     <div class="field"><label for="rmTime">Time</label><input class="input" id="rmTime" type="time" value="${esc(rm.time)}" data-bind="reminderTime" /></div>
-    <p class="small muted mt-4">${isNativeApp() ? nativeNotifLine() : perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
+    <p class="small muted mt-4">${isNativeApp() ? nativeNotifLine() + '</p>' + nativeNotifButtons() + '<p class="m-0">' : perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
 }
 
 function planReminderSheet() {
+  reminderSheetKind = 'plan';
   const pr = state.planReminder;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   openSheet('Meal plan reminder', `
@@ -2727,7 +2745,7 @@ function planReminderSheet() {
     <p class="small muted mt-4 m-0">Next week's plan comes out every Friday, so you can shop on Saturday (shops are closed on Sunday). From Friday, Groceries shows next week's list, and the banner on Today stays until Saturday evening or until you start ticking it off.</p>
     ${isNativeApp() ? '' : `<button class="btn ghost block mt-4" data-action="plan-ics">${icon('calendar')} Add to my calendar</button>
     <p class="small muted mt-2 m-0">Adds a repeating event with an alert to your phone's calendar, so it reminds you even when PulseFit is closed.</p>`}
-    <p class="small muted mt-4 m-0">${isNativeApp() ? `${nativeNotifLine()} You also see a banner on Today.` : perm === 'granted' ? 'In-app: you get a notification while PulseFit is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
+    <p class="small muted mt-4 m-0">${isNativeApp() ? `${nativeNotifLine()} You also see a banner on Today.</p>${nativeNotifButtons()}<p class="m-0">` : perm === 'granted' ? 'In-app: you get a notification while PulseFit is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
 }
 
 /** A weekly repeating calendar event (.ics) for the meal plan reminder, in German time. */
@@ -3100,6 +3118,8 @@ const HEALTH_ACTIONS = {
    so it stays current; it only runs out if the app isn't opened for 4 weeks. */
 const NOTIF_DAYS = 28;
 let notifPerm = null;          // 'granted' | 'denied' | 'prompt' | … once checked
+let notifExact = null;         // Android "Alarms & reminders" (exact timing): 'granted' | 'denied' | null
+let appBuild = 0;              // the installed app's build number (versionCode)
 let notifSig = '';
 let notifTimer = null;
 const atTime = (d, hhmm) => { const [h, m] = String(hhmm || '18:00').split(':').map(Number); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h || 0, m || 0); };
@@ -3110,11 +3130,11 @@ function plannedNotifications() {
     const d = addDays(today(), i), k = dayKey(d);
     if (rm.enabled && sessionFor(d).length && !workoutsOn(k).length) {
       const at = atTime(d, rm.time);
-      if (at > now) out.push({ id: 1000 + i, title: 'PulseFit', body: TRAIN_REMINDER_TEXT, schedule: { at, allowWhileIdle: true }, extra: { route: '#/today' } });
+      if (at > now) out.push({ id: 1000 + i, title: 'PulseFit', body: TRAIN_REMINDER_TEXT, schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/today' } });
     }
     if (pr.enabled && d.getDay() === pr.day) {
       const at = atTime(d, pr.time);
-      if (at > now) out.push({ id: 2000 + i, title: 'PulseFit', body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, extra: { route: '#/plan' } });
+      if (at > now) out.push({ id: 2000 + i, title: 'PulseFit', body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/plan' } });
     }
   }
   return out;
@@ -3129,8 +3149,11 @@ async function syncNativeReminders({ ask = false } = {}) {
     let p = await Notif.checkPermissions();
     if (p.display !== 'granted' && ask && (state.reminder.enabled || state.planReminder.enabled)) p = await Notif.requestPermissions();
     notifPerm = p.display;
+    // Exact timing only when Android already allows it. Asking for it on every schedule made the plugin open
+    // the "Alarms & reminders" screen each time the app started; the reminder sheet offers it instead.
+    try { notifExact = (await Notif.checkExactNotificationSetting()).exact_alarm; } catch { notifExact = null; }
     const list = notifPerm === 'granted' ? plannedNotifications() : [];
-    const sig = JSON.stringify(list.map((n) => [n.id, +n.schedule.at, n.body]));
+    const sig = JSON.stringify(list.map((n) => [n.id, +n.schedule.at, n.body, n.isExactNotification]));
     if (sig === notifSig) return;
     const pending = await Notif.getPending();
     if (pending.notifications && pending.notifications.length) await Notif.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
@@ -3161,6 +3184,7 @@ async function hcBoot() {
   // First start of a version with reminders: ask once for notification permission, then schedule.
   let asked = false;
   try { asked = localStorage.getItem('pf-notif-asked') === '1'; localStorage.setItem('pf-notif-asked', '1'); } catch { /* ignore */ }
+  try { const { App } = await hcLoad(); appBuild = Number((await App.getInfo()).build) || 0; } catch { /* ignore */ }
   syncNativeReminders({ ask: !asked });
   try {
     const { Notif } = await hcLoad();
@@ -3317,6 +3341,22 @@ const ACTIONS = {
     save(); routineDaysSheet(); rerender();
   },
   'reminders': remindersSheet,
+  'notif-test': async () => {
+    try {
+      const { Notif } = await hcLoad();
+      let p = await Notif.checkPermissions();
+      if (p.display !== 'granted') p = await Notif.requestPermissions();
+      notifPerm = p.display;
+      if (p.display !== 'granted') { toast('Notifications are off for PulseFit. Allow them in Android settings'); if (sheetOpen()) refreshReminderSheet(); return; }
+      await Notif.schedule({ notifications: [{ id: 999, title: 'PulseFit', body: 'Test notification: reminders are working.', isExactNotification: false }] });
+      toast('Sent. Check your notifications');
+    } catch { toast("Couldn't send it. Update the PulseFit app and try again"); }
+  },
+  'notif-exact': async () => {
+    try { const { Notif } = await hcLoad(); await Notif.changeExactNotificationSetting(); } catch { /* ignore */ }
+    notifSig = ''; await syncNativeReminders();
+    if (sheetOpen()) refreshReminderSheet();
+  },
   'plan-reminder': planReminderSheet,
   'toggle-plan-reminder': async () => {
     state.planReminder.enabled = !state.planReminder.enabled;

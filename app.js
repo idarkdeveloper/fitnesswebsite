@@ -248,6 +248,7 @@ function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* storage full or blocked */ }
   if (window.PFSync) window.PFSync.noteSave(state);   // cloud sync (sync.js), if loaded
   if (window.PF_widgetPush) window.PF_widgetPush();     // Android home-screen widget, in the app only
+  if (window.PF_notifPush) window.PF_notifPush();       // Android reminders, in the app only
 }
 
 /* ---------------------------------------------------------------
@@ -2697,14 +2698,20 @@ function routineDaysSheet() {
     <button class="btn block" data-action="close-sheet">Done</button>`);
 }
 
+/** Reminder sheets in the Android app: whether Android lets PulseFit post notifications. */
+function nativeNotifLine() {
+  if (notifPerm === 'granted') return 'Phone notifications are on. They arrive even when PulseFit is closed (Android may deliver them a few minutes late to save battery).';
+  if (notifPerm === 'denied') return 'Notifications are turned off for PulseFit. Turn them on in Android Settings → Apps → PulseFit → Notifications.';
+  return 'Turning a reminder on asks Android to allow notifications.';
+}
 function remindersSheet() {
   const rm = state.reminder;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   openSheet('Reminders', `
-    <div class="row-between mb-4"><div><div class="t fw-bold">Daily reminder</div><div class="small muted">On training days, while PulseFit is open</div></div>
+    <div class="row-between mb-4"><div><div class="t fw-bold">Daily reminder</div><div class="small muted">${isNativeApp() ? 'A phone notification on training days, skipped once you have trained' : 'On training days, while PulseFit is open'}</div></div>
       <button class="toggle" role="switch" aria-checked="${rm.enabled}" data-action="toggle-reminder" aria-label="Daily reminder"></button></div>
     <div class="field"><label for="rmTime">Time</label><input class="input" id="rmTime" type="time" value="${esc(rm.time)}" data-bind="reminderTime" /></div>
-    <p class="small muted mt-4">${perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
+    <p class="small muted mt-4">${isNativeApp() ? nativeNotifLine() : perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
 }
 
 function planReminderSheet() {
@@ -2718,9 +2725,9 @@ function planReminderSheet() {
       <div class="field"><label for="prTime">Time</label><input class="input" id="prTime" type="time" value="${esc(pr.time)}" data-bind="planRemTime" /></div>
     </div>
     <p class="small muted mt-4 m-0">Next week's plan comes out every Friday, so you can shop on Saturday (shops are closed on Sunday). From Friday, Groceries shows next week's list, and the banner on Today stays until Saturday evening or until you start ticking it off.</p>
-    <button class="btn ghost block mt-4" data-action="plan-ics">${icon('calendar')} Add to my calendar</button>
-    <p class="small muted mt-2 m-0">Adds a repeating event with an alert to your phone's calendar, so it reminds you even when PulseFit is closed.</p>
-    <p class="small muted mt-4 m-0">${perm === 'granted' ? 'In-app: you get a notification while PulseFit is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
+    ${isNativeApp() ? '' : `<button class="btn ghost block mt-4" data-action="plan-ics">${icon('calendar')} Add to my calendar</button>
+    <p class="small muted mt-2 m-0">Adds a repeating event with an alert to your phone's calendar, so it reminds you even when PulseFit is closed.</p>`}
+    <p class="small muted mt-4 m-0">${isNativeApp() ? `${nativeNotifLine()} You also see a banner on Today.` : perm === 'granted' ? 'In-app: you get a notification while PulseFit is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
 }
 
 /** A weekly repeating calendar event (.ics) for the meal plan reminder, in German time. */
@@ -2895,7 +2902,7 @@ function hcLoad() {
     const done = () => {
       const reg = window.capacitorExports && window.capacitorExports.registerPlugin;
       if (!reg) { reject(new Error('Capacitor not available')); return; }
-      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget') };
+      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget'), Notif: reg('LocalNotifications') };
       resolve(hcPlugins);
     };
     if (window.capacitorExports) { done(); return; }
@@ -3086,6 +3093,53 @@ const HEALTH_ACTIONS = {
   'health-off': () => { const h = hcState(); h.enabled = false; h.day = {}; save(); closeSheet(); rerender(); toast('Stopped. To remove access fully, open Health Connect permissions.'); },
 };
 
+/* ---------- Reminders in the Android app ----------
+   Android's web view has no web notifications, so in the app reminders are real Android notifications.
+   The next 4 weeks are scheduled ahead (training days at your time, skipping a day you've already trained,
+   plus the weekly meal plan reminder). The list is rebuilt whenever you open the app or change something,
+   so it stays current; it only runs out if the app isn't opened for 4 weeks. */
+const NOTIF_DAYS = 28;
+let notifPerm = null;          // 'granted' | 'denied' | 'prompt' | … once checked
+let notifSig = '';
+let notifTimer = null;
+const atTime = (d, hhmm) => { const [h, m] = String(hhmm || '18:00').split(':').map(Number); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h || 0, m || 0); };
+/** The reminders that should be pending right now, soonest first. */
+function plannedNotifications() {
+  const out = [], now = new Date(), rm = state.reminder, pr = state.planReminder;
+  for (let i = 0; i < NOTIF_DAYS; i++) {
+    const d = addDays(today(), i), k = dayKey(d);
+    if (rm.enabled && sessionFor(d).length && !workoutsOn(k).length) {
+      const at = atTime(d, rm.time);
+      if (at > now) out.push({ id: 1000 + i, title: 'PulseFit', body: TRAIN_REMINDER_TEXT, schedule: { at, allowWhileIdle: true }, extra: { route: '#/today' } });
+    }
+    if (pr.enabled && d.getDay() === pr.day) {
+      const at = atTime(d, pr.time);
+      if (at > now) out.push({ id: 2000 + i, title: 'PulseFit', body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, extra: { route: '#/plan' } });
+    }
+  }
+  return out;
+}
+/** Replace the pending reminders with the planned ones. `ask` shows Android's permission prompt if needed. */
+async function syncNativeReminders({ ask = false } = {}) {
+  if (!isNativeApp()) return;
+  let Notif;
+  try { ({ Notif } = await hcLoad()); } catch { return; }
+  if (!Notif) return;
+  try {
+    let p = await Notif.checkPermissions();
+    if (p.display !== 'granted' && ask && (state.reminder.enabled || state.planReminder.enabled)) p = await Notif.requestPermissions();
+    notifPerm = p.display;
+    const list = notifPerm === 'granted' ? plannedNotifications() : [];
+    const sig = JSON.stringify(list.map((n) => [n.id, +n.schedule.at, n.body]));
+    if (sig === notifSig) return;
+    const pending = await Notif.getPending();
+    if (pending.notifications && pending.notifications.length) await Notif.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
+    if (list.length) await Notif.schedule({ notifications: list });
+    notifSig = sig;
+  } catch { /* an app version without the plugin, or Android refused */ }
+}
+window.PF_notifPush = () => { clearTimeout(notifTimer); notifTimer = setTimeout(() => syncNativeReminders(), 800); };
+
 /** Native app: sync on start and whenever the app comes back to the front; handle the email sign-in link. */
 async function hcBoot() {
   if (!isNativeApp()) return;
@@ -3094,6 +3148,7 @@ async function hcBoot() {
     App.addListener('appStateChange', ({ isActive }) => {
       if (!isActive) return;
       widgetPush(true);
+      syncNativeReminders();
       if (Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync();
     });
     const onUrl = (url) => { if (url && url.startsWith('pulsefit://login') && window.PFSync && window.PFSync.handleAuthLink) window.PFSync.handleAuthLink(url); };
@@ -3103,6 +3158,17 @@ async function hcBoot() {
   } catch { /* plugins missing: an old app version */ }
   widgetPush(true);
   hcSync();
+  // First start of a version with reminders: ask once for notification permission, then schedule.
+  let asked = false;
+  try { asked = localStorage.getItem('pf-notif-asked') === '1'; localStorage.setItem('pf-notif-asked', '1'); } catch { /* ignore */ }
+  syncNativeReminders({ ask: !asked });
+  try {
+    const { Notif } = await hcLoad();
+    Notif.addListener('localNotificationActionPerformed', ({ notification }) => {
+      const r = notification && notification.extra && notification.extra.route;
+      if (r && location.hash !== r) location.hash = r;
+    });
+  } catch { /* ignore */ }
 }
 
 window.PF_APP = {
@@ -3254,6 +3320,7 @@ const ACTIONS = {
   'plan-reminder': planReminderSheet,
   'toggle-plan-reminder': async () => {
     state.planReminder.enabled = !state.planReminder.enabled;
+    if (state.planReminder.enabled && isNativeApp()) await syncNativeReminders({ ask: true });
     if (state.planReminder.enabled && 'Notification' in window && Notification.permission === 'default') {
       try { await Notification.requestPermission(); } catch { /* ignore */ }
     }
@@ -3263,6 +3330,7 @@ const ACTIONS = {
   'open-groceries': (el) => { planTab = 'groceries'; planWeek = Number(el.dataset.w); planSel = null; location.hash = '#/plan'; },
   'toggle-reminder': async () => {
     state.reminder.enabled = !state.reminder.enabled;
+    if (state.reminder.enabled && isNativeApp()) await syncNativeReminders({ ask: true });
     if (state.reminder.enabled && 'Notification' in window && Notification.permission === 'default') {
       try { await Notification.requestPermission(); } catch { /* ignore */ }
     }
@@ -3394,13 +3462,19 @@ function applyTheme() {
   if (meta) meta.content = { midnight: '#1c2a55', light: '#ffffff', dark: '#13161d' }[t];
 }
 
+/** The meal plan reminder's text for a day of the week (0 = Sun). From Friday the plan shown is next week's. */
+function planReminderText(wd) {
+  const next = ((wd + 6) % 7) >= 4;
+  return `${next ? "Next week's" : "This week's"} meal plan is ready.${wd === 6 ? ' Shops are closed tomorrow, so get the groceries today.' : wd === 5 ? ' Check the grocery list and shop tomorrow.' : ' Time to get the groceries.'}`;
+}
+const TRAIN_REMINDER_TEXT = "Today's session is waiting. A few sets is all it takes!";
+
 function checkPlanReminder() {
   const pr = state.planReminder;
   if (!planReminderDue() || !('Notification' in window) || Notification.permission !== 'granted') return;
   const k = dayKey(today());
   if (pr.lastNotified === k) return;
-  const next = planReminderWeek() === 1, wd = new Date().getDay();
-  try { new Notification('PulseFit', { body: `${next ? "Next week's" : "This week's"} meal plan is ready.${wd === 6 ? ' Shops are closed tomorrow, so get the groceries today.' : wd === 5 ? ' Check the grocery list and shop tomorrow.' : ' Time to get the groceries.'}` }); } catch { /* ignore */ }
+  try { new Notification('PulseFit', { body: planReminderText(new Date().getDay()) }); } catch { /* ignore */ }
   pr.lastNotified = k;
   save();
 }
@@ -3414,7 +3488,7 @@ function checkReminder() {
   const [hh, mm] = rm.time.split(':').map(Number);
   const now = new Date();
   if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm) return;
-  try { new Notification('PulseFit', { body: "Today's session is waiting. A few sets is all it takes!" }); } catch { /* ignore */ }
+  try { new Notification('PulseFit', { body: TRAIN_REMINDER_TEXT }); } catch { /* ignore */ }
   rm.lastNotified = k;
   save();
 }

@@ -3130,11 +3130,11 @@ function plannedNotifications() {
     const d = addDays(today(), i), k = dayKey(d);
     if (rm.enabled && sessionFor(d).length && !workoutsOn(k).length) {
       const at = atTime(d, rm.time);
-      if (at > now) out.push({ id: 1000 + i, title: 'PulseFit', body: TRAIN_REMINDER_TEXT, schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/today' } });
+      if (at > now) out.push({ id: 1000 + i, title: TRAIN_REMINDER_TITLE, body: trainReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/today' } });
     }
     if (pr.enabled && d.getDay() === pr.day) {
       const at = atTime(d, pr.time);
-      if (at > now) out.push({ id: 2000 + i, title: 'PulseFit', body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/plan' } });
+      if (at > now) out.push({ id: 2000 + i, title: planReminderTitle(d.getDay()), body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/plan' } });
     }
   }
   return out;
@@ -3348,7 +3348,7 @@ const ACTIONS = {
       if (p.display !== 'granted') p = await Notif.requestPermissions();
       notifPerm = p.display;
       if (p.display !== 'granted') { toast('Notifications are off for PulseFit. Allow them in Android settings'); if (sheetOpen()) refreshReminderSheet(); return; }
-      await Notif.schedule({ notifications: [{ id: 999, title: 'PulseFit', body: 'Test notification: reminders are working.', isExactNotification: false }] });
+      await Notif.schedule({ notifications: [{ id: 999, title: 'Reminders are on ✅', body: 'Test notification: reminders are working.', isExactNotification: false }] });
       toast('Sent. Check your notifications');
     } catch { toast("Couldn't send it. Update the PulseFit app and try again"); }
   },
@@ -3508,13 +3508,23 @@ function planReminderText(wd) {
   return `${next ? "Next week's" : "This week's"} meal plan is ready.${wd === 6 ? ' Shops are closed tomorrow, so get the groceries today.' : wd === 5 ? ' Check the grocery list and shop tomorrow.' : ' Time to get the groceries.'}`;
 }
 const TRAIN_REMINDER_TEXT = "Today's session is waiting. A few sets is all it takes!";
+const TRAIN_REMINDER_TITLE = 'Time to train 💪';
+/** "Pushups and Leg Raises today. A few sets is all it takes!" for a training day. */
+function trainReminderText(d) {
+  const names = sessionFor(d).map((cid) => CAT[cid] && CAT[cid].name).filter(Boolean);
+  if (!names.length) return TRAIN_REMINDER_TEXT;
+  const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
+  return `${list} today. A few sets is all it takes!`;
+}
+/** Plan reminder title: from Friday it's about next week's shopping. */
+const planReminderTitle = (wd) => (((wd + 6) % 7) >= 4 ? 'Groceries for next week 🛒' : "This week's groceries 🛒");
 
 function checkPlanReminder() {
   const pr = state.planReminder;
   if (!planReminderDue() || !('Notification' in window) || Notification.permission !== 'granted') return;
   const k = dayKey(today());
   if (pr.lastNotified === k) return;
-  try { new Notification('PulseFit', { body: planReminderText(new Date().getDay()) }); } catch { /* ignore */ }
+  try { new Notification(planReminderTitle(new Date().getDay()), { body: planReminderText(new Date().getDay()) }); } catch { /* ignore */ }
   pr.lastNotified = k;
   save();
 }
@@ -3528,7 +3538,7 @@ function checkReminder() {
   const [hh, mm] = rm.time.split(':').map(Number);
   const now = new Date();
   if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm) return;
-  try { new Notification('PulseFit', { body: TRAIN_REMINDER_TEXT }); } catch { /* ignore */ }
+  try { new Notification(TRAIN_REMINDER_TITLE, { body: trainReminderText(today()) }); } catch { /* ignore */ }
   rm.lastNotified = k;
   save();
 }

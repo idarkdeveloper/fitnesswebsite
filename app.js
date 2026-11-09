@@ -199,6 +199,7 @@ function defaultState() {
     joined: {},                         // ladderId -> ISO date
     reminder: { enabled: false, time: '18:00', lastNotified: '' },
     planReminder: { enabled: true, day: 5, time: '18:00', lastNotified: '' },  // weekly "next week's plan is out" (0 = Sun … 6 = Sat)
+    waterReminder: { enabled: false, every: 2, from: '09:00', to: '21:00', lastSlot: '' },    // every N hours in that window, until the day's goal
     challengeStart: null,
     hprofile: {},                       // body profile & targets (Track tab)
     hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
@@ -218,7 +219,7 @@ function loadState() {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
     if (!raw || typeof raw !== 'object') return defaultState();
     const d = defaultState();
-    return { ...d, ...raw, progOrder: raw.progOrder ?? 1, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) }, planReminder: { ...d.planReminder, ...(raw.planReminder || {}) } };
+    return { ...d, ...raw, progOrder: raw.progOrder ?? 1, profile: { ...d.profile, ...(raw.profile || {}) }, reminder: { ...d.reminder, ...(raw.reminder || {}) }, planReminder: { ...d.planReminder, ...(raw.planReminder || {}) }, waterReminder: { ...d.waterReminder, ...(raw.waterReminder || {}) } };
   } catch {
     return defaultState();
   }
@@ -1119,6 +1120,8 @@ VIEWS.profile = () => {
       ${row('track-setup', 'Goals', goals)}
       <div class="list-item static"><button class="grow text-left plain" data-action="plan-reminder"><span>Meal plan reminder<span class="li-sub">${state.planReminder.enabled ? `${WEEKDAYS[state.planReminder.day]}s at ${esc(state.planReminder.time)} · plan &amp; groceries` : 'Off'}</span></span></button>
         <button class="toggle" role="switch" aria-checked="${state.planReminder.enabled}" data-action="toggle-plan-reminder" aria-label="Weekly meal plan reminder"></button></div>
+      <div class="list-item static"><button class="grow text-left plain" data-action="water-reminder"><span>Water reminder<span class="li-sub">${state.waterReminder.enabled ? `Every ${state.waterReminder.every} h, ${esc(state.waterReminder.from)}–${esc(state.waterReminder.to)}` : 'Off'}</span></span></button>
+        <button class="toggle" role="switch" aria-checked="${state.waterReminder.enabled}" data-action="toggle-water-reminder" aria-label="Water reminder"></button></div>
     </div>
 
     <h2 class="group-label">Appearance</h2>
@@ -2719,7 +2722,7 @@ function nativeNotifButtons() {
     <p class="small muted mt-2 m-0">Opens Android's "Alarms and reminders" switch for PulseFit.</p>` : ''}`;
 }
 let reminderSheetKind = 'daily';
-const refreshReminderSheet = () => (reminderSheetKind === 'plan' ? planReminderSheet() : remindersSheet());
+const refreshReminderSheet = () => (reminderSheetKind === 'plan' ? planReminderSheet() : reminderSheetKind === 'water' ? waterReminderSheet() : remindersSheet());
 function remindersSheet() {
   reminderSheetKind = 'daily';
   const rm = state.reminder;
@@ -2731,6 +2734,23 @@ function remindersSheet() {
     <p class="small muted mt-4">${isNativeApp() ? nativeNotifLine() + '</p>' + nativeNotifButtons() + '<p class="m-0">' : perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
 }
 
+function waterReminderSheet() {
+  reminderSheetKind = 'water';
+  const w = state.waterReminder, slots = waterSlots();
+  const fmt = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  openSheet('Water reminder', `
+    <div class="row-between mb-4"><div><div class="t fw-bold">Drink water</div><div class="small muted">A nudge every few hours until you reach ${L1(waterGoal())} L. Tap “+ Glass” on it to log a glass without opening the app.</div></div>
+      <button class="toggle" role="switch" aria-checked="${w.enabled}" data-action="toggle-water-reminder" aria-label="Water reminder"></button></div>
+    <div class="field"><label for="wrEvery">Every</label><select class="input" id="wrEvery" data-bind="waterEvery">${[1, 1.5, 2, 3, 4].map((h) => `<option value="${h}" ${Number(w.every) === h ? 'selected' : ''}>${h} hours</option>`).join('')}</select></div>
+    <div class="grid2">
+      <div class="field"><label for="wrFrom">From</label><input class="input" id="wrFrom" type="time" value="${esc(w.from)}" data-bind="waterFrom" /></div>
+      <div class="field"><label for="wrTo">Until</label><input class="input" id="wrTo" type="time" value="${esc(w.to)}" data-bind="waterTo" /></div>
+    </div>
+    <p class="small muted mt-3 m-0" id="wrTimes">${slots.length} a day: ${slots.map(fmt).join(', ')}. Change your water goal under Goals.</p>
+    <p class="small muted mt-4 m-0">${isNativeApp() ? nativeNotifLine() : perm === 'granted' ? 'In a browser they only come while PulseFit is open.' : 'In a browser they only come while PulseFit is open, and need notifications allowed.'}</p>
+    ${nativeNotifButtons()}`);
+}
 function planReminderSheet() {
   reminderSheetKind = 'plan';
   const pr = state.planReminder;
@@ -3132,6 +3152,13 @@ function plannedNotifications() {
       const at = atTime(d, rm.time);
       if (at > now) out.push({ id: 1000 + i, title: TRAIN_REMINDER_TITLE, body: trainReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/today' } });
     }
+    // Water: one week ahead (up to 24 a day); today's stop once the goal is reached.
+    if (state.waterReminder.enabled && i < 7 && !(i === 0 && (hget(k, 'water') || 0) >= waterGoal())) {
+      waterSlots().forEach((m, j) => {
+        const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(m / 60), m % 60);
+        if (at > now) out.push({ id: 3000 + i * 24 + j, title: 'Drink water 💧', body: waterReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', actionTypeId: 'water', extra: { route: '#/today' } });
+      });
+    }
     if (pr.enabled && d.getDay() === pr.day) {
       const at = atTime(d, pr.time);
       if (at > now) out.push({ id: 2000 + i, title: planReminderTitle(d.getDay()), body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/plan' } });
@@ -3147,7 +3174,7 @@ async function syncNativeReminders({ ask = false } = {}) {
   if (!Notif) return;
   try {
     let p = await Notif.checkPermissions();
-    if (p.display !== 'granted' && ask && (state.reminder.enabled || state.planReminder.enabled)) p = await Notif.requestPermissions();
+    if (p.display !== 'granted' && ask && (state.reminder.enabled || state.planReminder.enabled || state.waterReminder.enabled)) p = await Notif.requestPermissions();
     notifPerm = p.display;
     // Exact timing only when Android already allows it. Asking for it on every schedule made the plugin open
     // the "Alarms & reminders" screen each time the app started; the reminder sheet offers it instead.
@@ -3188,7 +3215,9 @@ async function hcBoot() {
   syncNativeReminders({ ask: !asked });
   try {
     const { Notif } = await hcLoad();
-    Notif.addListener('localNotificationActionPerformed', ({ notification }) => {
+    try { await Notif.registerActionTypes({ types: [{ id: 'water', actions: [{ id: 'glass', title: `+ Glass (${WATER_GLASS} ml)` }] }] }); } catch { /* ignore */ }
+    Notif.addListener('localNotificationActionPerformed', ({ actionId, notification }) => {
+      if (actionId === 'glass') { addWaterGlass(); return; }
       const r = notification && notification.extra && notification.extra.route;
       if (r && location.hash !== r) location.hash = r;
     });
@@ -3358,6 +3387,15 @@ const ACTIONS = {
     if (sheetOpen()) refreshReminderSheet();
   },
   'plan-reminder': planReminderSheet,
+  'water-reminder': waterReminderSheet,
+  'toggle-water-reminder': async () => {
+    state.waterReminder.enabled = !state.waterReminder.enabled;
+    if (state.waterReminder.enabled && isNativeApp()) await syncNativeReminders({ ask: true });
+    if (state.waterReminder.enabled && !isNativeApp() && 'Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission(); } catch { /* ignore */ }
+    }
+    save(); if (sheetOpen()) waterReminderSheet(); rerender();
+  },
   'toggle-plan-reminder': async () => {
     state.planReminder.enabled = !state.planReminder.enabled;
     if (state.planReminder.enabled && isNativeApp()) await syncNativeReminders({ ask: true });
@@ -3448,6 +3486,14 @@ document.addEventListener('input', (ev) => {
     state.planReminder.time = t.value || '10:00';
     state.planReminder.lastNotified = '';
     save(); rerender();
+  } else if (t.dataset.bind === 'waterEvery' || t.dataset.bind === 'waterFrom' || t.dataset.bind === 'waterTo') {
+    const w = state.waterReminder;
+    if (t.dataset.bind === 'waterEvery') w.every = Number(t.value) || 2;
+    else if (t.value) w[t.dataset.bind === 'waterFrom' ? 'from' : 'to'] = t.value;
+    if (toMin(w.to) < toMin(w.from)) w.to = w.from;
+    save(); rerender();
+    const el = $('#wrTimes'), sl = waterSlots(), f = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+    if (el) el.textContent = `${sl.length} a day: ${sl.map(f).join(', ')}. Change your water goal under Goals.`;
   } else if (t.dataset.bind === 'planRemDay') {
     state.planReminder.day = Number(t.value);
     state.planReminder.lastNotified = '';
@@ -3516,6 +3562,32 @@ function trainReminderText(d) {
   const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
   return `${list} today. A few sets is all it takes!`;
 }
+/* Water reminder: a nudge every `every` hours from `from` to `to`, skipped once the day's water goal is reached. */
+const WATER_GLASS = 250;
+const waterGoal = () => hp().waterGoal || HDEF.waterGoal;
+const toMin = (hhmm) => { const [h, m] = String(hhmm || '0:0').split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+/** Reminder times of a day, in minutes after midnight. */
+function waterSlots() {
+  const w = state.waterReminder, step = Math.max(30, Math.round((Number(w.every) || 2) * 60));
+  const a = toMin(w.from), b = toMin(w.to), out = [];
+  for (let t = a; t <= b && out.length < 24; t += step) out.push(t);
+  return out;
+}
+const L1 = (ml) => (ml / 1000).toFixed(1).replace(/\.0$/, '');
+function waterReminderText(d) {
+  const goal = waterGoal();
+  if (dayKey(d) !== todayKey()) return `A glass now keeps you on track for ${L1(goal)} L today.`;
+  const had = hget(todayKey(), 'water') || 0;
+  return had ? `${(had / 1000).toFixed(2).replace(/0$/, '')} of ${L1(goal)} L so far today. Have a glass now.` : `Nothing logged yet today. Start with a glass, your goal is ${L1(goal)} L.`;
+}
+/** Add one glass to today's water (also used by the notification's "+ Glass" button). */
+function addWaterGlass() {
+  const day = todayKey();
+  hset(day, 'water', (hget(day, 'water') || 0) + WATER_GLASS);
+  save(); rerender();
+  toast(`Water: ${((hget(day, 'water')) / 1000).toFixed(2)} L`);
+}
+
 /** Plan reminder title: from Friday it's about next week's shopping. */
 const planReminderTitle = (wd) => (((wd + 6) % 7) >= 4 ? 'Groceries for next week 🛒' : "This week's groceries 🛒");
 
@@ -3529,8 +3601,23 @@ function checkPlanReminder() {
   save();
 }
 
+/** Browser only: a water nudge at each slot while the page is open. */
+function checkWaterReminder() {
+  const w = state.waterReminder;
+  if (!w.enabled || isNativeApp() || !('Notification' in window) || Notification.permission !== 'granted') return;
+  const k = todayKey(), now = new Date(), cur = now.getHours() * 60 + now.getMinutes();
+  const due = waterSlots().filter((m) => m <= cur).pop();
+  if (due == null || (hget(k, 'water') || 0) >= waterGoal()) return;
+  const slot = `${k}|${due}`;
+  if (w.lastSlot === slot) return;
+  try { new Notification('Drink water 💧', { body: waterReminderText(today()) }); } catch { /* ignore */ }
+  w.lastSlot = slot;
+  save();
+}
+
 function checkReminder() {
   checkPlanReminder();
+  checkWaterReminder();
   const rm = state.reminder;
   if (!rm.enabled || !('Notification' in window) || Notification.permission !== 'granted') return;
   const k = dayKey(today());

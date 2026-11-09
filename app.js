@@ -1012,7 +1012,7 @@ function progressBody() {
       ${verdict}
     </section>
     <section class="card mt-4" aria-labelledby="mH">
-      <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+, /, ''))})` : 'In centimetres'}</div></div><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></div>
+      <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+, /, ''))})` : 'In centimetres'}</div></div><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">History</button><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></span></div>
       <div class="m-grid mt-3">${mtiles}</div>
       <p class="small muted m-0 mt-3">Measure every week or two, same time of day. Waist keeps going down even in weeks when the scale doesn't.</p>
     </section>
@@ -1451,7 +1451,7 @@ function trackMeasureCard(day) {
   }).join('');
   return `
     <section class="card mt-4" aria-labelledby="measH">
-      <div class="row-between"><h2 class="h3" id="measH">Measurements</h2><button class="btn subtle sm" data-action="track-measure">Log</button></div>
+      <div class="row-between"><h2 class="h3" id="measH">Measurements</h2><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">History</button><button class="btn subtle sm" data-action="track-measure">Log</button></span></div>
       ${rows
         ? `<ul class="kv-list mt-3">${rows}</ul><p class="muted small m-0 mt-2">Latest value, and change since your first entry.</p>`
         : '<p class="muted small mt-3 m-0">Measure your waist every week or two, at the same time of day. It keeps going down even in weeks when the scale doesn’t.</p>'}
@@ -1724,16 +1724,43 @@ function sleepSheet() {
     ${v != null ? '<button class="btn ghost block mt-3" data-action="track-clear" data-f="sleep">Remove this entry</button>' : ''}`);
 }
 
-function measureSheet() {
-  const day = tKey();
+/** Short labels for the history list: "Upper arm · left" → "Arm L". */
+const MEASURE_SHORT = { waist: 'Waist', chest: 'Chest', hips: 'Hips', neck: 'Neck', armL: 'Arm L', arm: 'Arm R', forearmL: 'Forearm L', forearm: 'Forearm R', thighL: 'Thigh L', thigh: 'Thigh R', calfL: 'Calf L', calf: 'Calf R' };
+/** Dates that have at least one measurement, newest first: [{ day, vals: [[field, cm]] }]. */
+function measureDates() {
+  const by = {};
+  for (const [f] of MEASURES) for (const { day, v } of series(f)) (by[day] = by[day] || []).push([f, v]);
+  return Object.keys(by).sort().reverse().map((day) => ({ day, vals: MEASURES.map(([f]) => by[day].find((x) => x[0] === f)).filter(Boolean) }));
+}
+function measureHistorySheet() {
+  const rows = measureDates();
+  openSheet('Measurement history', rows.length ? `
+    <p class="muted small m-0 sheet-meta">${rows.length} ${rows.length === 1 ? 'date' : 'dates'}, newest first. Tap a date to change it.</p>
+    <ul class="m-hist mt-3">${rows.map(({ day, vals }) => `
+      <li><button class="m-hist-row" data-action="measure-edit" data-day="${day}">
+        <span class="d">${esc(fmtShort(fromKey(day)))}${day.slice(0, 4) !== todayKey().slice(0, 4) ? ` ${day.slice(0, 4)}` : ''}</span>
+        <span class="vals">${vals.map(([f, v]) => `<span class="chip sm">${MEASURE_SHORT[f]} ${kg(v)}</span>`).join('')}</span>
+        ${icon('chevR')}
+      </button></li>`).join('')}</ul>
+    <button class="btn ghost block mt-4" data-action="measure-edit" data-day="${todayKey()}">${icon('plus')} Add for another date</button>` : `
+    <p class="muted m-0">No measurements yet. Log your first one; every date you measure is kept here.</p>
+    <button class="btn block mt-4" data-action="measure-edit" data-day="${todayKey()}">Log measurements</button>`);
+}
+
+let measureDay = null;   // the date the measurements sheet is showing
+function measureSheet(dayArg) {
+  const day = typeof dayArg === 'string' ? dayArg : tKey();
+  measureDay = day;
   openSheet('Measurements', `
-    <p class="muted small m-0">In centimetres, ${esc(onDayLabel())}. Fill in only what you measured; the rest stays as it was.</p>
+    <div class="field"><label for="msDate">Date</label><input class="input" id="msDate" type="date" value="${day}" max="${todayKey()}" /></div>
+    <p class="muted small m-0 mt-2">In centimetres. Fill in only what you measured on this date; empty fields are left out. Earlier values show as grey hints.</p>
     <div class="grid2">${MEASURES.map(([f, label]) => {
       const last = latestOn(f, day);
       return `<div class="field"><label for="ms-${f}">${label}</label><input class="input" id="ms-${f}" data-measure="${f}" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${hget(day, f) ?? ''}" placeholder="${last ? kg(last.v) : ''}" /></div>`;
     }).join('')}</div>
     <p class="muted small mt-3 m-0">Waist: around your belly button, relaxed, after breathing out. Upper arm: the widest part, arm relaxed by your side. Forearm: just below the elbow. Thigh: halfway between hip and knee. Calf: the widest part, standing. Use the same spot every time.</p>
-    <button class="btn block lg mt-5" data-action="track-measure-save">Save</button>`);
+    <button class="btn block lg mt-5" data-action="track-measure-save">Save</button>
+    <button class="link-btn small mt-3" data-action="measure-history">See all dates</button>`);
 }
 
 function setupSheet() {
@@ -1841,9 +1868,11 @@ const TRACK_ACTIONS = {
     hset(tKey(), 'sleep', total);
     save(); closeSheet(); rerender(); toast('Saved');
   },
-  'track-measure': measureSheet,
+  'track-measure': () => measureSheet(),
+  'measure-history': measureHistorySheet,
+  'measure-edit': (el) => measureSheet(el.dataset.day),
   'track-measure-save': () => {
-    const day = tKey();
+    const day = measureDay || tKey();
     let bad = false, n = 0;
     $$('[data-measure]').forEach((inp) => {
       const v = parseNum(inp.value);
@@ -1852,7 +1881,7 @@ const TRACK_ACTIONS = {
       hset(day, inp.dataset.measure, Math.round(v * 10) / 10); n++;
     });
     if (bad) { toast('Measurements should be between 10 and 300 cm'); return; }
-    save(); closeSheet(); rerender(); toast(n ? 'Measurements saved' : 'Nothing changed');
+    save(); closeSheet(); rerender(); toast(n ? `Measurements saved for ${fmtShort(fromKey(day))}` : 'Nothing changed');
   },
   'track-clear': (el) => { hset(tKey(), el.dataset.f, null); save(); closeSheet(); rerender(); toast('Entry removed'); },
 };
@@ -3627,6 +3656,11 @@ document.addEventListener('input', (ev) => {
 });
 
 document.addEventListener('change', async (ev) => {
+  if (ev.target.id === 'msDate') {                                  // measurements: switch to another date
+    const d = ev.target.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) measureSheet(d); else ev.target.value = measureDay || todayKey();
+    return;
+  }
   if (ev.target.id === 'fBasis') {                                  // per 100 g needs the grams you ate
     const per100 = ev.target.value === '100g', f = $('#fGramsField');
     if (f) f.hidden = !per100;

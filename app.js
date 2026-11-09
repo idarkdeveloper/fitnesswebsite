@@ -2917,7 +2917,7 @@ function signInSheet() {
 
 function codeSheet(email) {
   openSheet('Check your email', `
-    <p class="muted m-0 mb-4">We sent a sign-in email to <strong>${esc(email)}</strong>. Open its link in this browser. If the email also shows a 6-digit code, you can type it here instead.</p>
+    <p class="muted m-0 mb-4">We sent a sign-in email to <strong>${esc(email)}</strong>. ${isNativeApp() ? 'Tap <b>Sign in</b> in that email on this phone: it opens PulseFit and signs you in.' : 'Open its link in this browser.'} If the email also shows a 6-digit code, you can type it here instead.</p>
     <div class="field"><label for="syncCode">Code</label>
       <input class="input" id="syncCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" data-email="${esc(email)}" /></div>
     <button class="btn block mt-3" data-action="sync-code">Sign in with code</button>`);

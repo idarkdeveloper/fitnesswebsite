@@ -2912,15 +2912,18 @@ function signInSheet() {
     <div class="field mt-6"><label for="syncEmail">Or get a sign-in link by email</label>
       <input class="input" id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120" /></div>
     <button class="btn ghost block mt-3" data-action="sync-email">Email me a link</button>
-    <p class="muted small m-0 mt-3">Open the link in this same browser.</p>`);
+    <p class="muted small m-0 mt-3">${isNativeApp() ? 'Tap the link in the email on this phone: it opens PulseFit.' : 'Open the link in this same browser.'}</p>`);
 }
 
 function codeSheet(email) {
   openSheet('Check your email', `
-    <p class="muted m-0 mb-4">We sent a sign-in email to <strong>${esc(email)}</strong>. ${isNativeApp() ? 'Tap <b>Sign in</b> in that email on this phone: it opens PulseFit and signs you in.' : 'Open its link in this browser.'} If the email also shows a 6-digit code, you can type it here instead.</p>
-    <div class="field"><label for="syncCode">Code</label>
-      <input class="input" id="syncCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" data-email="${esc(email)}" /></div>
-    <button class="btn block mt-3" data-action="sync-code">Sign in with code</button>`);
+    <p class="m-0">We sent a sign-in email to <strong>${esc(email)}</strong>.</p>
+    <p class="muted m-0 mt-3">${isNativeApp() ? 'Open it on this phone and tap <b>Sign in</b>. PulseFit opens and you are signed in.' : 'Open it and tap <b>Sign in</b> in this browser.'} The link works once and expires after a while; if it has, ask for a new one.</p>
+    <details class="faq mt-4"><summary class="small">The email has a 6-digit code?</summary>
+      <div class="field mt-3"><label for="syncCode">Code</label>
+        <input class="input" id="syncCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" data-email="${esc(email)}" /></div>
+      <button class="btn block mt-3" data-action="sync-code">Sign in with code</button>
+    </details>`);
 }
 
 /* ---------------------------------------------------------------

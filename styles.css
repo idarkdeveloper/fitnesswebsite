@@ -1385,7 +1385,7 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .hist-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-4) var(--space-5); background: none; border: 0; border-bottom: 1px solid var(--border-soft); color: inherit; text-align: left; }
 .hist-row > svg { color: var(--muted); width: 22px; height: 22px; }
 .p-row { display: block; padding: var(--space-4) var(--space-5); }
-.m-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.m-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }   /* pairs: left | right */
 .m-tile { display: flex; flex-direction: column; padding: var(--space-3); border-radius: var(--r-sm); border: 1px solid var(--border-soft); background: var(--surface-2); min-width: 0; }
 .m-tile .k { font-size: var(--fs-sm); color: var(--muted); }
 .m-tile .v { font-size: var(--fs-xl); font-weight: 800; white-space: nowrap; }

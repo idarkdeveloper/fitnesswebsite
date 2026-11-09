@@ -3200,6 +3200,7 @@ async function hcBoot() {
     const { App } = await hcLoad();
     App.addListener('appStateChange', ({ isActive }) => {
       if (!isActive) return;
+      checkForUpdate();
       widgetPush(true);
       syncNativeReminders();
       if (Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync();
@@ -3653,5 +3654,25 @@ applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');
 render();
 checkReminder();
+/* ---------- Picking up a new version ----------
+   Android keeps the app's page alive in the background, so a site update didn't show until the app was
+   fully closed. When PulseFit comes back to the front, compare the live version (the service worker's cache
+   name) with the one this page loaded, and reload once if it changed. Never mid-workout, with a sheet open,
+   or while typing. */
+let loadedVersion = null, lastVersionCheck = 0;
+async function siteVersion() {
+  try { const t = await (await fetch('sw.js', { cache: 'no-store' })).text(); return (t.match(/pf-shell-v\d+/) || [])[0] || null; } catch { return null; }
+}
+siteVersion().then((v) => { loadedVersion = v; });
+async function checkForUpdate() {
+  if (!loadedVersion || Date.now() - lastVersionCheck < 30e3) return;
+  lastVersionCheck = Date.now();
+  const v = await siteVersion();
+  if (!v || v === loadedVersion) return;
+  if (draft || sheetOpen() || parseRoute().name === 'workout' || document.activeElement?.matches('input, textarea, select')) return;
+  location.reload();
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+
 hcBoot();
 setInterval(checkReminder, 60000);

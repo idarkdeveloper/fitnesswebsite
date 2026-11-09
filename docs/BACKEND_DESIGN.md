@@ -11,7 +11,7 @@ The earlier full design is in git history (commit `73b0faf`). It covered up to 1
 | # | Decision | Source |
 |---|---|---|
 | 1 | Stay on GitHub Pages (`<user>.github.io`). No custom domain. | Owner, 2026-11-07 |
-| 2 | Theme syncs. Reminders stay on each device. | Default accepted |
+| 2 | Theme syncs. Reminder settings sync too (changed later at the owner's request, so they survive a reinstall); when each reminder last fired stays on the device. | Default accepted, then revised |
 | 3 | A reset wins over unsynced work on other devices. That work is offered as a backup download. | Default accepted |
 | 4 | Import while signed in **merges** into the synced data. | Owner, 2026-11-07 |
 | 5 | A different account on the same device starts fresh. Local data is offered as a backup download first. | Default accepted |
@@ -134,7 +134,7 @@ The client makes two calls:
 
 These stay on the device and are never uploaded:
 - `profile.email`
-- `reminder`
+- `reminder.lastNotified`, `planReminder.lastNotified`, `waterReminder.lastSlot` (the settings themselves sync as `reminders`)
 - `challengeStart` (dead code: it is set in `defaultState()` and never used)
 
 The device keeps its sync bookkeeping in a separate key, `pf2_sync`:

@@ -7,7 +7,7 @@
   const SCHEMA = 1;
   const SKEW_MS = 5 * 60 * 1000;          // future stamps beyond this are clamped
   // Single-value settings, merged by newest stamp.
-  const FIXED_REGS = ['profile.name', 'profile.theme', 'profile.pro', 'routineId', 'trainingDays', 'restSeconds'];
+  const FIXED_REGS = ['profile.name', 'profile.theme', 'profile.pro', 'routineId', 'trainingDays', 'restSeconds', 'reminders'];
   // Maps of single values (one register per key), merged by newest stamp.
   // hprofile: body profile and targets; hlog: "YYYY-MM-DD|field" -> number (weight, steps, sleep, water,
   // measurements); foods: saved foods by id.
@@ -25,7 +25,17 @@
     return JSON.stringify(v === undefined ? null : v);
   }
 
-  /** The synced part of app state. Email, reminder and challengeStart stay on the device. */
+  /** Reminder settings that follow you to a new phone (not when they last fired). */
+  function pickReminders(s) {
+    const r = s.reminder || {}, pr = s.planReminder || {}, w = s.waterReminder || {};
+    return {
+      daily: { enabled: !!r.enabled, time: r.time ?? '18:00' },
+      plan: { enabled: pr.enabled !== false, day: pr.day ?? 5, time: pr.time ?? '18:00' },
+      water: { enabled: !!w.enabled, every: w.every ?? 2, from: w.from ?? '09:00', to: w.to ?? '21:00' },
+    };
+  }
+
+  /** The synced part of app state. Email and challengeStart stay on the device. */
   function pick(state) {
     const s = state || {};
     const p = s.profile || {};
@@ -34,6 +44,7 @@
       routineId: s.routineId,
       trainingDays: Array.isArray(s.trainingDays) ? s.trainingDays : [],
       restSeconds: s.restSeconds,
+      reminders: pickReminders(s),
       current: isObj(s.current) ? s.current : {},
       levels: isObj(s.levels) ? s.levels : {},
       joined: isObj(s.joined) ? s.joined : {},
@@ -128,7 +139,7 @@
     // Health fields are optional (documents written before the Track tab don't have them).
     if (d.meals !== undefined && (!Array.isArray(d.meals) || d.meals.some((m) => !isObj(m) || typeof m.id !== 'string' || typeof m.at !== 'string' || !Number.isFinite(m.kcal)))) return 'bad meals';
     if (d.hlog !== undefined && (!isObj(d.hlog) || Object.values(d.hlog).some((v) => !Number.isFinite(v)))) return 'bad hlog';
-    for (const k of ['hprofile', 'foods', 'grocery', 'videos']) if (d[k] !== undefined && !isObj(d[k])) return 'bad ' + k;
+    for (const k of ['hprofile', 'foods', 'grocery', 'videos', 'reminders']) if (d[k] !== undefined && !isObj(d[k])) return 'bad ' + k;
     return null;
   }
 
@@ -240,8 +251,15 @@
     const d = clone(doc.data);
     const s = clone(state);
     s.profile = { ...(s.profile || {}), ...d.profile };
-    for (const k of ['routineId', 'trainingDays', 'restSeconds', 'current', 'levels', 'joined', 'workouts', 'hprofile', 'hlog', 'foods', 'meals', 'grocery']) {
+    for (const k of ['routineId', 'trainingDays', 'restSeconds', 'current', 'levels', 'joined', 'workouts', 'hprofile', 'hlog', 'foods', 'meals', 'grocery', 'videos']) {
       if (d[k] !== undefined) s[k] = d[k];
+    }
+    // Reminder settings: keep this device's "last fired" bookkeeping.
+    const r = d.reminders;
+    if (isObj(r)) {
+      if (isObj(r.daily)) s.reminder = { ...(s.reminder || {}), ...r.daily };
+      if (isObj(r.plan)) s.planReminder = { ...(s.planReminder || {}), ...r.plan };
+      if (isObj(r.water)) s.waterReminder = { ...(s.waterReminder || {}), ...r.water };
     }
     return s;
   }

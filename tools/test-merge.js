@@ -108,12 +108,30 @@ test('reset wins over unsynced work elsewhere, and flags the loss', () => {
 
 test('device-local fields never leave the device', () => {
   const c = cloud(); const a = device(); const b = device();
-  edit(a, (s) => { s.reminder.enabled = true; s.profile.email = 'secret@example.com'; });
+  edit(a, (s) => { s.reminder.lastNotified = '2026-01-01'; s.profile.email = 'secret@example.com'; });
   sync(a, c); sync(b, c);
   assert.ok(!JSON.stringify(c.doc).includes('secret@example.com'));
+  assert.ok(!JSON.stringify(c.doc).includes('lastNotified'));
   assert.ok(!('reminder' in c.doc.data));
-  assert.strictEqual(b.state.reminder.enabled, false);
+  assert.strictEqual(b.state.reminder.lastNotified, '');
   assert.strictEqual(b.state.profile.email, 'me@example.com');
+});
+
+test('reminder settings follow you to a new phone, without when they last fired', () => {
+  const c = cloud(); const a = device(); const b = device();
+  edit(a, (s) => {
+    s.reminder.enabled = true; s.reminder.time = '07:30';
+    s.planReminder = { enabled: true, day: 6, time: '18:00', lastNotified: '' };
+    s.waterReminder = { enabled: true, every: 3, from: '08:00', to: '20:00', lastSlot: 'x' };
+  });
+  sync(a, c);
+  edit(b, (s) => { s.planReminder = { enabled: true, day: 5, time: '18:00', lastNotified: '2026-02-02' }; }); sync(b, c);
+  assert.strictEqual(b.state.reminder.enabled, true);
+  assert.strictEqual(b.state.reminder.time, '07:30');
+  assert.strictEqual(b.state.planReminder.day, 6);
+  assert.strictEqual(b.state.planReminder.lastNotified, '2026-02-02');     // this phone's bookkeeping stays
+  assert.deepStrictEqual([b.state.waterReminder.enabled, b.state.waterReminder.every, b.state.waterReminder.from], [true, 3, '08:00']);
+  assert.ok(!JSON.stringify(c.doc).includes('lastSlot'));
 });
 
 test('first sign-in keeps unstamped local progress the cloud lacks', () => {

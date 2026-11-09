@@ -129,7 +129,7 @@ const ids = (page) => page.evaluate(() => window.PF_APP.getState().workouts.map(
   await laptop.waitForSelector('button[data-action="sync-recovery"]');
   step('reset wins everywhere; the laptop offers a backup of what it lost');
 
-  assert.ok(!JSON.stringify(cloud.doc).includes('reminder'), 'reminder must stay local');
+  assert.ok(!JSON.stringify(cloud.doc).includes('lastNotified') && !JSON.stringify(cloud.doc).includes('lastSlot'), 'when a reminder last fired must stay on the phone');
   await phone.screenshot({ path: process.env.SHOT || '/dev/null' }).catch(() => {});
   assert.deepStrictEqual(errors, [], 'console errors:\n' + errors.join('\n'));
   step('no console errors or CSP violations');

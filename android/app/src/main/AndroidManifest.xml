@@ -61,6 +61,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Reminders (local notifications). Inexact alarms are fine for a "time to train" nudge,
+         so drop the exact-alarm permission the plugin asks for. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+
     <!-- Health Connect: PulseFit only reads steps, sleep, weight, workouts and active calories.
          The health plugin declares many more; drop everything else, including every write permission. -->
     <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED" tools:node="remove" />

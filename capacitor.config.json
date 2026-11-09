@@ -8,5 +8,11 @@
   },
   "android": {
     "backgroundColor": "#13161d"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_pulsefit",
+      "iconColor": "#2E6FDB"
+    }
   }
 }

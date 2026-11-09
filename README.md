@@ -61,7 +61,7 @@ The last 14 days are read when the app opens and when it comes back to the front
 never overwritten. PulseFit only reads; every Health Connect write permission is removed in `AndroidManifest.xml`.
 Privacy page: `privacy.html`.
 
-**Reminders:** in the app, the training reminder and the weekly meal plan reminder are real Android notifications (`@capacitor/local-notifications`), so they arrive while PulseFit is closed. The next 4 weeks are scheduled ahead and rebuilt whenever you open the app or change a setting; a training day you've already done is skipped. In a browser they still only fire while the page is open.
+**Reminders:** in the app, the training reminder and the weekly meal plan reminder are real Android notifications (`@capacitor/local-notifications`), so they arrive while PulseFit is closed. They are inexact (Android may delay them a few minutes) unless you turn on Android's "Alarms and reminders" for PulseFit (Profile → Reminder → Deliver reminders on time); the app never opens that screen on its own. Profile → Reminder → Send a test notification checks the setup. The next 4 weeks are scheduled ahead and rebuilt whenever you open the app or change a setting; a training day you've already done is skipped. In a browser they still only fire while the page is open.
 
 **Home-screen widget:** a Day Streak widget (`StreakWidget.java`) shows your streak, today's session or "Done today ✓", and calories left and steps. The page sends it fresh numbers through the `PulseFitWidget` plugin whenever your data changes; add it from Profile → Home screen widget.
 

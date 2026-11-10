@@ -739,7 +739,7 @@ VIEWS.today = () => {
       ${tile('track-weight', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, true, 'Log weight')}
       ${tile('track-steps', 'Steps', steps != null ? nf(steps) : '–', '', `of ${nf(sg)}`, steps != null ? steps / sg : 0, false, 'Log steps')}
       ${tile('track-sleep', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', `of ${fmtSleep(lg)}`, sleep != null ? sleep / lg : 0, false, 'Log sleep')}
-      ${tile('track-water-add', 'Water', water != null ? (water / 1000).toFixed(1) : '0', 'L', 'tap + for a glass', (water || 0) / wg, false, 'Add a glass of water (250 ml)', 'data-ml="250"')}
+      ${tile('track-water-add', 'Water', L1(water), 'L', 'tap + for a glass', (water || 0) / wg, false, 'Add a glass of water (250 ml)', 'data-ml="250"')}
     </div>
     ${watchLine(tk)}
     <div class="tip-card mt-5">
@@ -1099,7 +1099,7 @@ VIEWS.profile = () => {
   const T = targets(todayKey());
   const name = pf.name.trim();
   const days = [1, 2, 3, 4, 5, 6, 0].filter((d) => state.trainingDays.includes(d)).map((d) => WEEKDAY_SHORT[d]).join(', ') || 'None';
-  const goals = [p.goalWeight ? `${kg(p.goalWeight)} kg` : null, `${nf(p.stepGoal || HDEF.stepGoal)} steps`, fmtSleep(p.sleepGoal || HDEF.sleepGoal), `${((p.waterGoal || HDEF.waterGoal) / 1000).toFixed(1)} L`].filter(Boolean).join(' · ');
+  const goals = [p.goalWeight ? `${kg(p.goalWeight)} kg` : null, `${nf(p.stepGoal || HDEF.stepGoal)} steps`, fmtSleep(p.sleepGoal || HDEF.sleepGoal), `${L1(p.waterGoal || HDEF.waterGoal)} L`].filter(Boolean).join(' · ');
   const row = (action, title, sub, end = icon('chevR'), cls = '') => `<button class="list-item ${cls}" data-action="${action}"><span>${title}${sub ? `<span class="li-sub">${sub}</span>` : ''}</span>${end}</button>`;
   return `
     <h1 class="h1">Profile</h1>
@@ -1434,7 +1434,7 @@ function trackHabits(day) {
       <div class="tiles">
         ${tile('track-steps', 'Steps', steps, steps != null ? nf(steps) : '', sg, nf(sg))}
         ${tile('track-sleep', 'Sleep', sleep, sleep != null ? fmtSleep(sleep) : '', lg, fmtSleep(lg))}
-        ${tile('track-water', 'Water', water, water != null ? `${(water / 1000).toFixed(1)} L` : '', wg, `${(wg / 1000).toFixed(1)} L`)}
+        ${tile('track-water', 'Water', water, water != null ? `${L1(water)} L` : '', wg, `${L1(wg)} L`)}
       </div>
       <button class="btn ghost block mt-3" data-action="track-water-add" data-ml="250">${icon('plus')} Glass of water (250 ml)</button>
     </section>`;
@@ -1880,7 +1880,7 @@ const TRACK_ACTIONS = {
   'track-water-add': (el) => {
     const day = tKey();
     hset(day, 'water', (hget(day, 'water') || 0) + Number(el.dataset.ml));
-    save(); rerender(); toast(`Water: ${((hget(day, 'water')) / 1000).toFixed(2)} L`);
+    save(); rerender(); toast(`Water: ${L1(hget(day, 'water'))} L`);
   },
   'track-num-save': (el) => {
     const v = parseNum($('#numVal').value), min = Number(el.dataset.min), max = Number(el.dataset.max);
@@ -3763,19 +3763,20 @@ function waterSlots() {
   for (let t = a; t <= b && out.length < 24; t += step) out.push(t);
   return out;
 }
-const L1 = (ml) => (ml / 1000).toFixed(1).replace(/\.0$/, '');
+/** Millilitres as litres, the same everywhere: 1250 -> "1.25", 1500 -> "1.5", 2000 -> "2". */
+function L1(ml) { return String(Math.round((ml || 0) / 10) / 100); }
 function waterReminderText(d) {
   const goal = waterGoal();
   if (dayKey(d) !== todayKey()) return `A glass now keeps you on track for ${L1(goal)} L today.`;
   const had = hget(todayKey(), 'water') || 0;
-  return had ? `${(had / 1000).toFixed(2).replace(/0$/, '')} of ${L1(goal)} L so far today. Have a glass now.` : `Nothing logged yet today. Start with a glass, your goal is ${L1(goal)} L.`;
+  return had ? `${L1(had)} of ${L1(goal)} L so far today. Have a glass now.` : `Nothing logged yet today. Start with a glass, your goal is ${L1(goal)} L.`;
 }
 /** Add one glass to today's water (also used by the notification's "+ Glass" button). */
 function addWaterGlass() {
   const day = todayKey();
   hset(day, 'water', (hget(day, 'water') || 0) + WATER_GLASS);
   save(); rerender();
-  toast(`Water: ${((hget(day, 'water')) / 1000).toFixed(2)} L`);
+  toast(`Water: ${L1(hget(day, 'water'))} L`);
 }
 
 /** Plan reminder title: from Friday it's about next week's shopping. */

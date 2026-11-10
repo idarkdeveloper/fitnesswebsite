@@ -1520,3 +1520,4 @@ svg.icon-sm { width: 16px; height: 16px; }
 .m-hist-row .d { font-weight: 700; }
 .m-hist-row .vals { grid-column: 1 / 2; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .m-hist-row svg { grid-row: 1 / 3; grid-column: 2; color: var(--muted); }
+.recipe-ings .cut { color: var(--muted); }

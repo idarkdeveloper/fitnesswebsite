@@ -21,7 +21,7 @@ window.PF_RECIPES = {
   dalpalak: { t: 25, sp: 'Turmeric, cumin seeds, garlic, green chilli, salt',
     steps: ['Boil the {dal} with water and turmeric until soft.',
       'Heat the oil, add cumin, garlic and green chilli, then the {onion} until soft.',
-      'Add the {tinnedtom} and the {spinach} (straight from frozen is fine; chop fresh greens) and cook until the greens are soft.',
+      'Add the {tinnedtom} and the {spinach} (straight from frozen is fine; roughly chop fresh greens) and cook until the greens are soft.',
       'Stir into the dal, season and simmer 3 minutes.'] },
   rajma: { t: 25, sp: 'Ginger-garlic paste, cumin, garam masala, chilli powder, salt, coriander',
     steps: ['Drain and rinse the {rajma}.',
@@ -176,3 +176,54 @@ window.PF_COOK = {
   prawns: 'just until pink and curled, 3–4 minutes',
   tofu: 'for 3–4 minutes, just to heat through',
 };
+
+/* How to cut each ingredient, shown next to it in a recipe's ingredient list. A recipe can override one with
+   `cut: { ingredient: '…' }` when that dish needs it differently (onion rings for salad, crumbled paneer for bhurji). */
+window.PF_CUT = {
+  onion: 'finely chopped (small dice, about 5 mm)',
+  tomato: 'chopped into 1 cm cubes',
+  capsicum: 'cut into 2 cm squares',
+  carrot: 'diced into 1 cm cubes',
+  cauliflower: 'cut into small florets, about 3 cm',
+  broccoli: 'cut into small florets, about 3 cm; peel and slice the stalk',
+  cabbage: 'finely shredded into thin strips',
+  pumpkin: 'cut into 2 cm cubes, skin on (it softens as it cooks)',
+  zucchini: 'halved lengthwise, then cut into 1 cm half-moons',
+  beans: 'ends trimmed, cut into 2 cm pieces',
+  cucumber: 'diced into 1 cm cubes',
+  spinach: 'frozen leaf spinach as it is; fresh spinach roughly chopped',
+  kale: 'leaves stripped off the stems, finely chopped',
+  chard: 'stems sliced thin, leaves roughly chopped',
+  aubergine: 'cut into 2 cm cubes',
+  leek: 'halved lengthwise, washed, sliced into thin half-rings',
+  mushrooms: 'sliced about 5 mm thick',
+  okra: 'washed and dried first, ends trimmed, cut into 1 cm rounds',
+  mixedveg: 'straight from the freezer, no need to thaw',
+  peas: 'straight from the freezer, no need to thaw',
+  chicken: 'cut into 3 cm bite-size pieces',
+  chickenthigh: 'cut into 3 cm pieces',
+  lamb: 'cut into 2–3 cm cubes',
+  fish: 'thawed, cut into 4 cm chunks',
+  salmon: 'cut into 4 cm chunks',
+  prawns: 'thawed and peeled',
+  tofu: 'pressed dry, cut into 2 cm cubes',
+  paneer: 'cut into 2 cm cubes',
+  tuna: 'drained',
+  rajma: 'drained and rinsed',
+  chana: 'drained and rinsed',
+  lemon: 'cut into wedges for squeezing',
+  fruit: 'cut into bite-size pieces',
+};
+// Dishes that need a different cut.
+Object.assign(window.PF_RECIPES.salad, { cut: { onion: 'thinly sliced into rings', cucumber: 'cut into thin half-moons', carrot: 'grated, or cut into thin sticks' } });
+Object.assign(window.PF_RECIPES.raita, { cut: { cucumber: 'grated, then squeezed to drop the water' } });
+Object.assign(window.PF_RECIPES.paneerbhurji, { cut: { paneer: 'crumbled by hand', onion: 'very finely chopped', tomato: 'finely chopped' } });
+Object.assign(window.PF_RECIPES.paneertikka, { cut: { paneer: 'cut into 3 cm cubes', capsicum: 'cut into 3 cm squares', onion: 'cut into quarters, layers separated into 3 cm petals' } });
+Object.assign(window.PF_RECIPES.tikka, { cut: { chicken: 'cut into 4 cm chunks' } });
+Object.assign(window.PF_RECIPES.fishtikka, { cut: { fish: 'thawed, left whole (or cut in two)' } });
+Object.assign(window.PF_RECIPES.omelette, { cut: { onion: 'very finely chopped', tomato: 'finely chopped, seeds scooped out' } });
+Object.assign(window.PF_RECIPES.eggbhurji, { cut: { onion: 'very finely chopped', tomato: 'finely chopped' } });
+Object.assign(window.PF_RECIPES.chanachaat, { cut: { onion: 'very finely chopped', tomato: 'finely chopped' } });
+Object.assign(window.PF_RECIPES.besanchilla, { cut: { onion: 'very finely chopped', tomato: 'very finely chopped' } });
+Object.assign(window.PF_RECIPES.moongchilla, { cut: { onion: 'very finely chopped' } });
+Object.assign(window.PF_RECIPES.poha, { cut: { onion: 'finely chopped' } });

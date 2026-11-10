@@ -1550,7 +1550,14 @@ function onDayLabel() {
   return day === todayKey() ? 'today' : `on ${fmtShort(fromKey(day))}`;
 }
 
-let foodPick = null;   // { id, qty, edit } while choosing servings in the Add food sheet
+let foodPick = null;   // { id, qty, edit } (a saved food) or { dish, qty } (a recipe dish) while choosing servings
+/** A recipe dish as a food: "Masala oats (1 bowl)" with its kcal, protein and nutrients per serving. */
+function dishFood(id) {
+  const M = window.PF_MEALS, d = M && M.DISH[id];
+  if (!d) return null;
+  return { name: `${d[0]} (${d[1]})`, kcal: d[2], protein: d[3], ...(M.dishNut(id) || {}) };
+}
+const pickedFood = () => (foodPick ? (foodPick.dish ? dishFood(foodPick.dish) : state.foods[foodPick.id]) : null);
 
 function foodSheet() {
   const day = tKey();
@@ -1564,10 +1571,10 @@ function foodSheet() {
   }).slice(0, 6);
   const T = targets(day);
   const eaten = state.meals.filter((m) => m.day === day).reduce((a, m) => a + m.kcal, 0);
-  const f = foodPick && state.foods[foodPick.id];
+  const f = pickedFood();
   const pickPanel = f ? `
     <div class="pick">
-      <div class="row-between"><span class="fw-bold t-lg">${esc(f.name)}</span>${foodPick.edit ? '' : '<button class="link-btn small" data-action="track-pick-edit">Edit values</button>'}</div>
+      <div class="row-between"><span class="fw-bold t-lg">${esc(f.name)}</span>${foodPick.edit || foodPick.dish ? '' : '<button class="link-btn small" data-action="track-pick-edit">Edit values</button>'}</div>
       <div class="small muted">${nf(f.kcal)} kcal${f.protein ? ` · ${nf(f.protein)} g protein` : ''}${nutLine(f)} each</div>
       ${foodPick.edit ? `
         <div class="grid3">
@@ -1598,10 +1605,12 @@ function foodSheet() {
   }
   openSheet('Add food', `
     <p class="small muted m-0 sheet-meta">to ${esc(onDayLabel())}${T ? ` · ${nf(Math.max(0, T.kcal - eaten))} kcal left` : ''}</p>
-    <label class="search mt-3">${icon('search')}<input id="foodSearch" type="search" aria-label="Search foods" placeholder="Search my foods, recent, or the plan" autocomplete="off" /></label>
+    <label class="search mt-3">${icon('search')}<input id="foodSearch" type="search" aria-label="Search foods" placeholder="Search foods and dishes: pizza, kulcha, dal…" autocomplete="off" /></label>
     ${pickPanel}
     <div class="row-between mt-4"><h3 class="sheet-sub m-0">My foods</h3><span class="small muted">tap · choose servings · add</span></div>
     ${saved.length ? `<div class="chips mt-2">${saved.map(([id, x]) => `<button class="chip ${foodPick && foodPick.id === id ? 'on' : ''}" data-name="${esc(x.name.toLowerCase())}" data-action="track-pick" data-food="${esc(id)}">${esc(x.name)} · ${nf(x.kcal)}</button>`).join('')}</div>` : '<p class="muted small m-0 mt-2">No saved foods yet. Add one under "Other food".</p>'}
+    ${window.PF_MEALS ? `<div id="dishResults" hidden><h3 class="sheet-sub">Dishes <span class="small muted">from the recipes</span></h3><div class="chips mt-2">${Object.entries(window.PF_MEALS.DISH).sort((a, b) => a[1][0].localeCompare(b[1][0])).map(([id, d]) => `<button class="chip ${foodPick && foodPick.dish === id ? 'on' : ''}" data-search-only data-name="${esc((d[0] + ' ' + id + ' ' + d[1]).toLowerCase())}" data-action="dish-pick" data-dish="${id}">${esc(d[0])} · ${nf(d[2])}</button>`).join('')}</div></div>` : ''}
+    <p class="muted small m-0 mt-3" id="foodNoMatch" hidden>Nothing found. Add it under "Other food" below, with the values from the label.</p>
     ${recent.length ? `<h3 class="sheet-sub">Recent</h3><div class="chips mt-2">${recent.map((m) => `<button class="chip" data-name="${esc(m.name.toLowerCase())}" data-action="track-food-recent" data-id="${esc(m.id)}">${esc(m.name)} · ${nf(m.kcal)}</button>`).join('')}</div>` : ''}
     ${planRows ? `<h3 class="sheet-sub">From ${day === todayKey() ? "today's" : "this day's"} plan</h3><div class="plan-picks mt-2">${planRows}</div>` : ''}
     <h3 class="sheet-sub">Eating out, or not sure?</h3>
@@ -1629,7 +1638,24 @@ function foodSheet() {
 /** Live filter for the Add food search box. */
 function filterFoodSheet(q) {
   const s = q.trim().toLowerCase();
-  $$('#sheetBody [data-name]').forEach((el) => { el.hidden = !!s && !el.dataset.name.includes(s); });
+  // Every word must match, in any order: "chicken pizza" finds "Wrap pizza (chicken & peppers)".
+  const words = s.split(/\s+/).filter(Boolean);
+  let shown = 0;
+  $$('#sheetBody [data-name]').forEach((el) => {
+    const hit = words.every((w) => el.dataset.name.includes(w));
+    el.hidden = el.hasAttribute('data-search-only') ? !s || !hit : !!s && !hit;
+    if (s && hit) shown++;
+  });
+  const dr = $('#dishResults');
+  if (dr) dr.hidden = !s || !$$('#dishResults [data-name]').some((el) => !el.hidden);
+  // Section headings (My foods, Recent, From today's plan) go away when none of their items match.
+  $$('#sheetBody .sheet-sub').forEach((h) => {
+    const head = h.closest('.row-between') || h, box = head.nextElementSibling;
+    if (!box || !box.querySelector('[data-name]') || box.closest('#dishResults')) return;
+    head.hidden = !!s && !Array.from(box.querySelectorAll('[data-name]')).some((el) => !el.hidden);
+  });
+  const nm = $('#foodNoMatch');
+  if (nm) nm.hidden = !s || shown > 0;
 }
 
 /** Starter "My foods": the everyday foods from mealplan.js. Fixed ids, so two devices seeding them don't duplicate. */
@@ -2259,8 +2285,9 @@ VIEWS.plan = () => {
 
 const PLAN_ACTIONS = {
   'track-pick': (el) => { foodPick = { id: el.dataset.food, qty: 1 }; foodSheet(); },
+  'dish-pick': (el) => { foodPick = { dish: el.dataset.dish, qty: 1 }; foodSheet(); },
   'track-pick-qty': (el) => {
-    const f = foodPick && state.foods[foodPick.id];
+    const f = pickedFood();
     if (!f) return;
     foodPick.qty = clamp(Math.round((foodPick.qty + Number(el.dataset.d)) * 2) / 2, 0.5, 10);
     $('#pickQty').textContent = `× ${foodPick.qty}`;
@@ -2268,7 +2295,7 @@ const PLAN_ACTIONS = {
     const pr = $('#pickProt'); if (pr && f.protein) pr.textContent = `${nf(f.protein * foodPick.qty)} g protein`;
   },
   'track-pick-add': () => {
-    const f = foodPick && state.foods[foodPick.id];
+    const f = pickedFood();
     if (!f) return;
     const q = foodPick.qty;
     foodPick = null;
@@ -2276,8 +2303,8 @@ const PLAN_ACTIONS = {
   },
   'track-pick-edit': () => { if (foodPick) { foodPick.edit = true; foodSheet(); } },
   'track-pick-save': () => {
-    const f = foodPick && state.foods[foodPick.id];
-    if (!f) return;
+    const f = pickedFood();
+    if (!f || foodPick.dish) return;
     const name = ($('#qeName').value || '').trim(), kcal = parseNum($('#qeKcal').value), protein = parseNum($('#qeProt').value);
     if (!name || kcal == null || kcal < 0 || kcal > 5000 || (protein != null && (protein < 0 || protein > 500))) { toast('Check the name, kcal (0–5,000) and protein (0–500 g)'); return; }
     state.foods[foodPick.id] = { ...nutOf(f), name, kcal: Math.round(kcal), ...(protein ? { protein } : {}) };   // keeps fat, carbs … 

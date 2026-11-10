@@ -210,6 +210,7 @@ function defaultState() {
     videos: {},                         // your own "Watch how" video per progression: progId -> YouTube id (synced)
     foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
     foodsSeededDE: false,               // German everyday foods added on this device (not synced)
+    foodsSeededOut: false,              // restaurant favourites (pizza, kulcha, biryani…) added on this device
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
     progOrder: 2,                       // progression list version (see migrateProgOrder)
   };
@@ -1637,12 +1638,13 @@ function seedQuickFoods() {
   const M = window.PF_MEALS;
   const nutFor = (id, kcal, protein) => M.nutFrom(kcal, protein, M.NUT[id]) || {};
   let changed = false;
+  const add = (list) => { for (const [id, name, kcal, protein] of list) if (!state.foods[id]) state.foods[id] = { name, kcal, ...(protein ? { protein } : {}), ...nutFor(id, kcal, protein) }; };
   if (!state.foodsSeeded || !state.foodsSeededDE) {
-    const add = (list) => { for (const [id, name, kcal, protein] of list) if (!state.foods[id]) state.foods[id] = { name, kcal, ...(protein ? { protein } : {}), ...nutFor(id, kcal, protein) }; };
     if (!state.foodsSeeded) add(M.QUICK);
     if (!state.foodsSeededDE) add(M.QUICK_DE || []);
     state.foodsSeeded = true; state.foodsSeededDE = true; changed = true;
   }
+  if (!state.foodsSeededOut && M.QUICK_OUT) { add(M.QUICK_OUT); state.foodsSeededOut = true; changed = true; }   // pizza, kulcha, biryani … from restaurants
   // Starter foods saved before nutrients existed get them, unless you changed their kcal or protein.
   if (!state.foodsNutFilled) {
     for (const [id, name, kcal, protein] of [...M.QUICK, ...(M.QUICK_DE || [])]) {
@@ -1934,7 +1936,7 @@ const RECIPE_STYLES = [
   { chicken: 'tikka', fish: 'fishtikka', paneer: 'paneertikka' },
   { paneer: 'paneerbhurji', eggs: 'eggbhurji', turkey: 'keema', tuna: 'tunamasala' },
 ];
-const RECIPE_NAMES = { curd: 'yoghurt', mixedveg: 'mixed vegetables', fish: 'fish', tuna: 'tuna', chicken: 'chicken', turkey: 'turkey mince', fruit: 'fruit', tinnedtom: 'chopped tomatoes', rajma: 'kidney beans', chana: 'chickpeas', spinach: 'spinach', atta: 'atta' };
+const RECIPE_NAMES = { curd: 'yoghurt', mixedveg: 'mixed vegetables', fish: 'fish', tuna: 'tuna', chicken: 'chicken', turkey: 'turkey mince', fruit: 'fruit', tinnedtom: 'chopped tomatoes', rajma: 'kidney beans', chana: 'chickpeas', spinach: 'spinach', atta: 'atta', potato: 'potatoes', flour: 'flour', wraps: 'wrap', pasta: 'pasta', buns: 'rolls', mozzarella: 'mozzarella', passata: 'passata' };
 const recipeName = (ing) => RECIPE_NAMES[ing] || ingShort(ing).toLowerCase().replace(/^frozen /, '').replace(/, tin$/, '');
 const FRACTIONS = [[0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
 /** Amount for a recipe ingredient line: "130 g", "½ tin", "¼ lemon", "3 eggs". */
@@ -1944,7 +1946,7 @@ function recipeAmt(ing, v) {
   const whole = Math.floor(v + 1e-6), rest = v - whole;
   const frac = rest < 0.08 ? '' : FRACTIONS.reduce((a, b) => (Math.abs(b[0] - rest) < Math.abs(a[0] - rest) ? b : a))[1];
   const num = `${whole || ''}${frac}` || '1';
-  const noun = { eggs: v > 1 ? 'eggs' : 'egg', bread: v > 1 ? 'slices' : 'slice', lemon: 'lemon', cucumber: 'cucumber', fruit: '' }[ing];
+  const noun = { eggs: v > 1 ? 'eggs' : 'egg', bread: v > 1 ? 'slices' : 'slice', lemon: 'lemon', cucumber: 'cucumber', fruit: '', wraps: v > 1 ? 'wraps' : 'wrap', buns: v > 1 ? 'rolls' : 'roll' }[ing];
   if (unit === 'tin') return `${num} tin`;
   return noun === undefined ? num : `${num}${noun ? ' ' + noun : ''}`;
 }

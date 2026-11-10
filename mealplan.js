@@ -28,6 +28,7 @@ window.PF_MEALS = (function () {
     mushrooms: ['Mushrooms (Champignons)', V, 'g', [250, '250 g box']],
     lemon: ['Lemons (Zitronen)', V, 'pc'],
     fruit: ['Fruit (apples, oranges, bananas)', V, 'pc'],
+    potato: ['Potatoes, floury (mehligkochende Kartoffeln)', V, 'g', [1500, '1.5 kg bag']],
     chicken: ['Chicken breast (Hähnchenbrustfilet)', MT, 'g', [400, '400 g pack']],
     turkey: ['Turkey mince (Putenhackfleisch)', MT, 'g', [400, '400 g pack']],
     eggs: ['Eggs (Eier)', MT, 'pc', [10, 'box of 10']],
@@ -39,16 +40,22 @@ window.PF_MEALS = (function () {
     quark: ['Low-fat quark (Magerquark)', DY, 'g', [500, '500 g tub']],
     curd: ['Plain yoghurt 1.5 % (Naturjoghurt)', DY, 'g', [500, '500 g tub']],
     milk: ['Milk 1.5 % (fettarme Milch)', DY, 'ml', [1000, '1 L carton']],
+    mozzarella: ['Mozzarella light', DY, 'g', [125, '125 g ball']],
     atta: ['Chapati atta or Weizenvollkornmehl', GR, 'g', [1000, '1 kg bag']],
     rice: ['Basmati rice', GR, 'g', [1000, '1 kg bag']],
     bread: ['Wholegrain bread (Vollkornbrot)', GR, 'pc', [10, 'loaf, about 10 slices']],
     oats: ['Oats (Haferflocken)', GR, 'g', [500, '500 g bag']],
     sooji: ['Semolina (Hartweizengrieß)', GR, 'g', [500, '500 g bag']],
+    flour: ['Wheat flour (Weizenmehl Type 550)', GR, 'g', [1000, '1 kg bag']],
+    wraps: ['Wholewheat wraps (Vollkorn-Wraps)', GR, 'pc', [6, 'pack of 6']],
+    pasta: ['Wholewheat pasta (Vollkornnudeln)', GR, 'g', [500, '500 g pack']],
+    buns: ['Wholegrain rolls (Vollkornbrötchen)', GR, 'pc', [4, '4 rolls']],
     dal: ['Red lentils (rote Linsen)', TN, 'g', [500, '500 g bag']],
     rajma: ['Kidney beans, tin (Kidneybohnen)', TN, 'tin'],
     chana: ['Chickpeas, tin (Kichererbsen)', TN, 'tin'],
     tinnedtom: ['Chopped tomatoes, tin (gehackte Tomaten)', TN, 'g', [400, '400 g tin']],
     tuna: ['Tuna in water, tin (Thunfisch naturell)', TN, 'tin'],
+    passata: ['Passata (passierte Tomaten)', TN, 'g', [500, '500 g carton']],
     spinach: ['Frozen leaf spinach (TK Blattspinat)', FZ, 'g', [450, '450 g pack']],
     mixedveg: ['Frozen mixed vegetables (TK Gemüse)', FZ, 'g', [1000, '1 kg bag']],
     peas: ['Frozen peas (TK Erbsen)', FZ, 'g', [450, '450 g bag']],
@@ -111,6 +118,27 @@ window.PF_MEALS = (function () {
     roastchana: ['Roasted chana', '30 g', 110, 6, { roastchana: 30 }],
     fruit: ['Fruit', '1 apple / orange', 80, 1, { fruit: 1 }],
     chanachaat: ['Chana chaat', '1 bowl', 190, 9, { chana: 0.33, onion: 20, tomato: 30, lemon: 0.25 }],
+    // Added for weeks from V3_FROM: parathas, kulcha, rolls, wrap pizzas, rice dishes and more sabzis.
+    alooparatha: ['Aloo paratha', '1 paratha', 320, 8, { atta: 60, potato: 80, oil: 6 }],
+    paneerparatha: ['Paneer paratha', '1 paratha', 400, 18, { atta: 60, paneer: 50, onion: 15, oil: 5 }],
+    kulcha: ['Amritsari aloo kulcha', '1 kulcha', 390, 10, { flour: 70, potato: 90, onion: 20, curd: 15, oil: 7 }],
+    vegsandwich: ['Paneer-veg sandwich', '2 slices', 360, 19, { bread: 2, paneer: 50, tomato: 40, cucumber: 0.15, onion: 10 }],
+    eggtoast: ['Masala egg toast', '2 slices, 2 eggs', 400, 21, { bread: 2, eggs: 2, onion: 15, tomato: 20, oil: 4 }],
+    biryani: ['Chicken biryani', '1 plate', 520, 37, { rice: 70, chicken: 130, onion: 50, curd: 40, oil: 8 }],
+    vegpulao: ['Veg pulao', '1 plate', 360, 9, { rice: 70, mixedveg: 80, peas: 30, onion: 30, oil: 6 }],
+    aloogobi: ['Aloo gobi', '1 bowl', 200, 6, { potato: 120, cauliflower: 150, onion: 20, tomato: 30, oil: 7 }],
+    bharta: ['Baingan bharta', '1 bowl', 150, 4, { aubergine: 250, onion: 40, tomato: 60, oil: 7 }],
+    bhindi: ['Bhindi masala', '1 bowl', 160, 5, { okra: 200, onion: 40, tomato: 40, oil: 8 }],
+    mushroommatar: ['Mushroom matar', '1 bowl', 170, 9, { mushrooms: 150, peas: 60, onion: 30, tinnedtom: 50, oil: 7 }],
+    kadhi: ['Kadhi', '1 bowl', 230, 11, { besan: 25, curd: 150, onion: 15, oil: 6 }],
+    pavbhaji: ['Pav bhaji', '1 bowl + 2 rolls', 500, 16, { buns: 2, potato: 100, mixedveg: 120, cauliflower: 60, tinnedtom: 80, onion: 40, oil: 10 }],
+    wrappizza: ['Wrap pizza (chicken & peppers)', '1 large wrap', 440, 36, { wraps: 1, passata: 60, mozzarella: 60, chicken: 80, capsicum: 60, onion: 20 }],
+    paneerpizza: ['Wrap pizza (paneer & mushroom)', '1 large wrap', 480, 23, { wraps: 1, passata: 60, mozzarella: 50, paneer: 50, capsicum: 60, mushrooms: 40, onion: 20 }],
+    chickenroll: ['Chicken kathi roll', '1 roll', 410, 35, { wraps: 1, chicken: 110, onion: 30, curd: 30, capsicum: 40, oil: 5 }],
+    paneerroll: ['Paneer kathi roll', '1 roll', 460, 21, { wraps: 1, paneer: 70, onion: 30, capsicum: 40, curd: 20, oil: 4 }],
+    eggfriedrice: ['Egg fried rice', '1 plate', 470, 18, { rice: 60, eggs: 2, mixedveg: 100, onion: 20, oil: 8 }],
+    masalapasta: ['Masala pasta with chicken', '1 plate', 520, 39, { pasta: 80, chicken: 110, capsicum: 60, tinnedtom: 120, onion: 30, oil: 7 }],
+    curdrice: ['Curd rice', '1 bowl', 300, 10, { rice: 50, curd: 150, cucumber: 0.15, oil: 3 }],
   };
 
   // Label nutrients per serving, estimated for home cooking: [fat, of which saturates, sugar, salt] in g.
@@ -129,6 +157,16 @@ window.PF_MEALS = (function () {
     salad: [0.2, 0, 5, 0.1], raita: [2.5, 1.6, 7, 0.5], curd: [2.3, 1.5, 6, 0.2], quarkfruit: [0.5, 0.2, 18, 0.1],
     chai: [3.5, 2.2, 13, 0.1], tea: [0.7, 0.4, 1, 0], roastchana: [1.8, 0.3, 3, 0.3], fruit: [0.3, 0, 16, 0],
     chanachaat: [3, 0.3, 5, 0.9],
+    alooparatha: [7, 1, 1.5, 0.8], paneerparatha: [18, 9, 1.5, 0.8], kulcha: [9, 1.5, 2, 1.2], vegsandwich: [14, 7, 4, 1.2],
+    eggtoast: [16, 4, 3, 1.3], biryani: [13, 3, 5, 1.5], vegpulao: [7, 1, 4, 1], aloogobi: [7.5, 0.8, 5, 0.8],
+    bharta: [7.5, 0.8, 8, 0.8], bhindi: [8.5, 0.9, 6, 0.8], mushroommatar: [7.5, 0.8, 6, 0.9], kadhi: [10, 2.5, 7, 1.1],
+    pavbhaji: [13, 3, 10, 2], wrappizza: [13, 6, 7, 2], paneerpizza: [22, 12, 7, 2], chickenroll: [12, 3, 5, 1.6],
+    paneerroll: [22, 11, 5, 1.5], eggfriedrice: [16, 3.5, 4, 1.6], masalapasta: [11, 2, 9, 1.3], curdrice: [6, 2.5, 7, 0.8],
+    // eating out
+    'q-pizza-slice': [11, 5, 3, 1.5], 'q-pizza-whole': [30, 13, 10, 5.5], 'q-kulcha-chole': [28, 9, 6, 3.5],
+    'q-chole-bhature': [40, 8, 6, 3.5], 'q-samosa': [15, 3, 1.5, 0.6], 'q-biryani-out': [28, 7, 5, 3],
+    'q-butter-chicken': [32, 15, 8, 2.5], 'q-naan': [10, 5, 2, 1.2], 'q-dosa': [16, 3, 3, 1.5],
+    'q-pav-bhaji-out': [26, 12, 10, 3], 'q-burger': [24, 9, 8, 2.2], 'q-fries': [17, 2, 0.5, 0.8], 'q-currywurst': [45, 16, 18, 4.5],
     // starter "My foods"
     'q-roti': [2.5, 0.4, 0.5, 0.2], 'q-rice': [0.7, 0.2, 0.1, 0], 'q-daal': [5, 0.6, 3, 1],
     'q-chicken-curry': [15, 2.5, 5, 1.3], 'q-chicken-dish': [9, 2, 3, 1.2], 'q-paneer': [26, 13, 5, 1.1],
@@ -160,6 +198,17 @@ window.PF_MEALS = (function () {
     ['q-doener', 'Döner kebab', 650, 35], ['q-brezel', 'Brezel (pretzel)', 220, 6], ['q-skyr', 'Skyr (150 g)', 95, 16],
   ];
 
+  // Restaurant and takeaway favourites (seeded once into My foods). Typical portions; restaurants vary a lot.
+  const QUICK_OUT = [
+    ['q-pizza-slice', 'Pizza, 1 slice (Pizzeria)', 280, 12], ['q-pizza-whole', 'Pizza Margherita, whole', 850, 35],
+    ['q-kulcha-chole', 'Amritsari kulcha with chole (restaurant)', 750, 20], ['q-chole-bhature', 'Chole bhature', 800, 20],
+    ['q-samosa', 'Samosa (1 piece)', 260, 4], ['q-biryani-out', 'Chicken biryani (restaurant)', 700, 35],
+    ['q-butter-chicken', 'Butter chicken (restaurant bowl)', 500, 30], ['q-naan', 'Butter naan', 300, 8],
+    ['q-dosa', 'Masala dosa', 400, 8], ['q-pav-bhaji-out', 'Pav bhaji (restaurant)', 600, 12],
+    ['q-burger', 'Burger (fast food)', 500, 25], ['q-fries', 'Fries, medium', 340, 4],
+    ['q-currywurst', 'Currywurst mit Pommes', 800, 25],
+  ];
+
   // Meal options per slot. p = main protein, used to keep the week varied. 'SABZI' becomes a seasonal vegetable dish.
   const B = 'Breakfast', L = 'Lunch', S = 'Snack', D = 'Dinner';
   const POOLS = {
@@ -173,6 +222,11 @@ window.PF_MEALS = (function () {
       { p: 'egg', items: [['upma', 1], ['boiled2', 1]] },
       { p: 'egg', items: [['masalaoats', 1], ['boiled2', 1]] },
       { p: 'egg', items: [['eggbhurji', 1], ['bread', 2]] },
+      { p: '', v3: 1, items: [['alooparatha', 1], ['curd', 1]] },
+      { p: 'paneer', v3: 1, items: [['paneerparatha', 1], ['curd', 1]] },
+      { p: 'treat', v3: 1, items: [['kulcha', 1], ['chana', 1]] },
+      { p: 'paneer', v3: 1, items: [['vegsandwich', 1]] },
+      { p: 'egg', v3: 1, items: [['eggtoast', 1]] },
     ],
     [L]: [
       { p: 'chicken', items: [['roti', 2], ['chickencurry', 1], ['salad', 1]] },
@@ -186,6 +240,15 @@ window.PF_MEALS = (function () {
       { p: 'beans', items: [['rice', 1], ['rajma', 1], ['raita', 1]] },
       { p: 'chicken', v2: 1, items: [['roti', 2], ['tikka', 1], ['raita', 1]] },
       { p: 'fish', v2: 1, items: [['roti', 2], ['fishtikka', 1], ['SABZI', 1]] },
+      { p: 'chicken', v3: 1, items: [['biryani', 1], ['raita', 1]] },
+      { p: 'egg', v3: 1, items: [['vegpulao', 1], ['boiled2', 1], ['raita', 1]] },
+      { p: 'dal', v3: 1, items: [['roti', 2], ['dal', 1], ['aloogobi', 1]] },
+      { p: 'dal', v3: 1, items: [['rice', 1], ['kadhi', 1], ['SABZI', 1]] },
+      { p: 'chicken', v3: 1, items: [['chickenroll', 1], ['salad', 1]] },
+      { p: 'chicken', v3: 1, items: [['masalapasta', 1], ['salad', 1]] },
+      { p: 'egg', v3: 1, items: [['eggfriedrice', 1], ['raita', 1]] },
+      { p: 'treat', v3: 1, items: [['kulcha', 1], ['chana', 1], ['salad', 1]] },
+      { p: 'treat', v3: 1, items: [['pavbhaji', 1], ['salad', 1]] },
     ],
     [S]: [
       { p: '', items: [['chai', 1], ['roastchana', 1]] },
@@ -208,12 +271,21 @@ window.PF_MEALS = (function () {
       { p: 'fish', items: [['tunamasala', 1], ['roti', 1], ['SABZI', 1]] },
       { p: 'egg', v2: 1, items: [['eggcurry', 1], ['roti', 1], ['salad', 1]] },
       { p: 'chicken', v2: 1, items: [['chickencurry', 1], ['rice', 1], ['salad', 1]] },
+      { p: 'treat', v3: 1, items: [['wrappizza', 1], ['salad', 1]] },
+      { p: 'treat', v3: 1, items: [['paneerpizza', 1], ['salad', 1]] },
+      { p: 'dal', v3: 1, items: [['bharta', 1], ['dal', 1], ['roti', 1]] },
+      { p: 'dal', v3: 1, items: [['bhindi', 1], ['dal', 1], ['roti', 1]] },
+      { p: '', v3: 1, items: [['mushroommatar', 1], ['roti', 2], ['raita', 1]] },
+      { p: 'paneer', v3: 1, items: [['paneerroll', 1], ['salad', 1]] },
+      { p: 'dal', v3: 1, items: [['curdrice', 1], ['SABZI', 1], ['boiled2', 1]] },
     ],
   };
   // Non-veg is fine any day; only paneer (pricey and fatty) is kept to twice a week. Weeks before V2_FROM keep the
   // first version's rules (fewer non-veg meals), so a plan you've already shopped for never changes.
   const V2_FROM = '2026-11-16';
   const MAX_V1 = { chicken: 3, paneer: 2, fish: 2, turkey: 2 }, MAX_V2 = { paneer: 2 };
+  // From V3_FROM the pools also hold the newer dishes. Treats (kulcha, pav bhaji, wrap pizza) at most twice a week.
+  const V3_FROM = '2026-11-16', MAX_V3 = { paneer: 2, treat: 2 };
 
   // What's in season (or cheap) in German shops, by month. Frozen mixed veg fills in all year.
   const SEASON = [
@@ -241,11 +313,11 @@ window.PF_MEALS = (function () {
   function weekPlan(mondayKey) {
     if (cache[mondayKey]) return cache[mondayKey];
     const r = rng('pulsefit|' + mondayKey);
-    const v2 = mondayKey >= V2_FROM, MAX = v2 ? MAX_V2 : MAX_V1;
+    const v2 = mondayKey >= V2_FROM, v3 = mondayKey >= V3_FROM, MAX = v3 ? MAX_V3 : v2 ? MAX_V2 : MAX_V1;
     const used = {};                                   // protein -> count this week
     const days = Array.from({ length: 7 }, () => ({}));
     for (const slot of [L, D, B, S]) {                 // lunch and dinner first: they carry the protein limits
-      const order = shuffle(v2 ? POOLS[slot] : POOLS[slot].filter((o) => !o.v2), r);
+      const order = shuffle(POOLS[slot].filter((o) => (v2 || !o.v2) && (v3 || !o.v3)), r);
       const taken = new Set();
       for (let i = 0; i < 7; i++) {
         if (taken.size >= order.length) taken.clear();   // small pools (snacks) repeat only after every option was used
@@ -354,5 +426,5 @@ window.PF_MEALS = (function () {
 
   const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday.';
 
-  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
+  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
 })();

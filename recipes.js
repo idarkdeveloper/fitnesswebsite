@@ -227,3 +227,133 @@ Object.assign(window.PF_RECIPES.chanachaat, { cut: { onion: 'very finely chopped
 Object.assign(window.PF_RECIPES.besanchilla, { cut: { onion: 'very finely chopped', tomato: 'very finely chopped' } });
 Object.assign(window.PF_RECIPES.moongchilla, { cut: { onion: 'very finely chopped' } });
 Object.assign(window.PF_RECIPES.poha, { cut: { onion: 'finely chopped' } });
+
+/* Newer dishes (weeks from 16 Nov 2026): parathas, kulcha, rolls, wrap pizzas, rice dishes and more sabzis. */
+Object.assign(window.PF_RECIPES, {
+  alooparatha: { t: 30, sp: 'Green chilli, cumin, amchur or lemon, chilli powder, salt, coriander',
+    steps: ['Boil the {potato} in salted water until soft, 15–20 minutes (or 8 minutes in the microwave), peel and mash while warm.',
+      'Mix the mash with chilli, cumin, amchur, salt and coriander. Let it cool so it doesn\'t make the dough wet.',
+      'Make a soft dough with the {atta}, a pinch of salt and water. Roll a ball to a small circle, put the filling in the middle, fold the edges over it and press closed.',
+      'Dust with flour and roll gently to about 18 cm, turning often so the filling stays inside.',
+      'Cook on a hot pan about 1 minute a side, then brush on the oil and cook until golden spots show on both sides.'],
+    tip: 'Boil potatoes for 2–3 parathas at once; the mash keeps 2 days in the fridge.' },
+  paneerparatha: { t: 25, sp: 'Green chilli, ajwain or cumin, chilli powder, salt, coriander',
+    steps: ['Grate or crumble the {paneer} and mix with the {onion}, chilli, ajwain, salt and coriander.',
+      'Make a soft dough with the {atta} and water. Roll a small circle, put the filling in the middle, close it up and press flat.',
+      'Roll gently to about 18 cm.',
+      'Cook on a hot pan about 1 minute a side, brush with the oil and cook until golden on both sides.'] },
+  kulcha: { t: 35, sp: '½ tsp baking powder, pinch of baking soda, salt, ajwain, green chilli, amchur, coriander, nigella or sesame seeds',
+    steps: ['Mix the {flour} with the baking powder, baking soda, a pinch of salt and the {curd}. Add water a little at a time for a soft, slightly sticky dough. Cover and rest 30 minutes.',
+      'Meanwhile boil, peel and mash the {potato}; mix with the {onion}, chilli, ajwain, amchur, salt and coriander.',
+      'Roll the dough to a small circle, fill with the potato, close and press flat. Sprinkle nigella seeds and coriander on top and press them in.',
+      'Roll gently to about 18 cm. Cook on a hot pan with the oil, pressing down, 2 minutes a side until crisp and golden (or bake at 250 °C for 8–10 minutes).'],
+    tip: 'Amritsari kulcha is usually brushed with butter; the plan uses a little oil instead. Serve with the chana masala as chole kulche.' },
+  vegsandwich: { t: 10, sp: 'Green chutney or mustard, chaat masala, black pepper, salt',
+    steps: ['Spread chutney (or a little mustard) on the {bread}.',
+      'Layer the {paneer} slices, {tomato}, {cucumber} and {onion}; season with chaat masala and pepper.',
+      'Close and toast in a sandwich maker or a dry pan, pressing down, 2–3 minutes a side.'] },
+  eggtoast: { t: 10, sp: 'Turmeric, chilli, black pepper, salt, coriander',
+    steps: ['Beat the {eggs} with the {onion}, {tomato}, chilli, turmeric, salt and coriander.',
+      'Heat half the oil in a pan. Dip a slice of {bread} in the egg on both sides, put it in the pan and pour a little extra egg on top.',
+      'Cook 2 minutes a side until set and golden. Repeat with the second slice.'] },
+  biryani: { t: 45, sp: 'Ginger-garlic paste, biryani masala or garam masala, whole spices (bay leaf, cloves, cardamom), turmeric, chilli, salt, mint, coriander',
+    steps: ['Mix the {chicken} with the {curd}, ginger-garlic paste, biryani masala, chilli, turmeric and salt. Leave 15 minutes or more.',
+      'Rinse the {rice} and soak it 15 minutes.',
+      'Heat the oil in a pot with the whole spices, fry the {onion} until deep golden and set half aside.',
+      'Add the chicken to the pot and cook 8–10 minutes until nearly done.',
+      'Drain the rice and spread it over the chicken. Pour in 1.5× its volume of hot water with a little salt, scatter the fried onions, mint and coriander on top.',
+      'Cover tightly and cook on low heat 15 minutes, then rest 5 minutes with the lid on. Mix gently from the side before serving.'] },
+  vegpulao: { t: 25, sp: 'Cumin seeds, bay leaf, cloves, cardamom, garam masala, salt',
+    steps: ['Rinse the {rice} and soak it 15 minutes.',
+      'Heat the oil, add cumin and the whole spices, then the {onion} until golden.',
+      'Add the {mixedveg} and {peas} and cook 2 minutes.',
+      'Add the drained rice, salt, garam masala and twice the rice\'s volume of water. Cover and cook on low 12–15 minutes, then rest 5 minutes.'] },
+  aloogobi: { t: 25, sp: 'Cumin seeds, turmeric, chilli powder, coriander powder, garam masala, salt, coriander',
+    steps: ['Heat the oil, add cumin seeds, then the {onion} until soft.',
+      'Add the {potato} with turmeric and salt; cover and cook 5 minutes.',
+      'Add the {cauliflower}, {tomato} and the powdered spices. Cover and cook on medium-low 10–12 minutes, stirring now and then, until both are tender.',
+      'Finish with garam masala and coriander.'] },
+  bharta: { t: 30, sp: 'Garlic, green chilli, cumin, chilli powder, garam masala, salt, coriander',
+    steps: ['Prick the {aubergine} and roast it whole: over a gas flame, under the oven grill at full heat, or at 230 °C for 30 minutes, turning, until the skin is black and the inside soft.',
+      'Let it cool a little, peel off the skin and mash the flesh.',
+      'Heat the oil, add cumin, garlic and chilli, then the {onion} until golden. Add the {tomato} and spices and cook until soft.',
+      'Stir in the mashed aubergine and cook 5 minutes. Finish with coriander.'] },
+  bhindi: { t: 25, sp: 'Cumin seeds, turmeric, chilli powder, coriander powder, amchur, salt',
+    steps: ['Make sure the {okra} is completely dry before you cut it; wet okra turns slimy.',
+      'Heat the oil, fry the okra uncovered on medium-high 8–10 minutes, stirring now and then, until it stops being sticky.',
+      'Add cumin and the {onion}; cook until the onion is soft. Add the {tomato} and spices, cook 3–4 minutes.',
+      'Finish with amchur. Don\'t cover the pan at any point.'] },
+  mushroommatar: { t: 20, sp: 'Ginger-garlic paste, cumin, turmeric, chilli powder, garam masala, salt, coriander',
+    steps: ['Heat the oil, add cumin, then the {onion} until golden and the ginger-garlic paste for 1 minute.',
+      'Add the {mushrooms} on high heat and cook until their water has gone, about 5 minutes.',
+      'Add the {tinnedtom}, {peas} and spices; simmer 6–8 minutes. Finish with coriander.'] },
+  kadhi: { t: 30, sp: 'Turmeric, cumin, mustard seeds, curry leaves or bay leaf, dried red chilli, ginger, salt',
+    steps: ['Whisk the {besan} into the {curd} until smooth, then whisk in about 400 ml water, turmeric and salt.',
+      'Bring to a boil slowly while stirring, so it doesn\'t split. Simmer on low 15–20 minutes until it thickens.',
+      'In a small pan heat the oil, add mustard seeds, cumin, curry leaves, red chilli and the {onion}; fry 2 minutes.',
+      'Pour this tadka into the kadhi and simmer 2 more minutes.'] },
+  pavbhaji: { t: 35, sp: 'Pav bhaji masala, ginger-garlic paste, chilli powder, lemon, salt, coriander, 1 tsp butter',
+    steps: ['Boil the {potato}, {cauliflower} and {mixedveg} together until very soft, about 15 minutes. Drain and mash roughly.',
+      'Heat the oil, fry the {onion} until soft, add ginger-garlic paste, then the {tinnedtom}, pav bhaji masala and chilli. Cook 5 minutes.',
+      'Add the mashed vegetables and a splash of water; mash everything together in the pan and simmer 5–8 minutes until thick.',
+      'Finish with lemon and coriander. Toast the {buns} cut side down in the pan with the teaspoon of butter.'],
+    tip: 'Vollkornbrötchen instead of white pav keeps it filling. The bhaji keeps 2 days in the fridge.' },
+  wrappizza: { t: 20, sp: 'Dried oregano, chilli flakes, garlic powder, salt, pepper',
+    steps: ['Heat the oven to 220 °C (top and bottom heat), or use a large pan with a lid.',
+      'Season the {chicken} with salt, pepper and garlic powder and cook it in a pan 6–7 minutes until done.',
+      'Lay the {wraps} on a baking tray. Spread the {passata} on it and season with oregano.',
+      'Top with the chicken, {capsicum} and {onion}, then tear the {mozzarella} over it.',
+      'Bake 8–10 minutes until the edge is crisp and the cheese has melted (or cook in the covered pan on medium 5–6 minutes). Finish with chilli flakes.'],
+    tip: 'A wholewheat wrap makes a thin, crisp base in 10 minutes, with no dough to make.' },
+  paneerpizza: { t: 15, sp: 'Dried oregano, chilli flakes, a pinch of garam masala, salt',
+    steps: ['Heat the oven to 220 °C (top and bottom heat), or use a large pan with a lid.',
+      'Toss the {paneer} cubes with a pinch of salt, chilli and garam masala.',
+      'Lay the {wraps} on a baking tray, spread the {passata} and season with oregano.',
+      'Top with the paneer, {capsicum}, {mushrooms} and {onion}, then tear the {mozzarella} over it.',
+      'Bake 8–10 minutes until crisp at the edge and melted (or cook in the covered pan on medium 5–6 minutes).'] },
+  chickenroll: { t: 25, sp: 'Ginger-garlic paste, tikka masala or garam masala, chilli powder, lemon, salt, green chutney or mint',
+    steps: ['Mix the {chicken} with half the {curd}, ginger-garlic paste, masala, chilli, lemon and salt.',
+      'Cook it in the hot oil 6–8 minutes until browned and cooked through. Add the {capsicum} for the last 2 minutes.',
+      'Warm the {wraps} in a dry pan.',
+      'Spread the rest of the yoghurt (mixed with chutney or mint) on the wrap, add the chicken, peppers and {onion}, and roll it up tightly.'] },
+  paneerroll: { t: 20, sp: 'Tikka masala or garam masala, chilli powder, lemon, salt, green chutney or mint',
+    steps: ['Toss the {paneer} with half the {curd}, masala, chilli and salt.',
+      'Cook in the hot oil 4–5 minutes until golden on the edges, adding the {capsicum} for the last 2 minutes.',
+      'Warm the {wraps} in a dry pan.',
+      'Spread the rest of the yoghurt and chutney, add the paneer, peppers and {onion}, squeeze over lemon and roll up.'] },
+  eggfriedrice: { t: 20, sp: 'Soy sauce, garlic, black pepper, spring onion if you have it, chilli sauce',
+    steps: ['Cook the {rice} (best the day before; cold rice fries better).',
+      'Heat the oil on high heat, add garlic and the {onion} for 1 minute, then the {mixedveg} for 3 minutes.',
+      'Push everything to the side, scramble the {eggs} in the empty space, then mix.',
+      'Add the cold rice, soy sauce and pepper and stir-fry 3–4 minutes until hot.'] },
+  masalapasta: { t: 25, sp: 'Garlic, chilli flakes, garam masala, oregano, salt',
+    steps: ['Boil the {pasta} in salted water as the pack says; keep a cup of the pasta water.',
+      'Meanwhile heat the oil, cook the {chicken} 5–6 minutes until done and set it aside.',
+      'In the same pan cook the {onion}, garlic and {capsicum} for 3 minutes, add the {tinnedtom}, garam masala, oregano and chilli and simmer 5 minutes.',
+      'Add the drained pasta and chicken, loosen with a little pasta water and toss.'] },
+  curdrice: { t: 10, sp: 'Mustard seeds, curry leaves, ginger, green chilli, salt, coriander',
+    steps: ['Mash the cooked {rice} a little while warm (cook it fresh, or use leftover rice warmed up).',
+      'When it has cooled, mix in the {curd}, salt and the {cucumber}.',
+      'Heat the oil, add mustard seeds, curry leaves, ginger and green chilli; pour over the rice.',
+      'Serve cool or at room temperature.'] },
+});
+Object.assign(window.PF_CUT, {
+  potato: 'peeled and cut into 2 cm cubes',
+  mozzarella: 'torn into small pieces',
+});
+Object.assign(window.PF_RECIPES.alooparatha, { cut: { potato: 'boiled whole, then peeled and mashed' } });
+Object.assign(window.PF_RECIPES.kulcha, { cut: { potato: 'boiled whole, then peeled and mashed', onion: 'very finely chopped' } });
+Object.assign(window.PF_RECIPES.paneerparatha, { cut: { paneer: 'grated or finely crumbled', onion: 'very finely chopped' } });
+Object.assign(window.PF_RECIPES.vegsandwich, { cut: { paneer: 'cut into thin slices', tomato: 'thinly sliced', cucumber: 'thinly sliced', onion: 'thinly sliced into rings' } });
+Object.assign(window.PF_RECIPES.eggtoast, { cut: { onion: 'very finely chopped', tomato: 'finely chopped' } });
+Object.assign(window.PF_RECIPES.biryani, { cut: { chicken: 'cut into 4 cm pieces', onion: 'thinly sliced (half-rings)' } });
+Object.assign(window.PF_RECIPES.vegpulao, { cut: { onion: 'thinly sliced' } });
+Object.assign(window.PF_RECIPES.pavbhaji, { cut: { potato: 'peeled, cut into 3 cm pieces', onion: 'finely chopped', cauliflower: 'cut into small florets' } });
+Object.assign(window.PF_RECIPES.bharta, { cut: { aubergine: 'left whole for roasting', onion: 'finely chopped', tomato: 'finely chopped' } });
+Object.assign(window.PF_RECIPES.wrappizza, { cut: { chicken: 'cut into thin strips', capsicum: 'cut into thin strips', onion: 'thinly sliced into rings' } });
+Object.assign(window.PF_RECIPES.paneerpizza, { cut: { paneer: 'cut into 1 cm cubes', capsicum: 'cut into thin strips', mushrooms: 'thinly sliced', onion: 'thinly sliced into rings' } });
+Object.assign(window.PF_RECIPES.chickenroll, { cut: { chicken: 'cut into thin strips', capsicum: 'cut into thin strips', onion: 'thinly sliced into rings' } });
+Object.assign(window.PF_RECIPES.paneerroll, { cut: { paneer: 'cut into 1 cm fingers', capsicum: 'cut into thin strips', onion: 'thinly sliced into rings' } });
+Object.assign(window.PF_RECIPES.masalapasta, { cut: { chicken: 'cut into 2 cm pieces', capsicum: 'cut into 2 cm squares' } });
+Object.assign(window.PF_RECIPES.curdrice, { cut: { cucumber: 'grated, or very finely chopped' } });
+Object.assign(window.PF_RECIPES.kadhi, { cut: { onion: 'thinly sliced' } });

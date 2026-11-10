@@ -1970,7 +1970,9 @@ function recipeSheet(id, n, wk) {
     const rest = left.filter((i) => i !== 'curd');
     if (rest.length) steps.push(`Add the ${rest.map(recipeName).join(' and ')} along with the onions.`);
   }
-  const lines = Object.entries(ings).map(([ing, v]) => `<li><b>${esc(recipeAmt(ing, v * n))}</b> ${esc(window.PF_MEALS.ING[ing][0])}</li>`).join('');
+  // How to cut it: this dish's own instruction, else the ingredient's usual one (a stand-in uses its own).
+  const cutOf = (ing) => { const cut = window.PF_CUT || {}; return (!subs[ing] && r.cut && r.cut[ing]) || cut[subs[ing] || ing] || ''; };
+  const lines = Object.entries(ings).map(([ing, v]) => { const c = cutOf(ing); return `<li><b>${esc(recipeAmt(ing, v * n))}</b> ${esc(window.PF_MEALS.ING[ing][0])}${c ? `<span class="cut">, ${esc(c)}</span>` : ''}</li>`; }).join('');
   openSheet(name, `
     <p class="small muted m-0 sheet-meta">${n > 1 ? `${n} servings, ${esc(serving)} each` : esc(serving)} · ${nf(kcal * n)} kcal · ${nf(protein * n)} g protein · about ${r.t} min</p>
     ${swapped.length ? `<p class="small m-0 mt-2 accent-text">Made with ${esc(swapped.map((i) => `${recipeName(subs[i])} instead of ${recipeName(i)}`).join(', '))}, from what you bought.</p>` : ''}

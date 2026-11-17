@@ -718,7 +718,7 @@ VIEWS.today = () => {
       ${session}
     </section>
 
-    <div class="sec-head"><h2 class="h2 m-0">${isToday ? "Today's log" : 'Log'}</h2><a class="link-btn small" href="#/track">All days</a></div>
+    <div class="sec-head"><h2 class="h2 m-0">${isToday ? "Today's log" : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">History</button><a class="link-btn small" href="#/track">All days</a></span></div>
     <section class="card food-sum" aria-label="Food today">
       <div class="row gap-4">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>
@@ -738,7 +738,7 @@ VIEWS.today = () => {
     <div class="q-grid mt-3">
       ${tile('track-weight', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, true, 'Log weight')}
       ${tile('track-steps', 'Steps', steps != null ? nf(steps) : '–', '', `of ${nf(sg)}`, steps != null ? steps / sg : 0, false, 'Log steps')}
-      ${tile('track-sleep', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', `of ${fmtSleep(lg)}`, sleep != null ? sleep / lg : 0, false, 'Log sleep')}
+      ${tile('track-sleep', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', sleep == null && isNativeApp() && (state.health?.denied || []).includes('sleep') ? 'allow in Health Connect' : `of ${fmtSleep(lg)}`, sleep != null ? sleep / lg : 0, false, 'Log sleep')}
       ${tile('track-water-add', 'Water', L1(water), 'L', 'tap + for a glass', (water || 0) / wg, false, 'Add a glass of water (250 ml)', 'data-ml="250"')}
     </div>
     ${watchLine(tk)}
@@ -1436,7 +1436,10 @@ function trackHabits(day) {
         ${tile('track-sleep', 'Sleep', sleep, sleep != null ? fmtSleep(sleep) : '', lg, fmtSleep(lg))}
         ${tile('track-water', 'Water', water, water != null ? `${L1(water)} L` : '', wg, `${L1(wg)} L`)}
       </div>
-      <button class="btn ghost block mt-3" data-action="track-water-add" data-ml="250">${icon('plus')} Glass of water (250 ml)</button>
+      <div class="grid2 mt-3">
+        <button class="btn ghost" data-action="track-water-add" data-ml="250">${icon('plus')} Glass of water</button>
+        <button class="btn ghost" data-action="habit-history" data-f="steps">${icon('calendar')} History</button>
+      </div>
     </section>`;
 }
 
@@ -1545,8 +1548,79 @@ function wireWeightChart() {
 }
 
 /* ---------- Track sheets ---------- */
-function onDayLabel() {
-  const day = tKey();
+/** Steps, sleep and water: how each one shows in History. */
+const HABIT = {
+  steps: { title: 'Steps', fmt: (v) => nf(v), goal: () => hp().stepGoal || HDEF.stepGoal },
+  sleep: { title: 'Sleep', fmt: (v) => fmtSleep(v), goal: () => hp().sleepGoal || HDEF.sleepGoal },
+  water: { title: 'Water', fmt: (v) => `${L1(v)} L`, goal: () => hp().waterGoal || HDEF.waterGoal },
+};
+
+/** Open the editor for one field on one date (default: the day being viewed). */
+function openHabit(field, day = tKey(), back = null) {
+  editDay = day; editBack = back;
+  const on = onDayLabel(day);
+  if (field === 'sleep') return sleepSheet();
+  if (field === 'steps') return numberSheet({ title: 'Steps', field, label: `Steps ${on}`, unit: 'steps', step: 100, min: 0, max: 100000, value: hget(day, 'steps'), hint: 'Copy the total from your phone’s health app or your watch.' });
+  if (field === 'water') return numberSheet({ title: 'Water', field, label: `Water ${on} (ml)`, unit: 'ml', step: 50, min: 0, max: 10000, value: hget(day, 'water'), hint: 'A glass is about 250 ml, a bottle 500 ml.' });
+  return numberSheet({
+    title: 'Weight', field: 'weight', label: `Weight (kg) ${on}`, unit: 'kg', step: 0.1, min: 30, max: 350,
+    value: hget(day, 'weight') ?? latestOn('weight', day)?.v,
+    hint: 'Weigh yourself in the morning, after the toilet and before eating or drinking. Daily numbers swing by 1–2 kg; the 7-day average shows the real trend.',
+  });
+}
+/** After saving or removing: back to History if we came from there, else close. */
+function afterHabitEdit(msg) {
+  const back = editBack;
+  editDay = null; editBack = null;
+  save(); rerender();
+  if (back) habitHistorySheet(back); else closeSheet();
+  toast(msg);
+}
+
+/** Last 30 days of steps, sleep or water: averages, a bar chart and every day, each one editable. */
+function habitHistorySheet(field) {
+  if (!HABIT[field]) field = 'steps';
+  const H = HABIT[field], goal = H.goal(), t = todayKey(), N = 30;
+  const days = Array.from({ length: N }, (_, i) => keyAdd(t, -i));               // newest first
+  const vals = days.map((k) => hget(k, field) ?? null);
+  const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  const got = vals.filter((v) => v != null), a7 = mean(vals.slice(0, 7).filter((v) => v != null)), a30 = mean(got);
+  const met = got.filter((v) => v >= goal).length;
+  const imp = state.health?.imported || {};
+  // Bars, oldest on the left; dashed line at the goal.
+  const W = 300, Hh = 96, top = Math.max(goal, ...got, 1) * 1.08, bw = W / N;
+  const y = (v) => Hh - (v / top) * Hh;
+  const bars = days.slice().reverse().map((k, i) => {
+    const v = hget(k, field);
+    if (v == null) return `<rect class="hb-none" x="${(i * bw + 1).toFixed(1)}" y="${Hh - 2}" width="${(bw - 2).toFixed(1)}" height="2" rx="1"/>`;
+    return `<rect class="hb${v >= goal ? ' met' : ''}" x="${(i * bw + 1).toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${(Hh - y(v)).toFixed(1)}" rx="2"><title>${esc(fmtShort(fromKey(k)))}: ${esc(H.fmt(v))}</title></rect>`;
+  }).join('');
+  const chart = `<svg class="habit-chart mt-3" viewBox="0 0 ${W} ${Hh + 14}" role="img" aria-label="${H.title}, last 30 days. Goal met on ${met} of ${got.length} logged days.">
+    ${bars}<line class="hb-goal" x1="0" x2="${W}" y1="${y(goal).toFixed(1)}" y2="${y(goal).toFixed(1)}"/>
+    <text class="hb-t" x="0" y="${Hh + 12}">30 days ago</text><text class="hb-t" x="${W}" y="${Hh + 12}" text-anchor="end">Today</text></svg>`;
+  openSheet(`${H.title} history`, `
+    <div class="segmented" role="tablist" aria-label="Which history" style="--n:3;--i:${Object.keys(HABIT).indexOf(field)}">
+      ${Object.entries(HABIT).map(([f, x]) => `<button role="tab" aria-selected="${f === field}" data-action="habit-history" data-f="${f}">${x.title}</button>`).join('')}
+    </div>
+    <div class="facts mt-3">
+      <span>7-day average <b>${a7 != null ? esc(H.fmt(a7)) : '–'}</b></span>
+      <span>30-day average <b>${a30 != null ? esc(H.fmt(a30)) : '–'}</b></span>
+      <span>Goal ${esc(H.fmt(goal))} met on <b>${met} of ${got.length}</b> logged days</span>
+    </div>
+    ${chart}
+    <p class="muted small m-0 mt-2">Tap a day to add or change it.${field === 'sleep' ? ' Sleep counts on the day you woke up.' : ''}</p>
+    <ul class="m-hist h-hist mt-3">${days.map((k, i) => {
+      const v = vals[i], watch = v != null && imp[hk(k, field)] === v;
+      return `<li><button class="m-hist-row h-row" data-action="habit-edit" data-f="${field}" data-day="${k}">
+        <span class="d">${k === t ? 'Today' : esc(fmtShort(fromKey(k)))}</span>
+        <span class="vals">${v != null ? `<b class="${v >= goal ? 'good-text' : ''}">${esc(H.fmt(v))}</b>${watch ? '<span class="chip sm">watch</span>' : ''}` : '<span class="muted">Not logged</span>'}</span>
+        ${icon('chevR')}
+      </button></li>`;
+    }).join('')}</ul>
+    <button class="btn ghost block mt-4" data-action="habit-edit" data-f="${field}" data-day="${keyAdd(t, -N)}">${icon('plus')} An older date</button>`);
+}
+
+function onDayLabel(day = tKey()) {
   return day === todayKey() ? 'today' : `on ${fmtShort(fromKey(day))}`;
 }
 
@@ -1731,25 +1805,36 @@ function mealsSheet() {
     <button class="btn block mt-4" data-action="track-food">${icon('plus')} Add food</button>`);
 }
 
+let editDay = null;    // the date the weight/steps/sleep/water sheet is editing
+let editBack = null;   // reopen this field's history after saving (opened from History)
+const eKey = () => editDay || tKey();
+const dateField = (field) => `<div class="field"><label for="hDate">Date</label><input class="input" id="hDate" data-f="${field}" type="date" value="${eKey()}" max="${todayKey()}" /></div>`;
+const histLink = (field) => HABIT[field] ? `<button class="link-btn small mt-4" data-action="habit-history" data-f="${field}">${icon('calendar')} See all days</button>` : '';
+
 function numberSheet({ title, field, label, value, unit, step = 1, min = 0, max = 100000, hint = '' }) {
   openSheet(title, `
+    ${dateField(field)}
     <div class="field"><label for="numVal">${esc(label)}</label>
       <div class="input-unit"><input class="input" id="numVal" type="number" inputmode="decimal" step="${step}" min="${min}" max="${max}" value="${value ?? ''}" /><span>${esc(unit)}</span></div></div>
     ${hint ? `<p class="muted small mt-2 m-0">${hint}</p>` : ''}
     <button class="btn block lg mt-5" data-action="track-num-save" data-f="${field}" data-min="${min}" data-max="${max}">Save</button>
-    ${hget(tKey(), field) != null ? `<button class="btn ghost block mt-3" data-action="track-clear" data-f="${field}">Remove this entry</button>` : ''}`);
+    ${hget(eKey(), field) != null ? `<button class="btn ghost block mt-3" data-action="track-clear" data-f="${field}">Remove this entry</button>` : ''}
+    ${histLink(field)}`);
 }
 
 function sleepSheet() {
-  const v = hget(tKey(), 'sleep');
+  const v = hget(eKey(), 'sleep');
   openSheet('Sleep', `
-    <p class="muted small m-0">How long you slept the night before ${esc(onDayLabel())}.</p>
+    ${dateField('sleep')}
+    <p class="muted small m-0">How long you slept the night before ${esc(onDayLabel(eKey()))}, counted on the day you woke up.</p>
     <div class="grid2">
       <div class="field"><label for="slH">Hours</label><input class="input" id="slH" type="number" inputmode="numeric" min="0" max="16" value="${v != null ? Math.floor(v / 60) : ''}" /></div>
       <div class="field"><label for="slM">Minutes</label><input class="input" id="slM" type="number" inputmode="numeric" min="0" max="59" value="${v != null ? Math.round(v % 60) : ''}" /></div>
     </div>
     <button class="btn block lg mt-5" data-action="track-sleep-save">Save</button>
-    ${v != null ? '<button class="btn ghost block mt-3" data-action="track-clear" data-f="sleep">Remove this entry</button>' : ''}`);
+    ${v != null ? '<button class="btn ghost block mt-3" data-action="track-clear" data-f="sleep">Remove this entry</button>' : ''}
+    ${isNativeApp() && hcState().enabled && v == null ? `<button class="link-btn small mt-4" data-action="health">Not coming from your watch? Check sleep in Health Connect</button>` : ''}
+    ${histLink('sleep')}`);
 }
 
 /** Short labels for the history list: "Upper arm · left" → "Arm L". */
@@ -1870,13 +1955,11 @@ const TRACK_ACTIONS = {
   'meal-del-sheet': (el) => deleteMeal(el.dataset.id, () => { if (sheetOpen()) mealsSheet(); }),
   'food-list': mealsSheet,
   'nutrients': nutrientsSheet,
-  'track-weight': () => numberSheet({
-    title: 'Weight', field: 'weight', label: `Weight (kg) ${onDayLabel()}`, unit: 'kg', step: 0.1, min: 30, max: 350,
-    value: hget(tKey(), 'weight') ?? latestOn('weight', tKey())?.v,
-    hint: 'Weigh yourself in the morning, after the toilet and before eating or drinking. Daily numbers swing by 1–2 kg; the 7-day average shows the real trend.',
-  }),
-  'track-steps': () => numberSheet({ title: 'Steps', field: 'steps', label: `Steps ${onDayLabel()}`, unit: 'steps', step: 100, min: 0, max: 100000, value: hget(tKey(), 'steps'), hint: 'Copy the total from your phone’s health app or your watch.' }),
-  'track-water': () => numberSheet({ title: 'Water', field: 'water', label: `Water ${onDayLabel()} (ml)`, unit: 'ml', step: 50, min: 0, max: 10000, value: hget(tKey(), 'water') }),
+  'track-weight': () => openHabit('weight'),
+  'track-steps': () => openHabit('steps'),
+  'track-water': () => openHabit('water'),
+  'habit-history': (el) => habitHistorySheet(el.dataset.f),
+  'habit-edit': (el) => openHabit(el.dataset.f, el.dataset.day, el.dataset.f),
   'track-water-add': (el) => {
     const day = tKey();
     hset(day, 'water', (hget(day, 'water') || 0) + Number(el.dataset.ml));
@@ -1885,16 +1968,18 @@ const TRACK_ACTIONS = {
   'track-num-save': (el) => {
     const v = parseNum($('#numVal').value), min = Number(el.dataset.min), max = Number(el.dataset.max);
     if (v == null || v < min || v > max) { toast(`Enter a number between ${nf(min)} and ${nf(max)}`); return; }
-    hset(tKey(), el.dataset.f, el.dataset.f === 'weight' ? Math.round(v * 10) / 10 : Math.round(v));
-    save(); closeSheet(); rerender(); toast('Saved');
+    const day = eKey();
+    hset(day, el.dataset.f, el.dataset.f === 'weight' ? Math.round(v * 10) / 10 : Math.round(v));
+    afterHabitEdit(day === todayKey() ? 'Saved' : `Saved for ${fmtShort(fromKey(day))}`);
   },
-  'track-sleep': sleepSheet,
+  'track-sleep': () => openHabit('sleep'),
   'track-sleep-save': () => {
     const h = parseNum($('#slH').value) || 0, m = parseNum($('#slM').value) || 0;
     const total = Math.round(h * 60 + m);
     if (total <= 0 || total > 16 * 60 || m > 59) { toast('Enter hours (0–16) and minutes (0–59)'); return; }
-    hset(tKey(), 'sleep', total);
-    save(); closeSheet(); rerender(); toast('Saved');
+    const day = eKey();
+    hset(day, 'sleep', total);
+    afterHabitEdit(day === todayKey() ? 'Saved' : `Saved for ${fmtShort(fromKey(day))}`);
   },
   'track-measure': () => measureSheet(),
   'measure-history': measureHistorySheet,
@@ -1911,7 +1996,7 @@ const TRACK_ACTIONS = {
     if (bad) { toast('Measurements should be between 10 and 300 cm'); return; }
     save(); closeSheet(); rerender(); toast(n ? `Measurements saved for ${fmtShort(fromKey(day))}` : 'Nothing changed');
   },
-  'track-clear': (el) => { hset(tKey(), el.dataset.f, null); save(); closeSheet(); rerender(); toast('Entry removed'); },
+  'track-clear': (el) => { hset(eKey(), el.dataset.f, null); afterHabitEdit('Entry removed'); },
 };
 
 /* ---------- Meal plan & groceries ---------- */
@@ -3161,6 +3246,7 @@ async function hcSync(loud = false) {
       Health.readSamples({ dataType: 'weight', ...span, limit: 500 }),
       Health.queryAggregated({ dataType: 'calories', ...span, bucket: 'day', aggregation: 'sum' }),
       Health.queryWorkouts({ ...span, limit: 200 }),
+      Health.checkAuthorization({ read: HC_READ }),
     ]);
     const ok = (i) => (got[i].status === 'fulfilled' ? got[i].value : null);
     for (const b of (ok(0)?.samples || [])) {
@@ -3168,11 +3254,18 @@ async function hcSync(loud = false) {
       if (v > 0 && hcPut(localKey(b.startDate), 'steps', v, imported)) changed++;
     }
     const sleep = {};                                                  // minutes asleep, counted on the day you woke up
+    // What happened with sleep, so the Health sheet can say why nothing shows up.
+    h.denied = ok(5)?.readDenied || h.denied || [];
+    h.sleepErr = got[1].status === 'rejected' ? String(got[1].reason?.message || got[1].reason || 'error') : '';
+    if (got[1].status === 'fulfilled') h.sleepLast = null;
     for (const sm of (ok(1)?.samples || [])) {
       // With sleep stages (Samsung Health writes them), count time asleep; otherwise the whole session.
       const staged = (sm.stages || []).filter((st) => !/awake|inbed|out/i.test(st.stage)).reduce((a, st) => a + (st.durationMinutes || 0), 0);
       const mins = staged > 0 ? staged : sm.value > 0 ? sm.value : (Date.parse(sm.endDate) - Date.parse(sm.startDate)) / 60000;
-      if (mins > 0 && mins < 24 * 60) { const d = localKey(sm.endDate); sleep[d] = (sleep[d] || 0) + mins; }
+      if (mins > 0 && mins < 24 * 60) {
+        const d = localKey(sm.endDate); sleep[d] = (sleep[d] || 0) + mins;
+        if (!h.sleepLast || sm.endDate > h.sleepLast.end) h.sleepLast = { start: sm.startDate, end: sm.endDate, mins: Math.round(mins) };
+      }
     }
     for (const [d, m] of Object.entries(sleep)) if (d >= dayKey(start) && hcPut(d, 'sleep', Math.round(m), imported)) changed++;
     const wt = {};
@@ -3191,7 +3284,7 @@ async function hcSync(loud = false) {
     const failed = got.filter((g) => g.status === 'rejected').length;
     save();
     if (!sheetOpen() && !document.activeElement?.matches('input, textarea')) rerender();
-    if (loud) toast(failed === got.length ? 'Could not read Health Connect. Check its permissions.' : changed ? `Updated ${changed} ${changed === 1 ? 'entry' : 'entries'} from Health Connect` : 'Up to date with Health Connect');
+    if (loud) toast(failed === got.length ? 'Could not read Health Connect. Check its permissions.' : h.denied.includes('sleep') ? 'Sleep is not allowed yet. Tap "Allow sleep".' : changed ? `Updated ${changed} ${changed === 1 ? 'entry' : 'entries'} from Health Connect` : 'Up to date with Health Connect');
   } catch (e) {
     if (loud) toast('Health Connect: ' + (e.message || 'something went wrong'));
   } finally { hcBusy = false; }
@@ -3209,6 +3302,21 @@ async function hcConnect() {
     await hcSync(true);
     if (sheetOpen()) healthSheet();
   } catch (e) { toast('Health Connect: ' + (e.message || 'something went wrong')); }
+}
+
+/** Sleep from Health Connect: what was last read, or why nothing arrives. */
+function hcSleepStatus(h) {
+  const t = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const day = (iso) => new Date(iso).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+  if ((h.denied || []).includes('sleep')) return `<div class="card flat soft mt-3"><p class="m-0"><b>Sleep: not allowed</b></p>
+    <p class="small muted m-0 mt-1">PulseFit has no permission to read sleep in Health Connect, so the Sleep tile stays empty.</p>
+    <button class="btn block mt-3" data-action="health-connect">${icon('moon')} Allow sleep</button></div>`;
+  if (h.sleepErr) return `<div class="card flat soft mt-3"><p class="m-0"><b>Sleep: could not read</b></p><p class="small muted m-0 mt-1">${esc(h.sleepErr)}</p></div>`;
+  if (h.sleepLast) return `<p class="small m-0 mt-3"><b>Last sleep read:</b> ${day(h.sleepLast.end)}, ${t(h.sleepLast.start)}–${t(h.sleepLast.end)}, ${fmtSleep(h.sleepLast.mins)} asleep. It counts on the day you wake up.</p>`;
+  if (!h.last) return '';
+  return `<div class="card flat soft mt-3"><p class="m-0"><b>Sleep: nothing in Health Connect</b></p>
+    <p class="small muted m-0 mt-1">PulseFit may read sleep, but Health Connect has no sleep from the last 14 days. Samsung Health isn't sharing it yet:</p>
+    <ol class="recipe-steps small mt-2 m-0"><li>Samsung Health → ⋮ → Settings → Health Connect.</li><li>Turn on <b>Sleep</b> under the data Samsung Health shares.</li><li>Wear the watch overnight, open Samsung Health in the morning so it syncs, then tap Sync now here.</li></ol></div>`;
 }
 
 /** One line on Today with what the watch recorded. */
@@ -3239,6 +3347,7 @@ function healthSheet() {
   openSheet('Galaxy Watch & Samsung Health', h.enabled ? `
     <div class="card flat soft row-between"><span><b>Connected</b><span class="d-block small muted">Health Connect · synced ${esc(ago(h.last))}</span></span><span class="pill">${icon('check')} On</span></div>
     <p class="small mt-3 m-0">Steps, sleep and weight for the last 14 days fill in automatically when you open PulseFit. Anything you type in yourself stays as you wrote it.</p>
+    ${hcSleepStatus(h)}
     ${d.workouts || d.kcal ? `<p class="small m-0 mt-2">Today from your watch: ${[d.workouts ? `${d.workouts} workouts, ${d.min} min` : '', d.kcal ? `${nf(d.kcal)} active kcal` : ''].filter(Boolean).join(' · ')}.</p>` : ''}
     <button class="btn block lg mt-4" data-action="health-sync">${icon('refresh')} Sync now</button>
     <button class="btn ghost block mt-2" data-action="health-settings">Health Connect permissions</button>
@@ -3687,6 +3796,11 @@ document.addEventListener('input', (ev) => {
 });
 
 document.addEventListener('change', async (ev) => {
+  if (ev.target.id === 'hDate') {                                   // weight/steps/sleep/water: edit another date
+    const d = ev.target.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) openHabit(ev.target.dataset.f, d, editBack); else ev.target.value = eKey();
+    return;
+  }
   if (ev.target.id === 'msDate') {                                  // measurements: switch to another date
     const d = ev.target.value;
     if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) measureSheet(d); else ev.target.value = measureDay || todayKey();

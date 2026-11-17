@@ -1524,3 +1524,17 @@ svg.icon-sm { width: 16px; height: 16px; }
 
 /* Add food search: hidden results stay hidden even where the item sets its own display. */
 #sheetBody [hidden] { display: none !important; }
+
+/* History of steps, sleep and water: 30 daily bars, goal as a dashed line. */
+.habit-chart { display: block; width: 100%; height: auto; overflow: visible; }
+.habit-chart .hb { fill: var(--primary); opacity: 0.55; }
+.habit-chart .hb.met { opacity: 1; }
+.habit-chart .hb-none { fill: var(--border-soft); }
+.habit-chart .hb-goal { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.habit-chart .hb-t { fill: var(--muted); font-size: 10px; font-family: inherit; }
+.good-text { color: var(--success); }
+.m-hist-row .vals b { font-weight: 700; }
+.h-hist { gap: var(--space-1); }
+.h-row { grid-template-columns: 1fr auto auto; padding: var(--space-2) var(--space-3); }
+.h-row .vals { grid-column: auto; align-items: center; justify-content: flex-end; }
+.h-row svg { grid-row: auto; grid-column: auto; }

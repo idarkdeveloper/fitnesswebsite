@@ -122,7 +122,8 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 ## 5. Layout
 
 - **Mobile first.** Single column, 16px gutter, content width capped at **760px**.
-- **< 960px:** fixed bottom tab bar (5 items, 26px icons, label always visible). Leave about 96px bottom padding so content clears it.
+- **< 960px:** fixed bottom tab bar (4 items, 24px icons, label always visible, about 64px tall plus the gesture area). `--nav-clear` (80px) is the bottom padding that keeps content clear of it.
+- **Never wider than the screen.** `html, body` clip horizontal overflow; scroll rows (`.h-scroll`) and anything holding positioned children (`.badge`, `.ch-mini`) are `position: relative`; labels that could grow at large Android text sizes wrap instead of `nowrap`.
 - **≥ 960px:** a 240px sticky sidebar replaces the tab bar. Content stays centred and capped at 760px.
 - Grids: the Movement Library is 2 columns, or 3 from 700px. Stats are 2 columns. Streak badges are 4 columns. Ladder badges are 5 columns.
 - Hero art has a max height (320–380px) so it never dominates desktop.
@@ -221,6 +222,21 @@ Measured by a script over `styles.css` and `app.js`. Re-run it after each cleanu
 | States | 7 clickable components without hover or pressed styles | Shared hover, pressed and focus rules (§6) | ✅ |
 
 Other gaps: no illustrations for empty states beyond icons.
+
+## 11. Design QA
+
+Every PR that changes the site runs `tools/design-qa.js` (`.github/workflows/design-qa.yml`): Galaxy S24,
+Galaxy S8 and Pixel 7 widths × Android text size 100 / 130 / 160% × eight screens and two sheets. It fails on:
+
+- anything reaching past the screen edge (sideways scroll);
+- a control smaller than 24 × 24px (a checkbox counts its label);
+- text under 12px at the default text size;
+- an inline icon larger than 48px (an unsized `<svg>`);
+- a bottom menu wider than the screen or taller than 72px;
+- page errors, console errors, or a browser `confirm()`/`alert()` (use `askConfirm`).
+
+Run it locally while serving the repo on port 8765: `node tools/design-qa.js`. It writes `design-qa/design-qa.md`
+and a screenshot per phone and screen. Research and process notes: `docs/RESEARCH.md`.
 
 ## Words
 

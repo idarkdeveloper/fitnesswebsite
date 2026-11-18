@@ -81,6 +81,11 @@ Decisions this research should inform:
   under 12 px, oversized icons, a stretched bottom menu, page errors and browser pop-ups. Run it locally with
   `node tools/design-qa.js` while serving the repo on port 8765.
 - **The PR template** asks for screenshots at phone width and the tests that were run.
+- **Report a problem** with the GitHub issue form "Something looks or works wrong": where, what you
+  expected, what happened (screenshot), how bad, which phone. Tick "after a recent update" when a merge
+  caused it: that is an *escape*, and each escape gets a new Design QA check.
+- **Design debt** (`docs/DESIGN-DEBT.md`) lists what is known and not yet fixed, with the measures:
+  escapes (target none), Design QA first-pass rate (target above 80%), and open items going down.
 - **Bug severity** (used in PR descriptions): *Critical*: you can't do the task. *Major*: you can, but it is
   confusing or wrong. *Minor*: looks off. *Cosmetic*: only a designer would notice.
 - **DESIGN.md is the source of truth** for tokens and rules; change it in the same PR as the code.

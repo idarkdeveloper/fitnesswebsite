@@ -1,0 +1,48 @@
+name: Something looks or works wrong
+description: Report a problem you saw in PulseFit, with a screenshot.
+title: "[Bug] "
+labels: ["design-qa"]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Screen and part of it, e.g. "Progress, the badges row" or "Add food sheet, search".
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Attach a screenshot (paste or drag it here).
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How bad
+      options:
+        - "Critical: I can't do the task"
+        - "Major: I can, but it's confusing or wrong"
+        - "Minor: it looks off"
+        - "Cosmetic: only a designer would notice"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone and app
+      description: e.g. "Galaxy S24, Android app, large font" or "Chrome on laptop".
+      placeholder: Galaxy S24, Android app
+  - type: checkboxes
+    id: escaped
+    attributes:
+      label: After a merge?
+      options:
+        - label: This appeared after a recent update (Design QA should have caught it)

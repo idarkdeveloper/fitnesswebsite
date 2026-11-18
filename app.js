@@ -1403,7 +1403,7 @@ function trackWeightCard(day, T, thisDay, isToday) {
   }
   return `
     <section class="card mt-4" aria-labelledby="weightH">
-      <div class="row-between"><h2 class="h3" id="weightH">Weight</h2><button class="btn subtle sm" data-action="track-weight">${w != null ? 'Edit' : 'Log weight'}</button></div>
+      <div class="row-between"><h2 class="h3" id="weightH">Weight</h2><span class="row gap-2"><button class="btn subtle sm" data-action="habit-history" data-f="weight">History</button><button class="btn subtle sm" data-action="track-weight">${w != null ? 'Edit' : 'Log weight'}</button></span></div>
       <div class="kpi mt-3">${w != null
         ? `<span class="kpi-v">${kg(w)}</span><span class="kpi-u">kg${isToday ? ' today' : ''}</span>`
         : `<span class="kpi-v faint">–</span><span class="kpi-u">Not weighed ${thisDay}</span>`}</div>
@@ -1513,8 +1513,8 @@ function weightChart(endDay) {
 }
 
 /** Hover, tap and arrow-key readout for the weight chart. */
-function wireWeightChart() {
-  const wrap = $('.wchart');
+function wireWeightChart(root = document) {
+  const wrap = root && root.querySelector('.wchart');
   if (!wrap) return;
   const svg = wrap.querySelector('svg'), tip = wrap.querySelector('.chart-tip');
   const xh = svg.querySelector('.xh'), dot = svg.querySelector('.fdot');
@@ -1550,6 +1550,7 @@ function wireWeightChart() {
 /* ---------- Track sheets ---------- */
 /** Steps, sleep and water: how each one shows in History. */
 const HABIT = {
+  weight: { title: 'Weight', fmt: (v) => `${kg(v)} kg`, goal: () => hp().goalWeight || null, lower: true },
   steps: { title: 'Steps', fmt: (v) => nf(v), goal: () => hp().stepGoal || HDEF.stepGoal },
   sleep: { title: 'Sleep', fmt: (v) => fmtSleep(v), goal: () => hp().sleepGoal || HDEF.sleepGoal },
   water: { title: 'Water', fmt: (v) => `${L1(v)} L`, goal: () => hp().waterGoal || HDEF.waterGoal },
@@ -1581,11 +1582,12 @@ function afterHabitEdit(msg) {
 function habitHistorySheet(field) {
   if (!HABIT[field]) field = 'steps';
   const H = HABIT[field], goal = H.goal(), t = todayKey(), N = 30;
+  const hit = (v) => goal != null && (H.lower ? v <= goal : v >= goal);
   const days = Array.from({ length: N }, (_, i) => keyAdd(t, -i));               // newest first
   const vals = days.map((k) => hget(k, field) ?? null);
   const mean = (a) => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
   const got = vals.filter((v) => v != null), a7 = mean(vals.slice(0, 7).filter((v) => v != null)), a30 = mean(got);
-  const met = got.filter((v) => v >= goal).length;
+  const met = got.filter(hit).length;
   const imp = state.health?.imported || {};
   // Bars, oldest on the left; dashed line at the goal.
   const W = 300, Hh = 96, top = Math.max(goal, ...got, 1) * 1.08, bw = W / N;
@@ -1595,17 +1597,18 @@ function habitHistorySheet(field) {
     if (v == null) return `<rect class="hb-none" x="${(i * bw + 1).toFixed(1)}" y="${Hh - 2}" width="${(bw - 2).toFixed(1)}" height="2" rx="1"/>`;
     return `<rect class="hb${v >= goal ? ' met' : ''}" x="${(i * bw + 1).toFixed(1)}" y="${y(v).toFixed(1)}" width="${(bw - 2).toFixed(1)}" height="${(Hh - y(v)).toFixed(1)}" rx="2"><title>${esc(fmtShort(fromKey(k)))}: ${esc(H.fmt(v))}</title></rect>`;
   }).join('');
-  const chart = `<svg class="habit-chart mt-3" viewBox="0 0 ${W} ${Hh + 14}" role="img" aria-label="${H.title}, last 30 days. Goal met on ${met} of ${got.length} logged days.">
+  // Weight changes slowly and lower is better: use the weight chart (daily dots, 7-day average line, goal).
+  const chart = H.lower ? weightChart(t) : `<svg class="habit-chart mt-3" viewBox="0 0 ${W} ${Hh + 14}" role="img" aria-label="${H.title}, last 30 days. Goal met on ${met} of ${got.length} logged days.">
     ${bars}<line class="hb-goal" x1="0" x2="${W}" y1="${y(goal).toFixed(1)}" y2="${y(goal).toFixed(1)}"/>
     <text class="hb-t" x="0" y="${Hh + 12}">30 days ago</text><text class="hb-t" x="${W}" y="${Hh + 12}" text-anchor="end">Today</text></svg>`;
   openSheet(`${H.title} history`, `
-    <div class="segmented" role="tablist" aria-label="Which history" style="--n:3;--i:${Object.keys(HABIT).indexOf(field)}">
+    <div class="segmented" role="tablist" aria-label="Which history" style="--n:${Object.keys(HABIT).length};--i:${Object.keys(HABIT).indexOf(field)}">
       ${Object.entries(HABIT).map(([f, x]) => `<button role="tab" aria-selected="${f === field}" data-action="habit-history" data-f="${f}">${x.title}</button>`).join('')}
     </div>
-    <div class="facts mt-3">
+    <div class="facts mt-3">${H.lower ? weightFacts(t, got) : `
       <span>7-day average <b>${a7 != null ? esc(H.fmt(a7)) : '–'}</b></span>
       <span>30-day average <b>${a30 != null ? esc(H.fmt(a30)) : '–'}</b></span>
-      <span>Goal ${esc(H.fmt(goal))} met on <b>${met} of ${got.length}</b> logged days</span>
+      <span>Goal ${esc(H.fmt(goal))} met on <b>${met} of ${got.length}</b> logged days</span>`}
     </div>
     ${chart}
     <p class="muted small m-0 mt-2">Tap a day to add or change it.${field === 'sleep' ? ' Sleep counts on the day you woke up.' : ''}</p>
@@ -1613,11 +1616,23 @@ function habitHistorySheet(field) {
       const v = vals[i], watch = v != null && imp[hk(k, field)] === v;
       return `<li><button class="m-hist-row h-row" data-action="habit-edit" data-f="${field}" data-day="${k}">
         <span class="d">${k === t ? 'Today' : esc(fmtShort(fromKey(k)))}</span>
-        <span class="vals">${v != null ? `<b class="${v >= goal ? 'good-text' : ''}">${esc(H.fmt(v))}</b>${watch ? '<span class="chip sm">watch</span>' : ''}` : '<span class="muted">Not logged</span>'}</span>
+        <span class="vals">${v != null ? `<b class="${hit(v) ? 'good-text' : ''}">${esc(H.fmt(v))}</b>${watch ? '<span class="chip sm">watch</span>' : ''}` : '<span class="muted">Not logged</span>'}</span>
         ${icon('chevR')}
       </button></li>`;
     }).join('')}</ul>
     <button class="btn ghost block mt-4" data-action="habit-edit" data-f="${field}" data-day="${keyAdd(t, -N)}">${icon('plus')} An older date</button>`);
+  if (H.lower) wireWeightChart($('#sheetBody'));
+}
+
+/** Weight history facts: 7-day average, change over the 30 days, and what's left to the goal. */
+function weightFacts(t, got) {
+  const a = avg7(t), goal = hp().goalWeight, first = got[got.length - 1], last = got[0];
+  const ch = got.length > 1 ? last - first : null;
+  const left = a != null && goal ? a - goal : null;
+  return `<span>7-day average <b>${a != null ? kg(a) + ' kg' : '–'}</b></span>
+      ${ch != null ? `<span>30 days <b>${ch > 0 ? '+' : ch < 0 ? '−' : ''}${kg(Math.abs(ch))} kg</b></span>` : ''}
+      ${left != null ? `<span>${left > 0.05 ? `<b>${kg(left)} kg</b> to goal` : '<b>Goal reached</b>'}</span>` : ''}
+      <span>Weighed <b>${got.length}</b> of 30 days</span>`;
 }
 
 function onDayLabel(day = tKey()) {

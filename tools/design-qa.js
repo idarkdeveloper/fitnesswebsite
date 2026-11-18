@@ -56,6 +56,14 @@ async function check(p, label, scale) {
         const fs = parseFloat(getComputedStyle(el).fontSize);
         if (own && fs < 12 && !el.closest('.sr-only')) { const t = name(el); if (!seen.has(t)) { seen.add(t); out.push(['text', `"${t}" is ${fs}px`]); } }
       }
+      // Chart labels: SVG text scales with its chart, so measure the size it is drawn at.
+      for (const t of scope.querySelectorAll('svg text')) {
+        if (!visible(t)) continue;
+        const svg = t.ownerSVGElement, vb = svg.viewBox && svg.viewBox.baseVal;
+        if (!vb || !vb.width) continue;
+        const px = parseFloat(getComputedStyle(t).fontSize) * svg.getBoundingClientRect().width / vb.width;
+        if (px < 11.95) { const k = 'chart ' + t.textContent.trim(); if (!seen.has(k)) { seen.add(k); out.push(['text', `chart label "${t.textContent.trim()}" is drawn at ${px.toFixed(1)}px`]); } }
+      }
     }
     // 4. icons
     for (const s of scope.querySelectorAll('svg')) {
@@ -159,7 +167,10 @@ async function setTextSize(p, scale) {
     p.on('dialog', (d) => { problems.push({ where: phone, kind: 'errors', msg: `browser ${d.type()}(): ${d.message()}` }); d.dismiss(); });
     // A fresh install whose every day is a training day, so Today shows a session.
     await p.goto(BASE); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(500);
-    await p.evaluate(() => { const k = 'pf2_state'; const st = JSON.parse(localStorage.getItem(k)); st.trainingDays = [0, 1, 2, 3, 4, 5, 6]; localStorage.setItem(k, JSON.stringify(st)); });
+    await p.evaluate(() => { const k = 'pf2_state'; const st = JSON.parse(localStorage.getItem(k)); st.trainingDays = [0, 1, 2, 3, 4, 5, 6];
+      // A few weigh-ins and step counts, so the weight chart and Trends bars are drawn and checked too.
+      for (let i = 0; i < 8; i++) { const d = new Date(); d.setDate(d.getDate() - i * 3); const day = d.toISOString().slice(0, 10); st.hlog[day + '|weight'] = 116.2 - i * 0.4; st.hlog[day + '|steps'] = 6000 + i * 700; }
+      localStorage.setItem(k, JSON.stringify(st)); });
     for (const scale of TEXT_SIZES) {
       for (const s of SCREENS) {
         await p.goto(BASE + '#/' + s); await p.reload(); await p.waitForTimeout(450);

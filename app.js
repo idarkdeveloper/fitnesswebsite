@@ -1021,7 +1021,7 @@ function progressBody() {
       ${verdict}
     </section>
     <section class="card mt-4" aria-labelledby="mH">
-      <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+, /, ''))})` : 'In centimetres'}</div></div><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">History</button><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></span></div>
+      <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+, /, ''))})` : 'In centimetres'}</div></div><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></span></div>
       <div class="m-grid mt-3">${mtiles}</div>
       <p class="small muted m-0 mt-3">Measure every week or two, same time of day. Waist keeps going down even in weeks when the scale doesn't.</p>
     </section>
@@ -1466,7 +1466,7 @@ function trackMeasureCard(day) {
   }).join('');
   return `
     <section class="card mt-4" aria-labelledby="measH">
-      <div class="row-between"><h2 class="h3" id="measH">Measurements</h2><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">History</button><button class="btn subtle sm" data-action="track-measure">Log</button></span></div>
+      <div class="row-between"><h2 class="h3" id="measH">Measurements</h2><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure">Log</button></span></div>
       ${rows
         ? `<ul class="kv-list mt-3">${rows}</ul><p class="muted small m-0 mt-2">Latest value, and change since your first entry.</p>`
         : '<p class="muted small mt-3 m-0">Measure your waist every week or two, at the same time of day. It keeps going down even in weeks when the scale doesn’t.</p>'}
@@ -1491,7 +1491,7 @@ function weightChart(endDay) {
   if (showGoal) { lo = Math.min(lo, goal); hi = Math.max(hi, goal); }
   const pad = Math.max(0.6, (hi - lo) * 0.15);
   lo = Math.floor(lo - pad); hi = Math.ceil(hi + pad);
-  const W = 320, H = 150, L = 34, R = 8, TP = 10, B = 22;
+  const W = 320, H = 150, L = 44, R = 8, TP = 10, B = 22;   // L fits "113.5" at 13.5px labels
   const x = (i) => L + (i / (N - 1)) * (W - L - R);
   const y = (v) => TP + ((hi - v) / (hi - lo)) * (H - TP - B);
   const ticks = [lo, (lo + hi) / 2, hi].map((v) => Math.round(v * 10) / 10);
@@ -1873,7 +1873,7 @@ function measureDates() {
 }
 function measureHistorySheet() {
   const rows = measureDates();
-  openSheet('Measurement history', rows.length ? `
+  openSheet('Measurement trends', rows.length ? `
     <p class="muted small m-0 sheet-meta">${rows.length} ${rows.length === 1 ? 'date' : 'dates'}, newest first. Tap a date to change it.</p>
     <ul class="m-hist mt-3">${rows.map(({ day, vals }) => `
       <li><button class="m-hist-row" data-action="measure-edit" data-day="${day}">
@@ -3478,7 +3478,7 @@ function plannedNotifications() {
     if (state.waterReminder.enabled && i < 7 && !(i === 0 && (hget(k, 'water') || 0) >= waterGoal())) {
       waterSlots().forEach((m, j) => {
         const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(m / 60), m % 60);
-        if (at > now) out.push({ id: 3000 + i * 24 + j, title: 'Drink water 💧', body: waterReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', channelId: 'water', actionTypeId: 'water', extra: { route: '#/today' } });
+        if (at > now) out.push({ id: 3000 + i * 24 + j, title: 'Drink water', body: waterReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', channelId: 'water', actionTypeId: 'water', extra: { route: '#/today' } });
       });
     }
     if (pr.enabled && d.getDay() === pr.day) {
@@ -3907,7 +3907,7 @@ function planReminderText(wd) {
   return `${next ? "Next week's" : "This week's"} meal plan is ready.${wd === 6 ? ' Shops are closed tomorrow, so get the groceries today.' : wd === 5 ? ' Check the grocery list and shop tomorrow.' : ' Time to get the groceries.'}`;
 }
 const TRAIN_REMINDER_TEXT = "Today's session is waiting. A few sets is all it takes!";
-const TRAIN_REMINDER_TITLE = 'Time to train 💪';
+const TRAIN_REMINDER_TITLE = 'Time to train';
 /** "Pushups and Leg Raises today. A few sets is all it takes!" for a training day. */
 function trainReminderText(d) {
   const names = sessionFor(d).map((cid) => CAT[cid] && CAT[cid].name).filter(Boolean);
@@ -3943,7 +3943,7 @@ function addWaterGlass() {
 }
 
 /** Plan reminder title: from Friday it's about next week's shopping. */
-const planReminderTitle = (wd) => (((wd + 6) % 7) >= 4 ? 'Groceries for next week 🛒' : "This week's groceries 🛒");
+const planReminderTitle = (wd) => (((wd + 6) % 7) >= 4 ? 'Groceries for next week' : "This week's groceries");
 
 function checkPlanReminder() {
   const pr = state.planReminder;
@@ -3964,7 +3964,7 @@ function checkWaterReminder() {
   if (due == null || (hget(k, 'water') || 0) >= waterGoal()) return;
   const slot = `${k}|${due}`;
   if (w.lastSlot === slot) return;
-  try { new Notification('Drink water 💧', { body: waterReminderText(today()) }); } catch { /* ignore */ }
+  try { new Notification('Drink water', { body: waterReminderText(today()) }); } catch { /* ignore */ }
   w.lastSlot = slot;
   save();
 }

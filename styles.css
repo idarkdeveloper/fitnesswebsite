@@ -1589,3 +1589,10 @@ html, body { overflow-x: clip; max-width: 100%; }
 .tab { padding: 6px 0; min-height: 52px; justify-content: center; }
 .tab svg { width: 24px; height: 24px; }
 :root { --nav-clear: 80px; }
+
+/* Chart labels: SVG text scales with the chart, so size them to land at 12 px or more on a 360 px phone. */
+.wchart text { font-size: 13.5px; }
+.habit-chart .hb-t { font-size: 12px; }
+/* Toasts sit above the bottom menu instead of over the page heading; higher during a workout, clear of the rest timer. */
+.toast { inset: auto auto calc(var(--nav-clear) + env(safe-area-inset-bottom)) 50%; max-width: calc(100% - 2 * var(--space-4)); }
+body[data-route="workout"] .toast { inset: auto auto calc(var(--nav-clear) + 88px + env(safe-area-inset-bottom)) 50%; }

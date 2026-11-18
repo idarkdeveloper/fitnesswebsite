@@ -230,7 +230,7 @@ Galaxy S8 and Pixel 7 widths × Android text size 100 / 130 / 160% × eight scre
 
 - anything reaching past the screen edge (sideways scroll);
 - a control smaller than 24 × 24px (a checkbox counts its label);
-- text under 12px at the default text size;
+- text under 12px at the default text size, including chart labels as drawn (SVG text scales with its chart);
 - an inline icon larger than 48px (an unsized `<svg>`);
 - a bottom menu wider than the screen or taller than 72px;
 - page errors, console errors, or a browser `confirm()`/`alert()` (use `askConfirm`).

@@ -9,6 +9,9 @@
      4. icons      no inline icon blown up past 48 px by a missing size (the squeezed card, PR #52)
      5. menu       the bottom menu spans the screen, no wider, and stays compact
      6. errors     no page errors, console errors or browser confirm()/alert() pop-ups
+   And once per theme (Midnight, Light, Dark) on one phone:
+     7. contrast   text against what is actually behind it: 4.5:1, or 3:1 for large text (WCAG 1.4.3)
+     8. focus      Tab moves through visible controls and each shows a 2 px+ focus ring (WCAG 2.4.7, 2.4.11)
    It writes design-qa.md (a table of every problem) and a screenshot per phone and screen,
    and exits 1 when anything fails. */
 const { chromium, devices } = require('playwright');
@@ -71,6 +74,68 @@ async function check(p, label, scale) {
   }, { scale, BIG_ART }).then((list) => list.map(([kind, msg]) => ({ where: label, kind, msg })));
 }
 
+/* 7. Text contrast against the colour behind it. Semi-transparent backgrounds are composited up to the first
+   solid one; text that sits on the page's gradient is checked against both gradient ends; text on art or
+   images can't be judged from the DOM and is skipped. */
+async function checkContrast(p, label) {
+  return p.evaluate(() => {
+    const parse = (c) => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return null; const v = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return { r: v[0], g: v[1], b: v[2], a: v.length > 3 ? v[3] : 1 }; };
+    const over = (top, under) => ({ r: top.r * top.a + under.r * (1 - top.a), g: top.g * top.a + under.g * (1 - top.a), b: top.b * top.a + under.b * (1 - top.a), a: 1 });
+    const lum = (c) => { const f = (x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+    const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+    const root = getComputedStyle(document.documentElement);
+    const tok = (n) => { const d = document.createElement('i'); d.style.color = root.getPropertyValue(n).trim(); document.body.appendChild(d); const c = parse(getComputedStyle(d).color); d.remove(); return c; };
+    const pageEnds = [tok('--bg-top'), tok('--bg-bottom')].filter(Boolean);
+    const out = [], seen = new Set();
+    const scope = document.querySelector('dialog[open]') || document.querySelector('#view');
+    for (const el of scope.querySelectorAll('*')) {
+      if (el.closest('svg, .sr-only, .art, .thumb, .ex-hero, .hero, .medal, [aria-hidden="true"], :disabled, [aria-disabled="true"]')) continue;
+      if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+      const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+      if (!r.width || !r.height || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+      // The selected segment's pill is a ::before on its track; its colour is --accent.
+      let backs = null, stack = [];
+      if (el.closest('.segmented') && el.closest('[aria-selected="true"], [aria-checked="true"]')) backs = [tok('--accent')];
+      for (let a = el; a && !backs; a = a.parentElement) {
+        const as = getComputedStyle(a);
+        if (as.backgroundImage !== 'none' && a !== document.body && a !== document.documentElement) { stack = null; break; }   // art or gradient: skip
+        const bg = parse(as.backgroundColor);
+        if (bg && bg.a > 0) { stack.push(bg); if (bg.a >= 1) { backs = [bg]; break; } }
+      }
+      if (stack === null) continue;
+      if (!backs) backs = pageEnds;
+      backs = backs.map((b) => stack.slice(0, stack.length - (b === stack[stack.length - 1] ? 1 : 0)).reverse().reduce((acc, layer) => over(layer, acc), b));
+      let fg = parse(cs.color); if (!fg) continue;
+      const fs = parseFloat(cs.fontSize), large = fs >= 24 || (fs >= 18.66 && +cs.fontWeight >= 700);
+      const need = large ? 3 : 4.5;
+      const worst = Math.min(...backs.map((b) => ratio(fg.a < 1 ? over(fg, b) : fg, b)));
+      const t = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 30);
+      if (worst < need - 0.05 && !seen.has(t)) { seen.add(t); out.push(`"${t}" is ${worst.toFixed(2)}:1, needs ${need}:1`); }
+    }
+    return out;
+  }).then((list) => list.map((msg) => ({ where: label, kind: 'contrast', msg })));
+}
+
+/* 8. Keyboard: the first stops of Tab order are visible and show a focus ring. */
+async function checkFocus(p, label, stops = 14) {
+  const out = [];
+  await p.evaluate(() => { document.activeElement && document.activeElement.blur(); window.scrollTo(0, 0); });
+  for (let i = 0; i < stops; i++) {
+    await p.keyboard.press('Tab');
+    const f = await p.evaluate(() => {
+      const e = document.activeElement; if (!e || e === document.body) return null;
+      const r = e.getBoundingClientRect(), cs = getComputedStyle(e);
+      const name = (e.getAttribute('aria-label') || e.textContent || e.tagName).replace(/\s+/g, ' ').trim().slice(0, 30);
+      const ring = (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) >= 2) || /(\d+(\.\d+)?px\s+){2,3}[1-9]/.test(cs.boxShadow) || (e.matches('input, select, textarea') && cs.boxShadow !== 'none');
+      return { name, hidden: !r.width || !r.height || cs.visibility === 'hidden', ring };
+    });
+    if (!f) continue;
+    if (f.hidden) out.push({ where: label, kind: 'focus', msg: `Tab lands on an invisible element ("${f.name}")` });
+    else if (!f.ring) out.push({ where: label, kind: 'focus', msg: `"${f.name}" has no visible focus ring` });
+  }
+  return out;
+}
+
 async function setTextSize(p, scale) {
   if (scale === 1) return;
   await p.evaluate((z) => {
@@ -114,12 +179,31 @@ async function setTextSize(p, scale) {
     }
     await ctx.close();
   }
+  // Contrast and keyboard focus, once per theme on one phone at the default text size.
+  for (const theme of ['midnight', 'light', 'dark']) {
+    const ctx = await b.newContext({ ...PHONES[0][1], hasTouch: false });
+    const p = await ctx.newPage();
+    await p.goto(BASE); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
+    await p.evaluate((t) => { const st = JSON.parse(localStorage.getItem('pf2_state')); st.trainingDays = [0, 1, 2, 3, 4, 5, 6]; st.profile.theme = t; localStorage.setItem('pf2_state', JSON.stringify(st)); }, theme);
+    for (const s of SCREENS) {
+      await p.goto(BASE + '#/' + s); await p.reload(); await p.waitForTimeout(450);
+      const where = `${PHONES[0][0]} · ${theme} · #/${s || 'today'}`;
+      problems.push(...await checkContrast(p, where)); checked++;
+      if (s === '' || s === 'progress') problems.push(...await checkFocus(p, where));
+    }
+    for (const [sheet, opener] of SHEETS) {
+      await p.goto(BASE + '#/'); await p.reload(); await p.waitForTimeout(450);
+      await p.click(opener); await p.waitForSelector('dialog[open]'); await p.waitForTimeout(250);
+      problems.push(...await checkContrast(p, `${PHONES[0][0]} · ${theme} · ${sheet}`)); checked++;
+    }
+    await ctx.close();
+  }
   await b.close();
   // Same problem on many screens or sizes: report it once, with a count.
   const grouped = new Map();
   for (const x of problems) { const k = x.kind + '|' + x.msg; const g = grouped.get(k) || { ...x, n: 0 }; g.n++; grouped.set(k, g); }
   const rows = [...grouped.values()];
-  const md = [`# Design QA`, '', `${checked} screen checks: ${PHONES.map((x) => x[0]).join(', ')} at text size ${TEXT_SIZES.map((t) => t * 100 + '%').join(', ')}.`, '',
+  const md = [`# Design QA`, '', `${checked} screen checks: ${PHONES.map((x) => x[0]).join(', ')} at text size ${TEXT_SIZES.map((t) => t * 100 + '%').join(', ')}; contrast and focus in the Midnight, Light and Dark themes.`, '',
     rows.length ? `**${rows.length} problem${rows.length === 1 ? '' : 's'}**` : '**No problems found.**', '',
     ...(rows.length ? ['| Check | Problem | First seen | Times |', '|---|---|---|---|', ...rows.map((r) => `| ${r.kind} | ${r.msg.replace(/\|/g, '/')} | ${r.where} | ${r.n} |`)] : [])].join('\n');
   fs.writeFileSync(path.join(OUT, 'design-qa.md'), md + '\n');

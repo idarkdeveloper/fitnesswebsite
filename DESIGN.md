@@ -235,6 +235,15 @@ Galaxy S8 and Pixel 7 widths × Android text size 100 / 130 / 160% × eight scre
 - a bottom menu wider than the screen or taller than 72px;
 - page errors, console errors, or a browser `confirm()`/`alert()` (use `askConfirm`).
 
+And once per theme (Midnight, Light, Dark) on the Galaxy S24 width:
+
+- text contrast below 4.5:1 (3:1 for large text) against what is really behind it, composited through
+  semi-transparent surfaces and checked against both ends of the page gradient;
+- a Tab stop that is invisible or has no 2px+ focus ring.
+
+Known gaps that Design QA can't measure are listed in `docs/DESIGN-DEBT.md`. Report problems with the
+"Something looks or works wrong" issue form on GitHub.
+
 Run it locally while serving the repo on port 8765: `node tools/design-qa.js`. It writes `design-qa/design-qa.md`
 and a screenshot per phone and screen. Research and process notes: `docs/RESEARCH.md`.
 

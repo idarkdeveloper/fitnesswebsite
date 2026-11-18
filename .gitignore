@@ -54,3 +54,6 @@ coverage/
 
 # ---------- Generated images awaiting review (never deployed) ----------
 img/review/
+
+# Design QA output (tools/design-qa.js)
+design-qa/

@@ -1,0 +1,48 @@
+# Design QA on every pull request that changes the site: phone widths x Android text sizes x screens.
+# Fails on sideways overflow, tiny tap targets, text under 12 px, blown-up icons, a stretched bottom
+# menu, page errors or browser pop-ups. The report and screenshots are attached to the run.
+name: Design QA
+
+on:
+  pull_request:
+    paths: ['*.html', '*.js', '*.css', 'tools/design-qa.js', '.github/workflows/design-qa.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  design-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.63.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve the site
+        run: |
+          python3 -m http.server 8765 >/dev/null 2>&1 &
+          for i in $(seq 1 20); do curl -sf http://localhost:8765/ >/dev/null && break; sleep 0.5; done
+
+      - name: Run design QA
+        run: node tools/design-qa.js http://localhost:8765/ design-qa
+
+      - name: Report
+        if: always()
+        run: cat design-qa/design-qa.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Keep report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-qa
+          path: design-qa/
+          retention-days: 14

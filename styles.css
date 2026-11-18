@@ -1207,7 +1207,7 @@ details > summary { cursor: pointer; padding: var(--space-2) 0; }
 .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); margin: var(--space-8) 0 var(--space-3); }
 .sec-head.sm { margin: var(--space-5) var(--space-1) var(--space-2); }
 .group-label { font-size: var(--fs-xs); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: var(--space-6) var(--space-1) var(--space-2); }
-.link-plain { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); }
+.link-plain { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--muted); min-height: var(--tap); }
 .c-text { color: var(--text); }
 .danger-text { color: var(--danger); }
 .icon-md { width: 24px; height: 24px; }
@@ -1220,7 +1220,7 @@ button.plain { background: none; border: 0; padding: 0; color: inherit; font: in
 .chip.strong { font-weight: 700; }
 .chip.dashed { background: transparent; border-style: dashed; color: var(--muted); }
 .plan-k.accent { color: var(--accent); }
-.plan-list .plan-k, .next-meal .plan-k, .plan-pick .plan-k { width: 78px; flex-shrink: 0; font-size: 11px; white-space: nowrap; }
+.plan-list .plan-k, .next-meal .plan-k, .plan-pick .plan-k { width: 78px; flex-shrink: 0; font-size: var(--fs-xs); white-space: nowrap; }
 .link-btn { text-decoration: none; font-weight: 700; }
 .link-btn:hover { text-decoration: underline; }
 .segmented button { font-size: var(--fs-body); white-space: nowrap; }
@@ -1254,7 +1254,7 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .streak-pill svg { width: 18px; height: 18px; }
 .wk-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: var(--space-5); }
 .wk-day { display: flex; flex-direction: column; align-items: center; padding: var(--space-3) 0 var(--space-2); border-radius: var(--r-sm); border: 1.5px solid transparent; background: transparent; }
-.wk-day .wd { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.wk-day .wd { font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 .wk-day .dn { font-size: var(--fs-lg); font-weight: 800; margin: 2px 0 4px; }
 .wk-day .mk { height: 16px; display: grid; place-items: center; color: var(--muted); }
 .wk-day .mk svg { width: 14px; height: 14px; }
@@ -1429,7 +1429,7 @@ button.chip.on { background: var(--primary); border-color: var(--primary); color
 /* Meal plan */
 .pd-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .pd { display: flex; flex-direction: column; align-items: center; padding: var(--space-2) 0; border-radius: var(--r-sm); border: 1.5px solid transparent; background: none; }
-.pd .wd { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--muted); }
+.pd .wd { font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; color: var(--muted); }
 .pd .kc { font-size: var(--fs-xs); font-weight: 700; }
 .pd.sel { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .pd.sel .wd { color: var(--accent); }
@@ -1538,3 +1538,28 @@ svg.icon-sm { width: 16px; height: 16px; }
 .h-row { grid-template-columns: 1fr auto auto; padding: var(--space-2) var(--space-3); }
 .h-row .vals { grid-column: auto; align-items: center; justify-content: flex-end; }
 .h-row svg { grid-row: auto; grid-column: auto; }
+
+/* Today: the explainer is one row under the session, so Start stays on the first screen. */
+.intro-row { width: 100%; min-height: 52px; display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-4); border-radius: var(--r-md); border: 1px dashed var(--border); background: transparent; color: var(--text); font: inherit; font-size: var(--fs-label); text-align: left; cursor: pointer; }
+.intro-row > svg:first-child { color: var(--accent); }
+.intro-row > svg:last-child { color: var(--muted); }
+.intro-row b { font-weight: 500; color: var(--link); }
+.howto-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.howto-list li { display: flex; gap: var(--space-3); align-items: flex-start; line-height: 1.5; }
+.howto-list li svg { flex: none; margin-top: 2px; color: var(--accent); }
+/* Water tile: the tile opens the editor; the chip adds a glass. */
+.q-tile.has-chip { padding: 0; gap: 0; }
+.q-main { display: flex; flex-direction: column; gap: 2px; width: 100%; padding: var(--space-4) var(--space-4) var(--space-2); border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.q-chip { margin: 0 var(--space-3) var(--space-3); min-height: var(--tap); display: flex; align-items: center; justify-content: center; gap: var(--space-1); border-radius: var(--r-pill); border: 1px solid var(--border); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.q-chip svg { width: 16px; height: 16px; }
+.q-chip:active, .q-main:active { transform: scale(0.98); transition: transform var(--dur-press) var(--ease); }
+.empty-start { align-items: center; margin-bottom: var(--space-4); }
+/* Weight carries hierarchy: titles and the numbers people read stay bold, labels and links are medium. */
+.wk-day .wd { font-weight: 500; }
+.wk-day .dn { font-weight: 500; }
+.wk-day.sel .dn { font-weight: 700; }
+.ring-c small { font-size: var(--fs-xs); font-weight: 500; }
+.link-btn { font-weight: 500; }
+.eyebrow { font-weight: 700; }
+/* Toast action: a full 44 px target without making the toast taller. */
+.toast-btn { min-height: var(--tap); padding: 0 var(--space-3); margin: calc(var(--space-3) * -1) calc(var(--space-3) * -1) calc(var(--space-3) * -1) 0; }

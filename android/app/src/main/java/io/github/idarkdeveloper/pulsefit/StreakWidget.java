@@ -32,13 +32,16 @@ public class StreakWidget extends AppWidgetProvider {
         int streak = p.getInt("streak", 0);
         String status = fresh ? p.getString("status", "") : "Open PulseFit to see today";
         String detail = fresh ? p.getString("detail", "") : "";
-        if (status.isEmpty()) status = streak == 0 ? "Start today 💪" : "Keep it going";
+        if (status.isEmpty()) status = streak == 0 ? "Start today" : "Keep it going";
 
         RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_streak);
         v.setTextViewText(R.id.widget_streak, String.valueOf(streak));
         v.setTextViewText(R.id.widget_status, status);
         v.setTextViewText(R.id.widget_detail, detail);
         v.setViewVisibility(R.id.widget_detail, detail.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
+        // TalkBack reads the whole widget as one sentence instead of a bare number.
+        String said = "PulseFit: " + streak + (streak == 1 ? " day" : " days") + " streak. " + status + (detail.isEmpty() ? "" : ". " + detail);
+        v.setContentDescription(R.id.widget_root, said);
 
         Intent open = new Intent(context, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);

@@ -17,9 +17,13 @@
 
     <TextView
         android:id="@+id/widget_streak"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="24sp"
+        android:autoSizeMaxTextSize="52sp"
+        android:maxLines="1"
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:text="0"

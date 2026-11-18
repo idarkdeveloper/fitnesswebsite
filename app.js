@@ -65,6 +65,7 @@ const ICONS = {
   squat: 'M10 3.8a1.8 1.8 0 1 0 0-.01M10.5 6.5 9 12.5h6.5l-1 6.5h3M10.3 8.5H17',
   sparkle: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18',
   moon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+  chart: 'M4 18l5-5 4 4 7-8M15 9h5v5',
 };
 
 function icon(name, attrs = '') {
@@ -384,7 +385,8 @@ function toast(msg, action) {
   }
   const host = $('#layer dialog.sheet[open]') || document.body;
   if (el.parentElement !== host) host.appendChild(el);
-  el.textContent = msg;
+  el.textContent = '';
+  const m = document.createElement('span'); m.textContent = msg; el.appendChild(m);
   if (action) {
     const b = document.createElement('button');
     b.className = 'toast-btn'; b.type = 'button'; b.textContent = action.label;
@@ -397,6 +399,15 @@ function toast(msg, action) {
 }
 
 let onSheetClose = null;
+let confirmRun = null;
+/** Ask before something that can't be undone, in the app's own sheet. `run` happens only on the OK button. */
+function askConfirm({ title, text, ok, danger = false, cancel = 'Cancel', extra = '' }, run) {
+  openSheet(title, `
+    <p class="m-0">${esc(text)}</p>${extra}
+    <button class="btn block lg mt-5 ${danger ? 'danger' : ''}" data-action="confirm-ok">${esc(ok)}</button>
+    <button class="btn ghost block mt-3" data-action="close-sheet">${esc(cancel)}</button>`, { onClose: () => { confirmRun = null; } });
+  confirmRun = run;
+}
 /**
  * Bottom sheet = native modal <dialog> opened with showModal(). The browser makes the page inert, keeps focus
  * inside, closes it on Esc and the Android back gesture, and returns focus to the opener on close.
@@ -422,7 +433,7 @@ function openSheet(title, body, { onClose } = {}) {
   }
   $('#sheetTitle').textContent = title;
   $('#sheetBody').innerHTML = body;
-  const first = $('#sheetBody button, #sheetBody input, #sheetBody select') || $('#layer [data-action="close-sheet"]');
+  const first = $('#sheetBody [autofocus]') || $('#sheetBody button, #sheetBody input, #sheetBody select') || $('#layer [data-action="close-sheet"]');
   if (dlg.open) { first.focus(); return; }
   first.autofocus = true;                                    // showModal() focuses this
   dlg.showModal();
@@ -684,10 +695,15 @@ VIEWS.today = () => {
   const goalPct = p.goalWeight && start && cur && start > p.goalWeight ? (start - cur) / (start - p.goalWeight) : 0;
   const steps = hget(tk, 'steps'), sleep = hget(tk, 'sleep'), water = hget(tk, 'water');
   const sg = p.stepGoal || HDEF.stepGoal, lg = p.sleepGoal || HDEF.sleepGoal, wg = p.waterGoal || HDEF.waterGoal;
-  const tile = (action, k, v, u, sub, pct, accent, label, extra = '') => `<button class="q-tile" data-action="${action}" data-today="1" aria-label="${label}" ${extra}>
-      <span class="row-between"><span class="k">${k}</span><span class="q-plus">${icon('plus')}</span></span>
+  // Every tile opens its editor. Water also gets a separate, labelled one-tap "+ 250 ml" button.
+  const tile = (action, k, v, u, sub, pct, accent, label, chip = '') => {
+    const inner = `<span class="row-between"><span class="k">${k}</span>${chip ? '' : `<span class="q-plus">${icon('plus')}</span>`}</span>
       <span class="v">${v}${u ? ` <small>${u}</small>` : ''}</span><span class="sub">${sub}</span>
-      <span class="bar"><span class="${accent ? 'accent' : ''}" style="width:${clamp(pct, 0, 1) * 100}%"></span></span></button>`;
+      <span class="bar"><span class="${accent ? 'accent' : ''}" style="width:${clamp(pct, 0, 1) * 100}%"></span></span>`;
+    return chip
+      ? `<div class="q-tile has-chip"><button class="q-main" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>${chip}</div>`
+      : `<button class="q-tile" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>`;
+  };
   const wsub = wl == null ? 'Log your morning weight'
     : [rate != null && Math.abs(rate) >= 0.05 ? `${rate < 0 ? '↓' : '↑'} ${Math.abs(rate).toFixed(1)} kg a week` : '',
       p.goalWeight && cur != null && cur - p.goalWeight > 0.05 ? `${kg(cur - p.goalWeight)} kg to goal` : ''].filter(Boolean).join(' · ') || (w != null ? 'Logged today' : `Last: ${fmtShort(fromKey(wl.day))}`);
@@ -700,16 +716,6 @@ VIEWS.today = () => {
     ${reminderBanner()}
     ${planBanner()}
     <div class="wk-strip">${week}</div>
-    ${!state.workouts.length && !state.seenIntro ? `
-    <section class="card howto mt-4" aria-label="How PulseFit works">
-      <div class="row-between"><h2 class="h3">How PulseFit works</h2>
-        <button class="icon-btn round bare" data-action="dismiss-intro" aria-label="Dismiss">${icon('x')}</button></div>
-      <ol>
-        <li>${icon('dumbbell')}<span><b>Each exercise is a ladder of progressions.</b> Start on a progression you can do with clean form, progression 1 if unsure.</span></li>
-        <li>${icon('check')}<span><b>Hit a level's target</b> (e.g. 2 sets of 15) to complete it. Finish level 3 to move up to the next progression.</span></li>
-        <li>${icon('calendar')}<span><b>Train on your scheduled days.</b> Rest days never break your streak.</span></li>
-      </ol>
-    </section>` : ''}
     <section class="card session-card mt-4" aria-labelledby="sessH">
       <div class="row-between">
         <div><div class="eyebrow">${isToday ? "Today's session" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">${esc(routineShort(r))} · ${cats.length ? `${plural(cats.length, 'exercise')}` : 'Rest day'}</h2></div>
@@ -717,8 +723,9 @@ VIEWS.today = () => {
       </div>
       ${session}
     </section>
+    ${!state.workouts.length && !state.seenIntro ? `<button class="intro-row mt-3" data-action="intro-sheet">${icon('chart')}<span class="grow">New here? <b>How levels work</b></span>${icon('chevR')}</button>` : ''}
 
-    <div class="sec-head"><h2 class="h2 m-0">${isToday ? "Today's log" : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">History</button><a class="link-btn small" href="#/track">All days</a></span></div>
+    <div class="sec-head"><h2 class="h2 m-0">${isToday ? "Today's log" : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">Trends</button><a class="link-btn small" href="#/track">Daily log</a></span></div>
     <section class="card food-sum" aria-label="Food today">
       <div class="row gap-4">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>
@@ -736,10 +743,11 @@ VIEWS.today = () => {
       </div>` : ''}
     </section>
     <div class="q-grid mt-3">
-      ${tile('track-weight', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, true, 'Log weight')}
-      ${tile('track-steps', 'Steps', steps != null ? nf(steps) : '–', '', `of ${nf(sg)}`, steps != null ? steps / sg : 0, false, 'Log steps')}
-      ${tile('track-sleep', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', sleep == null && isNativeApp() && (state.health?.denied || []).includes('sleep') ? 'allow in Health Connect' : `of ${fmtSleep(lg)}`, sleep != null ? sleep / lg : 0, false, 'Log sleep')}
-      ${tile('track-water-add', 'Water', L1(water), 'L', 'tap + for a glass', (water || 0) / wg, false, 'Add a glass of water (250 ml)', 'data-ml="250"')}
+      ${tile('track-weight', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, true, w != null || wl ? `Weight: ${kg(w ?? wl.v)} kilograms. Log weight` : 'Weight: not logged. Log weight')}
+      ${tile('track-steps', 'Steps', steps != null ? nf(steps) : '–', '', `of ${nf(sg)}`, steps != null ? steps / sg : 0, false, steps != null ? `Steps: ${nf(steps)} of ${nf(sg)}. Edit` : 'Steps: not logged. Log steps')}
+      ${tile('track-sleep', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', sleep == null && isNativeApp() && (state.health?.denied || []).includes('sleep') ? 'allow in Health Connect' : `of ${fmtSleep(lg)}`, sleep != null ? sleep / lg : 0, false, sleep != null ? `Sleep: ${fmtSleep(sleep)}. Edit` : 'Sleep: not logged. Log sleep')}
+      ${tile('track-water', 'Water', L1(water), 'L', `of ${L1(wg)} L`, (water || 0) / wg, false, `Water: ${L1(water)} litres. Edit`,
+        `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
     ${watchLine(tk)}
     <div class="tip-card mt-5">
@@ -936,7 +944,7 @@ function progressStrength() {
     const started = isStarted(c.id), cur = currentIdx(c.id);
     const m = c.progressions.filter((q) => isMastered(q.id)).length;
     const segs = c.progressions.map((q, i) => (isMastered(q.id) ? 'done' : started && i === cur ? 'cur' : 'off'));
-    return `<a class="lad-row" href="#/category/${c.id}">
+    return `<a class="lad-row" href="#/category/${c.id}" aria-label="${esc(c.name)}: ${m} of ${c.progressions.length} progressions mastered">
       <i class="lad-dot" style="--h:${CAT_HUE[c.id] ?? 210}"></i><span class="nm">${esc(c.name)}</span>${segBar(segs, 'wide')}<span class="cnt">${m}/${c.progressions.length}</span></a>`;
   }).join('');
   const ch = LADDERS.map((l) => {
@@ -947,7 +955,7 @@ function progressStrength() {
       <div class="row gap-2">${icon(l.icon)}<span class="fw-bold grow">${esc(l.name)}</span><span class="small fw-bold">${s.done} / ${s.total}</span></div>
       ${segBar(segs, 'wide mt-3')}
       <p class="small muted m-0 mt-2">${done ? 'Completed. Every badge earned.' : `Next badge: master ${esc(nextP.name)}`}</p>
-      ${done ? '' : joined ? `<a class="btn sm mt-3" href="#/category/${l.cat}">Continue</a>` : `<button class="btn ghost sm mt-3" data-action="join" data-id="${l.id}">Join</button>`}
+      ${done ? '' : joined ? `<a class="btn sm mt-3" href="#/category/${l.cat}" aria-label="Continue ${esc(l.name)}">Continue</a>` : `<button class="btn ghost sm mt-3" data-action="join" data-id="${l.id}" aria-label="Join ${esc(l.name)}">Join</button>`}
     </section>`;
   }).join('');
   const ach = achievements();
@@ -964,7 +972,7 @@ function progressStrength() {
     <div class="badge-row h-scroll">${ach.map(badgeHtml).join('')}</div>
     <div class="card list-card mt-5">
       ${recent.length ? recent.map(historyRow).join('') : '<p class="muted m-0 p-row">No workouts yet. Your sessions will show up here.</p>'}
-      ${state.workouts.length ? '<button class="link-btn p-row" data-action="prog-tab" data-tab="history">All workout history</button>' : ''}
+      ${state.workouts.length ? '<button class="link-btn p-row" data-action="prog-tab" data-tab="history">All workouts</button>' : ''}
     </div>`;
 }
 
@@ -1047,13 +1055,15 @@ VIEWS.progress = () => {
   const body = progTab === 'body' ? progressBody() : progTab === 'history' ? progressHistory() : progressStrength();
   return `
     <h1 class="h1">Progress</h1>
+    ${!state.workouts.length ? `
+    <div class="card flat soft row gap-3 empty-start">${icon('flame', 'class="c-warn"')}<p class="grow m-0">No workouts yet. Your first one starts your streak.</p><a class="btn sm" href="#/today">Today's session</a></div>` : `
     <div class="stat3">
       <button class="s3 hot" data-action="info-streak"><span class="v">${current} ${icon('flame', 'class="icon-sm c-warn"')}</span><span class="k">Day streak</span></button>
       <button class="s3" data-action="prog-tab" data-tab="history"><span class="v">${state.workouts.length}</span><span class="k">Workouts</span></button>
       <button class="s3" data-action="prog-tab" data-tab="strength"><span class="v">${masteredCount()}<small>/${TOTAL_PROGS}</small></span><span class="k">Mastered</span></button>
-    </div>
+    </div>`}
     <div class="segmented" role="tablist" aria-label="Progress" style="--n:3;--i:${PROG_TABS.indexOf(progTab)}">
-      ${[['strength', 'Strength'], ['body', 'Body'], ['history', 'History']].map(([id, label]) =>
+      ${[['strength', 'Strength'], ['body', 'Body'], ['history', 'Workouts']].map(([id, label]) =>
         `<button role="tab" aria-selected="${progTab === id}" data-action="prog-tab" data-tab="${id}">${label}</button>`).join('')}
     </div>
     <div role="tabpanel">${body}</div>`;
@@ -1063,8 +1073,9 @@ VIEWS.challenges = VIEWS.progress;
 
 function badgeHtml(b) {
   return `<div class="badge ${b.earned ? 'earned' : ''}" title="${esc(b.hint || '')}">
-    <div class="medal">${b.num != null ? `<span class="num">${b.num}</span>` : ''}${b.earned ? icon(b.icon || 'award') : icon('lock')}${b.tier ? `<span class="tier">${icon(b.tier)}</span>` : ''}</div>
-    <div>${esc(b.name)}</div>
+    <span class="sr-only">${b.earned ? 'Earned' : 'Locked'} badge: ${esc(b.name)}.${b.hint ? ` ${esc(b.hint)}` : ''}</span>
+    <div class="medal" aria-hidden="true">${b.num != null ? `<span class="num">${b.num}</span>` : ''}${b.earned ? icon(b.icon || 'award') : icon('lock')}${b.tier ? `<span class="tier">${icon(b.tier)}</span>` : ''}</div>
+    <div aria-hidden="true">${esc(b.name)}</div>
   </div>`;
 }
 
@@ -1286,7 +1297,7 @@ VIEWS.track = () => {
       <section class="card mt-4 callout">
         <h2 class="h3">Set your targets</h2>
         <p class="muted small mt-2 mb-3">Add your age, height and goal weight, and PulseFit works out a daily calorie and protein target for you.</p>
-        <button class="btn block" data-action="track-setup">Set up targets</button>
+        <button class="btn ghost block" data-action="track-setup">Set up targets</button>
       </section>` : ''}
     ${trackFoodCard(day, T, thisDay)}
     ${planCard(day)}
@@ -1403,7 +1414,7 @@ function trackWeightCard(day, T, thisDay, isToday) {
   }
   return `
     <section class="card mt-4" aria-labelledby="weightH">
-      <div class="row-between"><h2 class="h3" id="weightH">Weight</h2><span class="row gap-2"><button class="btn subtle sm" data-action="habit-history" data-f="weight">History</button><button class="btn subtle sm" data-action="track-weight">${w != null ? 'Edit' : 'Log weight'}</button></span></div>
+      <div class="row-between"><h2 class="h3" id="weightH">Weight</h2><span class="row gap-2"><button class="btn subtle sm" data-action="habit-history" data-f="weight">Trends</button><button class="btn subtle sm" data-action="track-weight">${w != null ? 'Edit' : 'Log weight'}</button></span></div>
       <div class="kpi mt-3">${w != null
         ? `<span class="kpi-v">${kg(w)}</span><span class="kpi-u">kg${isToday ? ' today' : ''}</span>`
         : `<span class="kpi-v faint">–</span><span class="kpi-u">Not weighed ${thisDay}</span>`}</div>
@@ -1438,7 +1449,7 @@ function trackHabits(day) {
       </div>
       <div class="grid2 mt-3">
         <button class="btn ghost" data-action="track-water-add" data-ml="250">${icon('plus')} Glass of water</button>
-        <button class="btn ghost" data-action="habit-history" data-f="steps">${icon('calendar')} History</button>
+        <button class="btn ghost" data-action="habit-history" data-f="steps">${icon('chart')} Trends</button>
       </div>
     </section>`;
 }
@@ -1601,8 +1612,8 @@ function habitHistorySheet(field) {
   const chart = H.lower ? weightChart(t) : `<svg class="habit-chart mt-3" viewBox="0 0 ${W} ${Hh + 14}" role="img" aria-label="${H.title}, last 30 days. Goal met on ${met} of ${got.length} logged days.">
     ${bars}<line class="hb-goal" x1="0" x2="${W}" y1="${y(goal).toFixed(1)}" y2="${y(goal).toFixed(1)}"/>
     <text class="hb-t" x="0" y="${Hh + 12}">30 days ago</text><text class="hb-t" x="${W}" y="${Hh + 12}" text-anchor="end">Today</text></svg>`;
-  openSheet(`${H.title} history`, `
-    <div class="segmented" role="tablist" aria-label="Which history" style="--n:${Object.keys(HABIT).length};--i:${Object.keys(HABIT).indexOf(field)}">
+  openSheet('Trends', `
+    <div class="segmented" role="tablist" aria-label="Which trend" style="--n:${Object.keys(HABIT).length};--i:${Object.keys(HABIT).indexOf(field)}">
       ${Object.entries(HABIT).map(([f, x]) => `<button role="tab" aria-selected="${f === field}" data-action="habit-history" data-f="${f}">${x.title}</button>`).join('')}
     </div>
     <div class="facts mt-3">${H.lower ? weightFacts(t, got) : `
@@ -1830,7 +1841,7 @@ function numberSheet({ title, field, label, value, unit, step = 1, min = 0, max 
   openSheet(title, `
     ${dateField(field)}
     <div class="field"><label for="numVal">${esc(label)}</label>
-      <div class="input-unit"><input class="input" id="numVal" type="number" inputmode="decimal" step="${step}" min="${min}" max="${max}" value="${value ?? ''}" /><span>${esc(unit)}</span></div></div>
+      <div class="input-unit"><input class="input" id="numVal" autofocus type="number" inputmode="decimal" step="${step}" min="${min}" max="${max}" value="${value ?? ''}" /><span>${esc(unit)}</span></div></div>
     ${hint ? `<p class="muted small mt-2 m-0">${hint}</p>` : ''}
     <button class="btn block lg mt-5" data-action="track-num-save" data-f="${field}" data-min="${min}" data-max="${max}">Save</button>
     ${hget(eKey(), field) != null ? `<button class="btn ghost block mt-3" data-action="track-clear" data-f="${field}">Remove this entry</button>` : ''}
@@ -1843,7 +1854,7 @@ function sleepSheet() {
     ${dateField('sleep')}
     <p class="muted small m-0">How long you slept the night before ${esc(onDayLabel(eKey()))}, counted on the day you woke up.</p>
     <div class="grid2">
-      <div class="field"><label for="slH">Hours</label><input class="input" id="slH" type="number" inputmode="numeric" min="0" max="16" value="${v != null ? Math.floor(v / 60) : ''}" /></div>
+      <div class="field"><label for="slH">Hours</label><input class="input" id="slH" autofocus type="number" inputmode="numeric" min="0" max="16" value="${v != null ? Math.floor(v / 60) : ''}" /></div>
       <div class="field"><label for="slM">Minutes</label><input class="input" id="slM" type="number" inputmode="numeric" min="0" max="59" value="${v != null ? Math.round(v % 60) : ''}" /></div>
     </div>
     <button class="btn block lg mt-5" data-action="track-sleep-save">Save</button>
@@ -1976,9 +1987,13 @@ const TRACK_ACTIONS = {
   'habit-history': (el) => habitHistorySheet(el.dataset.f),
   'habit-edit': (el) => openHabit(el.dataset.f, el.dataset.day, el.dataset.f),
   'track-water-add': (el) => {
-    const day = tKey();
-    hset(day, 'water', (hget(day, 'water') || 0) + Number(el.dataset.ml));
-    save(); rerender(); toast(`Water: ${L1(hget(day, 'water'))} L`);
+    const day = tKey(), before = hget(day, 'water');
+    hset(day, 'water', (before || 0) + Number(el.dataset.ml));
+    save(); rerender();
+    toast(`Water: ${L1(hget(day, 'water'))} L`, {
+      label: 'Undo',
+      run: () => { hset(day, 'water', before ?? null); save(); rerender(); toast(`Glass removed · ${L1(hget(day, 'water'))} L`); },
+    });
   },
   'track-num-save': (el) => {
     const v = parseNum($('#numVal').value), min = Number(el.dataset.min), max = Number(el.dataset.max);
@@ -3387,7 +3402,7 @@ function widgetData() {
   const sess = sessionFor(d);
   const status = workoutsOn(tk).length ? 'Done today ✓'
     : sess.length ? `Today: ${sess.map((c) => CAT[c].name).join(' + ')}`
-    : current ? 'Rest day · streak safe' : 'Start today 💪';
+    : current ? 'Rest day · streak safe' : 'Start today';
   const T = targets(tk);
   const eaten = state.meals.filter((m) => m.day === tk).reduce((a, m) => a + m.kcal, 0);
   const steps = hget(tk, 'steps');
@@ -3410,7 +3425,7 @@ async function widgetSheet() {
   let st = null;
   try { st = await (await hcLoad()).Widget.status(); } catch { /* the installed app is older than the widget */ }
   const w = widgetData();
-  const card = `<div class="widget-preview" aria-hidden="true"><div class="wp-k">🔥 Day Streak</div><div class="wp-n">${w.streak}</div><div class="wp-s">${esc(w.status)}</div>${w.detail ? `<div class="wp-d">${esc(w.detail)}</div>` : ''}</div>`;
+  const card = `<div class="widget-preview" aria-hidden="true"><div class="wp-k">Day streak</div><div class="wp-n">${w.streak}</div><div class="wp-s">${esc(w.status)}</div>${w.detail ? `<div class="wp-d">${esc(w.detail)}</div>` : ''}</div>`;
   openSheet('Home screen widget', `
     <p class="m-0">Your streak and today's session on your home screen, so you never miss a day. Tap it to open PulseFit.</p>
     ${card}
@@ -3457,18 +3472,18 @@ function plannedNotifications() {
     const d = addDays(today(), i), k = dayKey(d);
     if (rm.enabled && sessionFor(d).length && !workoutsOn(k).length) {
       const at = atTime(d, rm.time);
-      if (at > now) out.push({ id: 1000 + i, title: TRAIN_REMINDER_TITLE, body: trainReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/today' } });
+      if (at > now) out.push({ id: 1000 + i, title: TRAIN_REMINDER_TITLE, body: trainReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', channelId: 'workout', extra: { route: '#/today' } });
     }
     // Water: one week ahead (up to 24 a day); today's stop once the goal is reached.
     if (state.waterReminder.enabled && i < 7 && !(i === 0 && (hget(k, 'water') || 0) >= waterGoal())) {
       waterSlots().forEach((m, j) => {
         const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(m / 60), m % 60);
-        if (at > now) out.push({ id: 3000 + i * 24 + j, title: 'Drink water 💧', body: waterReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', actionTypeId: 'water', extra: { route: '#/today' } });
+        if (at > now) out.push({ id: 3000 + i * 24 + j, title: 'Drink water 💧', body: waterReminderText(d), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', channelId: 'water', actionTypeId: 'water', extra: { route: '#/today' } });
       });
     }
     if (pr.enabled && d.getDay() === pr.day) {
       const at = atTime(d, pr.time);
-      if (at > now) out.push({ id: 2000 + i, title: planReminderTitle(d.getDay()), body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', extra: { route: '#/plan' } });
+      if (at > now) out.push({ id: 2000 + i, title: planReminderTitle(d.getDay()), body: planReminderText(d.getDay()), schedule: { at, allowWhileIdle: true }, isExactNotification: notifExact === 'granted', channelId: 'mealplan', extra: { route: '#/plan' } });
     }
   }
   return out;
@@ -3487,7 +3502,7 @@ async function syncNativeReminders({ ask = false } = {}) {
     // the "Alarms & reminders" screen each time the app started; the reminder sheet offers it instead.
     try { notifExact = (await Notif.checkExactNotificationSetting()).exact_alarm; } catch { notifExact = null; }
     const list = notifPerm === 'granted' ? plannedNotifications() : [];
-    const sig = JSON.stringify(list.map((n) => [n.id, +n.schedule.at, n.body, n.isExactNotification]));
+    const sig = JSON.stringify(list.map((n) => [n.id, +n.schedule.at, n.body, n.isExactNotification, n.channelId]));
     if (sig === notifSig) return;
     const pending = await Notif.getPending();
     if (pending.notifications && pending.notifications.length) await Notif.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
@@ -3520,16 +3535,22 @@ async function hcBoot() {
   let asked = false;
   try { asked = localStorage.getItem('pf-notif-asked') === '1'; localStorage.setItem('pf-notif-asked', '1'); } catch { /* ignore */ }
   try { const { App } = await hcLoad(); appBuild = Number((await App.getInfo()).build) || 0; } catch { /* ignore */ }
-  syncNativeReminders({ ask: !asked });
   try {
     const { Notif } = await hcLoad();
+    // One Android notification category per kind, so each can be muted on its own in the phone's settings.
+    for (const ch of [
+      { id: 'workout', name: 'Workout reminders', description: 'On your training days, at the time you chose', importance: 4 },
+      { id: 'water', name: 'Water reminders', description: 'Every few hours until you reach your water goal', importance: 3 },
+      { id: 'mealplan', name: 'Meal plan reminder', description: 'Once a week, to plan meals and groceries', importance: 3 },
+    ]) { try { await Notif.createChannel({ ...ch, visibility: 1, vibration: true }); } catch { /* not Android */ } }
+    syncNativeReminders({ ask: !asked });              // after the categories exist, so reminders land in them
     try { await Notif.registerActionTypes({ types: [{ id: 'water', actions: [{ id: 'glass', title: `+ Glass (${WATER_GLASS} ml)` }] }] }); } catch { /* ignore */ }
     Notif.addListener('localNotificationActionPerformed', ({ actionId, notification }) => {
       if (actionId === 'glass') { addWaterGlass(); return; }
       const r = notification && notification.extra && notification.extra.route;
       if (r && location.hash !== r) location.hash = r;
     });
-  } catch { /* ignore */ }
+  } catch { syncNativeReminders({ ask: !asked }); }
 }
 
 window.PF_APP = {
@@ -3560,17 +3581,16 @@ const ACTIONS = {
     if (await window.PFSync.verifyCode(el.dataset.email, code)) { closeSheet(); toast('Signed in'); }
   },
   'sync-now': () => window.PFSync.syncNow(),
-  'sync-signout': () => { if (confirm('Sign out of cloud sync? Your data stays on this device.')) window.PFSync.signOut(); },
-  'sync-delete': () => {
-    if (confirm('Delete your cloud copy and sign out? Data on this device is not affected.')) window.PFSync.deleteCloud();
-  },
+  'sync-signout': () => askConfirm({ title: 'Sign out?', text: 'Cloud sync stops on this device. Your data stays here.', ok: 'Sign out' }, () => window.PFSync.signOut()),
+  'sync-delete': () => askConfirm({ title: 'Delete your cloud copy?', text: 'The copy in the cloud is deleted and you are signed out. Data on this device is not affected.', ok: 'Delete cloud copy', danger: true }, () => window.PFSync.deleteCloud()),
   'sync-recovery': () => {
     const r = window.PFSync.recovery();
     if (!r) return;
     downloadJson(r.state, 'pulsefit-before-reset');
-    if (confirm('Downloaded. Remove the saved copy from this device?')) { window.PFSync.clearRecovery(); rerender(); }
+    askConfirm({ title: 'Downloaded', text: 'Remove the saved copy from this device?', ok: 'Remove it', cancel: 'Keep it' }, () => { window.PFSync.clearRecovery(); rerender(); });
   },
   'close-sheet': () => closeSheet(),
+  'confirm-ok': () => { const run = confirmRun; confirmRun = null; closeSheet(); if (run) run(); },
   'pick-routine': routineSheet,
   'set-routine': (el) => { state.routineId = el.dataset.id; carouselIdx = 0; save(); closeSheet(); rerender(); toast(`Routine: ${ROUTINE[el.dataset.id].name}`); },
   'swap-prog': (el) => swapSheet(el.dataset.cat),
@@ -3585,7 +3605,14 @@ const ACTIONS = {
   'shift-day': (el) => { selectedDay = dayKey(addDays(fromKey(selectedDay), Number(el.dataset.n))); carouselIdx = 0; rerender(); },
   'pick-day': (el) => { selectedDay = el.dataset.day; carouselIdx = 0; rerender(); },
   'next-tip': () => { tipIdx++; rerender(); },
-  'dismiss-intro': () => { state.seenIntro = true; save(); rerender(); },
+  'dismiss-intro': () => { state.seenIntro = true; save(); if (sheetOpen()) closeSheet(); rerender(); },
+  'intro-sheet': () => openSheet('How PulseFit works', `
+    <ol class="howto-list">
+      <li>${icon('dumbbell')}<span><b>Each exercise is a ladder of progressions.</b> Start on a progression you can do with clean form, progression 1 if unsure.</span></li>
+      <li>${icon('check')}<span><b>Hit a level's target</b> (e.g. 2 sets of 15) to complete it. Finish level 3 to move up to the next progression.</span></li>
+      <li>${icon('calendar')}<span><b>Train on your scheduled days.</b> Rest days never break your streak.</span></li>
+    </ol>
+    <button class="btn block lg mt-5" data-action="dismiss-intro">Got it</button>`),
   'info-30': () => openSheet('30 Day Workout Challenge', `<p>Train on 30 different days to complete the challenge. Days don't need to be consecutive — just keep showing up.</p><p class="muted">${workoutDays().size >= 30 ? 'You did it! 🎉' : `${30 - Math.min(30, workoutDays().size)} to go.`}</p>`),
   'info-streak': () => { const s = streakStats(); openSheet('Activity streak', `<p>Your streak counts consecutive <strong>scheduled training days</strong> with a logged workout. Rest days are skipped, so they never break it.</p><p class="muted">Current: ${s.current} · Best: ${s.best}</p>`); },
   'scroll-history': () => { const h = $('#history'); if (h) h.scrollIntoView({ behavior: 'smooth' }); },
@@ -3601,8 +3628,9 @@ const ACTIONS = {
   },
   'cancel-workout': () => {
     const any = draft && draft.entries.some((e) => e.done.some(Boolean));
-    if (any && !confirm('Discard this workout? Sets you marked will not be saved.')) return;
-    stopWarmTimer(); draft = null; saveDraft(); stopRest(); go('#/today');
+    const discard = () => { stopWarmTimer(); draft = null; saveDraft(); stopRest(); go('#/today'); };
+    if (any) askConfirm({ title: 'Discard this workout?', text: 'Sets you marked will not be saved.', ok: 'Discard workout', cancel: 'Keep going', danger: true }, discard);
+    else discard();
   },
   'finish-workout': () => {
     stopRest();
@@ -3725,21 +3753,26 @@ const ACTIONS = {
   },
   'export': () => downloadJson(state, 'pulsefit-backup'),
   'import': () => $('#importFile').click(),
-  'reset': () => {
-    if (!confirm('Reset all progress, workouts, health logs and settings? This cannot be undone.')) return;
+  'reset': () => askConfirm({
+    title: 'Reset everything?', ok: 'Reset everything', cancel: 'Keep my data', danger: true,
+    text: 'All progress, workouts, health logs and settings are deleted. This cannot be undone.',
+    extra: '<button class="link-btn small mt-3" data-action="export">Export a backup first</button>',
+  }, () => {
     const theme = state.profile.theme;
     state = defaultState(); state.profile.theme = theme; state.hmigrated = true;
     seedQuickFoods();
     if (window.PFSync) window.PFSync.noteReset(state);   // a reset replaces older data on synced devices too
     save(); rerender(); toast('All progress reset');
-  },
+  }),
   'faq': faqSheet,
   'privacy': privacySheet,
   'view-workout': (el) => workoutSheet(el.dataset.id),
   'delete-workout': (el) => {
-    if (!confirm('Delete this workout?')) return;
-    state.workouts = state.workouts.filter((w) => w.id !== el.dataset.id);
-    save(); closeSheet(); rerender(); toast('Workout deleted');
+    const id = el.dataset.id;
+    askConfirm({ title: 'Delete this workout?', text: 'It is removed from your history and streak.', ok: 'Delete workout', danger: true }, () => {
+      state.workouts = state.workouts.filter((w) => w.id !== id);
+      save(); rerender(); toast('Workout deleted');
+    });
   },
 };
 
@@ -3844,9 +3877,10 @@ document.addEventListener('change', async (ev) => {
     const d = defaultState();
     if (window.PFSync && window.PFSync.signedIn()) {
       // Signed in: merge the file into the synced data instead of replacing it.
-      if (!confirm('Merge this file into your synced data? Workouts are combined and the highest levels are kept. Your settings stay as they are.')) return;
-      state = window.PFSync.mergeImport(state, data);
-      save(); rerender(); toast('Backup merged');
+      askConfirm({ title: 'Merge this backup?', text: 'Workouts are combined and the highest levels are kept. Your settings stay as they are.', ok: 'Merge backup' }, () => {
+        state = window.PFSync.mergeImport(state, data);
+        save(); rerender(); toast('Backup merged');
+      });
       return;
     }
     state = { ...d, ...data, profile: { ...d.profile, ...(data.profile || {}) }, reminder: { ...d.reminder, ...(data.reminder || {}) }, planReminder: { ...d.planReminder, ...(data.planReminder || {}) } };

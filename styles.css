@@ -1596,3 +1596,49 @@ html, body { overflow-x: clip; max-width: 100%; }
 /* Toasts sit above the bottom menu instead of over the page heading; higher during a workout, clear of the rest timer. */
 .toast { inset: auto auto calc(var(--nav-clear) + env(safe-area-inset-bottom)) 50%; max-width: calc(100% - 2 * var(--space-4)); }
 body[data-route="workout"] .toast { inset: auto auto calc(var(--nav-clear) + 88px + env(safe-area-inset-bottom)) 50%; }
+
+/* ---------- Motion (all of it is switched off under prefers-reduced-motion) ----------
+   Timing tokens only: --dur-press 80, --dur-fast 150, --dur-base 220, --dur-slow 400 ms. */
+
+/* Sheets leave the way they came: down and out, accelerating (ease-in), 170 ms. */
+dialog.sheet.closing { animation: sheetOut 170ms cubic-bezier(0.4, 0, 1, 1) forwards; }
+dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
+@keyframes sheetOut { to { transform: translateY(40px); opacity: 0; } }
+@keyframes fadeOut { to { opacity: 0; } }
+/* After a drag, spring back past rest and settle (follow-through). */
+.sheet.settling { transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Lists arrive one after another (staggering), 30 ms apart, capped so long lists don't drag. */
+.mv-list > *, .lad-list > *, .m-hist > li { animation: rise var(--dur-base) var(--ease) both; }
+:is(.mv-list, .lad-list, .m-hist) > :nth-child(2) { animation-delay: 30ms; }
+:is(.mv-list, .lad-list, .m-hist) > :nth-child(3) { animation-delay: 60ms; }
+:is(.mv-list, .lad-list, .m-hist) > :nth-child(4) { animation-delay: 90ms; }
+:is(.mv-list, .lad-list, .m-hist) > :nth-child(5) { animation-delay: 120ms; }
+:is(.mv-list, .lad-list, .m-hist) > :nth-child(6) { animation-delay: 150ms; }
+:is(.mv-list, .lad-list, .m-hist) > :nth-child(7) { animation-delay: 180ms; }
+:is(.mv-list, .lad-list, .m-hist) > :nth-child(n+8) { animation-delay: 210ms; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+
+/* The tab highlight slides from the tab you left to the one you picked. */
+.segmented.seg-slide::before { animation: segSlide var(--dur-base) var(--ease); }
+@keyframes segSlide { from { transform: translateX(calc(100% * var(--from, 0))); } }
+
+/* A ticked set: squash, overshoot, settle. */
+.pop { animation: pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes pop { 0% { transform: scale(0.82); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+
+/* Peak-end: the end of a workout grows in with an overshoot; a level-up or new badge adds a burst of
+   sparks that fly out on curved paths and fade (exaggeration, secondary action, arcs). */
+.celebrate .big { position: relative; display: inline-grid; place-items: center; }
+.celebrate .medal-pop { display: inline-block; animation: medalIn 560ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.celebrate.peak .medal-pop { animation-duration: 700ms; }
+@keyframes medalIn { 0% { transform: scale(0.3) rotate(-12deg); opacity: 0; } 60% { transform: scale(1.18) rotate(4deg); opacity: 1; } 100% { transform: none; } }
+.burst { position: absolute; inset: 50% auto auto 50%; width: 0; height: 0; pointer-events: none; }
+.burst i { position: absolute; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0;
+  animation: spark 720ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--d) forwards; }
+.burst i:nth-child(3n) { background: var(--warn); }
+.burst i:nth-child(3n+1) { background: var(--success); }
+@keyframes spark {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--a) + 28deg)) translateY(-62px) scale(0.4); }
+}

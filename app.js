@@ -399,6 +399,8 @@ function toast(msg, action) {
 }
 
 let onSheetClose = null;
+const reducedMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+let sheetClosing = null;   // timer while a sheet plays its slide-down exit
 let confirmRun = null;
 /** Ask before something that can't be undone, in the app's own sheet. `run` happens only on the OK button. */
 function askConfirm({ title, text, ok, danger = false, cancel = 'Cancel', extra = '' }, run) {
@@ -414,6 +416,7 @@ function askConfirm({ title, text, ok, danger = false, cancel = 'Cancel', extra 
  * Calling it while a sheet is open swaps the content of the open sheet.
  */
 function openSheet(title, body, { onClose } = {}) {
+  if (sheetClosing) { clearTimeout(sheetClosing); sheetClosing = null; $('#layer dialog.sheet')?.classList.remove('closing'); }
   onSheetClose = onClose || null;
   let dlg = $('#layer dialog.sheet');
   if (!dlg) {
@@ -428,11 +431,13 @@ function openSheet(title, body, { onClose } = {}) {
       </dialog>`;
     dlg = $('#layer dialog.sheet');
     dlg.addEventListener('close', () => sheetClosed(dlg));   // Esc, back gesture, tap outside
+    dlg.addEventListener('cancel', (ev) => { if (!reducedMotion()) { ev.preventDefault(); closeSheet(); } });
     enableSheetDrag(dlg);
     lightDismissFallback(dlg);
   }
   $('#sheetTitle').textContent = title;
   $('#sheetBody').innerHTML = body;
+  slideSegments($('#sheetBody'));
   const first = $('#sheetBody [autofocus]') || $('#sheetBody button, #sheetBody input, #sheetBody select') || $('#layer [data-action="close-sheet"]');
   if (dlg.open) { first.focus(); return; }
   first.autofocus = true;                                    // showModal() focuses this
@@ -458,7 +463,9 @@ function enableSheetDrag(sheet) {
   };
   const move = (ev) => {
     if (!active) return;
-    dy = Math.max(0, ev.clientY - startY);
+    const raw = ev.clientY - startY;
+    // Down follows the finger; up gives a little and resists (rubber banding).
+    dy = raw >= 0 ? raw : -Math.min(28, Math.sqrt(-raw) * 2.4);
     sheet.style.transform = `translateY(${dy}px)`;
   };
   const release = () => {
@@ -467,9 +474,9 @@ function enableSheetDrag(sheet) {
     sheet.classList.remove('dragging');
     const fast = dy / Math.max(1, performance.now() - t0) > 0.6;
     if (dy > 90 || (fast && dy > 30)) { closeSheet(); return; }
-    sheet.classList.add('settling');
+    sheet.classList.add('settling');                         // springs back past rest and settles (follow-through)
     sheet.style.transform = '';
-    setTimeout(() => sheet.classList.remove('settling'), 250);
+    setTimeout(() => sheet.classList.remove('settling'), 320);
   };
   sheet.addEventListener('pointerdown', grab);
   sheet.addEventListener('pointermove', move);
@@ -480,8 +487,17 @@ function enableSheetDrag(sheet) {
 function closeSheet() {
   const dlg = $('#layer dialog.sheet');
   if (!dlg) return;
-  if (dlg.open) dlg.close();                                 // the browser returns focus to the opener
-  sheetClosed(dlg);
+  const finish = () => {
+    sheetClosing = null;
+    dlg.classList.remove('closing');
+    if (dlg.open) dlg.close();                               // the browser returns focus to the opener
+    sheetClosed(dlg);
+  };
+  // Slide down and fade before closing: it leaves the way it came (origin awareness), speeding up as it goes.
+  if (!dlg.open || reducedMotion()) { finish(); return; }
+  if (sheetClosing) return;
+  dlg.classList.add('closing');
+  sheetClosing = setTimeout(finish, 170);
 }
 /** Runs once per sheet, however it was closed. */
 function sheetClosed(dlg) {
@@ -540,8 +556,31 @@ function render() {
     lastRouteKey = key;
   }
   afterRender(r);
+  slideSegments();
   if (pendingSummary) { const s = pendingSummary; pendingSummary = null; showSummary(s); }
 }
+/** A quick squash-and-settle on something that just changed (a ticked set). */
+function popOnce(el) {
+  if (!el || reducedMotion()) return;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  el.addEventListener('animationend', () => el.classList.remove('pop'), { once: true });
+}
+
+/** Views re-render on every tap, so the segmented control's pill is new each time. Remember where it was and
+    animate it from there to the new tab, so it slides instead of jumping. */
+const segPrev = {};
+function slideSegments(root = document) {
+  root.querySelectorAll('.segmented').forEach((sg) => {
+    const key = sg.getAttribute('aria-label') || '', i = parseFloat(sg.style.getPropertyValue('--i')) || 0;
+    const from = segPrev[key];
+    if (from != null && from !== i && !reducedMotion()) {
+      sg.style.setProperty('--from', from);
+      sg.classList.remove('seg-slide'); void sg.offsetWidth; sg.classList.add('seg-slide');
+    }
+    segPrev[key] = i;
+  });
+}
+
 const rerender = () => {
   const y = window.scrollY;
   render();
@@ -2778,6 +2817,7 @@ const WORKOUT_ACTIONS = {
     saveDraft();
     if (curSet()) startRest(); else stopRest();
     rerender();
+    popOnce($(`[data-action="wo-goto"][data-e="${c.ei}"][data-s="${c.si}"]`));
   },
   'wo-goto': (el) => {
     const ei = Number(el.dataset.e), si = Number(el.dataset.s);
@@ -2855,8 +2895,9 @@ function showSummary(summary) {
     return `<div class="opt static"><span class="level-ring ${r.passed ? 'done' : ''}">${r.passed ? icon('check') : ''}</span>
       <div><div class="t">${esc(p.name)}</div><div class="s">${esc(r.values.join(' · '))} ${unitOf(p)} — ${esc(msg)}</div></div></div>`;
   }).join('');
+  const peak = results.some((r) => r.leveledUp) || newBadges.length > 0;
   openSheet('Workout saved', `
-    <div class="celebrate"><div class="big">${results.some((r) => r.leveledUp) ? '🏆' : '💪'}</div>
+    <div class="celebrate ${peak ? 'peak' : ''}"><div class="big">${peak ? `<span class="burst" aria-hidden="true">${Array.from({ length: 12 }, (_, i) => `<i style="--a:${i * 30}deg;--d:${(i % 3) * 40}ms"></i>`).join('')}</span>` : ''}<span class="medal-pop">${results.some((r) => r.leveledUp) ? '🏆' : '💪'}</span></div>
       <p class="muted">${results.some((r) => r.leveledUp) ? 'You levelled up. Great work!' : 'Every session counts. See you next time!'}</p></div>
     <div class="opt-list">${lines}</div>
     ${newBadges.length ? `<h3 class="h3 m-0 mt-5 mb-2">New badge${newBadges.length > 1 ? 's' : ''}</h3><div class="badge-row">${newBadges.map(badgeHtml).join('')}</div>` : ''}
@@ -3666,7 +3707,7 @@ const ACTIONS = {
     e.done[s] = !e.done[s];
     saveDraft();
     el.setAttribute('aria-pressed', String(e.done[s]));
-    if (e.done[s]) startRest(); else stopRest();
+    if (e.done[s]) { popOnce(el); startRest(); } else stopRest();
     const fin = $('[data-action="finish-workout"], [data-action="save-quick"]');
     if (fin) fin.disabled = !draft.entries.some((x) => x.done.some(Boolean));
   },

@@ -2180,17 +2180,18 @@ const dishLinks = (m, wk) => m.dishes.map((d) => `<button class="dish-link" data
    which ones go in the lunchbox, and the order (on evening shifts dinner comes before the late snack).
    Stored in hprofile (synced): "shift|<Monday>" = morning | evening | off, and "shiftDays" = "1,2,3,4,5". */
 const SHIFTS = {
+  // At work you eat only in the break: morning 09:30–10:00, evening 18:30–19:00.
   morning: {
-    name: 'Morning shift', hours: '04:00–16:30',
+    name: 'Morning shift', hours: '04:00–16:30', pause: '09:30–10:00',
     order: ['Breakfast', 'Lunch', 'Snack', 'Dinner'],
-    at: { Breakfast: ['07:30', 'pack'], Lunch: ['11:30', 'pack'], Snack: ['14:30', 'pack'], Dinner: ['17:30', 'home'] },
-    tip: 'Before you leave (about 03:30): water, and tea or coffee if you like. Breakfast, lunch and the snack go in your lunchbox; packed the evening before. Dinner at home at 17:30, then pack tomorrow\'s food and get to bed by about 20:30.',
+    at: { Breakfast: ['03:30', 'home', 'before you leave'], Lunch: ['09:30', 'pack', 'break'], Snack: ['16:45', 'home'], Dinner: ['18:30', 'home'] },
+    tip: 'Breakfast at 03:30 before you leave: get it ready the evening before so it takes five minutes. Lunch goes in your lunchbox for the 09:30 break. Snack when you are home, dinner at 18:30, then pack tomorrow\'s lunch and get to bed by about 20:30.',
   },
   evening: {
-    name: 'Evening shift', hours: '13:00–00:30',
+    name: 'Evening shift', hours: '13:00–00:30', pause: '18:30–19:00',
     order: ['Breakfast', 'Lunch', 'Dinner', 'Snack'],
-    at: { Breakfast: ['09:30', 'home'], Lunch: ['12:15', 'home'], Dinner: ['18:30', 'pack'], Snack: ['21:30', 'pack'] },
-    tip: 'Cook lunch and dinner together around 11:00. Eat lunch before you leave and pack dinner and the snack. Back home after 00:30: nothing heavy; if you are hungry, a glass of milk or a bowl of curd.',
+    at: { Breakfast: ['09:30', 'home'], Lunch: ['12:15', 'home', 'before you leave'], Dinner: ['18:30', 'pack', 'break'], Snack: ['18:30', 'pack', 'break, with dinner'] },
+    tip: 'Cook lunch and dinner together around 11:00. Eat lunch before you leave; dinner and the snack go in your lunchbox for the 18:30 break. Back home after 00:30: nothing heavy; if you are hungry, a glass of milk or a bowl of curd.',
   },
 };
 const shiftWorkDays = () => String(hp().shiftDays ?? '1,2,3,4,5').split(',').filter(Boolean).map(Number);   // 0 = Sun
@@ -2211,7 +2212,7 @@ function shiftForWeek(wk) {
 /** The shift on one day, or null on a day off. */
 const shiftOn = (dayKey) => { const sh = shiftForWeek(weekStart(dayKey)); return sh && shiftWorkDays().includes(fromKey(dayKey).getDay()) ? sh : null; };
 /** "18:30 · lunchbox" for a meal on a shift day. */
-const mealWhen = (m) => (m.at ? `${m.at}${m.pack ? ' · lunchbox' : ''}` : '');
+const mealWhen = (m) => (m.at ? `${m.at}${m.note ? ` · ${m.note}` : ''}${m.pack ? ' · lunchbox' : ''}` : '');
 
 /** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week.
     On a shift day the meals carry a time and a lunchbox mark, in the order you eat them. */
@@ -2222,7 +2223,7 @@ function dayInfo(i, wk = weekStart(todayKey()), raw = false) {
   if (sh) {
     const S = SHIFTS[sh];
     meals = S.order.map((l) => meals.find((m) => m.label === l)).filter(Boolean)
-      .map((m) => ({ ...m, at: S.at[m.label][0], pack: S.at[m.label][1] === 'pack' }));
+      .map((m) => ({ ...m, at: S.at[m.label][0], pack: S.at[m.label][1] === 'pack', note: S.at[m.label][2] || '' }));
   }
   return { subs, meals, shift: sh, kcal: meals.reduce((a, m) => a + m.kcal, 0), protein: meals.reduce((a, m) => a + m.protein, 0) };
 }
@@ -2242,8 +2243,8 @@ function shiftSheet(wk) {
   openSheet(`Shift · week of ${fmtShort(fromKey(wk))}`, `
     <p class="small muted m-0">Times include travel. Meals keep the same food; they get times that fit the shift and the ones you eat at work are marked "lunchbox".</p>
     <div class="opt-list mt-3" role="radiogroup" aria-label="Shift this week">
-      ${opt('morning', 'Morning shift, 04:00–16:30', 'Breakfast 07:30, lunch 11:30, snack 14:30 at work · dinner 17:30 at home')}
-      ${opt('evening', 'Evening shift, 13:00–00:30', 'Breakfast 09:30, lunch 12:15 at home · dinner 18:30, snack 21:30 at work')}
+      ${opt('morning', 'Morning shift, 04:00–16:30', 'Break 09:30–10:00. Breakfast 03:30 at home · lunch in the break · snack 16:45 and dinner 18:30 at home')}
+      ${opt('evening', 'Evening shift, 13:00–00:30', 'Break 18:30–19:00. Breakfast 09:30 and lunch 12:15 at home · dinner and snack in the break')}
       ${opt('off', 'No shift', 'Holiday or a week off: meals at the usual times')}
     </div>
     ${!cur && eff ? `<p class="small muted m-0 mt-2">Not set for this week: it follows the rotation (the opposite of the week before).</p>` : ''}
@@ -2481,7 +2482,7 @@ VIEWS.plan = () => {
           <div><div class="eyebrow">${isToday ? `Today · ${PLAN_DAYS[sel]}` : esc(fmtShort(fromKey(dayK)))}</div><div class="h3 mt-1">${nf(d.kcal)} kcal · ${nf(d.protein)} g protein</div></div>
           ${T ? `<div class="text-right small"><span class="muted d-block">target</span><b>${nf(T.kcal)} · ${T.protein} g</b></div>` : ''}
         </div>
-        ${d.shift ? `<p class="small m-0 mt-2"><b>${SHIFTS[d.shift].name}</b>, ${SHIFTS[d.shift].hours} (with travel)</p>` : ''}
+        ${d.shift ? `<p class="small m-0 mt-2"><b>${SHIFTS[d.shift].name}</b>, ${SHIFTS[d.shift].hours} with travel · break ${SHIFTS[d.shift].pause}</p>` : ''}
         <ul class="plan-list mt-3">${meals}</ul>
         ${d.shift ? `<div class="note-box mt-3">${esc(SHIFTS[d.shift].tip)}</div>` : ''}
         ${d.subs && d.meals.some((m, j) => m.text !== dayInfo(sel, start, true).meals[j].text) ? `<p class="small muted m-0 mt-2">Using what you bought: ${esc(Object.entries(d.subs).map(([a, b]) => `${ingShort(b).toLowerCase()} instead of ${ingShort(a).toLowerCase()}`).join(', '))}.</p>` : ''}

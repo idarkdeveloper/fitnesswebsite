@@ -1642,3 +1642,10 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
   0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); }
   100% { opacity: 0; transform: rotate(calc(var(--a) + 28deg)) translateY(-62px) scale(0.4); }
 }
+
+/* Shift work: meal times and the lunchbox mark next to each meal, the shift row on the plan, the day strip label. */
+.plan-t { display: block; white-space: normal; font-size: var(--fs-xs); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--muted); margin-top: 2px; }
+.shift-row { width: 100%; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); min-height: 56px; text-align: left; color: var(--text); font: inherit; cursor: pointer; }
+.shift-row > svg:first-child { width: 22px; height: 22px; flex: none; color: var(--accent); }
+.shift-row > svg:last-child { width: 18px; height: 18px; flex: none; color: var(--muted); }
+.pd .sh { font-size: var(--fs-xs); color: var(--accent); min-height: 1.2em; }

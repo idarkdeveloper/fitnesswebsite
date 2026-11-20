@@ -1254,11 +1254,15 @@ function hset(day, f, v) {
 }
 const hp = () => state.hprofile;
 /** One-time: the owner said the week of Mon 23 Nov 2026 is an evening shift (shifts alternate weekly). */
+/** Ingredients you don't eat, from hprofile.dislikes ("cabbage,okra"); the meal plan leaves out dishes with them. */
+const dislikes = () => String(hp().dislikes || '').split(',').filter(Boolean);
+const applyDislikes = () => { if (window.PF_MEALS && window.PF_MEALS.setDislikes) window.PF_MEALS.setDislikes(dislikes()); };
 function seedShift() {
   const h = state.hprofile;
   if (!h || h.shiftSeeded) return;
   if (!Object.keys(h).some((k) => k.startsWith('shift|'))) { h['shift|2026-11-23'] = 'evening'; if (h.shiftDays == null) h.shiftDays = '1,2,3,4,5'; }
   h.shiftSeeded = 1;
+  if (!h.dislikesSeeded) { if (h.dislikes == null) h.dislikes = 'cabbage'; h.dislikesSeeded = 1; }   // the owner doesn't like white cabbage
   save();
 }
 const nf = (n) => Math.round(n).toLocaleString('en-US');
@@ -2190,8 +2194,8 @@ const SHIFTS = {
   evening: {
     name: 'Evening shift', hours: '13:00–00:30', pause: '18:30–19:00',
     order: ['Breakfast', 'Lunch', 'Dinner', 'Snack'],
-    at: { Breakfast: ['09:30', 'home'], Lunch: ['12:15', 'home', 'before you leave · cook a double portion'], Dinner: ['18:30', 'pack', 'break · same as lunch'], Snack: ['18:30', 'pack', 'break, with dinner'] },
-    tip: 'Cook once a day: around 11:00 make a double portion of lunch. Eat one before you leave and pack the other, with the snack, for the 18:30 break. Back home after 00:30: nothing heavy; if you are hungry, a glass of milk or a bowl of curd.',
+    at: { Breakfast: ['09:30', 'home'], Lunch: ['12:15', 'home', 'before you leave · cook a double portion'], Dinner: ['18:30', 'pack', 'break · same as lunch'], Snack: ['00:15', 'pack', 'on the way home'] },
+    tip: 'Cook once a day: around 11:00 make a double portion of lunch. Eat one before you leave and pack the other for the 18:30 break, so the 30 minutes are for dinner only. The snack goes in your bag for the way home (no tea that late, so you can sleep). Nothing else after 00:30.',
   },
 };
 const shiftWorkDays = () => String(hp().shiftDays ?? '1,2,3,4,5').split(',').filter(Boolean).map(Number);   // 0 = Sun
@@ -2229,7 +2233,8 @@ function dayInfo(i, wk = weekStart(todayKey()), raw = false) {
   // last night's dinner (a double portion) to work for lunch. The grocery list follows, so amounts add up.
   const base = window.PF_MEALS.weekPlan(wk)[i].map(([label, items]) => [label,
     sh === 'evening' && label === 'Dinner' ? dinnerItems(dayK)
-      : sh === 'morning' && label === 'Lunch' ? dinnerItems(keyAdd(dayK, -1)) : items]);
+      : sh === 'morning' && label === 'Lunch' ? dinnerItems(keyAdd(dayK, -1))
+      : sh === 'evening' && label === 'Snack' && items.some(([id]) => id !== 'tea' && id !== 'chai') ? items.filter(([id]) => id !== 'tea' && id !== 'chai') : items]);
   let meals = base.map(([label, items]) => ({ label, items, ...mealInfo(items, subs) }));
   if (sh) {
     const S = SHIFTS[sh];
@@ -2248,6 +2253,17 @@ function daysText(days) {
   const idx = order.map((d) => (d + 6) % 7);
   return idx.every((v, k) => k === 0 || v === idx[k - 1] + 1) && order.length > 2 ? `${names[0]}–${names[names.length - 1]}` : names.join(', ');
 }
+/** Vegetables and proteins the plan can leave out. Leaving one out swaps in other dishes for the rest of the plan. */
+function dislikeSheet() {
+  const M = window.PF_MEALS, dl = dislikes();
+  const used = new Set(Object.values(M.DISH).flatMap((d) => Object.keys(d[4])));
+  const pick = (g) => M.GROUPS[g].filter((x) => used.has(x) && M.ING[x]);
+  const chips = (list) => list.map((x) => `<button class="chip ${dl.includes(x) ? 'on' : ''}" aria-pressed="${dl.includes(x)}" data-action="dislike-toggle" data-ing="${x}">${dl.includes(x) ? 'Not for me: ' : ''}${esc(ingShort(x))}</button>`).join('');
+  openSheet("Foods you don't eat", `
+    <p class="small muted m-0">Tap what you don't eat. Plans, recipes and the grocery list leave out every dish with it and pick others. Tap again to bring it back.</p>
+    <h3 class="sheet-sub">Vegetables</h3><div class="chips">${chips(pick('veg'))}</div>
+    <h3 class="sheet-sub">Protein</h3><div class="chips">${chips(pick('protein'))}</div>`);
+}
 function shiftSheet(wk) {
   const cur = hp()['shift|' + wk] || '', eff = shiftForWeek(wk), days = shiftWorkDays();
   const opt = (v, title, sub) => `<button class="opt ${((cur || (eff ?? 'off')) === v) ? 'on' : ''}" role="radio" aria-checked="${(cur || (eff ?? 'off')) === v}" data-action="shift-set" data-wk="${wk}" data-v="${v}"><span class="grow"><span class="t">${title}</span><span class="s">${sub}</span></span>${(cur || (eff ?? 'off')) === v ? icon('check') : ''}</button>`;
@@ -2255,7 +2271,7 @@ function shiftSheet(wk) {
     <p class="small muted m-0">Times include travel. Meals keep the same food; they get times that fit the shift and the ones you eat at work are marked "lunchbox".</p>
     <div class="opt-list mt-3" role="radiogroup" aria-label="Shift this week">
       ${opt('morning', 'Morning shift, 04:00–16:30', 'Break 09:30–10:00. Breakfast 03:30 at home · lunch in the break · snack 16:45 and dinner 18:30 at home')}
-      ${opt('evening', 'Evening shift, 13:00–00:30', 'Break 18:30–19:00. Breakfast 09:30 and lunch 12:15 at home · dinner and snack in the break')}
+      ${opt('evening', 'Evening shift, 13:00–00:30', 'Break 18:30–19:00. Breakfast 09:30 and lunch 12:15 at home · dinner in the break · snack on the way home')}
       ${opt('off', 'No shift', 'Holiday or a week off: meals at the usual times')}
     </div>
     ${!cur && eff ? `<p class="small muted m-0 mt-2">Not set for this week: it follows the rotation (the opposite of the week before).</p>` : ''}
@@ -2485,8 +2501,12 @@ VIEWS.plan = () => {
     const wsh = shiftForWeek(start);
     const shiftRow = `<button class="card flat soft shift-row mt-4" data-action="shift-sheet" data-wk="${start}">
         ${icon('timer')}<span class="grow"><b>${wsh ? `${SHIFTS[wsh].name}, ${SHIFTS[wsh].hours}` : 'No shift this week'}</b><span class="d-block small muted">${wsh ? `${daysText(shiftWorkDays())} · meals timed around it` : 'Working shifts? Set them and meals are timed around them'}</span></span>${icon('chevR')}</button>`;
+    const dl = dislikes();
+    const dislikeRow = `<button class="card flat soft shift-row mt-2" data-action="dislike-sheet">
+        ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}</span></span>${icon('chevR')}</button>`;
     body = `
       ${shiftRow}
+      ${dislikeRow}
       <div class="pd-strip mt-4">${strip}</div>
       <section class="card mt-4 ${isToday ? 'callout' : ''}" aria-label="${PLAN_DAYS[sel]}">
         <div class="row-between">
@@ -2569,6 +2589,12 @@ const PLAN_ACTIONS = {
     if (m) deleteMeal(m.id);
   },
   'shift-sheet': (el) => shiftSheet(el.dataset.wk),
+  'dislike-sheet': () => dislikeSheet(),
+  'dislike-toggle': (el) => {
+    const ing = el.dataset.ing, cur = dislikes();
+    hp().dislikes = (cur.includes(ing) ? cur.filter((x) => x !== ing) : [...cur, ing]).join(',');
+    applyDislikes(); save(); rerender(); dislikeSheet();
+  },
   'shift-set': (el) => {
     const wk = el.dataset.wk;
     hp()['shift|' + wk] = el.dataset.v;
@@ -4154,6 +4180,7 @@ window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
 importOldTracker();
 seedQuickFoods();
 seedShift();
+applyDislikes();
 applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');
 render();

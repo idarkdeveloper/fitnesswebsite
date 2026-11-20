@@ -136,6 +136,13 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 - **Destructive actions** that lose a lot (reset, delete workout, discard workout with ticked sets) always confirm. Small, quick removals (a logged food) skip the confirm and show an **Undo** toast for 5 s instead.
 - **Feedback:** every save shows a toast or a summary sheet. Ticking a set starts the rest timer.
 - **Motion:** tokens `--dur-press` (80ms, pressed scale), `--dur-fast` (150ms, colour and border), `--dur-base` (220ms, tab indicator, sheet settle, page fade) and `--dur-slow` (400ms, progress fill), all on `--ease` (`cubic-bezier(0.2, 0.8, 0.2, 1)`). Everything is disabled under `prefers-reduced-motion`.
+- **Motion patterns** (the 12 principles, applied sparingly):
+  - **Sheets** rise in on `--ease` and leave the way they came: down and fading, 170ms, accelerating (`.closing`), for the close button, Esc, the back gesture and tapping outside alike.
+  - **Dragging a sheet up** gives at most 28px with resistance (rubber banding), then springs back past rest and settles (`cubic-bezier(0.34, 1.56, 0.64, 1)`).
+  - **Lists** (exercises, ladders, Trends, measurement dates) rise in one after another, 30ms apart, capped at 210ms.
+  - **The segmented control's pill** slides from the tab you left (`.seg-slide`) even though the view re-renders.
+  - **A ticked set** squashes and overshoots (`.pop`, 320ms).
+  - **The end of a workout** grows the medal in with an overshoot. A level-up or new badge adds a burst of 12 sparks on curved paths (peak-end rule: the best moment is the most designed one).
 - **States:** every clickable surface (options, theme options, day chips, stats, callouts, routine picker, list items, progression and mastery rows, library tiles, buttons, icon buttons, steppers, weekday buttons) has a hover style (tint toward `--accent`, only on hover-capable devices), a pressed style (`scale(0.98)`) and the global focus ring. Text inputs use an accent border plus a 3px ring instead of the outline.
 - Focus is always visible: 3px `--accent` outline.
 

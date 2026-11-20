@@ -160,7 +160,7 @@ async function setTextSize(p, scale) {
   const problems = [];
   let checked = 0;
   for (const [phone, dev] of PHONES) {
-    const ctx = await b.newContext({ ...dev });
+    const ctx = await b.newContext({ ...dev, reducedMotion: 'reduce' });   // measure layout at rest, not mid-animation
     const p = await ctx.newPage();
     p.on('pageerror', (e) => problems.push({ where: phone, kind: 'errors', msg: e.message }));
     p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) problems.push({ where: phone, kind: 'errors', msg: m.text() }); });
@@ -192,7 +192,7 @@ async function setTextSize(p, scale) {
   }
   // Contrast and keyboard focus, once per theme on one phone at the default text size.
   for (const theme of ['midnight', 'light', 'dark']) {
-    const ctx = await b.newContext({ ...PHONES[0][1], hasTouch: false });
+    const ctx = await b.newContext({ ...PHONES[0][1], hasTouch: false, reducedMotion: 'reduce' });
     const p = await ctx.newPage();
     await p.goto(BASE); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(400);
     await p.evaluate((t) => { const st = JSON.parse(localStorage.getItem('pf2_state')); st.trainingDays = [0, 1, 2, 3, 4, 5, 6]; st.profile.theme = t; localStorage.setItem('pf2_state', JSON.stringify(st)); }, theme);

@@ -2184,14 +2184,14 @@ const SHIFTS = {
   morning: {
     name: 'Morning shift', hours: '04:00–16:30', pause: '09:30–10:00',
     order: ['Breakfast', 'Lunch', 'Snack', 'Dinner'],
-    at: { Breakfast: ['03:30', 'home', 'before you leave'], Lunch: ['09:30', 'pack', 'break'], Snack: ['16:45', 'home'], Dinner: ['18:30', 'home'] },
-    tip: 'Breakfast at 03:30 before you leave: get it ready the evening before so it takes five minutes. Lunch goes in your lunchbox for the 09:30 break. Snack when you are home, dinner at 18:30, then pack tomorrow\'s lunch and get to bed by about 20:30.',
+    at: { Breakfast: ['03:30', 'home', 'before you leave'], Lunch: ['09:30', 'pack', 'break · last night\'s dinner'], Snack: ['16:45', 'home'], Dinner: ['18:30', 'home', 'cook a double portion'] },
+    tip: 'Cook once a day: at dinner make a double portion and pack the second half for tomorrow\'s 09:30 break. Breakfast at 03:30 before you leave: get it ready the evening before so it takes five minutes. Snack when you are home, then get to bed by about 20:30.',
   },
   evening: {
     name: 'Evening shift', hours: '13:00–00:30', pause: '18:30–19:00',
     order: ['Breakfast', 'Lunch', 'Dinner', 'Snack'],
-    at: { Breakfast: ['09:30', 'home'], Lunch: ['12:15', 'home', 'before you leave'], Dinner: ['18:30', 'pack', 'break'], Snack: ['18:30', 'pack', 'break, with dinner'] },
-    tip: 'Cook lunch and dinner together around 11:00. Eat lunch before you leave; dinner and the snack go in your lunchbox for the 18:30 break. Back home after 00:30: nothing heavy; if you are hungry, a glass of milk or a bowl of curd.',
+    at: { Breakfast: ['09:30', 'home'], Lunch: ['12:15', 'home', 'before you leave · cook a double portion'], Dinner: ['18:30', 'pack', 'break · same as lunch'], Snack: ['18:30', 'pack', 'break, with dinner'] },
+    tip: 'Cook once a day: around 11:00 make a double portion of lunch. Eat one before you leave and pack the other, with the snack, for the 18:30 break. Back home after 00:30: nothing heavy; if you are hungry, a glass of milk or a bowl of curd.',
   },
 };
 const shiftWorkDays = () => String(hp().shiftDays ?? '1,2,3,4,5').split(',').filter(Boolean).map(Number);   // 0 = Sun
@@ -2216,10 +2216,21 @@ const mealWhen = (m) => (m.at ? `${m.at}${m.note ? ` · ${m.note}` : ''}${m.pack
 
 /** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week.
     On a shift day the meals carry a time and a lunchbox mark, in the order you eat them. */
+/** What is eaten at dinner on a day: on an evening shift that is the lunch dish (cooked once, packed for the break). */
+function dinnerItems(dayKey) {
+  const plan = window.PF_MEALS.weekPlan(weekStart(dayKey))[planIdx(dayKey)];
+  const pick = (l) => plan.find(([label]) => label === l)[1];
+  return shiftOn(dayKey) === 'evening' ? pick('Lunch') : pick('Dinner');
+}
 function dayInfo(i, wk = weekStart(todayKey()), raw = false) {
-  const subs = raw ? null : subsFor(wk);                             // raw: the plan as generated (for the grocery list)
-  let meals = window.PF_MEALS.weekPlan(wk)[i].map(([label, items]) => ({ label, items, ...mealInfo(items, subs) }));
-  const sh = raw ? null : shiftOn(keyAdd(wk, i));
+  const subs = raw ? null : subsFor(wk);                             // raw: the plan as generated, without swaps (grocery list)
+  const dayK = keyAdd(wk, i), sh = shiftOn(dayK);
+  // Cook once on shift days: an evening shift eats lunch's dish again at dinner; a morning shift takes
+  // last night's dinner (a double portion) to work for lunch. The grocery list follows, so amounts add up.
+  const base = window.PF_MEALS.weekPlan(wk)[i].map(([label, items]) => [label,
+    sh === 'evening' && label === 'Dinner' ? dinnerItems(dayK)
+      : sh === 'morning' && label === 'Lunch' ? dinnerItems(keyAdd(dayK, -1)) : items]);
+  let meals = base.map(([label, items]) => ({ label, items, ...mealInfo(items, subs) }));
   if (sh) {
     const S = SHIFTS[sh];
     meals = S.order.map((l) => meals.find((m) => m.label === l)).filter(Boolean)

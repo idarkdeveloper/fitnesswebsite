@@ -51,6 +51,7 @@ window.PF_MEALS = (function () {
     wraps: ['Wholewheat wraps (Vollkorn-Wraps)', GR, 'pc', [6, 'pack of 6']],
     durum: ['Dürüm flatbread (Dürümfladen or Yufka), Turkish shop', GR, 'pc', [10, 'pack of 10']],
     pasta: ['Wholewheat pasta (Vollkornnudeln)', GR, 'g', [500, '500 g pack']],
+    spaghetti: ['Wholewheat spaghetti (Vollkornspaghetti)', GR, 'g', [500, '500 g pack']],
     buns: ['Wholegrain rolls (Vollkornbrötchen)', GR, 'pc', [4, '4 rolls']],
     dal: ['Red lentils (rote Linsen)', TN, 'g', [500, '500 g bag']],
     rajma: ['Kidney beans, tin (Kidneybohnen)', TN, 'tin'],
@@ -73,6 +74,7 @@ window.PF_MEALS = (function () {
     poha: ['Poha', AS, 'g', [500, '500 g bag']],
     roastchana: ['Roasted chana', AS, 'g', [500, '500 g bag']],
     okra: ['Okra (bhindi)', AS, 'g'],
+    dosabatter: ['Idli/dosa batter, ready-made (fridge section)', AS, 'g', [1000, '1 kg tub, keeps about a week']],
   };
 
   // id: [name, serving, kcal, protein g, { ingredient: amount per serving }]
@@ -143,6 +145,17 @@ window.PF_MEALS = (function () {
     eggfriedrice: ['Egg fried rice', '1 plate', 470, 18, { rice: 60, eggs: 2, mixedveg: 100, onion: 20, oil: 8 }],
     masalapasta: ['Masala pasta with chicken', '1 plate', 520, 39, { pasta: 80, chicken: 110, capsicum: 60, tinnedtom: 120, onion: 30, oil: 7 }],
     curdrice: ['Curd rice', '1 bowl', 300, 10, { rice: 50, curd: 150, cucumber: 0.15, oil: 3 }],
+    // From V5_FROM: South Indian (ready-made batter from the Asia shop, no grinding) and Western pasta and traybake.
+    idli: ['Idli', '4 pieces', 225, 7, { dosabatter: 160 }],
+    dosa: ['Plain dosa', '2 dosas', 290, 8, { dosabatter: 180, oil: 6 }],
+    masaladosa: ['Masala dosa', '2 dosas with potato filling', 430, 10, { dosabatter: 180, potato: 150, onion: 40, oil: 10 }],
+    sambar: ['Sambar', '1 bowl', 230, 11, { dal: 40, mixedveg: 80, onion: 20, tinnedtom: 40, oil: 5 }],
+    lemonrice: ['Lemon rice with peanuts', '1 plate', 380, 10, { rice: 70, peanuts: 15, lemon: 0.5, oil: 6 }],
+    chettinad: ['Chettinad chicken curry', '1 bowl', 330, 38, { chicken: 150, onion: 50, tinnedtom: 60, oil: 8 }],
+    spagbol: ['Spaghetti bolognese (turkey mince)', '1 plate', 570, 40, { spaghetti: 80, turkey: 120, passata: 150, onion: 40, carrot: 40, oil: 6 }],
+    tunapasta: ['Tuna tomato pasta', '1 plate', 520, 38, { pasta: 80, tuna: 1, passata: 120, onion: 30, capsicum: 50, oil: 6 }],
+    chickenpasta: ['Creamy chicken & mushroom pasta', '1 plate', 550, 52, { pasta: 80, chicken: 120, mushrooms: 100, quark: 80, milk: 50, oil: 5 }],
+    traybake: ['Chicken, potato & veg traybake', '1 tray', 430, 41, { chicken: 150, potato: 200, capsicum: 80, zucchini: 80, oil: 8 }],
     // Saturday breakfast in winter, from V4_FROM (asked for by name): lamb trotters, slow-cooked.
     nihari: ['Nihari (lamb trotters)', '1 bowl', 400, 28, { lambfeet: 2, onion: 40, atta: 10, oil: 6 }],
   };
@@ -152,6 +165,9 @@ window.PF_MEALS = (function () {
   const NUT = {
     nihari: [24, 9, 2, 1.5],
     durum: [3, 0.6, 1.5, 0.9],
+    idli: [1, 0.2, 0.5, 0.6], sambar: [6, 0.7, 5, 1.2], dosa: [7, 0.8, 0.8, 0.7], masaladosa: [12, 1.2, 3, 1.1],
+    lemonrice: [12, 1.2, 0.5, 0.6], chettinad: [12, 2, 5, 1.3], spagbol: [12, 2.5, 10, 1], tunapasta: [8, 1, 9, 1.1],
+    chickenpasta: [10, 3, 6, 0.9], traybake: [11, 1.5, 6, 0.8],
     roti: [2.5, 0.4, 0.5, 0.2], bread: [1, 0.2, 1.5, 0.5], rice: [0.5, 0.1, 0.1, 0],
     dal: [5.5, 0.6, 3, 1], dalpalak: [5.5, 0.6, 2.5, 1], rajma: [6, 0.7, 4, 1.1], chana: [7.5, 0.8, 5, 1.1],
     chickencurry: [15, 2.5, 5, 1.3], tikka: [9, 2, 3, 1.2], keema: [15, 3.5, 6, 1.2], fishcurry: [10, 1, 5, 1.2],
@@ -235,6 +251,9 @@ window.PF_MEALS = (function () {
       { p: 'treat', v3: 1, items: [['kulcha', 1], ['chana', 1]] },
       { p: 'paneer', v3: 1, items: [['vegsandwich', 1]] },
       { p: 'egg', v3: 1, items: [['eggtoast', 1]] },
+      { p: 'dal', v5: 1, items: [['idli', 1], ['sambar', 1]] },
+      { p: 'egg', v5: 1, items: [['dosa', 1], ['sambar', 1], ['boiled2', 1]] },
+      { p: 'treat', v5: 1, items: [['masaladosa', 1], ['curd', 1]] },
     ],
     [L]: [
       { p: 'chicken', items: [['roti', 2], ['chickencurry', 1], ['salad', 1]] },
@@ -257,6 +276,11 @@ window.PF_MEALS = (function () {
       { p: 'egg', v3: 1, items: [['eggfriedrice', 1], ['raita', 1]] },
       { p: 'treat', v3: 1, items: [['kulcha', 1], ['chana', 1], ['salad', 1]] },
       { p: 'treat', v3: 1, items: [['pavbhaji', 1], ['salad', 1]] },
+      { p: 'chicken', v5: 1, items: [['lemonrice', 1], ['chettinad', 1], ['salad', 1]] },
+      { p: 'dal', v5: 1, items: [['rice', 1], ['sambar', 1], ['SABZI', 1], ['curd', 1]] },
+      { p: 'turkey', v5: 1, items: [['spagbol', 1], ['salad', 1]] },
+      { p: 'fish', v5: 1, items: [['tunapasta', 1], ['salad', 1]] },
+      { p: 'chicken', v5: 1, items: [['chickenpasta', 1], ['salad', 1]] },
     ],
     [S]: [
       { p: '', items: [['chai', 1], ['roastchana', 1]] },
@@ -286,6 +310,10 @@ window.PF_MEALS = (function () {
       { p: '', v3: 1, items: [['mushroommatar', 1], ['roti', 2], ['raita', 1]] },
       { p: 'paneer', v3: 1, items: [['paneerroll', 1], ['salad', 1]] },
       { p: 'dal', v3: 1, items: [['curdrice', 1], ['SABZI', 1], ['boiled2', 1]] },
+      { p: 'chicken', v5: 1, items: [['chettinad', 1], ['roti', 1], ['salad', 1]] },
+      { p: 'chicken', v5: 1, items: [['traybake', 1]] },
+      { p: 'turkey', v5: 1, items: [['spagbol', 1], ['salad', 1]] },
+      { p: 'fish', v5: 1, items: [['tunapasta', 1], ['salad', 1]] },
     ],
   };
   // Non-veg is fine any day; only paneer (pricey and fatty) is kept to twice a week. Weeks before V2_FROM keep the
@@ -296,6 +324,8 @@ window.PF_MEALS = (function () {
   const V3_FROM = '2026-11-16', MAX_V3 = { paneer: 2, treat: 2 };
   // From V4_FROM, Saturday breakfast in winter (November to February) is always nihari (lamb trotters) with a roti:
   // a day off, so there's time for it to simmer.
+  // From V5_FROM the pools also hold South Indian dishes and Western pasta and traybakes.
+  const V5_FROM = '2026-11-30';
   const V4_FROM = '2026-11-23', SAT = 5, WINTER = [10, 11, 0, 1], NIHARI = { p: 'lamb', items: [['nihari', 1], ['roti', 1]] };
 
   // What's in season (or cheap) in German shops, by month. Frozen mixed veg fills in all year.
@@ -344,13 +374,13 @@ window.PF_MEALS = (function () {
   function weekPlan(mondayKey) {
     if (cache[mondayKey]) return cache[mondayKey];
     const r = rng('pulsefit|' + mondayKey);
-    const v2 = mondayKey >= V2_FROM, v3 = mondayKey >= V3_FROM, MAX = v3 ? MAX_V3 : v2 ? MAX_V2 : MAX_V1;
+    const v2 = mondayKey >= V2_FROM, v3 = mondayKey >= V3_FROM, v5 = mondayKey >= V5_FROM, MAX = v3 ? MAX_V3 : v2 ? MAX_V2 : MAX_V1;
     const used = {};                                   // protein -> count this week
     const [y, m, d] = mondayKey.split('-').map(Number);
     const niharDay = mondayKey >= V4_FROM && WINTER.includes(new Date(y, m - 1, d + SAT).getMonth()) && !hasDisliked('nihari');
     const days = Array.from({ length: 7 }, () => ({}));
     for (const slot of [L, D, B, S]) {                 // lunch and dinner first: they carry the protein limits
-      const avail = POOLS[slot].filter((o) => (v2 || !o.v2) && (v3 || !o.v3));
+      const avail = POOLS[slot].filter((o) => (v2 || !o.v2) && (v3 || !o.v3) && (v5 || !o.v5));
       const liked = avail.filter((o) => !trim(o.items).some(([id]) => hasDisliked(id)));
       const order = shuffle(liked.length ? liked : avail, r);
       const taken = new Set();

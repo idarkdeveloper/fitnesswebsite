@@ -1031,14 +1031,6 @@ function progressBody() {
   } else if (toGo != null && toGo <= 0.05) verdict = '<div class="note-box mt-3"><b>Goal reached.</b> Set a new goal in Profile → Goals.</div>';
 
   const firstDay = MEASURES.map(([f]) => firstOf(f)?.day).filter(Boolean).sort()[0];
-  // Waist, chest, hips and neck always show; a limb pair only once either side has been measured.
-  const shown = MEASURES.filter(([f], i) => i < 4 || [MEASURES[i - (i % 2)][0], MEASURES[i - (i % 2) + 1][0]].some((x) => firstOf(x)));
-  const mtiles = shown.map(([f, label]) => {
-    const l = latestOn(f, tk), f0 = firstOf(f);
-    const diff = l && f0 && f0.day !== l.day ? l.v - f0.v : null;
-    const dtxt = diff == null ? '' : Math.abs(diff) < 0.05 ? '<span class="d muted">no change</span>' : `<span class="d ${diff < 0 ? 'c-success' : ''}">${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)}</span>`;
-    return `<div class="m-tile"><span class="k">${label}</span><span class="v">${l ? kg(l.v) : '–'}${l ? ' <small>cm</small>' : ''}</span>${dtxt}</div>`;
-  }).join('');
 
   // Last 7 days averages (days with data only)
   const days = Array.from({ length: 7 }, (_, i) => keyAdd(tk, -i));
@@ -1063,7 +1055,7 @@ function progressBody() {
     ${compCard(tk, 'data-today="1"').replace('id="compH"', 'id="compHp"').replace('aria-labelledby="compH"', 'aria-labelledby="compHp"')}
     <section class="card mt-4" aria-labelledby="mH">
       <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+, /, ''))})` : 'In centimetres'}</div></div><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></span></div>
-      <div class="m-grid mt-3">${mtiles}</div>
+      ${measureBoard(tk)}
       <p class="small muted m-0 mt-3">Measure every week or two, same time of day. Waist keeps going down even in weeks when the scale doesn't.</p>
     </section>
     <section class="card mt-4 last7" aria-labelledby="l7H">
@@ -1229,6 +1221,7 @@ const PROFILE_ACTIONS = {
 // one-side fields: earlier entries are kept and shown as the right side.
 const MEASURES = [
   ['waist', 'Waist'], ['chest', 'Chest'], ['hips', 'Hips'], ['neck', 'Neck'],
+  ['shoulder', 'Shoulders'], ['abdomen', 'Abdomen (widest, belly)'],
   ['armL', 'Upper arm · left'], ['arm', 'Upper arm · right'],
   ['forearmL', 'Forearm · left'], ['forearm', 'Forearm · right'],
   ['thighL', 'Thigh · left'], ['thigh', 'Thigh · right'],
@@ -1577,6 +1570,53 @@ function compChart() {
     <div class="small muted mt-1 comp-key"><span class="ck bf"></span>Body fat %${mu.length > 1 ? '<span class="ck mu"></span>Muscle mass' : ''}</div>`;
 }
 
+/* ---- Measurement board: a body figure with the left side's tiles on the left and the right side's on the right,
+   like a smart-scale app. Each tile shows the latest value on `day` and the change since the first entry. ---- */
+const MB_LEFT = ['neck', 'armL', 'chest', 'abdomen', 'thighL', 'calfL'];
+const MB_RIGHT = ['shoulder', 'arm', 'waist', 'hips', 'thigh', 'calf'];
+const MB_LABEL = { neck: 'Neck', shoulder: 'Shoulders', armL: 'L-Bicep', arm: 'R-Bicep', chest: 'Chest', waist: 'Waist', abdomen: 'Abdomen', hips: 'Hip',
+  thighL: 'L-Thigh', thigh: 'R-Thigh', calfL: 'L-Calf', calf: 'R-Calf', forearmL: 'L-Forearm', forearm: 'R-Forearm' };
+const BODY_SVG = `<svg class="mb-body" viewBox="0 0 60 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <circle cx="30" cy="11" r="8"/>
+  <path d="M30 21C26 21 25 23 25 25L16 27C12 28 10 31 10 35L7 62C6 70 5 78 6 84L9 84C10 77 11 70 13 63L16 42L17 60C16 70 16 78 17 84L19 120C19 135 19 145 18 155L27 155C27 140 28 125 29 100L30 88L31 100C32 125 33 140 33 155L42 155C41 145 41 135 41 120L43 84C44 78 44 70 43 60L44 42L47 63C49 70 50 77 51 84L54 84C55 78 54 70 53 62L50 35C50 31 48 28 44 27L35 25C35 23 34 21 30 21Z"/></svg>`;
+function measureBoard(day) {
+  const tile = (f) => {
+    const l = latestOn(f, day), f0 = firstOf(f);
+    const diff = l && f0 && f0.day !== l.day ? l.v - f0.v : null;
+    const d = diff == null ? '' : Math.abs(diff) < 0.05 ? '<span class="d muted">no change</span>'
+      : `<span class="d ${diff < 0 ? 'c-success' : ''}">${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)}</span>`;
+    return `<button class="mb-tile" data-action="measure-field" data-f="${f}" aria-label="${MB_LABEL[f]}: ${l ? `${kg(l.v)} centimetres` : 'not measured'}. Edit">
+      <span class="k">${MB_LABEL[f]}</span><span class="v">${l ? kg(l.v) : '–'}${l ? '<small> cm</small>' : ''}</span>${d}</button>`;
+  };
+  const fore = ['forearmL', 'forearm'].some((f) => firstOf(f));
+  return `<div class="mb-board mt-3">
+      <div class="mb-col">${MB_LEFT.map(tile).join('')}</div>
+      <div class="mb-fig">${BODY_SVG}</div>
+      <div class="mb-col">${MB_RIGHT.map(tile).join('')}</div>
+    </div>
+    ${fore ? `<div class="m-grid mt-2">${tile('forearmL')}${tile('forearm')}</div>` : ''}
+    ${ratioCard(day)}`;
+}
+/** Waist–hip ratio (WHO: above 0.90 for men, 0.85 for women means more risk) and waist-to-height (keep under 0.5). */
+function ratioCard(day) {
+  const w = latestOn('waist', day), h = latestOn('hips', day);
+  if (!w || !h) return '';
+  const r = w.v / h.v, female = hp().sex === 'female';
+  const [a, b] = female ? [0.80, 0.85] : [0.90, 1.0];
+  const lo = 0.7, hi = 1.1, pos = (v) => Math.max(0, Math.min(100, ((v - lo) / (hi - lo)) * 100));
+  const band = r < a ? ['Healthy', 'c-success'] : r < b ? ['Raised', 'c-warn'] : ['High', 'c-danger'];
+  const ht = hp().height, wth = ht ? w.v / ht : null;
+  return `<div class="whr mt-3" role="group" aria-label="Waist-hip ratio ${r.toFixed(2)}, ${band[0]}">
+      <div class="row-between"><span class="fw-bold">Waist–hip ratio</span><span class="whr-v ${band[1]}">${r.toFixed(2)} <small>${band[0]}</small></span></div>
+      <div class="whr-bar mt-2" aria-hidden="true">
+        <span class="g" style="width:${pos(a)}%"></span><span class="y" style="width:${pos(b) - pos(a)}%"></span><span class="r" style="width:${100 - pos(b)}%"></span>
+        <i style="left:${pos(r)}%"></i>
+      </div>
+      <div class="whr-k small muted"><span style="left:${pos(a)}%">${a.toFixed(2)}</span><span style="left:${pos(b)}%">${b.toFixed(2)}</span></div>
+      <p class="small muted m-0 mt-2">Waist ÷ hip. For ${female ? 'women' : 'men'}, under ${a.toFixed(2)} is the healthy range (WHO).${wth ? ` Waist-to-height: <b>${wth.toFixed(2)}</b>, aim for under 0.50.` : ''}</p>
+    </div>`;
+}
+
 function trackMeasureCard(day) {
   const rows = MEASURES.map(([f, label]) => {
     const l = latestOn(f, day);
@@ -1590,9 +1630,8 @@ function trackMeasureCard(day) {
   return `
     <section class="card mt-4" aria-labelledby="measH">
       <div class="row-between"><h2 class="h3" id="measH">Measurements</h2><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure">Log</button></span></div>
-      ${rows
-        ? `<ul class="kv-list mt-3">${rows}</ul><p class="muted small m-0 mt-2">Latest value, and change since your first entry.</p>`
-        : '<p class="muted small mt-3 m-0">Measure your waist every week or two, at the same time of day. It keeps going down even in weeks when the scale doesn’t.</p>'}
+      ${rows ? '<p class="muted small m-0 mt-1">Latest, and change since your first entry. Tap one to update it.</p>' : '<p class="muted small mt-1 m-0">Measure every week or two, same time of day. Waist keeps going down even in weeks when the scale doesn’t. Tap a part to start.</p>'}
+      ${measureBoard(day)}
     </section>`;
 }
 
@@ -1987,7 +2026,7 @@ function sleepSheet() {
 }
 
 /** Short labels for the history list: "Upper arm · left" → "Arm L". */
-const MEASURE_SHORT = { waist: 'Waist', chest: 'Chest', hips: 'Hips', neck: 'Neck', armL: 'Arm L', arm: 'Arm R', forearmL: 'Forearm L', forearm: 'Forearm R', thighL: 'Thigh L', thigh: 'Thigh R', calfL: 'Calf L', calf: 'Calf R' };
+const MEASURE_SHORT = { waist: 'Waist', chest: 'Chest', hips: 'Hips', neck: 'Neck', shoulder: 'Shoulders', abdomen: 'Abdomen', armL: 'Arm L', arm: 'Arm R', forearmL: 'Forearm L', forearm: 'Forearm R', thighL: 'Thigh L', thigh: 'Thigh R', calfL: 'Calf L', calf: 'Calf R' };
 /** Dates that have at least one measurement, newest first: [{ day, vals: [[field, cm]] }]. */
 function measureDates() {
   const by = {};
@@ -2055,7 +2094,7 @@ function measureSheet(dayArg) {
       const last = latestOn(f, day);
       return `<div class="field"><label for="ms-${f}">${label}</label><input class="input" id="ms-${f}" data-measure="${f}" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${hget(day, f) ?? ''}" placeholder="${last ? kg(last.v) : ''}" /></div>`;
     }).join('')}</div>
-    <p class="muted small mt-3 m-0">Waist: around your belly button, relaxed, after breathing out. Upper arm: the widest part, arm relaxed by your side. Forearm: just below the elbow. Thigh: halfway between hip and knee. Calf: the widest part, standing. Use the same spot every time.</p>
+    <p class="muted small mt-3 m-0">Shoulders: around the widest part, arms relaxed. Abdomen: around the widest part of the belly. Waist: around your belly button, relaxed, after breathing out. Upper arm: the widest part, arm relaxed by your side. Forearm: just below the elbow. Thigh: halfway between hip and knee. Calf: the widest part, standing. Use the same spot every time.</p>
     <button class="btn block lg mt-5" data-action="track-measure-save">Save</button>
     <button class="link-btn small mt-3" data-action="measure-history">See all dates</button>`);
 }
@@ -2170,6 +2209,7 @@ const TRACK_ACTIONS = {
     afterHabitEdit(day === todayKey() ? 'Saved' : `Saved for ${fmtShort(fromKey(day))}`);
   },
   'track-measure': () => measureSheet(),
+  'measure-field': (el) => { measureSheet(); const i = $(`#ms-${el.dataset.f}`); if (i) { i.focus(); i.scrollIntoView({ block: 'center' }); } },
   'comp-log': (el) => compSheet(el.dataset.today ? todayKey() : undefined),
   'comp-history': compHistorySheet,
   'care-open': (el) => careSheet(el.dataset.id, el.dataset.day),

@@ -27,7 +27,7 @@ const SCREENS = ['', 'track', 'movements', 'category/pushups', 'exercise/wall-pu
 const SHEETS = [['Trends sheet', '[data-action="habit-history"]'], ['Add food sheet', '[data-action="track-food"]'],
   ["Foods you don't eat sheet", '[data-action="dislike-sheet"]', 'plan'], ['Body fat & muscle sheet', '[data-action="comp-log"]', 'track'],
   ['Self-care routine sheet', '.care-row']];
-const BIG_ART = '.art, .ring-wrap, .wchart, .habit-chart, .medal, .hero, .celebrate, .lv-art, .ex-hero, .thumb';
+const BIG_ART = '.art, .ring-wrap, .wchart, .habit-chart, .medal, .hero, .celebrate, .lv-art, .ex-hero, .thumb, .mb-fig';
 
 async function check(p, label, scale) {
   return p.evaluate(({ scale, BIG_ART }) => {

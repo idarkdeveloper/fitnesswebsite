@@ -1670,3 +1670,30 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .care-row .icon, .care-row svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--muted); }
 .care-list li.done b { text-decoration: line-through; color: var(--muted); }
 .care-kind { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--border); font-size: var(--fs-xs); font-weight: 600; color: var(--muted); vertical-align: 1px; }
+
+/* Measurement board: left-side tiles | body figure | right-side tiles. */
+.mb-board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(48px, 22%) minmax(0, 1fr); gap: var(--space-2); align-items: stretch; }
+.mb-col { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.mb-fig { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.mb-body { width: 100%; max-height: 100%; fill: color-mix(in srgb, var(--accent) 45%, transparent); stroke: var(--accent); stroke-width: 0.8; }
+.mb-tile { display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: var(--space-2) var(--space-3); min-height: 64px; border-radius: var(--r-sm);
+  border: 1px solid var(--border-soft); background: var(--surface-2); color: inherit; font: inherit; cursor: pointer; min-width: 0; }
+.mb-tile .k { font-size: var(--fs-sm); color: var(--muted); }
+.mb-tile .v { font-size: 20px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.mb-tile .v small { font-size: var(--fs-xs); font-weight: 600; color: var(--muted); }
+.mb-tile .d { font-size: var(--fs-xs); }
+.mb-tile .d.c-success { color: var(--success); }
+.m-grid .mb-tile { width: 100%; }
+/* Waist-hip ratio: green / amber / red bands with a marker. */
+.whr { padding: var(--space-3); border-radius: var(--r-sm); border: 1px solid var(--border-soft); background: var(--surface-2); }
+.whr-v { font-size: var(--fs-xl); font-weight: 800; }
+.whr-v small { font-size: var(--fs-sm); font-weight: 600; }
+.c-warn { color: var(--warn); } .c-danger { color: var(--danger); }
+.whr-bar { position: relative; display: flex; height: 8px; border-radius: 999px; overflow: visible; }
+.whr-bar span { height: 100%; }
+.whr-bar .g { background: var(--success); border-radius: 999px 0 0 999px; }
+.whr-bar .y { background: var(--warn); }
+.whr-bar .r { background: var(--danger); border-radius: 0 999px 999px 0; }
+.whr-bar i { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--text); border: 3px solid var(--surface-2); }
+.whr-k { position: relative; height: 18px; margin-top: 4px; }
+.whr-k span { position: absolute; transform: translateX(-50%); }

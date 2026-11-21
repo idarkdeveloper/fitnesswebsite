@@ -2323,9 +2323,8 @@ function planCard(key) {
     </section>`;
 }
 
-/** This week's shopping list from the plan (plus daily top-ups when targets are set), grouped by section. */
-function groceryList(start) {
-  const M = window.PF_MEALS;
+/** What a week's plan uses (plus daily top-ups when targets are set): { ingredient: amount }. */
+function weekNeeds(start) {
   const tot = {};
   const addItems = (items) => items.forEach(([id, n]) => {
     for (const [ing, amt] of Object.entries(dishOf(id)[4])) tot[ing] = (tot[ing] || 0) + amt * n;
@@ -2338,10 +2337,47 @@ function groceryList(start) {
     const ups = topUps(d, T);
     if (ups.length) { withTopUps = true; addItems(ups); }
   }
+  return { tot, withTopUps };
+}
+
+/* ---- Leftovers: buy 1 kg where the list said 500 g, and next week's list knows you still have 500 g ----
+   Only things that keep a week or more carry over: grains and flour, tins, frozen, pantry and Asia-shop items,
+   eggs, potatoes, onions, and meat sold to be frozen (lamb trotters). Fresh vegetables, dairy and meat don't. */
+const KEEP_SECTIONS = ['Bread, grains & flour', 'Tins, lentils & pulses', 'Frozen', 'Pantry', 'Asia / Indian shop'];
+const KEEP_ITEMS = ['eggs', 'potato', 'onion', 'lambfeet'];
+const keeps = (ing) => !!window.PF_MEALS.ING[ing] && (KEEP_SECTIONS.includes(window.PF_MEALS.ING[ing][1]) || KEEP_ITEMS.includes(ing));
+const CARRY_WEEKS = 4;
+/** What is left after the week starting `wk`: what you had going in, plus what you bought, minus what the plan used. */
+function leftoverAfter(wk, depth = 0) {
+  if (depth >= CARRY_WEEKS) return {};
+  const carry = leftoverAfter(keyAdd(wk, -7), depth + 1);
+  const recs = Object.keys(state.grocery).filter((k) => k.startsWith(wk + '|')).map((k) => k.split('|')[1]);
+  const ings = [...new Set([...Object.keys(carry), ...recs])].filter(keeps);
+  if (!ings.length) return {};
+  const { tot } = weekNeeds(wk), out = {};
+  for (const ing of ings) {
+    const c = carry[ing] || 0, n = tot[ing] ? roundQty(ing, tot[ing]) : 0, v = state.grocery[`${wk}|${ing}`];
+    const bought = v === 1 ? Math.max(0, n - c) : v && v.b != null ? v.b : 0;   // ticked = bought what the list said
+    const left = c + bought - n;
+    if (left > 0.001) out[ing] = left;
+  }
+  return out;
+}
+
+/** This week's shopping list from the plan (plus daily top-ups when targets are set), grouped by section,
+    with what's left from earlier weeks taken off. */
+function groceryList(start) {
+  const M = window.PF_MEALS;
+  const { tot, withTopUps } = weekNeeds(start);
+  const have = leftoverAfter(keyAdd(start, -7));
   const sections = M.SECTIONS.map((s) => ({
     name: s,
     items: Object.keys(tot).filter((ing) => M.ING[ing][1] === s).sort((a, b) => M.ING[a][0].localeCompare(M.ING[b][0]))
-      .map((ing) => { const [qty, packs] = fmtQty(ing, tot[ing]); return { id: ing, name: M.ING[ing][0], qty, packs, need: roundQty(ing, tot[ing]) }; }),
+      .map((ing) => {
+        const full = roundQty(ing, tot[ing]), h = Math.min(have[ing] || 0, full), rest = Math.max(0, tot[ing] - h);
+        const [qty, packs] = rest > 0.001 ? fmtQty(ing, rest) : ['Have it', ''];
+        return { id: ing, name: M.ING[ing][0], qty, packs, need: rest > 0.001 ? roundQty(ing, rest) : 0, have: h, covered: rest <= 0.001 };
+      }),
   })).filter((s) => s.items.length);
   return { sections, withTopUps };
 }
@@ -2380,9 +2416,9 @@ function groceryStatus(ing, v) {
   }
   return parts.join(' ');
 }
-/** Drop grocery records from weeks that are over (this week's and next week's stay). */
+/** Drop grocery records older than the leftover window. */
 function pruneGrocery() {
-  const keep = weekStart(todayKey());
+  const keep = keyAdd(weekStart(todayKey()), -7 * CARRY_WEEKS);   // a few past weeks stay, for leftovers
   for (const k of Object.keys(state.grocery)) if (k.split('|')[0] < keep) delete state.grocery[k];
 }
 
@@ -2446,7 +2482,7 @@ function groceryEditSheet(k, ing, need) {
   const v = state.grocery[k];
   const rec = v && typeof v === 'object' ? v : v ? { b: need } : {};
   groEdit = { k, ing, need, sub: rec.sub || null };
-  const [qty, packs] = fmtQty(ing, need);
+  const [qty, packs] = need > 0 ? fmtQty(ing, need) : ['Already have it', ''];
   const alts = M.altsFor(ing);
   const unitLabel = unit === 'pc' ? (ing === 'eggs' ? 'eggs' : ing === 'bread' ? 'slices' : 'pieces') : unit === 'tin' ? 'tins' : unit;
   openSheet(ingShort(ing), `
@@ -2454,6 +2490,7 @@ function groceryEditSheet(k, ing, need) {
     <div class="card flat soft mt-3 row-between"><span>Suggested for the week</span><span class="text-right"><b>${esc(qty)}</b>${packs ? `<span class="d-block small muted">${esc(packs)}</span>` : ''}</span></div>
     <div class="field mt-4"><label for="gbAmt">What you bought (${unitLabel})</label>
       <input class="input" id="gbAmt" type="number" inputmode="decimal" min="0" step="any" value="${rec.b ?? ''}" placeholder="${need}" /></div>
+    <p class="small muted m-0 mt-2">${keeps(ing) ? 'Bought more than this? What you don\'t use this week comes off next week\'s list.' : 'Fresh food: anything extra isn\'t carried to next week\'s list.'}</p>
     <div class="chips mt-2"><button class="chip" data-action="grocery-amt" data-v="${need}">As suggested</button><button class="chip" data-action="grocery-amt" data-v="0">Not available</button>${pack && unit !== 'pc' ? `<button class="chip" data-action="grocery-amt" data-v="${pack[0] * Math.max(1, Math.round(need / pack[0]))}">${Math.max(1, Math.round(need / pack[0]))} × ${esc(pack[1])}</button>` : ''}</div>
     <h3 class="sheet-sub">Bought something else instead?</h3>
       <p class="small muted m-0">Pick it and that week's meals switch to it.</p>
@@ -2479,7 +2516,7 @@ VIEWS.plan = () => {
   const short = (k) => fromKey(k).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const { sections, withTopUps } = groceryList(start);
   const all = sections.flatMap((s) => s.items);
-  const ticked = all.filter((it) => state.grocery[`${start}|${it.id}`]).length;
+  const ticked = all.filter((it) => it.covered || state.grocery[`${start}|${it.id}`]).length;
   let body;
   if (planTab === 'week') {
     const strip = PLAN_DAYS.map((name, i) => {
@@ -2534,13 +2571,15 @@ VIEWS.plan = () => {
         ${ticked ? `<button class="link-btn" data-action="grocery-clear" data-wk="${start}">Clear</button>` : ''}
       </section>
       ${sections.map((s) => {
-        const n = s.items.filter((it) => state.grocery[`${start}|${it.id}`]).length;
+        const n = s.items.filter((it) => it.covered || state.grocery[`${start}|${it.id}`]).length;
         return `<div class="sec-head sm"><h2 class="group-label m-0">${esc(s.name)}</h2><span class="small muted">${n} / ${s.items.length}</span></div>
         <ul class="grocery card list-card">${s.items.map((it) => {
           const k = `${start}|${it.id}`;
           const v = state.grocery[k], st = groceryStatus(it.id, v);
-          return `<li><label class="check"><input type="checkbox" data-grocery="${esc(k)}" ${v ? 'checked' : ''} aria-label="Bought ${esc(it.name)}" /></label>
-            <button class="g-item grow plain text-left" data-action="grocery-edit" data-k="${esc(k)}" data-ing="${it.id}" data-need="${it.need}" aria-label="${esc(it.name)}: note what you bought"><span class="${v ? 'done' : ''}">${esc(it.name)}</span>${st ? `<span class="d-block small ${v && v.sub ? 'accent-text' : 'muted'}">${esc(st)}</span>` : ''}</button>
+          const hv = it.have ? `${it.covered ? 'Already have it: ' : ''}${fmtAmt(it.id, it.have)} left from earlier weeks` : '';
+          const done = v || it.covered;
+          return `<li><label class="check"><input type="checkbox" data-grocery="${esc(k)}" ${done ? 'checked' : ''} ${it.covered && !v ? 'disabled' : ''} aria-label="${it.covered && !v ? `Already have ${esc(it.name)}` : `Bought ${esc(it.name)}`}" /></label>
+            <button class="g-item grow plain text-left" data-action="grocery-edit" data-k="${esc(k)}" data-ing="${it.id}" data-need="${it.need}" aria-label="${esc(it.name)}: note what you bought"><span class="${done ? 'done' : ''}">${esc(it.name)}</span>${hv ? `<span class="d-block small accent-text">${esc(hv)}</span>` : ''}${st ? `<span class="d-block small ${v && v.sub ? 'accent-text' : 'muted'}">${esc(st)}</span>` : ''}</button>
             <span class="text-right qty"><b>${esc(it.qty)}</b>${it.packs ? `<span class="d-block small muted">${esc(it.packs)}</span>` : ''}</span></li>`;
         }).join('')}</ul>`;
       }).join('')}
@@ -4047,7 +4086,7 @@ document.addEventListener('change', async (ev) => {
   }
   if (ev.target.dataset && ev.target.dataset.grocery) {
     const k = ev.target.dataset.grocery;
-    pruneGrocery();                                                 // past weeks only; this and next week stay
+    pruneGrocery();                                                 // only weeks older than the leftover window
     if (ev.target.checked) state.grocery[k] = 1; else delete state.grocery[k];
     save(); rerender();
     return;

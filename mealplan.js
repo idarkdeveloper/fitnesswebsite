@@ -49,6 +49,7 @@ window.PF_MEALS = (function () {
     sooji: ['Semolina (Hartweizengrieß)', GR, 'g', [500, '500 g bag']],
     flour: ['Wheat flour (Weizenmehl Type 550)', GR, 'g', [1000, '1 kg bag']],
     wraps: ['Wholewheat wraps (Vollkorn-Wraps)', GR, 'pc', [6, 'pack of 6']],
+    durum: ['Dürüm flatbread (Dürümfladen or Yufka), Turkish shop', GR, 'pc', [10, 'pack of 10']],
     pasta: ['Wholewheat pasta (Vollkornnudeln)', GR, 'g', [500, '500 g pack']],
     buns: ['Wholegrain rolls (Vollkornbrötchen)', GR, 'pc', [4, '4 rolls']],
     dal: ['Red lentils (rote Linsen)', TN, 'g', [500, '500 g bag']],
@@ -77,6 +78,8 @@ window.PF_MEALS = (function () {
   // id: [name, serving, kcal, protein g, { ingredient: amount per serving }]
   const DISH = {
     roti: ['Roti', '1 medium', 110, 3, { atta: 30 }],
+    // Shop-bought instead of home-made roti (setBread): half a flatbread is one roti's worth.
+    durum: ['Dürüm flatbread', '1 flatbread, about 75 g', 220, 7, { durum: 1 }],
     bread: ['Vollkornbrot', '1 slice', 105, 4, { bread: 1 }],
     rice: ['Rice', '1 cup cooked', 200, 4, { rice: 60 }],
     dal: ['Masoor dal', '1 bowl', 180, 11, { dal: 50, onion: 25, tinnedtom: 40, oil: 5 }],
@@ -148,6 +151,7 @@ window.PF_MEALS = (function () {
   // Carbohydrate is not listed: it is derived from kcal, protein and fat (4/4/9 kcal per g), so the numbers always add up.
   const NUT = {
     nihari: [24, 9, 2, 1.5],
+    durum: [3, 0.6, 1.5, 0.9],
     roti: [2.5, 0.4, 0.5, 0.2], bread: [1, 0.2, 1.5, 0.5], rice: [0.5, 0.1, 0.1, 0],
     dal: [5.5, 0.6, 3, 1], dalpalak: [5.5, 0.6, 2.5, 1], rajma: [6, 0.7, 4, 1.1], chana: [7.5, 0.8, 5, 1.1],
     chickencurry: [15, 2.5, 5, 1.3], tikka: [9, 2, 3, 1.2], keema: [15, 3.5, 6, 1.2], fishcurry: [10, 1, 5, 1.2],
@@ -320,7 +324,14 @@ window.PF_MEALS = (function () {
   const hasDisliked = (dishId) => !!(DISH[dishId] && dislikes.some((ing) => DISH[dishId][4][ing]));
   // Drinks served alongside food (chai with roasted chana) are simply left off instead of dropping the whole option.
   const DRINKS = new Set(['chai', 'tea']);
-  const trim = (items) => { const t = items.filter(([id]) => !(DRINKS.has(id) && hasDisliked(id))); return t.length ? t : items; };
+  // Bread with meals: home-made roti, or shop-bought dürüm (2 roti = 1 flatbread).
+  let bread = 'roti';
+  function setBread(kind) { const k = kind === 'durum' ? 'durum' : 'roti'; if (k === bread) return; bread = k; for (const c of Object.keys(cache)) delete cache[c]; }
+  const trim = (items) => {
+    let t = items.filter(([id]) => !(DRINKS.has(id) && hasDisliked(id)));
+    if (!t.length) t = items;
+    return bread === 'durum' ? t.map(([id, n]) => (id === 'roti' ? ['durum', n / 2] : [id, n])) : t;
+  };
   /** Set the ingredients you don't eat. Plans are rebuilt without them (unless nothing would be left). */
   function setDislikes(list) {
     const next = (list || []).filter(Boolean).sort();
@@ -450,5 +461,5 @@ window.PF_MEALS = (function () {
 
   const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday.';
 
-  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, POOLS, weekPlan, setDislikes, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
+  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, POOLS, weekPlan, setDislikes, setBread, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
 })();

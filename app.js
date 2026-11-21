@@ -1256,16 +1256,21 @@ const hp = () => state.hprofile;
 /** One-time: the owner said the week of Mon 23 Nov 2026 is an evening shift (shifts alternate weekly). */
 /** Ingredients you don't eat, from hprofile.dislikes ("cabbage,okra"); the meal plan leaves out dishes with them. */
 const dislikes = () => String(hp().dislikes || '').split(',').filter(Boolean);
-const applyDislikes = () => { if (window.PF_MEALS && window.PF_MEALS.setDislikes) window.PF_MEALS.setDislikes(dislikes()); };
+const applyDislikes = () => {
+  if (!window.PF_MEALS || !window.PF_MEALS.setDislikes) return;
+  window.PF_MEALS.setDislikes(dislikes());
+  window.PF_MEALS.setBread(hp().bread);
+};
 function seedShift() {
   const h = state.hprofile;
-  if (!h || (h.shiftSeeded && h.dislikesSeeded && h.teaSeeded)) return;
+  if (!h || (h.shiftSeeded && h.dislikesSeeded && h.teaSeeded && h.breadSeeded)) return;
   // Each setting is seeded once on its own flag, so a later one still lands on a phone that already has the earlier ones.
   if (!h.shiftSeeded) {
     if (!Object.keys(h).some((k) => k.startsWith('shift|'))) { h['shift|2026-11-23'] = 'evening'; if (h.shiftDays == null) h.shiftDays = '1,2,3,4,5'; }
     h.shiftSeeded = 1;
   }
   if (!h.dislikesSeeded) { if (h.dislikes == null) h.dislikes = 'cabbage'; h.dislikesSeeded = 1; }   // the owner doesn't like white cabbage
+  if (!h.breadSeeded) { if (h.bread == null) h.bread = 'durum'; h.breadSeeded = 1; }   // shop-bought dürüm, not home-made roti
   if (!h.teaSeeded) { const d = String(h.dislikes || '').split(',').filter(Boolean); if (!d.includes('tea')) h.dislikes = [...d, 'tea'].join(','); h.teaSeeded = 1; }   // nor drinks tea
   save();
 }
@@ -2089,6 +2094,13 @@ const PLAN_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 let planTab = 'week';
 const planIdx = (key) => (fromKey(key).getDay() + 6) % 7;          // Monday = 0
 const weekStart = (key) => keyAdd(key, -planIdx(key));
+/** "2 × Roti", "½ Dürüm flatbread", "1½ Dürüm flatbread": whole counts use ×, halves read as a fraction. */
+function qtyName(n, name) {
+  if (n === 1) return name;
+  if (Number.isInteger(n)) return `${n} × ${name}`;
+  const w = Math.floor(n), f = n - w;
+  return `${w || ''}${Math.abs(f - 0.5) < 0.01 ? '½' : f.toFixed(1).slice(1)} ${name}`;
+}
 /** A dish, with any stand-ins you bought applied (subs = { ingredient: stand-in }). */
 const dishOf = (id, subs) => window.PF_MEALS.dishWith(id, subs);
 /** Stand-ins recorded on a week's grocery list: { ingredient: what you bought instead }. */
@@ -2120,7 +2132,7 @@ function mealInfo(items, subs) {
     const ratio = base && base[2] ? k / base[2] : 1;
     const x = row ? M.nutFrom(k, p, [row[0] * ratio, row[1] * ratio, row[2], row[3]]) : null;
     if (x) for (const key of NUT_KEYS) nut[key] += x[key] * n;
-    return n === 1 ? name : `${n} × ${name}`;
+    return qtyName(n, name);
   });
   return { text: parts.join(' + '), kcal, protein, dishes, nut: nutOf(nut) };
 }
@@ -2181,7 +2193,7 @@ function recipeSheet(id, n, wk) {
     ${r.tip ? `<div class="note-box mt-3">${esc(fill(r.tip))}</div>` : ''}`);
 }
 /** A meal's dishes as recipe links: "2 × Roti + Dal saag + Salad". */
-const dishLinks = (m, wk) => m.dishes.map((d) => `<button class="dish-link" data-action="recipe" data-dish="${d.id}" data-n="${d.n}" data-wk="${wk}">${d.n === 1 ? '' : `${d.n} × `}${esc(d.name)}</button>`).join(' + ');
+const dishLinks = (m, wk) => m.dishes.map((d) => `<button class="dish-link" data-action="recipe" data-dish="${d.id}" data-n="${d.n}" data-wk="${wk}">${esc(qtyName(d.n, d.name))}</button>`).join(' + ');
 
 /* ---------- Shift work ----------
    Shifts include travel time. On a shift day the plan keeps the same food but sets when each meal is eaten,
@@ -2268,7 +2280,10 @@ function dislikeSheet() {
     <p class="small muted m-0">Tap what you don't eat. Plans, recipes and the grocery list leave out every dish with it and pick others. Tap again to bring it back.</p>
     <h3 class="sheet-sub">Vegetables</h3><div class="chips">${chips(pick('veg'))}</div>
     <h3 class="sheet-sub">Protein</h3><div class="chips">${chips(pick('protein'))}</div>
-    <h3 class="sheet-sub">Drinks</h3><div class="chips">${chips(['tea'])}</div>`);
+    <h3 class="sheet-sub">Drinks</h3><div class="chips">${chips(['tea'])}</div>
+    <h3 class="sheet-sub">Bread with meals</h3>
+    <div class="chips">${[['durum', 'Dürüm, shop-bought'], ['roti', 'Home-made roti']].map(([k, n]) => `<button class="chip ${(hp().bread || 'roti') === k ? 'on' : ''}" aria-pressed="${(hp().bread || 'roti') === k}" data-action="bread-set" data-k="${k}">${n}</button>`).join('')}</div>
+    <p class="small muted m-0">Dürüm: half a flatbread wherever the plan had a roti.</p>`);
 }
 function shiftSheet(wk) {
   const cur = hp()['shift|' + wk] || '', eff = shiftForWeek(wk), days = shiftWorkDays();
@@ -2299,7 +2314,7 @@ function topUps(day, T) {
   if (roti > 0) add('roti', roti);
   return out;
 }
-const topUpText = (list, subs) => list.map(([id, n]) => { const [name, serving] = dishOf(id, subs); return n === 1 ? `${name} (${serving})` : `${n} × ${name}`; }).join(', ');
+const topUpText = (list, subs) => list.map(([id, n]) => { const [name, serving] = dishOf(id, subs); return n === 1 ? `${name} (${serving})` : qtyName(n, name); }).join(', ');
 
 function planCard(key) {
   if (!window.PF_MEALS) return '';
@@ -2546,7 +2561,7 @@ VIEWS.plan = () => {
         ${icon('timer')}<span class="grow"><b>${wsh ? `${SHIFTS[wsh].name}, ${SHIFTS[wsh].hours}` : 'No shift this week'}</b><span class="d-block small muted">${wsh ? `${daysText(shiftWorkDays())} · meals timed around it` : 'Working shifts? Set them and meals are timed around them'}</span></span>${icon('chevR')}</button>`;
     const dl = dislikes();
     const dislikeRow = `<button class="card flat soft shift-row mt-2" data-action="dislike-sheet">
-        ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => DISLIKE_NAMES[x] || ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}</span></span>${icon('chevR')}</button>`;
+        ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => DISLIKE_NAMES[x] || ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}${hp().bread === 'durum' ? ' · Dürüm instead of roti' : ''}</span></span>${icon('chevR')}</button>`;
     body = `
       ${shiftRow}
       ${dislikeRow}
@@ -2635,6 +2650,7 @@ const PLAN_ACTIONS = {
   },
   'shift-sheet': (el) => shiftSheet(el.dataset.wk),
   'dislike-sheet': () => dislikeSheet(),
+  'bread-set': (el) => { hp().bread = el.dataset.k; applyDislikes(); save(); rerender(); dislikeSheet(); },
   'dislike-toggle': (el) => {
     const ing = el.dataset.ing, cur = dislikes();
     hp().dislikes = (cur.includes(ing) ? cur.filter((x) => x !== ing) : [...cur, ing]).join(',');

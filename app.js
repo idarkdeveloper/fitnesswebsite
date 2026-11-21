@@ -2128,7 +2128,7 @@ const RECIPE_STYLES = [
   { chicken: 'tikka', fish: 'fishtikka', paneer: 'paneertikka' },
   { paneer: 'paneerbhurji', eggs: 'eggbhurji', turkey: 'keema', tuna: 'tunamasala' },
 ];
-const RECIPE_NAMES = { curd: 'yoghurt', beefshin: 'beef shin', mixedveg: 'mixed vegetables', fish: 'fish', tuna: 'tuna', chicken: 'chicken', turkey: 'turkey mince', fruit: 'fruit', tinnedtom: 'chopped tomatoes', rajma: 'kidney beans', chana: 'chickpeas', spinach: 'spinach', atta: 'atta', potato: 'potatoes', flour: 'flour', wraps: 'wrap', pasta: 'pasta', buns: 'rolls', mozzarella: 'mozzarella', passata: 'passata' };
+const RECIPE_NAMES = { curd: 'yoghurt', mixedveg: 'mixed vegetables', fish: 'fish', tuna: 'tuna', chicken: 'chicken', turkey: 'turkey mince', fruit: 'fruit', tinnedtom: 'chopped tomatoes', rajma: 'kidney beans', chana: 'chickpeas', spinach: 'spinach', atta: 'atta', potato: 'potatoes', flour: 'flour', wraps: 'wrap', pasta: 'pasta', buns: 'rolls', mozzarella: 'mozzarella', passata: 'passata' };
 const recipeName = (ing) => RECIPE_NAMES[ing] || ingShort(ing).toLowerCase().replace(/^frozen /, '').replace(/, tin$/, '');
 const FRACTIONS = [[0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
 /** Amount for a recipe ingredient line: "130 g", "½ tin", "¼ lemon", "3 eggs". */

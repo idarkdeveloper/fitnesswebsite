@@ -256,11 +256,11 @@ Object.assign(window.PF_RECIPES, {
     steps: ['Beat the {eggs} with the {onion}, {tomato}, chilli, turmeric, salt and coriander.',
       'Heat half the oil in a pan. Dip a slice of {bread} in the egg on both sides, put it in the pan and pour a little extra egg on top.',
       'Cook 2 minutes a side until set and golden. Repeat with the second slice.'] },
-  nihari: { t: 180, sp: 'Nihari masala (Shan or National, Asia shop) or garam masala + fennel powder + ginger powder, ginger-garlic paste, salt; to serve: ginger matchsticks, green chilli, coriander, lemon',
-    steps: ['If the {beefshin} was frozen, move it to the fridge on Friday night to thaw.',
+  nihari: { t: 150, sp: 'Nihari masala (Shan or National, Asia shop) or garam masala + fennel powder + ginger powder, ginger-garlic paste, salt; to serve: ginger matchsticks, green chilli, coriander, lemon',
+    steps: ['If the {lamb} was frozen, move it to the fridge on Friday night to thaw.',
       'Heat the oil in a heavy pot and fry the {onion} until golden. Take half out for the top.',
-      'Add the beef, ginger-garlic paste and 1 tbsp nihari masala. Fry 5 minutes until the meat is browned all over.',
-      'Pour in about 600 ml hot water with a little salt. Cover and simmer on low 2½–3 hours (pressure cooker: 45 minutes) until the meat falls off the bone.',
+      'Add the lamb, ginger-garlic paste and 1 tbsp nihari masala. Fry 5 minutes until the meat is browned all over.',
+      'Pour in about 500 ml hot water with a little salt. Cover and simmer on low about 2 hours (pressure cooker: 35 minutes) until the meat is very tender.',
       'Whisk the {atta} with a little water, stir it in and simmer 10 minutes more until the gravy is thick and glossy.',
       'Serve topped with the fried onion, ginger, green chilli, coriander and a squeeze of lemon, with the roti.'] },
   biryani: { t: 45, sp: 'Ginger-garlic paste, biryani masala or garam masala, whole spices (bay leaf, cloves, cardamom), turmeric, chilli, salt, mint, coriander',
@@ -364,4 +364,4 @@ Object.assign(window.PF_RECIPES.paneerroll, { cut: { paneer: 'cut into 1 cm fing
 Object.assign(window.PF_RECIPES.masalapasta, { cut: { chicken: 'cut into 2 cm pieces', capsicum: 'cut into 2 cm squares' } });
 Object.assign(window.PF_RECIPES.curdrice, { cut: { cucumber: 'grated, or very finely chopped' } });
 Object.assign(window.PF_RECIPES.kadhi, { cut: { onion: 'thinly sliced' } });
-Object.assign(window.PF_RECIPES.nihari, { cut: { beefshin: 'leave on the bone, in 2–3 pieces', onion: 'thinly sliced (half-rings)' } });
+Object.assign(window.PF_RECIPES.nihari, { cut: { lamb: 'in large chunks; shoulder or shank on the bone (Lammschulter, Lammhaxe) is best', onion: 'thinly sliced (half-rings)' } });

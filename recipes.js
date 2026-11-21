@@ -262,13 +262,13 @@ Object.assign(window.PF_RECIPES, {
       'Cook 2 minutes a side until set and golden. Repeat with the second slice.'] },
   nihari: { t: 240, sp: 'Nihari masala (Shan or National, Asia shop) or garam masala + fennel powder + ginger powder, ginger-garlic paste, salt; to serve: ginger matchsticks, green chilli, coriander, lemon',
     steps: ['If the {lambfeet} were frozen, move them to the fridge on Friday night to thaw.',
-      'Rinse the trotters, scrape off any hair left on the skin, then boil them 5 minutes in plain water and throw that water away.',
+      'Singe off any hair left on the skin over a gas flame (or a kitchen torch), then scrape the skin with the back of a knife and rinse. Boil the pieces 5 minutes in plain water and throw that water away.',
       'Heat the oil in a heavy pot and fry the {onion} until golden. Take half out for the top.',
-      'Add the trotters, ginger-garlic paste and 1 tbsp nihari masala. Fry 5 minutes.',
+      'Add the leg pieces, ginger-garlic paste and 1 tbsp nihari masala. Fry 5 minutes.',
       'Pour in about 1 litre hot water with a little salt. Cover and simmer on low 3½–4 hours (pressure cooker: about 1 hour) until the meat comes off the bone and the broth turns sticky. Add hot water if it gets too thick.',
       'Whisk the {atta} with a little water, stir it in and simmer 10 minutes more until the gravy is thick and glossy.',
       'Serve topped with the fried onion, ginger, green chilli, coriander and a squeeze of lemon, with the roti.'],
-    tip: 'Cooking 4 trotters at once takes no longer: keep the second portion in the fridge for up to 2 days or freeze it for next Saturday.' },
+    tip: 'The leg pieces are long: if they don\'t fit the pot or pressure cooker, ask the butcher to saw them (home knives won\'t cut the bone). Cooking 4 at once takes no longer; keep the second portion in the fridge up to 2 days or freeze it for next Saturday.' },
   biryani: { t: 45, sp: 'Ginger-garlic paste, biryani masala or garam masala, whole spices (bay leaf, cloves, cardamom), turmeric, chilli, salt, mint, coriander',
     steps: ['Mix the {chicken} with the {curd}, ginger-garlic paste, biryani masala, chilli, turmeric and salt. Leave 15 minutes or more.',
       'Rinse the {rice} and soak it 15 minutes.',
@@ -459,7 +459,7 @@ Object.assign(window.PF_RECIPES.paneerroll, { cut: { paneer: 'cut into 1 cm fing
 Object.assign(window.PF_RECIPES.masalapasta, { cut: { chicken: 'cut into 2 cm pieces', capsicum: 'cut into 2 cm squares' } });
 Object.assign(window.PF_RECIPES.curdrice, { cut: { cucumber: 'grated, or very finely chopped' } });
 Object.assign(window.PF_RECIPES.kadhi, { cut: { onion: 'thinly sliced' } });
-Object.assign(window.PF_RECIPES.nihari, { cut: { lambfeet: 'ask the butcher to cut each trotter in 2–3 pieces', onion: 'thinly sliced (half-rings)' } });
+Object.assign(window.PF_RECIPES.nihari, { cut: { lambfeet: 'whole, or sawn in 2–3 pieces by the butcher', onion: 'thinly sliced (half-rings)' } });
 Object.assign(window.PF_RECIPES.masaladosa, { cut: { potato: 'boiled, in rough chunks', onion: 'thinly sliced' } });
 Object.assign(window.PF_RECIPES.traybake, { cut: { potato: 'in 2–3 cm chunks', capsicum: 'in large pieces', zucchini: 'in thick half-moons', chicken: 'whole, or in 2–3 pieces' } });
 Object.assign(window.PF_RECIPES.spagbol, { cut: { onion: 'finely chopped', carrot: 'finely chopped or grated' } });

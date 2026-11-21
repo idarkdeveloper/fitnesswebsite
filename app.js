@@ -2167,7 +2167,7 @@ const RECIPE_STYLES = [
   { chicken: 'tikka', fish: 'fishtikka', paneer: 'paneertikka' },
   { paneer: 'paneerbhurji', eggs: 'eggbhurji', turkey: 'keema', tuna: 'tunamasala' },
 ];
-const RECIPE_NAMES = { curd: 'yoghurt', lambfeet: 'lamb trotters', mixedveg: 'mixed vegetables', fish: 'fish', tuna: 'tuna', chicken: 'chicken', turkey: 'turkey mince', fruit: 'fruit', tinnedtom: 'chopped tomatoes', rajma: 'kidney beans', chana: 'chickpeas', spinach: 'spinach', atta: 'atta', potato: 'potatoes', flour: 'flour', wraps: 'wrap', pasta: 'pasta', buns: 'rolls', mozzarella: 'mozzarella', passata: 'passata' };
+const RECIPE_NAMES = { curd: 'yoghurt', lambfeet: 'lamb leg pieces', mixedveg: 'mixed vegetables', fish: 'fish', tuna: 'tuna', chicken: 'chicken', turkey: 'turkey mince', fruit: 'fruit', tinnedtom: 'chopped tomatoes', rajma: 'kidney beans', chana: 'chickpeas', spinach: 'spinach', atta: 'atta', potato: 'potatoes', flour: 'flour', wraps: 'wrap', pasta: 'pasta', buns: 'rolls', mozzarella: 'mozzarella', passata: 'passata' };
 const recipeName = (ing) => RECIPE_NAMES[ing] || ingShort(ing).toLowerCase().replace(/^frozen /, '').replace(/, tin$/, '');
 const FRACTIONS = [[0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
 /** Amount for a recipe ingredient line: "130 g", "½ tin", "¼ lemon", "3 eggs". */
@@ -2380,7 +2380,7 @@ function weekNeeds(start) {
 
 /* ---- Leftovers: buy 1 kg where the list said 500 g, and next week's list knows you still have 500 g ----
    Only things that keep a week or more carry over: grains and flour, tins, frozen, pantry and Asia-shop items,
-   eggs, potatoes, onions, and meat sold to be frozen (lamb trotters). Fresh vegetables, dairy and meat don't. */
+   eggs, potatoes, onions, and meat sold to be frozen (lamb leg pieces). Fresh vegetables, dairy and meat don't. */
 const KEEP_SECTIONS = ['Bread, grains & flour', 'Tins, lentils & pulses', 'Frozen', 'Pantry', 'Asia / Indian shop'];
 const KEEP_ITEMS = ['eggs', 'potato', 'onion', 'lambfeet'];
 const keeps = (ing) => !!window.PF_MEALS.ING[ing] && (KEEP_SECTIONS.includes(window.PF_MEALS.ING[ing][1]) || KEEP_ITEMS.includes(ing));

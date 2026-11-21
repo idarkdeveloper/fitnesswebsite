@@ -35,7 +35,7 @@ window.PF_MEALS = (function () {
     chickenthigh: ['Chicken thighs, boneless (Hähnchenschenkel)', MT, 'g', [400, '400 g pack']],
     beef: ['Beef mince (Rinderhackfleisch)', MT, 'g', [500, '500 g pack']],
     lamb: ['Lamb (Lammfleisch)', MT, 'g', [400, '400 g pack']],
-    lambfeet: ['Lamb trotters, cleaned (Lammfüße), Turkish or halal butcher', MT, 'pc', [4, 'pack of 4, freeze 2']],
+    lambfeet: ['Lamb leg pieces for paya, skin on (Lammfüße), Turkish or halal butcher', MT, 'pc', [4, 'pack of 4, freeze 2']],
     salmon: ['Salmon fillet (Lachs)', MT, 'g', [250, '2-fillet pack']],
     tofu: ['Tofu (natur)', DY, 'g', [200, '200 g block']],
     quark: ['Low-fat quark (Magerquark)', DY, 'g', [500, '500 g tub']],
@@ -168,8 +168,8 @@ window.PF_MEALS = (function () {
     wedges: ['Air-fryer potato wedges', '1 plate', 195, 4, { potato: 200, oil: 5 }],
     chanatikki: ['Air-fryer chana tikki', '3 patties', 265, 13, { chana: 0.5, besan: 20, onion: 20, oil: 4 }],
     traybake: ['Chicken, potato & veg traybake', '1 tray', 430, 41, { chicken: 150, potato: 200, capsicum: 80, zucchini: 80, oil: 8 }],
-    // Saturday breakfast in winter, from V4_FROM (asked for by name): lamb trotters, slow-cooked.
-    nihari: ['Nihari (lamb trotters)', '1 bowl', 400, 28, { lambfeet: 2, onion: 40, atta: 10, oil: 6 }],
+    // Saturday breakfast in winter, from V4_FROM (asked for by name): lamb leg pieces (paya cut, skin on), slow-cooked.
+    nihari: ['Nihari (lamb leg pieces)', '1 bowl', 400, 28, { lambfeet: 2, onion: 40, atta: 10, oil: 6 }],
   };
 
   // Label nutrients per serving, estimated for home cooking: [fat, of which saturates, sugar, salt] in g.
@@ -345,7 +345,7 @@ window.PF_MEALS = (function () {
   const MAX_V1 = { chicken: 3, paneer: 2, fish: 2, turkey: 2 }, MAX_V2 = { paneer: 2 };
   // From V3_FROM the pools also hold the newer dishes. Treats (kulcha, pav bhaji, wrap pizza) at most twice a week.
   const V3_FROM = '2026-11-16', MAX_V3 = { paneer: 2, treat: 2 };
-  // From V4_FROM, Saturday breakfast in winter (November to February) is always nihari (lamb trotters) with a roti:
+  // From V4_FROM, Saturday breakfast in winter (November to February) is always nihari (lamb leg pieces) with a roti:
   // a day off, so there's time for it to simmer.
   // From V5_FROM the pools also hold South Indian dishes and Western pasta and traybakes.
   const V5_FROM = '2026-11-30';

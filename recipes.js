@@ -390,6 +390,15 @@ Object.assign(window.PF_RECIPES, {
       'Heat the oil, cook the {chicken} 5–6 minutes until done and set it aside.',
       'In the same pan cook the {mushrooms} and garlic 4 minutes until browned.',
       'Off the heat, stir the {quark} with the {milk}, pepper and herbs into the pan, add the chicken and pasta and toss. Loosen with pasta water; don\'t boil it again or the quark splits.'] },
+  sattudrink: { t: 3, sp: 'Roasted cumin powder, black salt (kala namak) or salt, mint or coriander, green chilli (optional)',
+    steps: ['Whisk the {sattu} into a large glass of cold water (about 350 ml) until there are no lumps.',
+      'Add a squeeze of {lemon}, roasted cumin, black salt and a little chopped mint or chilli. Stir and drink straight away.'],
+    tip: 'Shake it in a closed bottle if you\'re in a hurry: it travels well in the lunchbox too.' },
+  sattuwrap: { t: 10, sp: 'Mustard oil if you have it, ajwain, roasted cumin, green chilli, salt, coriander, pickle masala (optional)',
+    steps: ['Mix the {sattu} with the {onion}, chilli, coriander, ajwain, cumin, salt, the oil and a squeeze of {lemon}. Sprinkle in a little water until it holds together like damp sand.',
+      'Warm the {durum} in a dry pan for 20 seconds a side.',
+      'Spread the sattu filling down the middle, roll it up tightly and toast the roll 1 minute a side so it crisps.'],
+    tip: 'No rolling or kneading: the dürüm does the work of a sattu paratha.' },
   traybake: { t: 40, sp: 'Paprika, garlic powder, dried herbs, salt, pepper, lemon',
     steps: ['Heat the oven to 200 °C (fan 180 °C).',
       'Toss the {potato}, {capsicum} and {zucchini} with half the oil, salt and herbs on a tray; roast 15 minutes.',
@@ -425,3 +434,4 @@ Object.assign(window.PF_RECIPES.nihari, { cut: { lambfeet: 'ask the butcher to c
 Object.assign(window.PF_RECIPES.masaladosa, { cut: { potato: 'boiled, in rough chunks', onion: 'thinly sliced' } });
 Object.assign(window.PF_RECIPES.traybake, { cut: { potato: 'in 2–3 cm chunks', capsicum: 'in large pieces', zucchini: 'in thick half-moons', chicken: 'whole, or in 2–3 pieces' } });
 Object.assign(window.PF_RECIPES.spagbol, { cut: { onion: 'finely chopped', carrot: 'finely chopped or grated' } });
+Object.assign(window.PF_RECIPES.sattuwrap, { cut: { onion: 'very finely chopped' } });

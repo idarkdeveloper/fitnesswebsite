@@ -74,6 +74,7 @@ window.PF_MEALS = (function () {
     poha: ['Poha', AS, 'g', [500, '500 g bag']],
     roastchana: ['Roasted chana', AS, 'g', [500, '500 g bag']],
     okra: ['Okra (bhindi)', AS, 'g'],
+    sattu: ['Sattu (roasted gram flour)', AS, 'g', [1000, '1 kg bag']],
     dosabatter: ['Idli/dosa batter, ready-made (fridge section)', AS, 'g', [1000, '1 kg tub, keeps about a week']],
   };
 
@@ -155,6 +156,9 @@ window.PF_MEALS = (function () {
     spagbol: ['Spaghetti bolognese (turkey mince)', '1 plate', 570, 40, { spaghetti: 80, turkey: 120, passata: 150, onion: 40, carrot: 40, oil: 6 }],
     tunapasta: ['Tuna tomato pasta', '1 plate', 520, 38, { pasta: 80, tuna: 1, passata: 120, onion: 30, capsicum: 50, oil: 6 }],
     chickenpasta: ['Creamy chicken & mushroom pasta', '1 plate', 550, 52, { pasta: 80, chicken: 120, mushrooms: 100, quark: 80, milk: 50, oil: 5 }],
+    // Sattu (you have it at home): a salty drink for a snack, and a no-rolling breakfast roll in a dürüm.
+    sattudrink: ['Sattu drink (namkeen)', '1 large glass', 160, 9, { sattu: 40, lemon: 0.25 }],
+    sattuwrap: ['Sattu dürüm roll', '1 roll', 480, 19, { durum: 1, sattu: 50, onion: 40, lemon: 0.25, oil: 5 }],
     traybake: ['Chicken, potato & veg traybake', '1 tray', 430, 41, { chicken: 150, potato: 200, capsicum: 80, zucchini: 80, oil: 8 }],
     // Saturday breakfast in winter, from V4_FROM (asked for by name): lamb trotters, slow-cooked.
     nihari: ['Nihari (lamb trotters)', '1 bowl', 400, 28, { lambfeet: 2, onion: 40, atta: 10, oil: 6 }],
@@ -167,7 +171,7 @@ window.PF_MEALS = (function () {
     durum: [3, 0.6, 1.5, 0.9],
     idli: [1, 0.2, 0.5, 0.6], sambar: [6, 0.7, 5, 1.2], dosa: [7, 0.8, 0.8, 0.7], masaladosa: [12, 1.2, 3, 1.1],
     lemonrice: [12, 1.2, 0.5, 0.6], chettinad: [12, 2, 5, 1.3], spagbol: [12, 2.5, 10, 1], tunapasta: [8, 1, 9, 1.1],
-    chickenpasta: [10, 3, 6, 0.9], traybake: [11, 1.5, 6, 0.8],
+    chickenpasta: [10, 3, 6, 0.9], traybake: [11, 1.5, 6, 0.8], sattudrink: [2.4, 0.4, 1, 0.8], sattuwrap: [12, 1.5, 3, 1.8],
     roti: [2.5, 0.4, 0.5, 0.2], bread: [1, 0.2, 1.5, 0.5], rice: [0.5, 0.1, 0.1, 0],
     dal: [5.5, 0.6, 3, 1], dalpalak: [5.5, 0.6, 2.5, 1], rajma: [6, 0.7, 4, 1.1], chana: [7.5, 0.8, 5, 1.1],
     chickencurry: [15, 2.5, 5, 1.3], tikka: [9, 2, 3, 1.2], keema: [15, 3.5, 6, 1.2], fishcurry: [10, 1, 5, 1.2],
@@ -254,6 +258,7 @@ window.PF_MEALS = (function () {
       { p: 'dal', v5: 1, items: [['idli', 1], ['sambar', 1]] },
       { p: 'egg', v5: 1, items: [['dosa', 1], ['sambar', 1], ['boiled2', 1]] },
       { p: 'treat', v5: 1, items: [['masaladosa', 1], ['curd', 1]] },
+      { p: 'dal', v5: 1, items: [['sattuwrap', 1]] },
     ],
     [L]: [
       { p: 'chicken', items: [['roti', 2], ['chickencurry', 1], ['salad', 1]] },
@@ -289,6 +294,7 @@ window.PF_MEALS = (function () {
       { p: '', items: [['tea', 1], ['chanachaat', 1]] },
       { p: '', items: [['tea', 1], ['boiled2', 1]] },
       { p: '', items: [['curd', 1], ['fruit', 1]] },
+      { p: '', v5: 1, items: [['sattudrink', 1], ['fruit', 1]] },
     ],
     [D]: [
       { p: 'chicken', items: [['tikka', 1], ['salad', 1], ['roti', 1]] },

@@ -1697,3 +1697,20 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .whr-bar i { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--text); border: 3px solid var(--surface-2); }
 .whr-k { position: relative; height: 18px; margin-top: 4px; }
 .whr-k span { position: absolute; transform: translateX(-50%); }
+
+/* Selected part: tile lit up, a band across the body and a dotted lead to the tile's side. */
+.mb-tile.on { background: color-mix(in srgb, var(--primary) 55%, var(--surface-2)); border-color: var(--primary); }
+.mb-tile.on .k, .mb-tile.on .v small { color: inherit; }
+.mb-body .mb-band { stroke: var(--primary); stroke-width: 2.4; stroke-linecap: round; }
+.mb-body .mb-dot { fill: var(--surface-2); stroke: var(--primary); stroke-width: 1.2; }
+.mb-body .mb-lead { stroke: var(--primary); stroke-width: 1; stroke-dasharray: 2 2; }
+.mb-fig { overflow: visible; }
+.mb-body { overflow: visible; }
+/* The tape: big number and a ruler-like slider with 0.1 / 1 cm ticks. */
+.mo-val { text-align: center; font-size: 40px; font-weight: 800; line-height: 1.1; margin-top: var(--space-2); }
+.mo-val small { font-size: var(--fs-label); font-weight: 600; color: var(--muted); }
+.mo-ruler { margin-top: var(--space-3); padding: var(--space-3) 0; border-radius: var(--r-sm); background:
+  repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 10px) center / 100% 14px no-repeat,
+  repeating-linear-gradient(90deg, var(--muted) 0 2px, transparent 2px 50px) center / 100% 26px no-repeat; }
+.mo-ruler input[type=range] { width: 100%; height: 44px; margin: 0; background: transparent; accent-color: var(--primary); cursor: pointer; }
+.mo-scale { display: flex; justify-content: space-between; }

@@ -1579,19 +1579,24 @@ const MB_LABEL = { neck: 'Neck', shoulder: 'Shoulders', armL: 'L-Bicep', arm: 'R
 const BODY_SVG = `<svg class="mb-body" viewBox="0 0 60 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
   <circle cx="30" cy="11" r="8"/>
   <path d="M30 21C26 21 25 23 25 25L16 27C12 28 10 31 10 35L7 62C6 70 5 78 6 84L9 84C10 77 11 70 13 63L16 42L17 60C16 70 16 78 17 84L19 120C19 135 19 145 18 155L27 155C27 140 28 125 29 100L30 88L31 100C32 125 33 140 33 155L42 155C41 145 41 135 41 120L43 84C44 78 44 70 43 60L44 42L47 63C49 70 50 77 51 84L54 84C55 78 54 70 53 62L50 35C50 31 48 28 44 27L35 25C35 23 34 21 30 21Z"/></svg>`;
+const MB_BAND = { neck: [25, 35, 22], shoulder: [11, 49, 28], chest: [13, 47, 38], waist: [15, 45, 56], abdomen: [15, 45, 64], hips: [16, 44, 80],
+  armL: [9, 16, 44], arm: [44, 51, 44], forearmL: [6, 12, 68], forearm: [48, 54, 68], thighL: [18, 29, 104], thigh: [31, 42, 104], calfL: [19, 27, 134], calf: [33, 41, 134] };
+let mbSel = null;   // the measurement being edited: highlighted on the board and marked on the figure
 function measureBoard(day) {
+  const sel = mbSel && MB_BAND[mbSel] ? MB_BAND[mbSel] : null, right = mbSel && MB_RIGHT.includes(mbSel);
+  const fig = sel ? BODY_SVG.replace('</svg>', `<line class="mb-band" x1="${sel[0]}" x2="${sel[1]}" y1="${sel[2]}" y2="${sel[2]}"/><circle class="mb-dot" cx="${right ? sel[1] : sel[0]}" cy="${sel[2]}" r="2.2"/><line class="mb-lead" x1="${right ? sel[1] : sel[0]}" x2="${right ? 60 : 0}" y1="${sel[2]}" y2="${sel[2]}"/></svg>`) : BODY_SVG;
   const tile = (f) => {
     const l = latestOn(f, day), f0 = firstOf(f);
     const diff = l && f0 && f0.day !== l.day ? l.v - f0.v : null;
     const d = diff == null ? '' : Math.abs(diff) < 0.05 ? '<span class="d muted">no change</span>'
       : `<span class="d ${diff < 0 ? 'c-success' : ''}">${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)}</span>`;
-    return `<button class="mb-tile" data-action="measure-field" data-f="${f}" aria-label="${MB_LABEL[f]}: ${l ? `${kg(l.v)} centimetres` : 'not measured'}. Edit">
+    return `<button class="mb-tile ${f === mbSel ? 'on' : ''}" data-action="measure-field" data-f="${f}" aria-label="${MB_LABEL[f]}: ${l ? `${kg(l.v)} centimetres` : 'not measured'}. Edit">
       <span class="k">${MB_LABEL[f]}</span><span class="v">${l ? kg(l.v) : '–'}${l ? '<small> cm</small>' : ''}</span>${d}</button>`;
   };
   const fore = ['forearmL', 'forearm'].some((f) => firstOf(f));
   return `<div class="mb-board mt-3">
       <div class="mb-col">${MB_LEFT.map(tile).join('')}</div>
-      <div class="mb-fig">${BODY_SVG}</div>
+      <div class="mb-fig">${fig}</div>
       <div class="mb-col">${MB_RIGHT.map(tile).join('')}</div>
     </div>
     ${fore ? `<div class="m-grid mt-2">${tile('forearmL')}${tile('forearm')}</div>` : ''}
@@ -1615,6 +1620,33 @@ function ratioCard(day) {
       <div class="whr-k small muted"><span style="left:${pos(a)}%">${a.toFixed(2)}</span><span style="left:${pos(b)}%">${b.toFixed(2)}</span></div>
       <p class="small muted m-0 mt-2">Waist ÷ hip. For ${female ? 'women' : 'men'}, under ${a.toFixed(2)} is the healthy range (WHO).${wth ? ` Waist-to-height: <b>${wth.toFixed(2)}</b>, aim for under 0.50.` : ''}</p>
     </div>`;
+}
+
+/** One measurement, like a tape: a big number, a ruler slider (0.1 cm steps), the date, and Confirm. */
+const MB_HINT = { neck: 'Just below the Adam\'s apple, tape level.', shoulder: 'Around the widest part of both shoulders, arms relaxed.', chest: 'Around the fullest part, under the armpits, after breathing out.',
+  waist: 'Around your belly button, relaxed, after breathing out.', abdomen: 'Around the widest part of the belly.', hips: 'Around the widest part of the buttocks, feet together.',
+  armL: 'Widest part of the upper arm, arm relaxed by your side.', arm: 'Widest part of the upper arm, arm relaxed by your side.', forearmL: 'Just below the elbow.', forearm: 'Just below the elbow.',
+  thighL: 'Halfway between hip and knee, standing.', thigh: 'Halfway between hip and knee, standing.', calfL: 'The widest part, standing.', calf: 'The widest part, standing.' };
+const MB_START = { neck: 40, shoulder: 120, chest: 100, waist: 90, abdomen: 95, hips: 100, armL: 33, arm: 33, forearmL: 28, forearm: 28, thighL: 58, thigh: 58, calfL: 38, calf: 38 };
+let moDay = null;
+function measureOneSheet(f, dayArg) {
+  const day = typeof dayArg === 'string' ? dayArg : tKey();
+  moDay = day;
+  if (mbSel !== f) { mbSel = f; rerender(); }
+  const mine = hget(day, f), last = latestOn(f, day), v = mine ?? last?.v ?? MB_START[f] ?? 50;
+  const lo = Math.max(10, Math.floor(v - 20)), hi = Math.min(300, Math.ceil(v + 20));
+  openSheet(MB_LABEL[f], `
+    <div class="mo-val" aria-hidden="true"><output id="moOut">${kg(v)}</output><small> cm</small></div>
+    <div class="mo-ruler"><input type="range" id="moRange" min="${lo}" max="${hi}" step="0.1" value="${v}" aria-label="${MB_LABEL[f]} in centimetres" /></div>
+    <div class="mo-scale small muted" aria-hidden="true"><span>${lo}</span><span>${Math.round((lo + hi) / 2)}</span><span>${hi}</span></div>
+    <div class="grid2 mt-3">
+      <div class="field"><label for="moNum">Exact (cm)</label><input class="input" id="moNum" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${kg(v)}" /></div>
+      <div class="field"><label for="moDate">Date</label><input class="input" id="moDate" type="date" value="${day}" max="${todayKey()}" /></div>
+    </div>
+    <p class="muted small m-0 mt-2">${MB_HINT[f] || ''}${mine == null && last ? ` Last time: ${kg(last.v)} cm on ${esc(fmtShort(fromKey(last.day)))}.` : ''}</p>
+    <button class="btn block lg mt-4" data-action="mo-save" data-f="${f}">Confirm</button>
+    ${mine != null ? `<button class="link-btn small danger-text mt-3" data-action="mo-clear" data-f="${f}">Remove this entry</button>` : ''}`,
+    { onClose: () => { mbSel = null; rerender(); } });
 }
 
 function trackMeasureCard(day) {
@@ -2209,7 +2241,14 @@ const TRACK_ACTIONS = {
     afterHabitEdit(day === todayKey() ? 'Saved' : `Saved for ${fmtShort(fromKey(day))}`);
   },
   'track-measure': () => measureSheet(),
-  'measure-field': (el) => { measureSheet(); const i = $(`#ms-${el.dataset.f}`); if (i) { i.focus(); i.scrollIntoView({ block: 'center' }); } },
+  'measure-field': (el) => measureOneSheet(el.dataset.f),
+  'mo-save': (el) => {
+    const f = el.dataset.f, day = moDay || tKey(), v = parseNum($('#moNum').value);
+    if (v == null || v < 10 || v > 300) { toast('Enter a size between 10 and 300 cm'); $('#moNum').focus(); return; }
+    hset(day, f, Math.round(v * 10) / 10); save(); closeSheet(); rerender();
+    toast(`${MB_LABEL[f]} ${kg(v)} cm saved for ${fmtShort(fromKey(day))}`);
+  },
+  'mo-clear': (el) => { hset(moDay || tKey(), el.dataset.f, null); save(); closeSheet(); rerender(); toast('Entry removed'); },
   'comp-log': (el) => compSheet(el.dataset.today ? todayKey() : undefined),
   'comp-history': compHistorySheet,
   'care-open': (el) => careSheet(el.dataset.id, el.dataset.day),
@@ -4274,6 +4313,14 @@ document.addEventListener('pointerdown', (ev) => {
 
 document.addEventListener('input', (ev) => {
   const t = ev.target;
+  if (t.id === 'moRange' || t.id === 'moNum') {                    // measurement ruler and exact field stay in step
+    const v = parseNum(t.value);
+    if (v == null) return;
+    if (t.id === 'moRange') { const n = $('#moNum'); if (n) n.value = kg(v); }
+    else { const r = $('#moRange'); if (r && v >= +r.min && v <= +r.max) r.value = v; }
+    const o = $('#moOut'); if (o) o.textContent = kg(v);
+    return;
+  }
   if (t.id === 'foodSearch') { filterFoodSheet(t.value); return; }
   if (t.matches('[data-set]') && draft) {
     draft.entries[t.dataset.e].values[t.dataset.s] = clamp(Number(t.value) || 0, 0, 999);
@@ -4315,6 +4362,11 @@ document.addEventListener('change', async (ev) => {
   if (ev.target.id === 'cpDate') {                                  // body fat & muscle: switch to another date
     const d = ev.target.value;
     if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) compSheet(d); else ev.target.value = compDay || todayKey();
+    return;
+  }
+  if (ev.target.id === 'moDate') {                                  // one measurement: switch to another date
+    const d = ev.target.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey() && mbSel) measureOneSheet(mbSel, d); else ev.target.value = moDay || todayKey();
     return;
   }
   if (ev.target.id === 'msDate') {                                  // measurements: switch to another date

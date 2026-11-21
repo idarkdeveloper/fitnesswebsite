@@ -23,7 +23,9 @@ const OUT = process.argv[3] || 'design-qa';
 const PHONES = [['Galaxy S24', devices['Galaxy S24']], ['Galaxy S8', devices['Galaxy S8']], ['Pixel 7', devices['Pixel 7']]];
 const TEXT_SIZES = [1, 1.3, 1.6];                     // Android font size setting, as the app's WebView applies it
 const SCREENS = ['', 'track', 'movements', 'category/pushups', 'exercise/wall-pushups', 'progress', 'profile', 'plan'];
-const SHEETS = [['Trends sheet', '[data-action="habit-history"]'], ['Add food sheet', '[data-action="track-food"]']];
+// [name, button that opens it, screen it is on (default Today)]
+const SHEETS = [['Trends sheet', '[data-action="habit-history"]'], ['Add food sheet', '[data-action="track-food"]'],
+  ["Foods you don't eat sheet", '[data-action="dislike-sheet"]', 'plan']];
 const BIG_ART = '.art, .ring-wrap, .wchart, .habit-chart, .medal, .hero, .celebrate, .lv-art, .ex-hero, .thumb';
 
 async function check(p, label, scale) {
@@ -179,8 +181,8 @@ async function setTextSize(p, scale) {
         problems.push(...await check(p, where, scale)); checked++;
         if (scale === 1) await p.screenshot({ path: path.join(OUT, `${phone.replace(/\W+/g, '')}-${(s || 'today').replace(/\W+/g, '-')}.png`), fullPage: true });
       }
-      for (const [sheet, opener] of SHEETS) {
-        await p.goto(BASE + '#/'); await p.reload(); await p.waitForTimeout(450);
+      for (const [sheet, opener, route = ''] of SHEETS) {
+        await p.goto(BASE + '#/' + route); await p.reload(); await p.waitForTimeout(450);
         const o = await p.$(opener); if (!o) { problems.push({ where: phone, kind: 'errors', msg: `could not open ${sheet}` }); continue; }
         await o.click(); await p.waitForSelector('dialog[open]'); await p.waitForTimeout(250);
         await setTextSize(p, scale);
@@ -202,8 +204,8 @@ async function setTextSize(p, scale) {
       problems.push(...await checkContrast(p, where)); checked++;
       if (s === '' || s === 'progress') problems.push(...await checkFocus(p, where));
     }
-    for (const [sheet, opener] of SHEETS) {
-      await p.goto(BASE + '#/'); await p.reload(); await p.waitForTimeout(450);
+    for (const [sheet, opener, route = ''] of SHEETS) {
+      await p.goto(BASE + '#/' + route); await p.reload(); await p.waitForTimeout(450);
       await p.click(opener); await p.waitForSelector('dialog[open]'); await p.waitForTimeout(250);
       problems.push(...await checkContrast(p, `${PHONES[0][0]} · ${theme} · ${sheet}`)); checked++;
     }

@@ -308,6 +308,16 @@ window.PF_MEALS = (function () {
   }
 
   const cache = {};
+  // Ingredients you don't eat (e.g. cabbage): dishes that contain them never appear in a plan.
+  let dislikes = [];
+  const hasDisliked = (dishId) => !!(DISH[dishId] && dislikes.some((ing) => DISH[dishId][4][ing]));
+  /** Set the ingredients you don't eat. Plans are rebuilt without them (unless nothing would be left). */
+  function setDislikes(list) {
+    const next = (list || []).filter(Boolean).sort();
+    if (next.join() === dislikes.join()) return;
+    dislikes = next;
+    for (const k of Object.keys(cache)) delete cache[k];
+  }
   /** The 7-day plan (Monday first) for the week starting on `mondayKey` ("YYYY-MM-DD").
       Each day: [[label, [[dish, servings], ...]], ...] in Breakfast, Lunch, Snack, Dinner order. */
   function weekPlan(mondayKey) {
@@ -317,7 +327,9 @@ window.PF_MEALS = (function () {
     const used = {};                                   // protein -> count this week
     const days = Array.from({ length: 7 }, () => ({}));
     for (const slot of [L, D, B, S]) {                 // lunch and dinner first: they carry the protein limits
-      const order = shuffle(POOLS[slot].filter((o) => (v2 || !o.v2) && (v3 || !o.v3)), r);
+      const avail = POOLS[slot].filter((o) => (v2 || !o.v2) && (v3 || !o.v3));
+      const liked = avail.filter((o) => !o.items.some(([id]) => hasDisliked(id)));
+      const order = shuffle(liked.length ? liked : avail, r);
       const taken = new Set();
       for (let i = 0; i < 7; i++) {
         if (taken.size >= order.length) taken.clear();   // small pools (snacks) repeat only after every option was used
@@ -340,7 +352,7 @@ window.PF_MEALS = (function () {
     const offset = Math.floor(r() * 4);
     const plan = days.map((day, i) => {
       const month = new Date(y, m - 1, d + i).getMonth();
-      const veg = SEASON[month];
+      const veg = SEASON[month].filter((v) => !hasDisliked(v)).length ? SEASON[month].filter((v) => !hasDisliked(v)) : ['sabzi'];
       let n = 0;
       return [B, L, S, D].map((slot) => [slot, day[slot].items.map(([id, s]) => [id === 'SABZI' ? veg[(i + offset + n++) % veg.length] : id, s])]);
     });
@@ -426,5 +438,5 @@ window.PF_MEALS = (function () {
 
   const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday.';
 
-  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, POOLS, weekPlan, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
+  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, POOLS, weekPlan, setDislikes, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
 })();

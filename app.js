@@ -1259,10 +1259,14 @@ const dislikes = () => String(hp().dislikes || '').split(',').filter(Boolean);
 const applyDislikes = () => { if (window.PF_MEALS && window.PF_MEALS.setDislikes) window.PF_MEALS.setDislikes(dislikes()); };
 function seedShift() {
   const h = state.hprofile;
-  if (!h || h.shiftSeeded) return;
-  if (!Object.keys(h).some((k) => k.startsWith('shift|'))) { h['shift|2026-11-23'] = 'evening'; if (h.shiftDays == null) h.shiftDays = '1,2,3,4,5'; }
-  h.shiftSeeded = 1;
+  if (!h || (h.shiftSeeded && h.dislikesSeeded && h.teaSeeded)) return;
+  // Each setting is seeded once on its own flag, so a later one still lands on a phone that already has the earlier ones.
+  if (!h.shiftSeeded) {
+    if (!Object.keys(h).some((k) => k.startsWith('shift|'))) { h['shift|2026-11-23'] = 'evening'; if (h.shiftDays == null) h.shiftDays = '1,2,3,4,5'; }
+    h.shiftSeeded = 1;
+  }
   if (!h.dislikesSeeded) { if (h.dislikes == null) h.dislikes = 'cabbage'; h.dislikesSeeded = 1; }   // the owner doesn't like white cabbage
+  if (!h.teaSeeded) { const d = String(h.dislikes || '').split(',').filter(Boolean); if (!d.includes('tea')) h.dislikes = [...d, 'tea'].join(','); h.teaSeeded = 1; }   // nor drinks tea
   save();
 }
 const nf = (n) => Math.round(n).toLocaleString('en-US');
@@ -2254,15 +2258,17 @@ function daysText(days) {
   return idx.every((v, k) => k === 0 || v === idx[k - 1] + 1) && order.length > 2 ? `${names[0]}–${names[names.length - 1]}` : names.join(', ');
 }
 /** Vegetables and proteins the plan can leave out. Leaving one out swaps in other dishes for the rest of the plan. */
+const DISLIKE_NAMES = { tea: 'Tea and chai' };
 function dislikeSheet() {
   const M = window.PF_MEALS, dl = dislikes();
   const used = new Set(Object.values(M.DISH).flatMap((d) => Object.keys(d[4])));
   const pick = (g) => M.GROUPS[g].filter((x) => used.has(x) && M.ING[x]);
-  const chips = (list) => list.map((x) => `<button class="chip ${dl.includes(x) ? 'on' : ''}" aria-pressed="${dl.includes(x)}" data-action="dislike-toggle" data-ing="${x}">${dl.includes(x) ? 'Not for me: ' : ''}${esc(ingShort(x))}</button>`).join('');
+  const chips = (list) => list.map((x) => `<button class="chip ${dl.includes(x) ? 'on' : ''}" aria-pressed="${dl.includes(x)}" data-action="dislike-toggle" data-ing="${x}">${dl.includes(x) ? 'Not for me: ' : ''}${esc(DISLIKE_NAMES[x] || ingShort(x))}</button>`).join('');
   openSheet("Foods you don't eat", `
     <p class="small muted m-0">Tap what you don't eat. Plans, recipes and the grocery list leave out every dish with it and pick others. Tap again to bring it back.</p>
     <h3 class="sheet-sub">Vegetables</h3><div class="chips">${chips(pick('veg'))}</div>
-    <h3 class="sheet-sub">Protein</h3><div class="chips">${chips(pick('protein'))}</div>`);
+    <h3 class="sheet-sub">Protein</h3><div class="chips">${chips(pick('protein'))}</div>
+    <h3 class="sheet-sub">Drinks</h3><div class="chips">${chips(['tea'])}</div>`);
 }
 function shiftSheet(wk) {
   const cur = hp()['shift|' + wk] || '', eff = shiftForWeek(wk), days = shiftWorkDays();
@@ -2503,7 +2509,7 @@ VIEWS.plan = () => {
         ${icon('timer')}<span class="grow"><b>${wsh ? `${SHIFTS[wsh].name}, ${SHIFTS[wsh].hours}` : 'No shift this week'}</b><span class="d-block small muted">${wsh ? `${daysText(shiftWorkDays())} · meals timed around it` : 'Working shifts? Set them and meals are timed around them'}</span></span>${icon('chevR')}</button>`;
     const dl = dislikes();
     const dislikeRow = `<button class="card flat soft shift-row mt-2" data-action="dislike-sheet">
-        ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}</span></span>${icon('chevR')}</button>`;
+        ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => DISLIKE_NAMES[x] || ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}</span></span>${icon('chevR')}</button>`;
     body = `
       ${shiftRow}
       ${dislikeRow}

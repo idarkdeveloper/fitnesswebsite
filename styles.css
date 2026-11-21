@@ -1649,3 +1649,68 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .shift-row > svg:first-child { width: 22px; height: 22px; flex: none; color: var(--accent); }
 .shift-row > svg:last-child { width: 18px; height: 18px; flex: none; color: var(--muted); }
 .pd .sh { font-size: var(--fs-xs); color: var(--accent); min-height: 1.2em; }
+
+/* Body fat & muscle chart: body fat in the accent colour, muscle mass in green, each on its own scale. */
+.comp-chart .cp-bf { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.comp-chart .cp-bf-dot { fill: var(--accent); }
+.comp-chart .cp-mu { fill: none; stroke: var(--success); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; }
+.comp-chart .cp-mu-dot { fill: var(--success); }
+.comp-key { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.comp-key .ck { display: inline-block; width: 14px; height: 3px; border-radius: 2px; background: var(--accent); }
+.comp-key .ck.mu { background: var(--success); margin-left: var(--space-2); }
+
+/* Self-care routines on Today: a tick, then the routine (time, name, what it's for). */
+.care-list { list-style: none; margin: 0; padding: 0; }
+.care-list li { display: flex; align-items: center; gap: var(--space-2); border-top: 1px solid var(--border-soft); }
+.care-list li:first-child { border-top: 0; }
+.care-tick { flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--border); background: transparent; color: var(--primary-ink); cursor: pointer; }
+.care-tick svg { width: 20px; height: 20px; }
+.care-list li.done .care-tick { background: var(--success); border-color: var(--success); color: var(--bg); }
+.care-row { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) 0; color: inherit; background: none; border: 0; font: inherit; cursor: pointer; min-width: 0; }
+.care-row .icon, .care-row svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--muted); }
+.care-list li.done b { text-decoration: line-through; color: var(--muted); }
+.care-kind { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 999px; border: 1px solid var(--border); font-size: var(--fs-xs); font-weight: 600; color: var(--muted); vertical-align: 1px; }
+
+/* Measurement board: left-side tiles | body figure | right-side tiles. */
+.mb-board { display: grid; grid-template-columns: minmax(0, 1fr) minmax(48px, 22%) minmax(0, 1fr); gap: var(--space-2); align-items: stretch; }
+.mb-col { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.mb-fig { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.mb-body { width: 100%; max-height: 100%; fill: color-mix(in srgb, var(--accent) 45%, transparent); stroke: var(--accent); stroke-width: 0.8; }
+.mb-tile { display: flex; flex-direction: column; align-items: flex-start; text-align: left; padding: var(--space-2) var(--space-3); min-height: 64px; border-radius: var(--r-sm);
+  border: 1px solid var(--border-soft); background: var(--surface-2); color: inherit; font: inherit; cursor: pointer; min-width: 0; }
+.mb-tile .k { font-size: var(--fs-sm); color: var(--muted); }
+.mb-tile .v { font-size: 20px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+.mb-tile .v small { font-size: var(--fs-xs); font-weight: 600; color: var(--muted); }
+.mb-tile .d { font-size: var(--fs-xs); }
+.mb-tile .d.c-success { color: var(--success); }
+.m-grid .mb-tile { width: 100%; }
+/* Waist-hip ratio: green / amber / red bands with a marker. */
+.whr { padding: var(--space-3); border-radius: var(--r-sm); border: 1px solid var(--border-soft); background: var(--surface-2); }
+.whr-v { font-size: var(--fs-xl); font-weight: 800; }
+.whr-v small { font-size: var(--fs-sm); font-weight: 600; }
+.c-warn { color: var(--warn); } .c-danger { color: var(--danger); }
+.whr-bar { position: relative; display: flex; height: 8px; border-radius: 999px; overflow: visible; }
+.whr-bar span { height: 100%; }
+.whr-bar .g { background: var(--success); border-radius: 999px 0 0 999px; }
+.whr-bar .y { background: var(--warn); }
+.whr-bar .r { background: var(--danger); border-radius: 0 999px 999px 0; }
+.whr-bar i { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--text); border: 3px solid var(--surface-2); }
+.whr-k { position: relative; height: 18px; margin-top: 4px; }
+.whr-k span { position: absolute; transform: translateX(-50%); }
+
+/* Selected part: tile lit up, a band across the body and a dotted lead to the tile's side. */
+.mb-tile.on { background: color-mix(in srgb, var(--primary) 55%, var(--surface-2)); border-color: var(--primary); }
+.mb-tile.on .k, .mb-tile.on .v small { color: inherit; }
+.mb-body .mb-band { stroke: var(--primary); stroke-width: 2.4; stroke-linecap: round; }
+.mb-body .mb-dot { fill: var(--surface-2); stroke: var(--primary); stroke-width: 1.2; }
+.mb-body .mb-lead { stroke: var(--primary); stroke-width: 1; stroke-dasharray: 2 2; }
+.mb-fig { overflow: visible; }
+.mb-body { overflow: visible; }
+/* The tape: big number and a ruler-like slider with 0.1 / 1 cm ticks. */
+.mo-val { text-align: center; font-size: 40px; font-weight: 800; line-height: 1.1; margin-top: var(--space-2); }
+.mo-val small { font-size: var(--fs-label); font-weight: 600; color: var(--muted); }
+.mo-ruler { margin-top: var(--space-3); padding: var(--space-3) 0; border-radius: var(--r-sm); background:
+  repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px 10px) center / 100% 14px no-repeat,
+  repeating-linear-gradient(90deg, var(--muted) 0 2px, transparent 2px 50px) center / 100% 26px no-repeat; }
+.mo-ruler input[type=range] { width: 100%; height: 44px; margin: 0; background: transparent; accent-color: var(--primary); cursor: pointer; }
+.mo-scale { display: flex; justify-content: space-between; }

@@ -789,6 +789,7 @@ VIEWS.today = () => {
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
     ${watchLine(tk)}
+    ${careCard(tk)}
     <div class="tip-card mt-5">
       ${icon('bolt')}
       <p class="grow m-0"><b>60-second hit.</b> <span class="muted">${esc(TIPS[tipIdx % TIPS.length])}</span></p>
@@ -1030,14 +1031,6 @@ function progressBody() {
   } else if (toGo != null && toGo <= 0.05) verdict = '<div class="note-box mt-3"><b>Goal reached.</b> Set a new goal in Profile → Goals.</div>';
 
   const firstDay = MEASURES.map(([f]) => firstOf(f)?.day).filter(Boolean).sort()[0];
-  // Waist, chest, hips and neck always show; a limb pair only once either side has been measured.
-  const shown = MEASURES.filter(([f], i) => i < 4 || [MEASURES[i - (i % 2)][0], MEASURES[i - (i % 2) + 1][0]].some((x) => firstOf(x)));
-  const mtiles = shown.map(([f, label]) => {
-    const l = latestOn(f, tk), f0 = firstOf(f);
-    const diff = l && f0 && f0.day !== l.day ? l.v - f0.v : null;
-    const dtxt = diff == null ? '' : Math.abs(diff) < 0.05 ? '<span class="d muted">no change</span>' : `<span class="d ${diff < 0 ? 'c-success' : ''}">${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)}</span>`;
-    return `<div class="m-tile"><span class="k">${label}</span><span class="v">${l ? kg(l.v) : '–'}${l ? ' <small>cm</small>' : ''}</span>${dtxt}</div>`;
-  }).join('');
 
   // Last 7 days averages (days with data only)
   const days = Array.from({ length: 7 }, (_, i) => keyAdd(tk, -i));
@@ -1059,9 +1052,10 @@ function progressBody() {
       ${weightChart(tk)}
       ${verdict}
     </section>
+    ${compCard(tk, 'data-today="1"').replace('id="compH"', 'id="compHp"').replace('aria-labelledby="compH"', 'aria-labelledby="compHp"')}
     <section class="card mt-4" aria-labelledby="mH">
       <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+, /, ''))})` : 'In centimetres'}</div></div><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></span></div>
-      <div class="m-grid mt-3">${mtiles}</div>
+      ${measureBoard(tk)}
       <p class="small muted m-0 mt-3">Measure every week or two, same time of day. Waist keeps going down even in weeks when the scale doesn't.</p>
     </section>
     <section class="card mt-4 last7" aria-labelledby="l7H">
@@ -1219,18 +1213,28 @@ const PROFILE_ACTIONS = {
 /* ---------- Track: weight, food, steps, sleep, water, measurements ----------
    Data (all synced, see sync-core.js):
    - state.hprofile: { sex, age, height, activity, goalWeight, rate, stepGoal, sleepGoal (min), waterGoal (ml) }
-   - state.hlog: { "YYYY-MM-DD|field": number }  fields: weight (kg), steps, sleep (min), water (ml), MEASURES (cm)
+   - state.hlog: { "YYYY-MM-DD|field": number }  fields: weight (kg), steps, sleep (min), water (ml), MEASURES (cm),
+     COMP (bodyfat %, muscle kg, visceral rating)
    - state.meals: [{ id, day, at, name, kcal, protein? }]
    - state.foods: { id: { name, kcal, protein? } }   saved foods */
 // Body measurements in cm, in pairs so left and right sit side by side. 'arm' and 'thigh' are the original
 // one-side fields: earlier entries are kept and shown as the right side.
 const MEASURES = [
   ['waist', 'Waist'], ['chest', 'Chest'], ['hips', 'Hips'], ['neck', 'Neck'],
+  ['shoulder', 'Shoulders'], ['abdomen', 'Abdomen (widest, belly)'],
   ['armL', 'Upper arm · left'], ['arm', 'Upper arm · right'],
   ['forearmL', 'Forearm · left'], ['forearm', 'Forearm · right'],
   ['thighL', 'Thigh · left'], ['thigh', 'Thigh · right'],
   ['calfL', 'Calf · left'], ['calf', 'Calf · right'],
 ];
+/* Body composition from a smart scale: [field, label, unit, min, max, step, lower is better].
+   Scales estimate these from a small electrical current, so they swing with water: read the trend, not one day. */
+const COMP = [
+  ['bodyfat', 'Body fat', '%', 3, 70, 0.1, true],
+  ['muscle', 'Muscle mass', 'kg', 10, 200, 0.1, false],
+  ['visceral', 'Visceral fat', '', 1, 60, 1, true],
+];
+const compFmt = (f, v) => (f === 'visceral' ? String(Math.round(v)) : kg(v));
 const ACTIVITY = [
   [1.2, 'Mostly sitting, little exercise'],
   [1.375, 'Light: exercise 1–3 days a week'],
@@ -1363,6 +1367,7 @@ VIEWS.track = () => {
     ${planCard(day)}
     ${trackWeightCard(day, T, thisDay, isToday)}
     ${trackHabits(day)}
+    ${compCard(day)}
     ${trackMeasureCard(day)}
     <div class="list-group mt-5">
       <button class="list-item" data-action="track-setup"><span>Targets &amp; body profile<span class="li-sub">${T ? `${nf(T.kcal)} kcal a day${p.goalWeight ? ` · goal ${kg(p.goalWeight)} kg` : ' · no goal weight yet'}` : 'Not set up yet'}</span></span>${icon('chevR')}</button>
@@ -1514,6 +1519,136 @@ function trackHabits(day) {
     </section>`;
 }
 
+/** Body fat, fat mass, muscle and visceral fat: latest on `day`, and the change since the first scale reading. */
+function compCard(day, logAttr = '') {
+  const tile = (label, l, f0, fmt, unit, lower) => {
+    const diff = l && f0 && f0.day !== l.day ? l.v - f0.v : null;
+    const good = diff != null && (lower ? diff < 0 : diff > 0);
+    const dtxt = diff == null ? '' : Math.abs(diff) < 0.05 ? '<span class="d muted">no change</span>'
+      : `<span class="d ${good ? 'c-success' : ''}">${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}</span>`;
+    return `<div class="m-tile"><span class="k">${label}</span><span class="v">${l ? fmt(l.v) : '–'}${l && unit ? ` <small>${unit}</small>` : ''}</span>${dtxt}</div>`;
+  };
+  const bf = latestOn('bodyfat', day), mu = latestOn('muscle', day), vi = latestOn('visceral', day);
+  // Fat mass = body fat % × the weight on the same day (or the latest weight before it).
+  const fatOn = (r) => { if (!r) return null; const w = hget(r.day, 'weight') ?? latestOn('weight', r.day)?.v; return w ? { day: r.day, v: (w * r.v) / 100 } : null; };
+  const fm = fatOn(bf), fm0 = fatOn(firstOf('bodyfat'));
+  const any = bf || mu || vi;
+  const first = COMP.map(([f]) => firstOf(f)?.day).filter(Boolean).sort()[0];
+  return `
+    <section class="card mt-4" aria-labelledby="compH">
+      <div class="row-between"><div><h2 class="h3" id="compH">Body fat &amp; muscle</h2><div class="small muted">${first ? `Latest · change since first reading (${esc(fmtShort(fromKey(first)).replace(/^\w+, /, ''))})` : 'From your smart scale'}</div></div><span class="row gap-2">${any ? '<button class="btn subtle sm" data-action="comp-history">Trends</button>' : ''}<button class="btn subtle sm" data-action="comp-log" ${logAttr}>Log</button></span></div>
+      ${any ? `
+      <div class="m-grid mt-3">
+        ${tile('Body fat', bf, firstOf('bodyfat'), kg, '%', true)}
+        ${tile('Fat mass', fm, fm0, kg, 'kg', true)}
+        ${tile('Muscle mass', mu, firstOf('muscle'), kg, 'kg', false)}
+        ${tile('Visceral fat', vi, firstOf('visceral'), (v) => String(Math.round(v)), '', true)}
+      </div>
+      ${compChart()}
+      <p class="small muted m-0 mt-3">${vi && vi.v > 12 ? 'Visceral fat (around the organs) is 1–12 on most scales when healthy; it usually falls first with a steady deficit and daily walking. ' : ''}Weigh in the morning, before eating or drinking, and watch the trend: the scale's estimates swing with water.</p>`
+      : '<p class="muted small mt-3 m-0">Log body fat %, muscle mass and visceral fat from your smart scale. Losing fat while muscle holds steady is the goal, even in weeks the weight barely moves.</p>'}
+    </section>`;
+}
+/** Body fat % over every reading (needs 2 or more), with muscle mass as a second line on its own scale. */
+function compChart() {
+  const bf = series('bodyfat');
+  if (bf.length < 2) return '';
+  const W = 300, H = 90, P = 6;
+  const days = bf.map((r) => r.day), x0 = fromKey(days[0]).getTime(), x1 = fromKey(days[days.length - 1]).getTime();
+  const X = (d) => P + ((fromKey(d).getTime() - x0) / Math.max(1, x1 - x0)) * (W - 2 * P);
+  const line = (s, cls) => {
+    const vs = s.map((r) => r.v), lo = Math.min(...vs), hi = Math.max(...vs), span = Math.max(hi - lo, 1);
+    const Y = (v) => P + (1 - (v - lo) / span) * (H - 2 * P);
+    const pts = s.filter((r) => r.day >= days[0]).map((r) => [X(r.day), Y(r.v)]);
+    return `<polyline class="${cls}" points="${pts.map(([a, b]) => `${a.toFixed(1)},${b.toFixed(1)}`).join(' ')}"/>${pts.map(([a, b]) => `<circle class="${cls}-dot" cx="${a.toFixed(1)}" cy="${b.toFixed(1)}" r="3"/>`).join('')}`;
+  };
+  const mu = series('muscle', days[0]);
+  const a = bf[0], b = bf[bf.length - 1];
+  return `<svg class="habit-chart comp-chart mt-3" viewBox="0 0 ${W} ${H + 16}" role="img" aria-label="Body fat from ${kg(a.v)}% on ${esc(fmtShort(fromKey(a.day)))} to ${kg(b.v)}% on ${esc(fmtShort(fromKey(b.day)))}${mu.length > 1 ? `; muscle mass from ${kg(mu[0].v)} to ${kg(mu[mu.length - 1].v)} kg` : ''}.">
+    ${mu.length > 1 ? line(mu, 'cp-mu') : ''}${line(bf, 'cp-bf')}
+    <text class="hb-t" x="0" y="${H + 14}">${esc(fmtShort(fromKey(a.day)).replace(/^\w+, /, ''))}</text><text class="hb-t" x="${W}" y="${H + 14}" text-anchor="end">${esc(fmtShort(fromKey(b.day)).replace(/^\w+, /, ''))}</text></svg>
+    <div class="small muted mt-1 comp-key"><span class="ck bf"></span>Body fat %${mu.length > 1 ? '<span class="ck mu"></span>Muscle mass' : ''}</div>`;
+}
+
+/* ---- Measurement board: a body figure with the left side's tiles on the left and the right side's on the right,
+   like a smart-scale app. Each tile shows the latest value on `day` and the change since the first entry. ---- */
+const MB_LEFT = ['neck', 'armL', 'chest', 'abdomen', 'thighL', 'calfL'];
+const MB_RIGHT = ['shoulder', 'arm', 'waist', 'hips', 'thigh', 'calf'];
+const MB_LABEL = { neck: 'Neck', shoulder: 'Shoulders', armL: 'L-Bicep', arm: 'R-Bicep', chest: 'Chest', waist: 'Waist', abdomen: 'Abdomen', hips: 'Hip',
+  thighL: 'L-Thigh', thigh: 'R-Thigh', calfL: 'L-Calf', calf: 'R-Calf', forearmL: 'L-Forearm', forearm: 'R-Forearm' };
+const BODY_SVG = `<svg class="mb-body" viewBox="0 0 60 160" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <circle cx="30" cy="11" r="8"/>
+  <path d="M30 21C26 21 25 23 25 25L16 27C12 28 10 31 10 35L7 62C6 70 5 78 6 84L9 84C10 77 11 70 13 63L16 42L17 60C16 70 16 78 17 84L19 120C19 135 19 145 18 155L27 155C27 140 28 125 29 100L30 88L31 100C32 125 33 140 33 155L42 155C41 145 41 135 41 120L43 84C44 78 44 70 43 60L44 42L47 63C49 70 50 77 51 84L54 84C55 78 54 70 53 62L50 35C50 31 48 28 44 27L35 25C35 23 34 21 30 21Z"/></svg>`;
+const MB_BAND = { neck: [25, 35, 22], shoulder: [11, 49, 28], chest: [13, 47, 38], waist: [15, 45, 56], abdomen: [15, 45, 64], hips: [16, 44, 80],
+  armL: [9, 16, 44], arm: [44, 51, 44], forearmL: [6, 12, 68], forearm: [48, 54, 68], thighL: [18, 29, 104], thigh: [31, 42, 104], calfL: [19, 27, 134], calf: [33, 41, 134] };
+let mbSel = null;   // the measurement being edited: highlighted on the board and marked on the figure
+function measureBoard(day) {
+  const sel = mbSel && MB_BAND[mbSel] ? MB_BAND[mbSel] : null, right = mbSel && MB_RIGHT.includes(mbSel);
+  const fig = sel ? BODY_SVG.replace('</svg>', `<line class="mb-band" x1="${sel[0]}" x2="${sel[1]}" y1="${sel[2]}" y2="${sel[2]}"/><circle class="mb-dot" cx="${right ? sel[1] : sel[0]}" cy="${sel[2]}" r="2.2"/><line class="mb-lead" x1="${right ? sel[1] : sel[0]}" x2="${right ? 60 : 0}" y1="${sel[2]}" y2="${sel[2]}"/></svg>`) : BODY_SVG;
+  const tile = (f) => {
+    const l = latestOn(f, day), f0 = firstOf(f);
+    const diff = l && f0 && f0.day !== l.day ? l.v - f0.v : null;
+    const d = diff == null ? '' : Math.abs(diff) < 0.05 ? '<span class="d muted">no change</span>'
+      : `<span class="d ${diff < 0 ? 'c-success' : ''}">${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)}</span>`;
+    return `<button class="mb-tile ${f === mbSel ? 'on' : ''}" data-action="measure-field" data-f="${f}" aria-label="${MB_LABEL[f]}: ${l ? `${kg(l.v)} centimetres` : 'not measured'}. Edit">
+      <span class="k">${MB_LABEL[f]}</span><span class="v">${l ? kg(l.v) : '–'}${l ? '<small> cm</small>' : ''}</span>${d}</button>`;
+  };
+  const fore = ['forearmL', 'forearm'].some((f) => firstOf(f));
+  return `<div class="mb-board mt-3">
+      <div class="mb-col">${MB_LEFT.map(tile).join('')}</div>
+      <div class="mb-fig">${fig}</div>
+      <div class="mb-col">${MB_RIGHT.map(tile).join('')}</div>
+    </div>
+    ${fore ? `<div class="m-grid mt-2">${tile('forearmL')}${tile('forearm')}</div>` : ''}
+    ${ratioCard(day)}`;
+}
+/** Waist–hip ratio (WHO: above 0.90 for men, 0.85 for women means more risk) and waist-to-height (keep under 0.5). */
+function ratioCard(day) {
+  const w = latestOn('waist', day), h = latestOn('hips', day);
+  if (!w || !h) return '';
+  const r = w.v / h.v, female = hp().sex === 'female';
+  const [a, b] = female ? [0.80, 0.85] : [0.90, 1.0];
+  const lo = 0.7, hi = 1.1, pos = (v) => Math.max(0, Math.min(100, ((v - lo) / (hi - lo)) * 100));
+  const band = r < a ? ['Healthy', 'c-success'] : r < b ? ['Raised', 'c-warn'] : ['High', 'c-danger'];
+  const ht = hp().height, wth = ht ? w.v / ht : null;
+  return `<div class="whr mt-3" role="group" aria-label="Waist-hip ratio ${r.toFixed(2)}, ${band[0]}">
+      <div class="row-between"><span class="fw-bold">Waist–hip ratio</span><span class="whr-v ${band[1]}">${r.toFixed(2)} <small>${band[0]}</small></span></div>
+      <div class="whr-bar mt-2" aria-hidden="true">
+        <span class="g" style="width:${pos(a)}%"></span><span class="y" style="width:${pos(b) - pos(a)}%"></span><span class="r" style="width:${100 - pos(b)}%"></span>
+        <i style="left:${pos(r)}%"></i>
+      </div>
+      <div class="whr-k small muted"><span style="left:${pos(a)}%">${a.toFixed(2)}</span><span style="left:${pos(b)}%">${b.toFixed(2)}</span></div>
+      <p class="small muted m-0 mt-2">Waist ÷ hip. For ${female ? 'women' : 'men'}, under ${a.toFixed(2)} is the healthy range (WHO).${wth ? ` Waist-to-height: <b>${wth.toFixed(2)}</b>, aim for under 0.50.` : ''}</p>
+    </div>`;
+}
+
+/** One measurement, like a tape: a big number, a ruler slider (0.1 cm steps), the date, and Confirm. */
+const MB_HINT = { neck: 'Just below the Adam\'s apple, tape level.', shoulder: 'Around the widest part of both shoulders, arms relaxed.', chest: 'Around the fullest part, under the armpits, after breathing out.',
+  waist: 'Around your belly button, relaxed, after breathing out.', abdomen: 'Around the widest part of the belly.', hips: 'Around the widest part of the buttocks, feet together.',
+  armL: 'Widest part of the upper arm, arm relaxed by your side.', arm: 'Widest part of the upper arm, arm relaxed by your side.', forearmL: 'Just below the elbow.', forearm: 'Just below the elbow.',
+  thighL: 'Halfway between hip and knee, standing.', thigh: 'Halfway between hip and knee, standing.', calfL: 'The widest part, standing.', calf: 'The widest part, standing.' };
+const MB_START = { neck: 40, shoulder: 120, chest: 100, waist: 90, abdomen: 95, hips: 100, armL: 33, arm: 33, forearmL: 28, forearm: 28, thighL: 58, thigh: 58, calfL: 38, calf: 38 };
+let moDay = null;
+function measureOneSheet(f, dayArg) {
+  const day = typeof dayArg === 'string' ? dayArg : tKey();
+  moDay = day;
+  if (mbSel !== f) { mbSel = f; rerender(); }
+  const mine = hget(day, f), last = latestOn(f, day), v = mine ?? last?.v ?? MB_START[f] ?? 50;
+  const lo = Math.max(10, Math.floor(v - 20)), hi = Math.min(300, Math.ceil(v + 20));
+  openSheet(MB_LABEL[f], `
+    <div class="mo-val" aria-hidden="true"><output id="moOut">${kg(v)}</output><small> cm</small></div>
+    <div class="mo-ruler"><input type="range" id="moRange" min="${lo}" max="${hi}" step="0.1" value="${v}" aria-label="${MB_LABEL[f]} in centimetres" /></div>
+    <div class="mo-scale small muted" aria-hidden="true"><span>${lo}</span><span>${Math.round((lo + hi) / 2)}</span><span>${hi}</span></div>
+    <div class="grid2 mt-3">
+      <div class="field"><label for="moNum">Exact (cm)</label><input class="input" id="moNum" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${kg(v)}" /></div>
+      <div class="field"><label for="moDate">Date</label><input class="input" id="moDate" type="date" value="${day}" max="${todayKey()}" /></div>
+    </div>
+    <p class="muted small m-0 mt-2">${MB_HINT[f] || ''}${mine == null && last ? ` Last time: ${kg(last.v)} cm on ${esc(fmtShort(fromKey(last.day)))}.` : ''}</p>
+    <button class="btn block lg mt-4" data-action="mo-save" data-f="${f}">Confirm</button>
+    ${mine != null ? `<button class="link-btn small danger-text mt-3" data-action="mo-clear" data-f="${f}">Remove this entry</button>` : ''}`,
+    { onClose: () => { mbSel = null; rerender(); } });
+}
+
 function trackMeasureCard(day) {
   const rows = MEASURES.map(([f, label]) => {
     const l = latestOn(f, day);
@@ -1527,9 +1662,8 @@ function trackMeasureCard(day) {
   return `
     <section class="card mt-4" aria-labelledby="measH">
       <div class="row-between"><h2 class="h3" id="measH">Measurements</h2><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure">Log</button></span></div>
-      ${rows
-        ? `<ul class="kv-list mt-3">${rows}</ul><p class="muted small m-0 mt-2">Latest value, and change since your first entry.</p>`
-        : '<p class="muted small mt-3 m-0">Measure your waist every week or two, at the same time of day. It keeps going down even in weeks when the scale doesn’t.</p>'}
+      ${rows ? '<p class="muted small m-0 mt-1">Latest, and change since your first entry. Tap one to update it.</p>' : '<p class="muted small mt-1 m-0">Measure every week or two, same time of day. Waist keeps going down even in weeks when the scale doesn’t. Tap a part to start.</p>'}
+      ${measureBoard(day)}
     </section>`;
 }
 
@@ -1924,7 +2058,7 @@ function sleepSheet() {
 }
 
 /** Short labels for the history list: "Upper arm · left" → "Arm L". */
-const MEASURE_SHORT = { waist: 'Waist', chest: 'Chest', hips: 'Hips', neck: 'Neck', armL: 'Arm L', arm: 'Arm R', forearmL: 'Forearm L', forearm: 'Forearm R', thighL: 'Thigh L', thigh: 'Thigh R', calfL: 'Calf L', calf: 'Calf R' };
+const MEASURE_SHORT = { waist: 'Waist', chest: 'Chest', hips: 'Hips', neck: 'Neck', shoulder: 'Shoulders', abdomen: 'Abdomen', armL: 'Arm L', arm: 'Arm R', forearmL: 'Forearm L', forearm: 'Forearm R', thighL: 'Thigh L', thigh: 'Thigh R', calfL: 'Calf L', calf: 'Calf R' };
 /** Dates that have at least one measurement, newest first: [{ day, vals: [[field, cm]] }]. */
 function measureDates() {
   const by = {};
@@ -1946,6 +2080,41 @@ function measureHistorySheet() {
     <button class="btn block mt-4" data-action="measure-edit" data-day="${todayKey()}">Log measurements</button>`);
 }
 
+/** Every date with a scale reading, newest first, each one editable. */
+function compHistorySheet() {
+  const by = {};
+  for (const [f] of COMP) for (const { day, v } of series(f)) (by[day] = by[day] || []).push([f, v]);
+  const rows = Object.keys(by).sort().reverse();
+  const short = { bodyfat: 'Fat', muscle: 'Muscle', visceral: 'Visceral' };
+  openSheet('Body fat & muscle trends', `
+    ${compChart()}
+    <p class="muted small m-0 mt-3">${rows.length} ${rows.length === 1 ? 'reading' : 'readings'}, newest first. Tap a date to change it.</p>
+    <ul class="m-hist mt-3">${rows.map((day) => `
+      <li><button class="m-hist-row" data-action="comp-edit" data-day="${day}">
+        <span class="d">${esc(fmtShort(fromKey(day)))}${day.slice(0, 4) !== todayKey().slice(0, 4) ? ` ${day.slice(0, 4)}` : ''}</span>
+        <span class="vals">${COMP.filter(([f]) => by[day].some((x) => x[0] === f)).map(([f, , u]) => `<span class="chip sm">${short[f]} ${compFmt(f, by[day].find((x) => x[0] === f)[1])}${u === '%' ? '%' : u ? ` ${u}` : ''}</span>`).join('')}</span>
+        ${icon('chevR')}
+      </button></li>`).join('')}</ul>
+    <button class="btn ghost block mt-4" data-action="comp-edit" data-day="${todayKey()}">${icon('plus')} Add for another date</button>`);
+}
+let compDay = null;   // the date the body-composition sheet is showing
+function compSheet(dayArg) {
+  const day = typeof dayArg === 'string' ? dayArg : tKey();
+  compDay = day;
+  const field = (f, label, unit, min, max, step, val, last) => `<div class="field"><label for="cp-${f}">${label}${unit ? ` (${unit})` : ''}</label><input class="input" id="cp-${f}" data-comp="${f}" type="number" inputmode="decimal" step="${step}" min="${min}" max="${max}" value="${val ?? ''}" placeholder="${last != null ? last : ''}" /></div>`;
+  const lw = latestOn('weight', day);
+  openSheet('Body fat & muscle', `
+    <div class="field"><label for="cpDate">Date</label><input class="input" id="cpDate" type="date" value="${day}" max="${todayKey()}" /></div>
+    <p class="muted small m-0 mt-2">Copy the numbers from your scale's app. Fill in what you have; empty fields are left out. Earlier values show as grey hints.</p>
+    <div class="grid2">
+      ${field('weight', 'Weight', 'kg', 30, 350, 0.1, hget(day, 'weight'), lw ? kg(lw.v) : null)}
+      ${COMP.map(([f, label, unit, min, max, step]) => { const l = latestOn(f, day); return field(f, label, unit, min, max, step, hget(day, f), l ? compFmt(f, l.v) : null); }).join('')}
+    </div>
+    <p class="muted small mt-3 m-0">Muscle mass is the scale's "Muscle mass" (not skeletal muscle). Visceral fat is a rating, usually 1–59.</p>
+    <button class="btn block lg mt-5" data-action="comp-save">Save</button>
+    <button class="link-btn small mt-3" data-action="comp-history">See all dates</button>`);
+}
+
 let measureDay = null;   // the date the measurements sheet is showing
 function measureSheet(dayArg) {
   const day = typeof dayArg === 'string' ? dayArg : tKey();
@@ -1957,7 +2126,7 @@ function measureSheet(dayArg) {
       const last = latestOn(f, day);
       return `<div class="field"><label for="ms-${f}">${label}</label><input class="input" id="ms-${f}" data-measure="${f}" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${hget(day, f) ?? ''}" placeholder="${last ? kg(last.v) : ''}" /></div>`;
     }).join('')}</div>
-    <p class="muted small mt-3 m-0">Waist: around your belly button, relaxed, after breathing out. Upper arm: the widest part, arm relaxed by your side. Forearm: just below the elbow. Thigh: halfway between hip and knee. Calf: the widest part, standing. Use the same spot every time.</p>
+    <p class="muted small mt-3 m-0">Shoulders: around the widest part, arms relaxed. Abdomen: around the widest part of the belly. Waist: around your belly button, relaxed, after breathing out. Upper arm: the widest part, arm relaxed by your side. Forearm: just below the elbow. Thigh: halfway between hip and knee. Calf: the widest part, standing. Use the same spot every time.</p>
     <button class="btn block lg mt-5" data-action="track-measure-save">Save</button>
     <button class="link-btn small mt-3" data-action="measure-history">See all dates</button>`);
 }
@@ -2072,6 +2241,40 @@ const TRACK_ACTIONS = {
     afterHabitEdit(day === todayKey() ? 'Saved' : `Saved for ${fmtShort(fromKey(day))}`);
   },
   'track-measure': () => measureSheet(),
+  'measure-field': (el) => measureOneSheet(el.dataset.f),
+  'mo-save': (el) => {
+    const f = el.dataset.f, day = moDay || tKey(), v = parseNum($('#moNum').value);
+    if (v == null || v < 10 || v > 300) { toast('Enter a size between 10 and 300 cm'); $('#moNum').focus(); return; }
+    hset(day, f, Math.round(v * 10) / 10); save(); closeSheet(); rerender();
+    toast(`${MB_LABEL[f]} ${kg(v)} cm saved for ${fmtShort(fromKey(day))}`);
+  },
+  'mo-clear': (el) => { hset(moDay || tKey(), el.dataset.f, null); save(); closeSheet(); rerender(); toast('Entry removed'); },
+  'comp-log': (el) => compSheet(el.dataset.today ? todayKey() : undefined),
+  'comp-history': compHistorySheet,
+  'care-open': (el) => careSheet(el.dataset.id, el.dataset.day),
+  'care-tick': (el) => {
+    const { id, day } = el.dataset, was = careDone(day, id);
+    hset(day, `care:${id}`, was ? null : 1);
+    save();
+    if (el.dataset.close) closeSheet();
+    rerender();
+    if (!was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All done for today' : `${window.PF_CARE.R[id].title}: done`); }
+  },
+  'comp-edit': (el) => compSheet(el.dataset.day),
+  'comp-save': () => {
+    const day = compDay || tKey();
+    const lim = { weight: [30, 350], bodyfat: [3, 70], muscle: [10, 200], visceral: [1, 60] };
+    const vals = {};
+    for (const inp of $$('[data-comp]')) {
+      const f = inp.dataset.comp, v = parseNum(inp.value);
+      if (inp.value.trim() === '') { vals[f] = null; continue; }
+      if (v == null || v < lim[f][0] || v > lim[f][1]) { toast(`${f === 'bodyfat' ? 'Body fat' : f === 'muscle' ? 'Muscle mass' : f === 'visceral' ? 'Visceral fat' : 'Weight'} should be between ${lim[f][0]} and ${lim[f][1]}`); inp.focus(); return; }
+      vals[f] = f === 'visceral' ? Math.round(v) : Math.round(v * 10) / 10;
+    }
+    let n = 0;
+    for (const [f, v] of Object.entries(vals)) if (hget(day, f) !== (v ?? undefined)) { hset(day, f, v); n++; }
+    save(); closeSheet(); rerender(); toast(n ? `Saved for ${fmtShort(fromKey(day))}` : 'Nothing changed');
+  },
   'measure-history': measureHistorySheet,
   'measure-edit': (el) => measureSheet(el.dataset.day),
   'track-measure-save': () => {
@@ -2255,6 +2458,39 @@ function shiftForWeek(wk) {
 /** The shift on one day, or null on a day off. */
 const shiftOn = (dayKey) => { const sh = shiftForWeek(weekStart(dayKey)); return sh && shiftWorkDays().includes(fromKey(dayKey).getDay()) ? sh : null; };
 /** "18:30 · lunchbox" for a meal on a shift day. */
+/* ---------- Self-care: skin, teeth, hair and beard routines (care.js), timed to the day's shift ----------
+   Ticks are stored as hlog "YYYY-MM-DD|care:<routine>" = 1, so they sync with everything else. */
+const careIds = (day) => (window.PF_CARE ? window.PF_CARE.forDay(shiftOn(day), fromKey(day).getDay()) : []);
+const careDone = (day, id) => hget(day, `care:${id}`) === 1;
+function careCard(day) {
+  const ids = careIds(day);
+  if (!ids.length) return '';
+  const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, sh = shiftOn(day);
+  return `
+    <section class="card mt-4" aria-labelledby="careH">
+      <div class="row-between"><h2 class="h3" id="careH">Self-care &amp; home</h2><span class="small muted">${n} of ${ids.length} done</span></div>
+      <p class="small muted m-0 mt-1">${sh ? `${SHIFTS[sh].name} · timed around it` : fromKey(day).getDay() % 6 === 0 ? 'Weekend: deeper care, laundry and cleaning' : 'Day off'}</p>
+      <ul class="care-list mt-2">${ids.map((id) => {
+        const r = R[id], done = careDone(day, id);
+        return `<li class="${done ? 'done' : ''}">
+          <button class="care-tick" data-action="care-tick" data-id="${id}" data-day="${day}" aria-pressed="${done}" aria-label="${esc(r.title)}: ${done ? 'done, tap to undo' : 'mark done'}">${done ? icon('check') : ''}</button>
+          <button class="care-row grow plain text-left" data-action="care-open" data-id="${id}" data-day="${day}">
+            <span class="plan-k">${esc(r.at)}</span><span class="grow"><b class="d-block">${esc(r.title)}${r.title.startsWith(window.PF_CARE.kindOf(id)) ? '' : ` <span class="care-kind">${window.PF_CARE.kindOf(id)}</span>`}</b><span class="small muted">${esc(r.sub)}</span></span>${icon('chevR')}
+          </button></li>`;
+      }).join('')}</ul>
+    </section>`;
+}
+function careSheet(id, day) {
+  const r = window.PF_CARE.R[id];
+  if (!r) return;
+  const done = careDone(day, id);
+  openSheet(r.title, `
+    <p class="small muted m-0 sheet-meta">${esc(r.at)} · ${esc(r.sub)}</p>
+    <ol class="recipe-steps mt-3">${r.steps.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
+    ${r.note ? `<div class="note-box mt-3">${esc(r.note)}</div>` : ''}
+    <button class="btn block lg mt-4 ${done ? 'ghost' : ''}" data-action="care-tick" data-id="${id}" data-day="${day}" data-close="1">${done ? 'Mark as not done' : 'Done'}</button>`);
+}
+
 const mealWhen = (m) => (m.at ? `${m.at}${m.note ? ` · ${m.note}` : ''}${m.pack ? ' · lunchbox' : ''}` : '');
 
 /** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week.
@@ -4077,6 +4313,14 @@ document.addEventListener('pointerdown', (ev) => {
 
 document.addEventListener('input', (ev) => {
   const t = ev.target;
+  if (t.id === 'moRange' || t.id === 'moNum') {                    // measurement ruler and exact field stay in step
+    const v = parseNum(t.value);
+    if (v == null) return;
+    if (t.id === 'moRange') { const n = $('#moNum'); if (n) n.value = kg(v); }
+    else { const r = $('#moRange'); if (r && v >= +r.min && v <= +r.max) r.value = v; }
+    const o = $('#moOut'); if (o) o.textContent = kg(v);
+    return;
+  }
   if (t.id === 'foodSearch') { filterFoodSheet(t.value); return; }
   if (t.matches('[data-set]') && draft) {
     draft.entries[t.dataset.e].values[t.dataset.s] = clamp(Number(t.value) || 0, 0, 999);
@@ -4113,6 +4357,16 @@ document.addEventListener('change', async (ev) => {
   if (ev.target.id === 'hDate') {                                   // weight/steps/sleep/water: edit another date
     const d = ev.target.value;
     if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) openHabit(ev.target.dataset.f, d, editBack); else ev.target.value = eKey();
+    return;
+  }
+  if (ev.target.id === 'cpDate') {                                  // body fat & muscle: switch to another date
+    const d = ev.target.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) compSheet(d); else ev.target.value = compDay || todayKey();
+    return;
+  }
+  if (ev.target.id === 'moDate') {                                  // one measurement: switch to another date
+    const d = ev.target.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey() && mbSel) measureOneSheet(mbSel, d); else ev.target.value = moDay || todayKey();
     return;
   }
   if (ev.target.id === 'msDate') {                                  // measurements: switch to another date

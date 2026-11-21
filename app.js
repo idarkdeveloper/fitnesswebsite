@@ -789,6 +789,7 @@ VIEWS.today = () => {
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
     ${watchLine(tk)}
+    ${careCard(tk)}
     <div class="tip-card mt-5">
       ${icon('bolt')}
       <p class="grow m-0"><b>60-second hit.</b> <span class="muted">${esc(TIPS[tipIdx % TIPS.length])}</span></p>
@@ -2171,6 +2172,15 @@ const TRACK_ACTIONS = {
   'track-measure': () => measureSheet(),
   'comp-log': (el) => compSheet(el.dataset.today ? todayKey() : undefined),
   'comp-history': compHistorySheet,
+  'care-open': (el) => careSheet(el.dataset.id, el.dataset.day),
+  'care-tick': (el) => {
+    const { id, day } = el.dataset, was = careDone(day, id);
+    hset(day, `care:${id}`, was ? null : 1);
+    save();
+    if (el.dataset.close) closeSheet();
+    rerender();
+    if (!was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All self-care done today' : `${window.PF_CARE.R[id].title}: done`); }
+  },
   'comp-edit': (el) => compSheet(el.dataset.day),
   'comp-save': () => {
     const day = compDay || tKey();
@@ -2369,6 +2379,39 @@ function shiftForWeek(wk) {
 /** The shift on one day, or null on a day off. */
 const shiftOn = (dayKey) => { const sh = shiftForWeek(weekStart(dayKey)); return sh && shiftWorkDays().includes(fromKey(dayKey).getDay()) ? sh : null; };
 /** "18:30 · lunchbox" for a meal on a shift day. */
+/* ---------- Self-care: skin, teeth, hair and beard routines (care.js), timed to the day's shift ----------
+   Ticks are stored as hlog "YYYY-MM-DD|care:<routine>" = 1, so they sync with everything else. */
+const careIds = (day) => (window.PF_CARE ? window.PF_CARE.forDay(shiftOn(day), fromKey(day).getDay()) : []);
+const careDone = (day, id) => hget(day, `care:${id}`) === 1;
+function careCard(day) {
+  const ids = careIds(day);
+  if (!ids.length) return '';
+  const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, sh = shiftOn(day);
+  return `
+    <section class="card mt-4" aria-labelledby="careH">
+      <div class="row-between"><h2 class="h3" id="careH">Self-care</h2><span class="small muted">${n} of ${ids.length} done</span></div>
+      <p class="small muted m-0 mt-1">${sh ? `${SHIFTS[sh].name} · timed around it` : fromKey(day).getDay() % 6 === 0 ? 'Weekend: the deeper care' : 'Day off'}</p>
+      <ul class="care-list mt-2">${ids.map((id) => {
+        const r = R[id], done = careDone(day, id);
+        return `<li class="${done ? 'done' : ''}">
+          <button class="care-tick" data-action="care-tick" data-id="${id}" data-day="${day}" aria-pressed="${done}" aria-label="${esc(r.title)}: ${done ? 'done, tap to undo' : 'mark done'}">${done ? icon('check') : ''}</button>
+          <button class="care-row grow plain text-left" data-action="care-open" data-id="${id}" data-day="${day}">
+            <span class="plan-k">${esc(r.at)}</span><span class="grow"><b class="d-block">${esc(r.title)}</b><span class="small muted">${esc(r.sub)}</span></span>${icon('chevR')}
+          </button></li>`;
+      }).join('')}</ul>
+    </section>`;
+}
+function careSheet(id, day) {
+  const r = window.PF_CARE.R[id];
+  if (!r) return;
+  const done = careDone(day, id);
+  openSheet(r.title, `
+    <p class="small muted m-0 sheet-meta">${esc(r.at)} · ${esc(r.sub)}</p>
+    <ol class="recipe-steps mt-3">${r.steps.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
+    ${r.note ? `<div class="note-box mt-3">${esc(r.note)}</div>` : ''}
+    <button class="btn block lg mt-4 ${done ? 'ghost' : ''}" data-action="care-tick" data-id="${id}" data-day="${day}" data-close="1">${done ? 'Mark as not done' : 'Done'}</button>`);
+}
+
 const mealWhen = (m) => (m.at ? `${m.at}${m.note ? ` · ${m.note}` : ''}${m.pack ? ' · lunchbox' : ''}` : '');
 
 /** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week.

@@ -444,6 +444,7 @@ window.PF_MEALS = (function () {
     paneertikka: '{paneer} tikka with {capsicum}', palakpaneer: '{spinach} {paneer}', khichdi: '{moong} dal khichdi',
     sabzi: '{mixedveg} sabzi', gobi: '{cauliflower} sabzi', pattagobhi: '{cabbage} sabzi', kaddu: '{pumpkin} sabzi',
     gajarmatar: '{carrot} {peas}', zucchini: '{zucchini} sabzi', beans: '{beans} sabzi', moongchilla: '{moong} dal chilla',
+    bhindi: '{okra} masala',
   };
   /** Register something you bought that isn't on any list ("Other…"), standing in for `base`.
       kcal/protein are per 100 g (or per piece / tin); left out, the original's values are used. */

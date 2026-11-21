@@ -2101,12 +2101,25 @@ function qtyName(n, name) {
   const w = Math.floor(n), f = n - w;
   return `${w || ''}${Math.abs(f - 0.5) < 0.01 ? '½' : f.toFixed(1).slice(1)} ${name}`;
 }
+/** For an ingredient you didn't buy: the first of its kind (same group) that the week's list has and you didn't skip.
+    Frozen mixed veg, chicken and eggs are tried first, as the most flexible. */
+function autoStandIn(ing, tot, skipped) {
+  const M = window.PF_MEALS;
+  const rank = (a) => { const i = ['mixedveg', 'chicken', 'eggs'].indexOf(a); return i < 0 ? 9 : i; };
+  const alts = M.altsFor(ing).filter((a) => tot[a] && !skipped.includes(a)).sort((a, b) => rank(a) - rank(b));
+  if (alts.length) return alts[0];
+  // Nothing of its kind on the list: frozen mixed veg or eggs are the easiest to pick up.
+  for (const f of ['mixedveg', 'eggs']) if (M.altsFor(ing).includes(f) && !skipped.includes(f)) return f;
+  return null;
+}
 /** A dish, with any stand-ins you bought applied (subs = { ingredient: stand-in }). */
 const dishOf = (id, subs) => window.PF_MEALS.dishWith(id, subs);
 /** Stand-ins recorded on a week's grocery list: { ingredient: what you bought instead }. */
 function subsFor(wk) {
   const out = {};
+  const notBought = [];
   for (const [k, v] of Object.entries(state.grocery)) {
+    if (k.startsWith(wk + '|') && v && typeof v === 'object' && v.b === 0 && !v.sub) notBought.push(k.slice(wk.length + 1));
     if (!k.startsWith(wk + '|') || !v || typeof v !== 'object' || !v.sub) continue;
     const ing = k.slice(wk.length + 1);
     if (v.sub === 'other') {                                          // something not on any list, named by you
@@ -2115,6 +2128,16 @@ function subsFor(wk) {
       window.PF_MEALS.registerCustom(id, ing, v.cn, v.ck ?? null, v.cp ?? null);
       out[ing] = id;
     } else out[ing] = v.sub;
+  }
+  // Marked "Not bought" without naming a stand-in: use something of the same kind you're buying that week
+  // (okra -> another vegetable on the list, fish -> another protein), so the plan doesn't show a dish you can't cook.
+  if (notBought.length) {
+    const M = window.PF_MEALS, { tot } = weekNeeds(wk);
+    for (const ing of notBought) {
+      if (out[ing]) continue;
+      const alt = autoStandIn(ing, tot, notBought);
+      if (alt) out[ing] = alt;
+    }
   }
   return Object.keys(out).length ? out : null;
 }
@@ -2531,6 +2554,7 @@ VIEWS.plan = () => {
   const short = (k) => fromKey(k).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const { sections, withTopUps } = groceryList(start);
   const all = sections.flatMap((s) => s.items);
+  const gsubs = subsFor(start);
   const ticked = all.filter((it) => it.covered || state.grocery[`${start}|${it.id}`]).length;
   let body;
   if (planTab === 'week') {
@@ -2590,7 +2614,9 @@ VIEWS.plan = () => {
         return `<div class="sec-head sm"><h2 class="group-label m-0">${esc(s.name)}</h2><span class="small muted">${n} / ${s.items.length}</span></div>
         <ul class="grocery card list-card">${s.items.map((it) => {
           const k = `${start}|${it.id}`;
-          const v = state.grocery[k], st = groceryStatus(it.id, v);
+          const v = state.grocery[k];
+          let st = groceryStatus(it.id, v);
+          if (v && v.b === 0 && !v.sub && gsubs && gsubs[it.id]) st += ` · meals use ${ingShort(gsubs[it.id]).toLowerCase()} instead`;
           const hv = it.have ? `${it.covered ? 'Already have it: ' : ''}${fmtAmt(it.id, it.have)} left from earlier weeks` : '';
           const done = v || it.covered;
           return `<li><label class="check"><input type="checkbox" data-grocery="${esc(k)}" ${done ? 'checked' : ''} ${it.covered && !v ? 'disabled' : ''} aria-label="${it.covered && !v ? `Already have ${esc(it.name)}` : `Bought ${esc(it.name)}`}" /></label>

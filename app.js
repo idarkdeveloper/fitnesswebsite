@@ -2179,7 +2179,7 @@ const TRACK_ACTIONS = {
     save();
     if (el.dataset.close) closeSheet();
     rerender();
-    if (!was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All self-care done today' : `${window.PF_CARE.R[id].title}: done`); }
+    if (!was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All done for today' : `${window.PF_CARE.R[id].title}: done`); }
   },
   'comp-edit': (el) => compSheet(el.dataset.day),
   'comp-save': () => {
@@ -2389,14 +2389,14 @@ function careCard(day) {
   const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, sh = shiftOn(day);
   return `
     <section class="card mt-4" aria-labelledby="careH">
-      <div class="row-between"><h2 class="h3" id="careH">Self-care</h2><span class="small muted">${n} of ${ids.length} done</span></div>
-      <p class="small muted m-0 mt-1">${sh ? `${SHIFTS[sh].name} · timed around it` : fromKey(day).getDay() % 6 === 0 ? 'Weekend: the deeper care' : 'Day off'}</p>
+      <div class="row-between"><h2 class="h3" id="careH">Self-care &amp; home</h2><span class="small muted">${n} of ${ids.length} done</span></div>
+      <p class="small muted m-0 mt-1">${sh ? `${SHIFTS[sh].name} · timed around it` : fromKey(day).getDay() % 6 === 0 ? 'Weekend: deeper care, laundry and cleaning' : 'Day off'}</p>
       <ul class="care-list mt-2">${ids.map((id) => {
         const r = R[id], done = careDone(day, id);
         return `<li class="${done ? 'done' : ''}">
           <button class="care-tick" data-action="care-tick" data-id="${id}" data-day="${day}" aria-pressed="${done}" aria-label="${esc(r.title)}: ${done ? 'done, tap to undo' : 'mark done'}">${done ? icon('check') : ''}</button>
           <button class="care-row grow plain text-left" data-action="care-open" data-id="${id}" data-day="${day}">
-            <span class="plan-k">${esc(r.at)}</span><span class="grow"><b class="d-block">${esc(r.title)}</b><span class="small muted">${esc(r.sub)}</span></span>${icon('chevR')}
+            <span class="plan-k">${esc(r.at)}</span><span class="grow"><b class="d-block">${esc(r.title)}${r.title.startsWith(window.PF_CARE.kindOf(id)) ? '' : ` <span class="care-kind">${window.PF_CARE.kindOf(id)}</span>`}</b><span class="small muted">${esc(r.sub)}</span></span>${icon('chevR')}
           </button></li>`;
       }).join('')}</ul>
     </section>`;

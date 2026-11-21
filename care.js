@@ -1,4 +1,4 @@
-/* PulseFit self-care routines (skin, teeth, hair, beard), from the owner's own "Shift Worker Master Routine Guide".
+/* PulseFit self-care routines (skin, teeth, hair, beard) and weekend home care (laundry, cleaning), from the owner's own "Shift Worker Master Routine Guide".
    Each day shows the routines for that day's shift: morning shift, late shift, or a day off (with the weekend extras).
    Products are the owner's own (dm / Rossmann); steps keep his wording, trimmed to fit a phone. */
 window.PF_CARE = (function () {
@@ -14,10 +14,9 @@ window.PF_CARE = (function () {
       ],
     },
     'm-pm': {
-      at: '16:45', title: 'After-shift reset', sub: 'Shower off the workday, scalp tonic and overnight moisture',
+      at: '16:45', title: 'After-shift reset', sub: 'Shower off the workday and overnight moisture',
       steps: [
         ['Shower', 'Balea med pH 5.5 Duschgel, all over, to wash off the shift\'s sweat.'],
-        ['Hair & scalp', 'Balea Professional Conditioner Kopfhaut Sensitive on the lengths, 2 min, rinse. Detangle with the ebelin Entwirrkünstler, towel-dry, massage Balea Haarwasser Birke into the roots.'],
         ['Face wash', 'Balea MEN Sensitive Waschgel, gently.'],
         ['Moisture', '3–4 drops Balea Glycerin serum on damp skin, sealed with Balea Gesichtscreme Gel Aqua.'],
         ['Spots & hands', 'Balea Anti-Pickel patches on any spots. A pea of Mixa Ceramide hand cream before sleep.'],
@@ -25,9 +24,9 @@ window.PF_CARE = (function () {
       note: 'No heavy night cream: glycerin serum + aqua gel hydrate without clogging pores, so you wake up grease-free at 03:00.',
     },
     'e-am': {
-      at: '10:15', title: 'Pre-shift prep', sub: 'Shower, scalp boost, teeth, face shield and beard',
+      at: '10:15', title: 'Pre-shift prep', sub: 'Shower, teeth, face shield and beard',
       steps: [
-        ['Shower & scalp', 'Balea med pH 5.5 Duschgel. Towel-dry and massage Balea MEN Haar-Tonic Coffein Boost into crown and temples.'],
+        ['Shower', 'Balea med pH 5.5 Duschgel, all over.'],
         ['Teeth', 'Floss with the Dontodent sticks, brush 2 min with Elmex Sensitive, scrape your tongue, rinse with the antibacterial mouthwash.'],
         ['Face shield', 'L\'Oréal Aufwach-Kick wash, Gesichtswasser hautrein, 3 drops Niacinamide serum, L\'Oréal Anti-Glanz gel.'],
         ['Beard', 'Comb with the ebelin Bartkamm; warm 3 drops Balea MEN Bartöl in your palms and massage down to the skin.'],
@@ -43,6 +42,60 @@ window.PF_CARE = (function () {
         ['Hands', 'Mixa Ceramide hand cream, then lights out.'],
       ],
       note: 'Low light, nothing stimulating: no menthol Aufwach-Kick wash or scalp tonic at midnight; keep those for 10:15.',
+    },
+    // Hair: its own routine, done right after the shower.
+    'm-hair': {
+      at: '16:45', title: 'Hair & scalp', sub: 'After the shower: condition, detangle, birch scalp tonic',
+      steps: [
+        ['Condition', 'Balea Professional Conditioner Kopfhaut Sensitive on the lengths. Leave 2 min, rinse.'],
+        ['Detangle', 'ebelin Entwirrkünstler, gently from the ends up.'],
+        ['Scalp tonic', 'Towel-dry, then massage Balea Haarwasser Birke into the roots to clear and soothe the scalp.'],
+      ],
+    },
+    'e-hair': {
+      at: '10:15', title: 'Hair & scalp', sub: 'After the shower: caffeine root boost',
+      steps: [
+        ['Towel-dry', 'Pat, don\'t rub: wet hair breaks easily.'],
+        ['Scalp boost', 'Massage Balea MEN Haar-Tonic Power Effect Coffein Boost into the crown and temples for a minute.'],
+        ['Detangle', 'ebelin Entwirrkünstler through the lengths.'],
+      ],
+      note: 'Keep the caffeine tonic for the morning. At 00:30 skip all scalp products so you can fall asleep.',
+    },
+    'off-hair': {
+      at: 'Morning', title: 'Hair', sub: 'Day off: detangle and a light scalp tonic',
+      steps: [
+        ['Detangle', 'ebelin Entwirrkünstler through dry or damp hair.'],
+        ['Scalp', 'A little Balea Haarwasser Birke massaged into the roots.'],
+      ],
+    },
+    // Home: the weekend laundry and cleaning pages of the guide.
+    'laundry': {
+      kind: 'Home', at: 'Morning', title: 'Laundry (Miele)', sub: 'Saturday: work shirts, towels and sheets',
+      steps: [
+        ['Pre-treat', 'Turn work shirts inside out and spray the underarms with Dr. Beckmann Deo & Schweiss Fleckenspray. Leave 10–30 min.'],
+        ['Detergent', 'Slot II (main wash): Denkmit Color- or Vollwaschmittel. For whites or sweat add 1–2 tbsp Denkmit Fleckensalz Soda-Power. Softener slot: 1–2 caps Denkmit Hygiene-Spüler.'],
+        ['Drum', 'One Denkmit Farb- & Schmutzfangtuch in the drum with the clothes.'],
+        ['Program', 'Work shirts and colours: Buntwäsche 40 °C (or 30 °C). Towels, sheets and white undershirts: Koch-/Buntwäsche 60 °C. Pay in appWash and press Start.'],
+      ],
+      note: 'Saturday rather than Sunday: most German house rules ask for no washing machines on Sundays and holidays.',
+    },
+    'bathroom': {
+      kind: 'Home', at: 'Afternoon', title: 'Bathroom deep clean', sub: 'Saturday: toilet, limescale and mould (gloves on)',
+      steps: [
+        ['Gloves', 'Profissimo Einmalhandschuhe on, window open.'],
+        ['Toilet', 'Drop a Denkmit WC-Tab in the bowl and let it fizz 30–60 min. Then WC-Gel under the rim, scrub, flush.'],
+        ['Taps & glass', 'Denkmit Kalkreiniger Anti Kalk; wait 3 min, wipe damp, rinse.'],
+        ['Grout & mould', 'Denkmit Schimmelentferner mit Aktiv-Chlor on the spots; wait 15 min, wipe, air the room.'],
+      ],
+      note: 'Never mix the chlorine mould spray with the acidic limescale or toilet cleaners: it releases toxic gas. Do the mould step on its own, at the end, with the window open. Mixa Ceramide hand cream afterwards.',
+    },
+    'kitchen': {
+      kind: 'Home', at: 'Afternoon', title: 'Kitchen & surfaces', sub: 'Sunday: degrease, disinfect, lint-roll',
+      steps: [
+        ['Stovetop', 'Denkmit Fettlöser Power-Formel; leave 2 min, wipe clean.'],
+        ['Touch points', 'Phone, desk, light switches and handles with Denkmit Desinfektionstücher.'],
+        ['Fabrics', 'Profissimo Fusselroller over the sofa, coats and bed sheets.'],
+      ],
     },
     'off-am': {
       at: 'Morning', title: 'Teeth & face', sub: 'Your daily basics on a day off',
@@ -97,11 +150,13 @@ window.PF_CARE = (function () {
   };
   /** The routines for one day, in the order you do them. shift: 'morning' | 'evening' | null; dow: 0 = Sunday. */
   function forDay(shift, dow) {
-    if (shift === 'morning') return ['m-am', 'm-pm'];
-    if (shift === 'evening') return ['e-am', 'e-pm'];
-    if (dow === 6) return ['off-am', 'sat-bha'];
-    if (dow === 0) return ['sun-am', 'sun-hair', 'sun-beard', 'off-pm'];
-    return ['off-am', 'off-pm'];
+    if (shift === 'morning') return ['m-am', 'm-pm', 'm-hair'];
+    if (shift === 'evening') return ['e-am', 'e-hair', 'e-pm'];
+    if (dow === 6) return ['off-am', 'off-hair', 'laundry', 'bathroom', 'sat-bha'];
+    if (dow === 0) return ['sun-am', 'sun-hair', 'kitchen', 'sun-beard', 'off-pm'];
+    return ['off-am', 'off-hair', 'off-pm'];
   }
-  return { R, forDay };
+  /** Skin (face, teeth, body), Hair or Home: the small label on each routine. */
+  const kindOf = (id) => R[id].kind || (/hair/.test(id) ? 'Hair' : /beard/.test(id) ? 'Beard' : 'Skin');
+  return { R, forDay, kindOf };
 })();

@@ -1649,3 +1649,12 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .shift-row > svg:first-child { width: 22px; height: 22px; flex: none; color: var(--accent); }
 .shift-row > svg:last-child { width: 18px; height: 18px; flex: none; color: var(--muted); }
 .pd .sh { font-size: var(--fs-xs); color: var(--accent); min-height: 1.2em; }
+
+/* Body fat & muscle chart: body fat in the accent colour, muscle mass in green, each on its own scale. */
+.comp-chart .cp-bf { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; }
+.comp-chart .cp-bf-dot { fill: var(--accent); }
+.comp-chart .cp-mu { fill: none; stroke: var(--success); stroke-width: 2; stroke-dasharray: 5 4; stroke-linejoin: round; }
+.comp-chart .cp-mu-dot { fill: var(--success); }
+.comp-key { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.comp-key .ck { display: inline-block; width: 14px; height: 3px; border-radius: 2px; background: var(--accent); }
+.comp-key .ck.mu { background: var(--success); margin-left: var(--space-2); }

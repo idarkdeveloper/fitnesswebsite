@@ -1256,13 +1256,22 @@ const hp = () => state.hprofile;
 /** One-time: the owner said the week of Mon 23 Nov 2026 is an evening shift (shifts alternate weekly). */
 /** Ingredients you don't eat, from hprofile.dislikes ("cabbage,okra"); the meal plan leaves out dishes with them. */
 const dislikes = () => String(hp().dislikes || '').split(',').filter(Boolean);
-const applyDislikes = () => { if (window.PF_MEALS && window.PF_MEALS.setDislikes) window.PF_MEALS.setDislikes(dislikes()); };
+const applyDislikes = () => {
+  if (!window.PF_MEALS || !window.PF_MEALS.setDislikes) return;
+  window.PF_MEALS.setDislikes(dislikes());
+  window.PF_MEALS.setBread(hp().bread);
+};
 function seedShift() {
   const h = state.hprofile;
-  if (!h || h.shiftSeeded) return;
-  if (!Object.keys(h).some((k) => k.startsWith('shift|'))) { h['shift|2026-11-23'] = 'evening'; if (h.shiftDays == null) h.shiftDays = '1,2,3,4,5'; }
-  h.shiftSeeded = 1;
+  if (!h || (h.shiftSeeded && h.dislikesSeeded && h.teaSeeded && h.breadSeeded)) return;
+  // Each setting is seeded once on its own flag, so a later one still lands on a phone that already has the earlier ones.
+  if (!h.shiftSeeded) {
+    if (!Object.keys(h).some((k) => k.startsWith('shift|'))) { h['shift|2026-11-23'] = 'evening'; if (h.shiftDays == null) h.shiftDays = '1,2,3,4,5'; }
+    h.shiftSeeded = 1;
+  }
   if (!h.dislikesSeeded) { if (h.dislikes == null) h.dislikes = 'cabbage'; h.dislikesSeeded = 1; }   // the owner doesn't like white cabbage
+  if (!h.breadSeeded) { if (h.bread == null) h.bread = 'durum'; h.breadSeeded = 1; }   // shop-bought dürüm, not home-made roti
+  if (!h.teaSeeded) { const d = String(h.dislikes || '').split(',').filter(Boolean); if (!d.includes('tea')) h.dislikes = [...d, 'tea'].join(','); h.teaSeeded = 1; }   // nor drinks tea
   save();
 }
 const nf = (n) => Math.round(n).toLocaleString('en-US');
@@ -2085,6 +2094,13 @@ const PLAN_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 let planTab = 'week';
 const planIdx = (key) => (fromKey(key).getDay() + 6) % 7;          // Monday = 0
 const weekStart = (key) => keyAdd(key, -planIdx(key));
+/** "2 × Roti", "½ Dürüm flatbread", "1½ Dürüm flatbread": whole counts use ×, halves read as a fraction. */
+function qtyName(n, name) {
+  if (n === 1) return name;
+  if (Number.isInteger(n)) return `${n} × ${name}`;
+  const w = Math.floor(n), f = n - w;
+  return `${w || ''}${Math.abs(f - 0.5) < 0.01 ? '½' : f.toFixed(1).slice(1)} ${name}`;
+}
 /** A dish, with any stand-ins you bought applied (subs = { ingredient: stand-in }). */
 const dishOf = (id, subs) => window.PF_MEALS.dishWith(id, subs);
 /** Stand-ins recorded on a week's grocery list: { ingredient: what you bought instead }. */
@@ -2116,7 +2132,7 @@ function mealInfo(items, subs) {
     const ratio = base && base[2] ? k / base[2] : 1;
     const x = row ? M.nutFrom(k, p, [row[0] * ratio, row[1] * ratio, row[2], row[3]]) : null;
     if (x) for (const key of NUT_KEYS) nut[key] += x[key] * n;
-    return n === 1 ? name : `${n} × ${name}`;
+    return qtyName(n, name);
   });
   return { text: parts.join(' + '), kcal, protein, dishes, nut: nutOf(nut) };
 }
@@ -2177,7 +2193,7 @@ function recipeSheet(id, n, wk) {
     ${r.tip ? `<div class="note-box mt-3">${esc(fill(r.tip))}</div>` : ''}`);
 }
 /** A meal's dishes as recipe links: "2 × Roti + Dal saag + Salad". */
-const dishLinks = (m, wk) => m.dishes.map((d) => `<button class="dish-link" data-action="recipe" data-dish="${d.id}" data-n="${d.n}" data-wk="${wk}">${d.n === 1 ? '' : `${d.n} × `}${esc(d.name)}</button>`).join(' + ');
+const dishLinks = (m, wk) => m.dishes.map((d) => `<button class="dish-link" data-action="recipe" data-dish="${d.id}" data-n="${d.n}" data-wk="${wk}">${esc(qtyName(d.n, d.name))}</button>`).join(' + ');
 
 /* ---------- Shift work ----------
    Shifts include travel time. On a shift day the plan keeps the same food but sets when each meal is eaten,
@@ -2254,15 +2270,20 @@ function daysText(days) {
   return idx.every((v, k) => k === 0 || v === idx[k - 1] + 1) && order.length > 2 ? `${names[0]}–${names[names.length - 1]}` : names.join(', ');
 }
 /** Vegetables and proteins the plan can leave out. Leaving one out swaps in other dishes for the rest of the plan. */
+const DISLIKE_NAMES = { tea: 'Tea and chai' };
 function dislikeSheet() {
   const M = window.PF_MEALS, dl = dislikes();
   const used = new Set(Object.values(M.DISH).flatMap((d) => Object.keys(d[4])));
   const pick = (g) => M.GROUPS[g].filter((x) => used.has(x) && M.ING[x]);
-  const chips = (list) => list.map((x) => `<button class="chip ${dl.includes(x) ? 'on' : ''}" aria-pressed="${dl.includes(x)}" data-action="dislike-toggle" data-ing="${x}">${dl.includes(x) ? 'Not for me: ' : ''}${esc(ingShort(x))}</button>`).join('');
+  const chips = (list) => list.map((x) => `<button class="chip ${dl.includes(x) ? 'on' : ''}" aria-pressed="${dl.includes(x)}" data-action="dislike-toggle" data-ing="${x}">${dl.includes(x) ? 'Not for me: ' : ''}${esc(DISLIKE_NAMES[x] || ingShort(x))}</button>`).join('');
   openSheet("Foods you don't eat", `
     <p class="small muted m-0">Tap what you don't eat. Plans, recipes and the grocery list leave out every dish with it and pick others. Tap again to bring it back.</p>
     <h3 class="sheet-sub">Vegetables</h3><div class="chips">${chips(pick('veg'))}</div>
-    <h3 class="sheet-sub">Protein</h3><div class="chips">${chips(pick('protein'))}</div>`);
+    <h3 class="sheet-sub">Protein</h3><div class="chips">${chips(pick('protein'))}</div>
+    <h3 class="sheet-sub">Drinks</h3><div class="chips">${chips(['tea'])}</div>
+    <h3 class="sheet-sub">Bread with meals</h3>
+    <div class="chips">${[['durum', 'Dürüm, shop-bought'], ['roti', 'Home-made roti']].map(([k, n]) => `<button class="chip ${(hp().bread || 'roti') === k ? 'on' : ''}" aria-pressed="${(hp().bread || 'roti') === k}" data-action="bread-set" data-k="${k}">${n}</button>`).join('')}</div>
+    <p class="small muted m-0">Dürüm: half a flatbread wherever the plan had a roti.</p>`);
 }
 function shiftSheet(wk) {
   const cur = hp()['shift|' + wk] || '', eff = shiftForWeek(wk), days = shiftWorkDays();
@@ -2293,7 +2314,7 @@ function topUps(day, T) {
   if (roti > 0) add('roti', roti);
   return out;
 }
-const topUpText = (list, subs) => list.map(([id, n]) => { const [name, serving] = dishOf(id, subs); return n === 1 ? `${name} (${serving})` : `${n} × ${name}`; }).join(', ');
+const topUpText = (list, subs) => list.map(([id, n]) => { const [name, serving] = dishOf(id, subs); return n === 1 ? `${name} (${serving})` : qtyName(n, name); }).join(', ');
 
 function planCard(key) {
   if (!window.PF_MEALS) return '';
@@ -2317,9 +2338,8 @@ function planCard(key) {
     </section>`;
 }
 
-/** This week's shopping list from the plan (plus daily top-ups when targets are set), grouped by section. */
-function groceryList(start) {
-  const M = window.PF_MEALS;
+/** What a week's plan uses (plus daily top-ups when targets are set): { ingredient: amount }. */
+function weekNeeds(start) {
   const tot = {};
   const addItems = (items) => items.forEach(([id, n]) => {
     for (const [ing, amt] of Object.entries(dishOf(id)[4])) tot[ing] = (tot[ing] || 0) + amt * n;
@@ -2332,10 +2352,47 @@ function groceryList(start) {
     const ups = topUps(d, T);
     if (ups.length) { withTopUps = true; addItems(ups); }
   }
+  return { tot, withTopUps };
+}
+
+/* ---- Leftovers: buy 1 kg where the list said 500 g, and next week's list knows you still have 500 g ----
+   Only things that keep a week or more carry over: grains and flour, tins, frozen, pantry and Asia-shop items,
+   eggs, potatoes, onions, and meat sold to be frozen (lamb trotters). Fresh vegetables, dairy and meat don't. */
+const KEEP_SECTIONS = ['Bread, grains & flour', 'Tins, lentils & pulses', 'Frozen', 'Pantry', 'Asia / Indian shop'];
+const KEEP_ITEMS = ['eggs', 'potato', 'onion', 'lambfeet'];
+const keeps = (ing) => !!window.PF_MEALS.ING[ing] && (KEEP_SECTIONS.includes(window.PF_MEALS.ING[ing][1]) || KEEP_ITEMS.includes(ing));
+const CARRY_WEEKS = 4;
+/** What is left after the week starting `wk`: what you had going in, plus what you bought, minus what the plan used. */
+function leftoverAfter(wk, depth = 0) {
+  if (depth >= CARRY_WEEKS) return {};
+  const carry = leftoverAfter(keyAdd(wk, -7), depth + 1);
+  const recs = Object.keys(state.grocery).filter((k) => k.startsWith(wk + '|')).map((k) => k.split('|')[1]);
+  const ings = [...new Set([...Object.keys(carry), ...recs])].filter(keeps);
+  if (!ings.length) return {};
+  const { tot } = weekNeeds(wk), out = {};
+  for (const ing of ings) {
+    const c = carry[ing] || 0, n = tot[ing] ? roundQty(ing, tot[ing]) : 0, v = state.grocery[`${wk}|${ing}`];
+    const bought = v === 1 ? Math.max(0, n - c) : v && v.b != null ? v.b : 0;   // ticked = bought what the list said
+    const left = c + bought - n;
+    if (left > 0.001) out[ing] = left;
+  }
+  return out;
+}
+
+/** This week's shopping list from the plan (plus daily top-ups when targets are set), grouped by section,
+    with what's left from earlier weeks taken off. */
+function groceryList(start) {
+  const M = window.PF_MEALS;
+  const { tot, withTopUps } = weekNeeds(start);
+  const have = leftoverAfter(keyAdd(start, -7));
   const sections = M.SECTIONS.map((s) => ({
     name: s,
     items: Object.keys(tot).filter((ing) => M.ING[ing][1] === s).sort((a, b) => M.ING[a][0].localeCompare(M.ING[b][0]))
-      .map((ing) => { const [qty, packs] = fmtQty(ing, tot[ing]); return { id: ing, name: M.ING[ing][0], qty, packs, need: roundQty(ing, tot[ing]) }; }),
+      .map((ing) => {
+        const full = roundQty(ing, tot[ing]), h = Math.min(have[ing] || 0, full), rest = Math.max(0, tot[ing] - h);
+        const [qty, packs] = rest > 0.001 ? fmtQty(ing, rest) : ['Have it', ''];
+        return { id: ing, name: M.ING[ing][0], qty, packs, need: rest > 0.001 ? roundQty(ing, rest) : 0, have: h, covered: rest <= 0.001 };
+      }),
   })).filter((s) => s.items.length);
   return { sections, withTopUps };
 }
@@ -2374,9 +2431,9 @@ function groceryStatus(ing, v) {
   }
   return parts.join(' ');
 }
-/** Drop grocery records from weeks that are over (this week's and next week's stay). */
+/** Drop grocery records older than the leftover window. */
 function pruneGrocery() {
-  const keep = weekStart(todayKey());
+  const keep = keyAdd(weekStart(todayKey()), -7 * CARRY_WEEKS);   // a few past weeks stay, for leftovers
   for (const k of Object.keys(state.grocery)) if (k.split('|')[0] < keep) delete state.grocery[k];
 }
 
@@ -2440,7 +2497,7 @@ function groceryEditSheet(k, ing, need) {
   const v = state.grocery[k];
   const rec = v && typeof v === 'object' ? v : v ? { b: need } : {};
   groEdit = { k, ing, need, sub: rec.sub || null };
-  const [qty, packs] = fmtQty(ing, need);
+  const [qty, packs] = need > 0 ? fmtQty(ing, need) : ['Already have it', ''];
   const alts = M.altsFor(ing);
   const unitLabel = unit === 'pc' ? (ing === 'eggs' ? 'eggs' : ing === 'bread' ? 'slices' : 'pieces') : unit === 'tin' ? 'tins' : unit;
   openSheet(ingShort(ing), `
@@ -2448,6 +2505,7 @@ function groceryEditSheet(k, ing, need) {
     <div class="card flat soft mt-3 row-between"><span>Suggested for the week</span><span class="text-right"><b>${esc(qty)}</b>${packs ? `<span class="d-block small muted">${esc(packs)}</span>` : ''}</span></div>
     <div class="field mt-4"><label for="gbAmt">What you bought (${unitLabel})</label>
       <input class="input" id="gbAmt" type="number" inputmode="decimal" min="0" step="any" value="${rec.b ?? ''}" placeholder="${need}" /></div>
+    <p class="small muted m-0 mt-2">${keeps(ing) ? 'Bought more than this? What you don\'t use this week comes off next week\'s list.' : 'Fresh food: anything extra isn\'t carried to next week\'s list.'}</p>
     <div class="chips mt-2"><button class="chip" data-action="grocery-amt" data-v="${need}">As suggested</button><button class="chip" data-action="grocery-amt" data-v="0">Not available</button>${pack && unit !== 'pc' ? `<button class="chip" data-action="grocery-amt" data-v="${pack[0] * Math.max(1, Math.round(need / pack[0]))}">${Math.max(1, Math.round(need / pack[0]))} × ${esc(pack[1])}</button>` : ''}</div>
     <h3 class="sheet-sub">Bought something else instead?</h3>
       <p class="small muted m-0">Pick it and that week's meals switch to it.</p>
@@ -2473,7 +2531,7 @@ VIEWS.plan = () => {
   const short = (k) => fromKey(k).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const { sections, withTopUps } = groceryList(start);
   const all = sections.flatMap((s) => s.items);
-  const ticked = all.filter((it) => state.grocery[`${start}|${it.id}`]).length;
+  const ticked = all.filter((it) => it.covered || state.grocery[`${start}|${it.id}`]).length;
   let body;
   if (planTab === 'week') {
     const strip = PLAN_DAYS.map((name, i) => {
@@ -2503,7 +2561,7 @@ VIEWS.plan = () => {
         ${icon('timer')}<span class="grow"><b>${wsh ? `${SHIFTS[wsh].name}, ${SHIFTS[wsh].hours}` : 'No shift this week'}</b><span class="d-block small muted">${wsh ? `${daysText(shiftWorkDays())} · meals timed around it` : 'Working shifts? Set them and meals are timed around them'}</span></span>${icon('chevR')}</button>`;
     const dl = dislikes();
     const dislikeRow = `<button class="card flat soft shift-row mt-2" data-action="dislike-sheet">
-        ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}</span></span>${icon('chevR')}</button>`;
+        ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => DISLIKE_NAMES[x] || ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}${hp().bread === 'durum' ? ' · Dürüm instead of roti' : ''}</span></span>${icon('chevR')}</button>`;
     body = `
       ${shiftRow}
       ${dislikeRow}
@@ -2528,13 +2586,15 @@ VIEWS.plan = () => {
         ${ticked ? `<button class="link-btn" data-action="grocery-clear" data-wk="${start}">Clear</button>` : ''}
       </section>
       ${sections.map((s) => {
-        const n = s.items.filter((it) => state.grocery[`${start}|${it.id}`]).length;
+        const n = s.items.filter((it) => it.covered || state.grocery[`${start}|${it.id}`]).length;
         return `<div class="sec-head sm"><h2 class="group-label m-0">${esc(s.name)}</h2><span class="small muted">${n} / ${s.items.length}</span></div>
         <ul class="grocery card list-card">${s.items.map((it) => {
           const k = `${start}|${it.id}`;
           const v = state.grocery[k], st = groceryStatus(it.id, v);
-          return `<li><label class="check"><input type="checkbox" data-grocery="${esc(k)}" ${v ? 'checked' : ''} aria-label="Bought ${esc(it.name)}" /></label>
-            <button class="g-item grow plain text-left" data-action="grocery-edit" data-k="${esc(k)}" data-ing="${it.id}" data-need="${it.need}" aria-label="${esc(it.name)}: note what you bought"><span class="${v ? 'done' : ''}">${esc(it.name)}</span>${st ? `<span class="d-block small ${v && v.sub ? 'accent-text' : 'muted'}">${esc(st)}</span>` : ''}</button>
+          const hv = it.have ? `${it.covered ? 'Already have it: ' : ''}${fmtAmt(it.id, it.have)} left from earlier weeks` : '';
+          const done = v || it.covered;
+          return `<li><label class="check"><input type="checkbox" data-grocery="${esc(k)}" ${done ? 'checked' : ''} ${it.covered && !v ? 'disabled' : ''} aria-label="${it.covered && !v ? `Already have ${esc(it.name)}` : `Bought ${esc(it.name)}`}" /></label>
+            <button class="g-item grow plain text-left" data-action="grocery-edit" data-k="${esc(k)}" data-ing="${it.id}" data-need="${it.need}" aria-label="${esc(it.name)}: note what you bought"><span class="${done ? 'done' : ''}">${esc(it.name)}</span>${hv ? `<span class="d-block small accent-text">${esc(hv)}</span>` : ''}${st ? `<span class="d-block small ${v && v.sub ? 'accent-text' : 'muted'}">${esc(st)}</span>` : ''}</button>
             <span class="text-right qty"><b>${esc(it.qty)}</b>${it.packs ? `<span class="d-block small muted">${esc(it.packs)}</span>` : ''}</span></li>`;
         }).join('')}</ul>`;
       }).join('')}
@@ -2590,6 +2650,7 @@ const PLAN_ACTIONS = {
   },
   'shift-sheet': (el) => shiftSheet(el.dataset.wk),
   'dislike-sheet': () => dislikeSheet(),
+  'bread-set': (el) => { hp().bread = el.dataset.k; applyDislikes(); save(); rerender(); dislikeSheet(); },
   'dislike-toggle': (el) => {
     const ing = el.dataset.ing, cur = dislikes();
     hp().dislikes = (cur.includes(ing) ? cur.filter((x) => x !== ing) : [...cur, ing]).join(',');
@@ -4041,7 +4102,7 @@ document.addEventListener('change', async (ev) => {
   }
   if (ev.target.dataset && ev.target.dataset.grocery) {
     const k = ev.target.dataset.grocery;
-    pruneGrocery();                                                 // past weeks only; this and next week stay
+    pruneGrocery();                                                 // only weeks older than the leftover window
     if (ev.target.checked) state.grocery[k] = 1; else delete state.grocery[k];
     save(); rerender();
     return;

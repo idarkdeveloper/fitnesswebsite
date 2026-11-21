@@ -139,11 +139,14 @@ window.PF_MEALS = (function () {
     eggfriedrice: ['Egg fried rice', '1 plate', 470, 18, { rice: 60, eggs: 2, mixedveg: 100, onion: 20, oil: 8 }],
     masalapasta: ['Masala pasta with chicken', '1 plate', 520, 39, { pasta: 80, chicken: 110, capsicum: 60, tinnedtom: 120, onion: 30, oil: 7 }],
     curdrice: ['Curd rice', '1 bowl', 300, 10, { rice: 50, curd: 150, cucumber: 0.15, oil: 3 }],
+    // Saturday breakfast in winter, from V4_FROM (asked for by name): slow-cooked lamb.
+    nihari: ['Lamb nihari', '1 bowl', 375, 32, { lamb: 150, onion: 40, atta: 10, oil: 6 }],
   };
 
   // Label nutrients per serving, estimated for home cooking: [fat, of which saturates, sugar, salt] in g.
   // Carbohydrate is not listed: it is derived from kcal, protein and fat (4/4/9 kcal per g), so the numbers always add up.
   const NUT = {
+    nihari: [18, 6.5, 2, 1.5],
     roti: [2.5, 0.4, 0.5, 0.2], bread: [1, 0.2, 1.5, 0.5], rice: [0.5, 0.1, 0.1, 0],
     dal: [5.5, 0.6, 3, 1], dalpalak: [5.5, 0.6, 2.5, 1], rajma: [6, 0.7, 4, 1.1], chana: [7.5, 0.8, 5, 1.1],
     chickencurry: [15, 2.5, 5, 1.3], tikka: [9, 2, 3, 1.2], keema: [15, 3.5, 6, 1.2], fishcurry: [10, 1, 5, 1.2],
@@ -286,6 +289,9 @@ window.PF_MEALS = (function () {
   const MAX_V1 = { chicken: 3, paneer: 2, fish: 2, turkey: 2 }, MAX_V2 = { paneer: 2 };
   // From V3_FROM the pools also hold the newer dishes. Treats (kulcha, pav bhaji, wrap pizza) at most twice a week.
   const V3_FROM = '2026-11-16', MAX_V3 = { paneer: 2, treat: 2 };
+  // From V4_FROM, Saturday breakfast in winter (November to February) is always lamb nihari with a roti:
+  // a day off, so there's time for it to simmer.
+  const V4_FROM = '2026-11-23', SAT = 5, WINTER = [10, 11, 0, 1], NIHARI = { p: 'lamb', items: [['nihari', 1], ['roti', 1]] };
 
   // What's in season (or cheap) in German shops, by month. Frozen mixed veg fills in all year.
   const SEASON = [
@@ -325,6 +331,8 @@ window.PF_MEALS = (function () {
     const r = rng('pulsefit|' + mondayKey);
     const v2 = mondayKey >= V2_FROM, v3 = mondayKey >= V3_FROM, MAX = v3 ? MAX_V3 : v2 ? MAX_V2 : MAX_V1;
     const used = {};                                   // protein -> count this week
+    const [y, m, d] = mondayKey.split('-').map(Number);
+    const niharDay = mondayKey >= V4_FROM && WINTER.includes(new Date(y, m - 1, d + SAT).getMonth()) && !hasDisliked('nihari');
     const days = Array.from({ length: 7 }, () => ({}));
     for (const slot of [L, D, B, S]) {                 // lunch and dinner first: they carry the protein limits
       const avail = POOLS[slot].filter((o) => (v2 || !o.v2) && (v3 || !o.v3));
@@ -343,12 +351,12 @@ window.PF_MEALS = (function () {
           if (o.p && prev && prev.p === o.p && o.p !== 'egg') return false;      // nor two days running
           return true;
         };
-        const pick = order.find((o) => ok(o, true)) || order.find((o) => ok(o, false));
+        const pick = slot === B && i === SAT && niharDay ? NIHARI
+          : order.find((o) => ok(o, true)) || order.find((o) => ok(o, false));
         taken.add(pick); days[i][slot] = pick;
         if (pick.p) used[pick.p] = (used[pick.p] || 0) + 1;
       }
     }
-    const [y, m, d] = mondayKey.split('-').map(Number);
     const offset = Math.floor(r() * 4);
     const plan = days.map((day, i) => {
       const month = new Date(y, m - 1, d + i).getMonth();

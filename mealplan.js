@@ -146,8 +146,7 @@ window.PF_MEALS = (function () {
     eggfriedrice: ['Egg fried rice', '1 plate', 470, 18, { rice: 60, eggs: 2, mixedveg: 100, onion: 20, oil: 8 }],
     masalapasta: ['Masala pasta with chicken', '1 plate', 520, 39, { pasta: 80, chicken: 110, capsicum: 60, tinnedtom: 120, onion: 30, oil: 7 }],
     curdrice: ['Curd rice', '1 bowl', 300, 10, { rice: 50, curd: 150, cucumber: 0.15, oil: 3 }],
-    // From V5_FROM: South Indian (ready-made batter from the Asia shop, no grinding) and Western pasta and traybake.
-    idli: ['Idli', '4 pieces', 225, 7, { dosabatter: 160 }],
+    // From V5_FROM: South Indian (ready-made dosa batter from the Asia shop, no grinding) and Western pasta and traybake.
     dosa: ['Plain dosa', '2 dosas', 290, 8, { dosabatter: 180, oil: 6 }],
     masaladosa: ['Masala dosa', '2 dosas with potato filling', 430, 10, { dosabatter: 180, potato: 150, onion: 40, oil: 10 }],
     sambar: ['Sambar', '1 bowl', 230, 11, { dal: 40, mixedveg: 80, onion: 20, tinnedtom: 40, oil: 5 }],
@@ -159,6 +158,15 @@ window.PF_MEALS = (function () {
     // Sattu (you have it at home): a salty drink for a snack, and a no-rolling breakfast roll in a dürüm.
     sattudrink: ['Sattu drink (namkeen)', '1 large glass', 160, 9, { sattu: 40, lemon: 0.25 }],
     sattuwrap: ['Sattu dürüm roll', '1 roll', 480, 19, { durum: 1, sattu: 50, onion: 40, lemon: 0.25, oil: 5 }],
+    // Sandwich toaster / contact grill and air fryer: quick, little washing up.
+    chickensandwich: ['Grilled chicken & cheese sandwich', '2 slices', 395, 38, { bread: 2, chicken: 100, mozzarella: 30, capsicum: 30, onion: 15, curd: 20 }],
+    masalasandwich: ['Bombay masala grilled sandwich', '2 slices', 375, 15, { bread: 2, potato: 100, onion: 15, capsicum: 30, tomato: 30, mozzarella: 25, oil: 3 }],
+    tunamelt: ['Tuna melt sandwich', '2 slices', 345, 30, { bread: 2, tuna: 0.5, mozzarella: 30, onion: 15, curd: 20 }],
+    eggcheese: ['Grilled egg & cheese sandwich', '2 slices, 2 eggs', 425, 25, { bread: 2, eggs: 2, mozzarella: 25, tomato: 30, oil: 2 }],
+    airthighs: ['Air-fryer tandoori chicken thighs', '160 g raw', 335, 33, { chickenthigh: 160, curd: 30, lemon: 0.25, oil: 3 }],
+    airfish: ['Air-fryer masala fish', '160 g raw', 230, 32, { fish: 160, besan: 15, oil: 5 }],
+    wedges: ['Air-fryer potato wedges', '1 plate', 195, 4, { potato: 200, oil: 5 }],
+    chanatikki: ['Air-fryer chana tikki', '3 patties', 265, 13, { chana: 0.5, besan: 20, onion: 20, oil: 4 }],
     traybake: ['Chicken, potato & veg traybake', '1 tray', 430, 41, { chicken: 150, potato: 200, capsicum: 80, zucchini: 80, oil: 8 }],
     // Saturday breakfast in winter, from V4_FROM (asked for by name): lamb trotters, slow-cooked.
     nihari: ['Nihari (lamb trotters)', '1 bowl', 400, 28, { lambfeet: 2, onion: 40, atta: 10, oil: 6 }],
@@ -169,9 +177,11 @@ window.PF_MEALS = (function () {
   const NUT = {
     nihari: [24, 9, 2, 1.5],
     durum: [3, 0.6, 1.5, 0.9],
-    idli: [1, 0.2, 0.5, 0.6], sambar: [6, 0.7, 5, 1.2], dosa: [7, 0.8, 0.8, 0.7], masaladosa: [12, 1.2, 3, 1.1],
+    sambar: [6, 0.7, 5, 1.2], dosa: [7, 0.8, 0.8, 0.7], masaladosa: [12, 1.2, 3, 1.1],
     lemonrice: [12, 1.2, 0.5, 0.6], chettinad: [12, 2, 5, 1.3], spagbol: [12, 2.5, 10, 1], tunapasta: [8, 1, 9, 1.1],
-    chickenpasta: [10, 3, 6, 0.9], traybake: [11, 1.5, 6, 0.8], sattudrink: [2.4, 0.4, 1, 0.8], sattuwrap: [12, 1.5, 3, 1.8],
+    chickenpasta: [10, 3, 6, 0.9], traybake: [11, 1.5, 6, 0.8], sattudrink: [2.4, 0.4, 1, 0.8],
+    chickensandwich: [9, 3.5, 5, 1.6], masalasandwich: [9, 3.5, 5, 1.4], tunamelt: [7, 3, 4, 1.7], eggcheese: [17, 6, 4, 1.5],
+    airthighs: [17, 4, 2, 1], airfish: [6, 0.6, 0.5, 0.9], wedges: [5, 0.4, 1, 0.4], chanatikki: [7, 0.7, 2, 0.9], sattuwrap: [12, 1.5, 3, 1.8],
     roti: [2.5, 0.4, 0.5, 0.2], bread: [1, 0.2, 1.5, 0.5], rice: [0.5, 0.1, 0.1, 0],
     dal: [5.5, 0.6, 3, 1], dalpalak: [5.5, 0.6, 2.5, 1], rajma: [6, 0.7, 4, 1.1], chana: [7.5, 0.8, 5, 1.1],
     chickencurry: [15, 2.5, 5, 1.3], tikka: [9, 2, 3, 1.2], keema: [15, 3.5, 6, 1.2], fishcurry: [10, 1, 5, 1.2],
@@ -255,10 +265,11 @@ window.PF_MEALS = (function () {
       { p: 'treat', v3: 1, items: [['kulcha', 1], ['chana', 1]] },
       { p: 'paneer', v3: 1, items: [['vegsandwich', 1]] },
       { p: 'egg', v3: 1, items: [['eggtoast', 1]] },
-      { p: 'dal', v5: 1, items: [['idli', 1], ['sambar', 1]] },
       { p: 'egg', v5: 1, items: [['dosa', 1], ['sambar', 1], ['boiled2', 1]] },
       { p: 'treat', v5: 1, items: [['masaladosa', 1], ['curd', 1]] },
       { p: 'dal', v5: 1, items: [['sattuwrap', 1]] },
+      { p: 'egg', v5: 1, items: [['eggcheese', 1]] },
+      { p: '', v5: 1, items: [['masalasandwich', 1], ['curd', 1]] },
     ],
     [L]: [
       { p: 'chicken', items: [['roti', 2], ['chickencurry', 1], ['salad', 1]] },
@@ -286,6 +297,9 @@ window.PF_MEALS = (function () {
       { p: 'turkey', v5: 1, items: [['spagbol', 1], ['salad', 1]] },
       { p: 'fish', v5: 1, items: [['tunapasta', 1], ['salad', 1]] },
       { p: 'chicken', v5: 1, items: [['chickenpasta', 1], ['salad', 1]] },
+      { p: 'chicken', v5: 1, items: [['chickensandwich', 1], ['salad', 1]] },
+      { p: 'fish', v5: 1, items: [['tunamelt', 1], ['salad', 1]] },
+      { p: 'beans', v5: 1, items: [['chanatikki', 1], ['roti', 1], ['raita', 1]] },
     ],
     [S]: [
       { p: '', items: [['chai', 1], ['roastchana', 1]] },
@@ -318,6 +332,9 @@ window.PF_MEALS = (function () {
       { p: 'dal', v3: 1, items: [['curdrice', 1], ['SABZI', 1], ['boiled2', 1]] },
       { p: 'chicken', v5: 1, items: [['chettinad', 1], ['roti', 1], ['salad', 1]] },
       { p: 'chicken', v5: 1, items: [['traybake', 1]] },
+      { p: 'chicken', v5: 1, items: [['airthighs', 1], ['roti', 1], ['salad', 1]] },
+      { p: 'fish', v5: 1, items: [['airfish', 1], ['wedges', 1], ['salad', 1]] },
+      { p: 'beans', v5: 1, items: [['chanatikki', 1], ['raita', 1], ['salad', 1]] },
       { p: 'turkey', v5: 1, items: [['spagbol', 1], ['salad', 1]] },
       { p: 'fish', v5: 1, items: [['tunapasta', 1], ['salad', 1]] },
     ],

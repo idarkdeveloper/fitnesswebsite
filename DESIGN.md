@@ -127,6 +127,8 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 - **≥ 960px:** a 240px sticky sidebar replaces the tab bar. Content stays centred and capped at 760px.
 - Grids: the Movement Library is 2 columns, or 3 from 700px. Stats are 2 columns. Streak badges are 4 columns. Ladder badges are 5 columns.
 - Hero art has a max height (320–380px) so it never dominates desktop.
+- **Summaries on Today, details in sheets.** Today holds only what you act on now, in this order: the 14-week plan summary, the week strip, today's session, food with the next meal, the four quick tiles, and one self-care row. Anything with a list (self-care routines, the plan's week-by-week table) shows one line with progress and a chevron, and opens a sheet. Don't add another full card to Today: add a summary row and a sheet.
+- **Daily log is split into tabs** (Food · Body · Steps & sleep, a `.segmented` control). Each tab can be linked as `#/track/<tab>`. Body holds weight, body fat & muscle, and measurements.
 - **Back navigation pattern:** every drill-down page (category, exercise, workout) starts with a `.topbar` that has a 44px back or close button and a centred title.
 
 ## 6. Interaction rules

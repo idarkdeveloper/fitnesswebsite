@@ -770,6 +770,7 @@ VIEWS.today = () => {
     </div>
     ${reminderBanner()}
     ${planBanner()}
+    ${goalPlanCard(tk)}
     <div class="wk-strip">${week}</div>
     <section class="card session-card mt-4" aria-labelledby="sessH">
       <div class="row-between">
@@ -804,13 +805,8 @@ VIEWS.today = () => {
       ${tile('track-water', 'Water', L1(water), 'L', `of ${L1(wg)} L`, (water || 0) / wg, false, `Water: ${L1(water)} litres. Edit`,
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
-    ${watchLine(tk)}
-    ${careCard(tk)}
-    <div class="tip-card mt-5">
-      ${icon('bolt')}
-      <p class="grow m-0"><b>60-second hit.</b> <span class="muted">${esc(TIPS[tipIdx % TIPS.length])}</span></p>
-      <button class="icon-btn round bare" data-action="next-tip" aria-label="Another tip">${icon('reset')}</button>
-    </div>`;
+    ${careRow(tk)}
+    ${watchLine(tk)}`;
 };
 VIEWS.exercises = (...a) => VIEWS.movements(...a);
 VIEWS.home = VIEWS.today;
@@ -1353,7 +1349,9 @@ function targets(day) {
 
 
 /* ---------- Track view ---------- */
-VIEWS.track = () => {
+let trackTab = 'food';   // Daily log: food | body | habits
+VIEWS.track = (r) => {
+  if (r && ['food', 'body', 'habits'].includes(r.arg)) trackTab = r.arg;   // #/track/body opens on that tab
   const day = tKey();
   const isToday = day === todayKey();
   const d = fromKey(day);
@@ -1379,12 +1377,12 @@ VIEWS.track = () => {
         <p class="muted small mt-2 mb-3">Add your age, height and goal weight, and PulseFit works out a daily calorie and protein target for you.</p>
         <button class="btn ghost block" data-action="track-setup">Set up targets</button>
       </section>` : ''}
-    ${trackFoodCard(day, T, thisDay)}
-    ${planCard(day)}
-    ${trackWeightCard(day, T, thisDay, isToday)}
-    ${trackHabits(day)}
-    ${compCard(day)}
-    ${trackMeasureCard(day)}
+    <div class="segmented mt-4" role="tablist" aria-label="Daily log section" style="--n:3;--i:${['food', 'body', 'habits'].indexOf(trackTab)}">
+      ${[['food', 'Food'], ['body', 'Body'], ['habits', 'Steps & sleep']].map(([k, l]) => `<button role="tab" aria-selected="${trackTab === k}" data-action="track-tab" data-tab="${k}">${l}</button>`).join('')}
+    </div>
+    ${trackTab === 'food' ? `${trackFoodCard(day, T, thisDay)}${planCard(day)}`
+      : trackTab === 'body' ? `${trackWeightCard(day, T, thisDay, isToday)}${compCard(day)}${trackMeasureCard(day)}`
+      : trackHabits(day)}
     <div class="list-group mt-5">
       <button class="list-item" data-action="track-setup"><span>Targets &amp; body profile<span class="li-sub">${T ? `${nf(T.kcal)} kcal a day${p.goalWeight ? ` · goal ${kg(p.goalWeight)} kg` : ' · no goal weight yet'}` : 'Not set up yet'}</span></span>${icon('chevR')}</button>
     </div>
@@ -2268,12 +2266,16 @@ const TRACK_ACTIONS = {
   'comp-log': (el) => compSheet(el.dataset.today ? todayKey() : undefined),
   'comp-history': compHistorySheet,
   'care-open': (el) => careSheet(el.dataset.id, el.dataset.day),
+  'care-list': (el) => careListSheet(el.dataset.day),
+  'track-tab': (el) => { trackTab = el.dataset.tab; history.replaceState(null, '', `#/track/${trackTab}`); rerender(); },
+  'goal-plan': () => goalPlanSheet(),
   'care-tick': (el) => {
     const { id, day } = el.dataset, was = careDone(day, id);
     hset(day, `care:${id}`, was ? null : 1);
     save();
     if (el.dataset.close) closeSheet();
     rerender();
+    if (!el.dataset.close && $('#sheetBody .care-list')) careListSheet(day);
     if (!was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All done for today' : `${window.PF_CARE.R[id].title}: done`); }
   },
   'comp-edit': (el) => compSheet(el.dataset.day),
@@ -2496,6 +2498,20 @@ function careCard(day) {
       }).join('')}</ul>
     </section>`;
 }
+/** Today: one line for self-care: how many are done and what's next; the full list opens in a sheet. */
+function careRow(day) {
+  const ids = careIds(day);
+  if (!ids.length) return '';
+  const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, nextId = ids.find((id) => !careDone(day, id));
+  const pct = n / ids.length;
+  return `<button class="card care-sum mt-3" data-action="care-list" data-day="${day}" aria-label="Self-care and home: ${n} of ${ids.length} done${nextId ? `. Next: ${R[nextId].title}` : ''}. Open the list">
+      <span class="ring-wrap sm">${ringSvg(pct, 44, 5)}<span class="ring-c"><b class="small">${n}/${ids.length}</b></span></span>
+      <span class="grow"><b class="d-block">Self-care &amp; home</b><span class="small muted">${nextId ? `Next: ${esc(R[nextId].at)} · ${esc(R[nextId].title)}` : 'All done for today'}</span></span>
+      ${icon('chevR')}</button>`;
+}
+function careListSheet(day) {
+  openSheet('Self-care & home', `${careCard(day).replace(/<section[^>]*>|<\/section>/g, '').replace(/<div class="row-between"><h2[^]*?<\/h2>/, '<div class="row-between"><span></span>')}`);
+}
 function careSheet(id, day) {
   const r = window.PF_CARE.R[id];
   if (!r) return;
@@ -2505,6 +2521,60 @@ function careSheet(id, day) {
     <ol class="recipe-steps mt-3">${r.steps.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
     ${r.note ? `<div class="note-box mt-3">${esc(r.note)}</div>` : ''}
     <button class="btn block lg mt-4 ${done ? 'ghost' : ''}" data-action="care-tick" data-id="${id}" data-day="${day}" data-close="1">${done ? 'Mark as not done' : 'Done'}</button>`);
+}
+
+/* ---------- 14-week plan towards 85 kg (goalplan.js) ---------- */
+/** Once: the owner said yes to the plan, so set goal 85 kg at 1 kg a week, Dumbbell Full Body on Tue/Thu/Sat.
+    Each new phase sets that phase's step goal (once per phase, so a goal you change yourself sticks until the next). */
+function seedGoalPlan() {
+  const G = window.PF_GOALPLAN, h = state.hprofile;
+  if (!G || !h) return;
+  let changed = false;
+  if (!h.goalPlanSeeded) {
+    h.goalWeight = G.GOAL_KG; h.rate = 1; h.goalPlanSeeded = 1;
+    state.routineId = 'dumbbell-full'; state.trainingDays = [2, 4, 6];
+    changed = true;
+  }
+  const ph = G.phaseOf(G.weekOf(todayKey()) || 1);
+  if (ph && h.planStepsSet !== ph.steps) { h.stepGoal = ph.steps; h.planStepsSet = ph.steps; changed = true; }
+  if (changed) save();
+}
+function goalPlanCard(tk) {
+  const G = window.PF_GOALPLAN;
+  if (!G || !hp().goalPlanSeeded) return '';
+  const wk = G.weekOf(tk);
+  if (wk > G.WEEKS) return '';
+  const w = Math.max(1, wk), ph = G.phaseOf(w), cur = avg7(tk) ?? latestOn('weight', tk)?.v;
+  const target = G.targetKg(w);
+  const status = cur == null ? '' : cur <= target + 0.3 ? '<span class="c-success">on track</span>' : `<span class="muted">${kg(cur - target)} kg above</span>`;
+  return `<button class="card goal-sum mt-3" data-action="goal-plan" aria-label="14-week plan, week ${w} of ${G.WEEKS}, ${ph.name}. Open the plan">
+      <span class="row-between"><span class="eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery week' : ''}` : `Starts Mon ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}</span>${icon('chevR')}</span>
+      <span class="goal-bar" aria-hidden="true"><span style="width:${(Math.max(0, wk - 1) / G.WEEKS) * 100}%"></span></span>
+      <span class="small d-block mt-2">${nf(ph.steps)} steps a day · strength Tue, Thu, Sat · ${esc(ph.cardio[0].replace(/^Sunday: /, 'Sun ').replace(/\.$/, ''))}</span>
+      <span class="small d-block muted">${wk ? 'This week\'s weight target' : 'Week 1 target'} <b>${kg(target)} kg</b>${cur != null ? ` · now ${kg(cur)}${wk ? ` ${status}` : ''}` : ''}</span>
+    </button>`;
+}
+function goalPlanSheet() {
+  const G = window.PF_GOALPLAN, tk = todayKey(), wk = Math.max(1, Math.min(G.WEEKS, G.weekOf(tk)));
+  const cur = avg7(tk) ?? latestOn('weight', tk)?.v;
+  const rows = Array.from({ length: G.WEEKS }, (_, i) => {
+    const n = i + 1, ph = G.phaseOf(n);
+    return `<li class="${n === wk ? 'cur' : n < wk ? 'past' : ''}"><span class="gw">W${n}</span><span class="grow small">${esc(fmtShort(fromKey(G.weekStart(n))).replace(/^\w+, /, ''))} · ${ph.name}${n === G.RECOVERY ? ' · recovery' : ''}</span><span class="small">${nf(ph.steps)} steps</span><b class="small">${kg(G.targetKg(n))} kg</b></li>`;
+  }).join('');
+  const ph = G.phaseOf(wk);
+  openSheet('14-week plan', `
+    <p class="small muted m-0 sheet-meta">From ${kg(G.START_KG)} kg to about ${kg(G.targetKg(G.WEEKS))} kg by the end of February, the first stretch to <b>${G.GOAL_KG} kg</b> (around September–October 2027 at a safe 0.7–1 kg a week).${cur != null ? ` Now: <b>${kg(cur)} kg</b> (7-day average).` : ''}</p>
+    <div class="note-box mt-3"><b>This week: ${ph.name}${wk === G.RECOVERY ? ', recovery week' : ''}.</b> ${esc(ph.focus)}
+      <ul class="plan-ul">
+        <li>${wk === G.RECOVERY ? 'Strength: 2 sets per exercise, no finisher. Let your body recover.' : esc(ph.strength)}</li>
+        <li>${nf(ph.steps)} steps every day (your step goal is set to this).</li>
+        ${ph.cardio.map((c) => `<li>${esc(c)}</li>`).join('')}
+        <li>About 1,800–1,900 kcal and 135 g protein a day: your food target follows your goal and weight.</li>
+      </ul></div>
+    <h3 class="sheet-sub">Week by week</h3>
+    <ul class="goal-weeks mt-2">${rows}</ul>
+    <p class="small muted m-0 mt-3">Weight targets are for the end of each week. Read your 7-day average, not single days. If the average stalls for 3 weeks, walk an extra 2,000 steps a day before cutting food. Check with your doctor before the interval weeks if you have heart, blood pressure or joint problems.</p>
+    <button class="btn ghost block mt-4" data-action="pick-routine">Strength routine: ${esc(routine().name)}</button>`);
 }
 
 const mealWhen = (m) => (m.at ? `${m.at}${m.note ? ` · ${m.note}` : ''}${m.pack ? ' · lunchbox' : ''}` : '');
@@ -4537,6 +4607,7 @@ window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
 importOldTracker();
 seedQuickFoods();
 seedShift();
+seedGoalPlan();
 applyDislikes();
 applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');

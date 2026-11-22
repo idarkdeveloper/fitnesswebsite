@@ -14,6 +14,7 @@ list first; move an item to "Closed" with its PR when done. Anything Design QA c
 
 | Item | PR |
 |---|---|
+| Accessibility audit (WCAG 2.2 AA, axe-core on every screen and sheet): focus kept across re-renders, no live page, skip link, full ARIA tabs, keyboard-reachable scroll rows, 200% text size in Design QA | #69, #70 |
 | Emoji in notification titles (read aloud by TalkBack) | #56 |
 | Chart labels under 12 px; now about 12.4 px at 360 px, and Design QA measures chart labels | #56 |
 | Measurements said "History" while everything else said "Trends" | #56 |

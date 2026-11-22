@@ -454,6 +454,7 @@ function openSheet(title, body, { onClose } = {}) {
   $('#sheetTitle').textContent = title;
   $('#sheetBody').innerHTML = body;
   slideSegments($('#sheetBody'));
+  wireTabs($('#sheetBody'));
   const first = $('#sheetBody [autofocus]') || $('#sheetBody button, #sheetBody input, #sheetBody select') || $('#layer [data-action="close-sheet"]');
   if (dlg.open) { first.focus(); return; }
   first.autofocus = true;                                    // showModal() focuses this
@@ -563,7 +564,7 @@ let pendingSummary = null;
 /** A selector that finds "the same" control after the view is rebuilt: its id, or its data-action and data-* values. */
 function focusKey(el) {
   if (!el || !$('#view').contains(el)) return null;
-  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (el.id && !/^(tab|panel)-\d+/.test(el.id)) return `#${CSS.escape(el.id)}`;
   const attrs = [...el.attributes].filter((a) => a.name.startsWith('data-') || a.name === 'role' || a.name === 'href');
   return attrs.length ? el.tagName.toLowerCase() + attrs.map((a) => `[${a.name}="${CSS.escape(a.value)}"]`).join('') : null;
 }
@@ -585,6 +586,7 @@ function render() {
   }
   afterRender(r);
   slideSegments();
+  wireTabs($('#view'));
   if (pendingSummary) { const s = pendingSummary; pendingSummary = null; showSummary(s); }
 }
 /** A quick squash-and-settle on something that just changed (a ticked set). */
@@ -606,6 +608,24 @@ function slideSegments(root = document) {
       sg.classList.remove('seg-slide'); void sg.offsetWidth; sg.classList.add('seg-slide');
     }
     segPrev[key] = i;
+  });
+}
+
+/** ARIA tabs: each tab gets an id, the selected one points at its panel (aria-controls), the panel names its tab,
+    and only the selected tab is in the Tab order (arrow keys move between tabs). */
+let tabSeq = 0;
+function wireTabs(root = document) {
+  root.querySelectorAll('[role="tablist"]').forEach((tl) => {
+    const n = ++tabSeq, tabs = [...tl.querySelectorAll('[role="tab"]')];
+    let panel = tl.nextElementSibling;
+    while (panel && panel.getAttribute('role') !== 'tabpanel' && !panel.matches('[role="tablist"]')) panel = panel.nextElementSibling;
+    if (panel && panel.getAttribute('role') !== 'tabpanel') panel = null;
+    tabs.forEach((t, i) => {
+      t.id = t.id || `tab-${n}-${i}`;
+      const on = t.getAttribute('aria-selected') === 'true';
+      t.tabIndex = on ? 0 : -1;
+      if (on && panel) { panel.id = panel.id || `panel-${n}`; t.setAttribute('aria-controls', panel.id); panel.setAttribute('aria-labelledby', t.id); panel.tabIndex = -1; }
+    });
   });
 }
 
@@ -1392,9 +1412,9 @@ VIEWS.track = (r) => {
     <div class="segmented mt-4" role="tablist" aria-label="Daily log section" style="--n:3;--i:${['food', 'body', 'habits'].indexOf(trackTab)}">
       ${[['food', 'Food'], ['body', 'Body'], ['habits', 'Steps & sleep']].map(([k, l]) => `<button role="tab" aria-selected="${trackTab === k}" data-action="track-tab" data-tab="${k}">${l}</button>`).join('')}
     </div>
-    ${trackTab === 'food' ? `${trackFoodCard(day, T, thisDay)}${planCard(day)}`
+    <div role="tabpanel">${trackTab === 'food' ? `${trackFoodCard(day, T, thisDay)}${planCard(day)}`
       : trackTab === 'body' ? `${trackWeightCard(day, T, thisDay, isToday)}${compCard(day)}${trackMeasureCard(day)}`
-      : trackHabits(day)}
+      : trackHabits(day)}</div>
     <div class="list-group mt-5">
       <button class="list-item" data-action="track-setup"><span>Targets &amp; body profile<span class="li-sub">${T ? `${nf(T.kcal)} kcal a day${p.goalWeight ? ` · goal ${kg(p.goalWeight)} kg` : ' · no goal weight yet'}` : 'Not set up yet'}</span></span>${icon('chevR')}</button>
     </div>
@@ -1836,6 +1856,7 @@ function habitHistorySheet(field) {
     <div class="segmented" role="tablist" aria-label="Which trend" style="--n:${Object.keys(HABIT).length};--i:${Object.keys(HABIT).indexOf(field)}">
       ${Object.entries(HABIT).map(([f, x]) => `<button role="tab" aria-selected="${f === field}" data-action="habit-history" data-f="${f}">${x.title}</button>`).join('')}
     </div>
+    <div role="tabpanel">
     <div class="facts mt-3">${H.lower ? weightFacts(t, got) : `
       <span>7-day average <b>${a7 != null ? esc(H.fmt(a7)) : '–'}</b></span>
       <span>30-day average <b>${a30 != null ? esc(H.fmt(a30)) : '–'}</b></span>
@@ -1851,7 +1872,8 @@ function habitHistorySheet(field) {
         ${icon('chevR')}
       </button></li>`;
     }).join('')}</ul>
-    <button class="btn ghost block mt-4" data-action="habit-edit" data-f="${field}" data-day="${keyAdd(t, -N)}">${icon('plus')} An older date</button>`);
+    <button class="btn ghost block mt-4" data-action="habit-edit" data-f="${field}" data-day="${keyAdd(t, -N)}">${icon('plus')} An older date</button>
+    </div>`);
   if (H.lower) wireWeightChart($('#sheetBody'));
 }
 
@@ -4409,6 +4431,12 @@ document.addEventListener('pointerdown', (ev) => {
   if (holdRepeat) { clearTimeout(holdRepeat.t); clearInterval(holdRepeat.i); holdRepeat = null; }
 }, true));
 
+document.addEventListener('click', (ev) => {
+  const a = ev.target.closest && ev.target.closest('.skip-link');
+  if (!a) return;
+  ev.preventDefault();
+  $('#main')?.focus();
+}, true);
 /** Tab controls (role="tablist"): arrow keys, Home and End move between tabs and select them, as the ARIA tabs pattern expects. */
 document.addEventListener('keydown', (ev) => {
   const t = ev.target;

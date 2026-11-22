@@ -99,3 +99,9 @@ window.PF_VIDEOS = {
   "db-lateral": ["XPPfnSEATJA", "How to do a Dumbbell Lateral Raise", "National Academy of Sports Medicine (NASM)"],
   "db-triceps": ["MO_03opCc0g", "How To: Laying Dumbbell Tricep Extension", "ScottHermanFitness"],
 };
+
+/* PulseFit's own demo clips, made in Figma Weave (Kling 4.0 Flash) from each exercise's photo, same athlete.
+   Keyed by exercise id; every weight step uses its exercise's clip. */
+window.PF_CLIPS = {
+  "db-goblet": "video/db-goblet.mp4",
+};

@@ -50,6 +50,7 @@ window.PF_CARE = (function () {
         ['Condition', 'Balea Professional Conditioner Kopfhaut Sensitive on the lengths. Leave 2 min, rinse.'],
         ['Detangle', 'ebelin Entwirrkünstler, gently from the ends up.'],
         ['Scalp tonic', 'Towel-dry, then massage Balea Haarwasser Birke into the roots to clear and soothe the scalp.'],
+        ['Blow-dry', 'Mist Balea Hitzeschutzspray over the lengths first, then 2–3 sprays Balea Föhn-Spray Föhnen & Stärken at the roots. Dry on medium heat with a round brush from your new brush set, nozzle pointing down the hair.'],
       ],
     },
     'e-hair': {
@@ -58,6 +59,7 @@ window.PF_CARE = (function () {
         ['Towel-dry', 'Pat, don\'t rub: wet hair breaks easily.'],
         ['Scalp boost', 'Massage Balea MEN Haar-Tonic Power Effect Coffein Boost into the crown and temples for a minute.'],
         ['Detangle', 'ebelin Entwirrkünstler through the lengths.'],
+        ['Blow-dry', 'Balea Hitzeschutzspray on the lengths, Föhn-Spray at the roots, then dry on medium heat with a round brush for lift that lasts the shift.'],
       ],
       note: 'Keep the caffeine tonic for the morning. At 00:30 skip all scalp products so you can fall asleep.',
     },
@@ -66,16 +68,19 @@ window.PF_CARE = (function () {
       steps: [
         ['Detangle', 'ebelin Entwirrkünstler through dry or damp hair.'],
         ['Scalp', 'A little Balea Haarwasser Birke massaged into the roots.'],
+        ['Style', 'If you blow-dry: Hitzeschutzspray first, always. On days you air-dry, skip the heat completely; it\'s the best thing for your hair.'],
       ],
     },
     // Home: the weekend laundry and cleaning pages of the guide.
     'laundry': {
       kind: 'Home', at: 'Morning', title: 'Laundry (Miele)', sub: 'Saturday: work shirts, towels and sheets',
       steps: [
-        ['Pre-treat', 'Turn work shirts inside out and spray the underarms with Dr. Beckmann Deo & Schweiss Fleckenspray. Leave 10–30 min.'],
-        ['Detergent', 'Slot II (main wash): Denkmit Color- or Vollwaschmittel. For whites or sweat add 1–2 tbsp Denkmit Fleckensalz Soda-Power. Softener slot: 1–2 caps Denkmit Hygiene-Spüler.'],
+        ['Pre-treat', 'Turn work shirts inside out. Spray stains and underarms with Denkmit Fleckenentferner Spray (or Dr. Beckmann Deo & Schweiss); leave 10–30 min.'],
+        ['Yellow underarms (whites only)', 'Once a month: soak white shirts 30 min in a bowl of warm water with a cup of Centra24 Wasserstoffperoxid 3% and 2 tbsp Heitmann Reine Soda, then wash. Never on colours, and never with chlorine products.'],
+        ['Detergent', 'Slot II: Denkmit Colorwaschmittel flüssig for work shirts and colours; Denkmit Feinwaschmittel Color&Care for knits and delicates (30 °C, wool/fine program). For whites or sweaty sports kit add 2 tbsp Heitmann Soda. Softener slot: 1–2 caps Denkmit Hygiene-Spüler (the fragrance-free one for towels).'],
         ['Drum', 'One Denkmit Farb- & Schmutzfangtuch in the drum with the clothes.'],
         ['Program', 'Work shirts and colours: Buntwäsche 40 °C (or 30 °C). Towels, sheets and white undershirts: Koch-/Buntwäsche 60 °C. Pay in appWash and press Start.'],
+        ['After drying', 'Hang shirts straight away and mist Denkmit Textilerfrischer Faltenglatt 3in1; smooth with your hand: no ironing needed. Pilled jumpers: a quick pass with the lint shaver.'],
       ],
       note: 'Saturday rather than Sunday: most German house rules ask for no washing machines on Sundays and holidays.',
     },
@@ -85,23 +90,54 @@ window.PF_CARE = (function () {
         ['Gloves', 'Profissimo Einmalhandschuhe on, window open.'],
         ['Toilet', 'Drop a Denkmit WC-Tab in the bowl and let it fizz 30–60 min. Then WC-Gel under the rim, scrub, flush.'],
         ['Taps & glass', 'Denkmit Kalkreiniger Anti Kalk; wait 3 min, wipe damp, rinse.'],
+        ['Tiles & shower', 'Bosch UniversalBrush with the scrub pad over tiles, shower tray and grout lines, a little Allzweckreiniger Soda Power on the pad. Profissimo Schmutzradierer for marks on walls and doors.'],
         ['Grout & mould', 'Denkmit Schimmelentferner mit Aktiv-Chlor on the spots; wait 15 min, wipe, air the room.'],
       ],
-      note: 'Never mix the chlorine mould spray with the acidic limescale or toilet cleaners: it releases toxic gas. Do the mould step on its own, at the end, with the window open. Mixa Ceramide hand cream afterwards.',
+      note: 'Never mix the chlorine mould spray with the acidic limescale or toilet cleaners, or with hydrogen peroxide: it releases toxic gas. Do the mould step on its own, at the end, with the window open. Mixa Ceramide hand cream afterwards.',
     },
     'kitchen': {
       kind: 'Home', at: 'Afternoon', title: 'Kitchen & surfaces', sub: 'Sunday: degrease, disinfect, lint-roll',
       steps: [
-        ['Stovetop', 'Denkmit Fettlöser Power-Formel; leave 2 min, wipe clean.'],
+        ['Stovetop & air fryer', 'Denkmit Fettlöser Power-Formel on the hob; leave 2 min, wipe clean. Air-fryer basket: soak in hot water with a spoon of Heitmann Soda, then rinse.'],
+        ['Counters', 'Denkmit Allzweckreiniger Soda Power on counters and the sink; dry the dish rack and wipe under it.'],
         ['Touch points', 'Phone, desk, light switches and handles with Denkmit Desinfektionstücher.'],
+        ['Bin', 'Empty, wipe the lid; the Denkmit Mülleimer-Deo pad stays inside the lid.'],
         ['Fabrics', 'Profissimo Fusselroller over the sofa, coats and bed sheets.'],
+      ],
+      note: 'Summer: a fruit-fly trap next to the fruit bowl, and ARDAP only around window frames and skirting, never on food surfaces.',
+    },
+    'floors': {
+      kind: 'Home', at: 'Afternoon', title: 'Floors', sub: 'Sunday: vacuum, then wet-clean',
+      steps: [
+        ['Vacuum', 'Cordless vacuum through every room, the crevice tool along skirting boards and under the bed.'],
+        ['Wet-clean', 'Wet-dry floor cleaner over hard floors with a capful of roborock floor cleaning solution in the clean-water tank. Kitchen and bathroom last.'],
+        ['Empty & dry', 'Empty the dirty-water tank, run the self-clean, and leave the roller to dry so it doesn\'t smell.'],
+      ],
+    },
+    'whiten': {
+      at: 'Midday', title: 'Teeth whitening', sub: 'Sunday: Perlweiss strips or gel, once a week',
+      steps: [
+        ['Brush first', 'Brush and floss, then wait 30 minutes (fresh-brushed enamel is more sensitive).'],
+        ['Whiten', 'One Perlweiss Whitening Strip Intensiv Kur on upper and lower teeth for the time on the pack; or, on alternate weeks, the Perlweiss Bleaching System Dental 4.0 gel as directed. Not both on the same day.'],
+        ['After', 'Rinse with water; no coffee, tea, curry or cola for 1 hour. Elmex Sensitive in the evening.'],
+      ],
+      note: 'Stop for a week if your teeth or gums get sensitive. Whitening doesn\'t change fillings or crowns.',
+    },
+    'monthly': {
+      kind: 'Home', at: 'Afternoon', title: 'Monthly reset', sub: 'First Sunday: fridge, mattress, toilet, vacuums',
+      steps: [
+        ['Fridge', 'Clear out old food, wipe the shelves with Allzweckreiniger Soda Power, put in a new Denkmit Kühlschrank-Frische.'],
+        ['Bed', 'Wash the mattress protector at 60 °C; air the mattress for an hour; air the neck pillow by the window.'],
+        ['Toilet', 'New Denkmit WC-Blauspüler in the cistern.'],
+        ['Vacuums', 'Rinse the vacuum filters and let them dry 24 h; robot vacuum: new bag, filter and mop pads from the 18-piece kit when they look grey.'],
+        ['Bin', 'New Mülleimer-Deo pad when the scent has gone.'],
       ],
     },
     'off-am': {
       at: 'Morning', title: 'Teeth & face', sub: 'Your daily basics on a day off',
       steps: [
-        ['Teeth', 'Floss with the Dontodent sticks, brush 2 min with Elmex Sensitive, scrape your tongue, rinse with the antibacterial mouthwash.'],
-        ['Face', 'Balea MEN Sensitive Waschgel, Gesichtswasser hautrein, 3 drops Niacinamide serum, Balea Aqua gel.'],
+        ['Teeth', 'Floss with the Dontodent sticks, brush 2 min, scrape your tongue (Dontodent Zungenreiniger), rinse with the antibacterial mouthwash. Twice a week use Perlweiss Schönheits Zahnweiß instead of Elmex Sensitive; keep Elmex for the other days.'],
+        ['Face', 'Balea MEN Sensitive Waschgel, Gesichtswasser hautrein on an ebelin Wattepad, 3 drops Niacinamide serum, Balea Aqua gel.'],
         ['Beard', 'Comb with the ebelin Bartkamm and 3 drops Balea MEN Bartöl.'],
       ],
     },
@@ -119,13 +155,15 @@ window.PF_CARE = (function () {
         ['Face wash', 'Balea MEN Sensitive Waschgel.'],
         ['Moisture', '3–4 drops Glycerin serum on damp skin, sealed with Balea Gesichtscreme Gel Aqua.'],
         ['Spots & hands', 'Anti-Pickel patches on any spots; Mixa Ceramide hand cream.'],
+        ['Underarms', '2–3 evenings a week: Chemist at Play UnderArm Roll-on, so your Hidrofugal works better on shift days.'],
       ],
     },
     'sat-bha': {
       at: 'Evening', title: 'Pore clearing (BHA)', sub: 'Saturday: salicylic acid peel and deep hydration',
       steps: [
         ['Cleanse', 'Balea MEN Sensitive Waschgel with the ebelin silicone pad; pat completely dry.'],
-        ['BHA', 'Balea Peeling Toner Beauty Expert (2% BHA) on a cotton pad over forehead, nose and chin. Don\'t rinse.'],
+        ['BHA', 'Balea Peeling Toner Beauty Expert (2% BHA) on an ebelin Wattepad over forehead, nose and chin. Don\'t rinse.'],
+        ['Underarms', 'Chemist at Play UnderArm Roll-on on clean, dry underarms (it exfoliates and fights odour overnight). Not on freshly shaved skin.'],
         ['Wait', '5 minutes for the acid to absorb.'],
         ['Serums', '3 drops Niacinamide, then 3 drops Glycerin serum. Seal with Aqua gel; patches on any spots.'],
         ['Teeth', 'Floss and brush 2 min with Elmex Sensitive.'],
@@ -143,20 +181,21 @@ window.PF_CARE = (function () {
       at: 'Afternoon', title: 'Beard detailing', sub: 'Sunday: trim and oil',
       steps: [
         ['Comb', 'Comb the dry beard with the wooden comb from the ebelin Bartschere & Kamm set.'],
-        ['Trim', 'Snip stray hairs along the moustache and cheek line with the scissors.'],
+        ['Trim', 'Philips Multigroom 9000 with the beard comb at your usual length; then the precision trimmer for the cheek and neck line (neckline two fingers above the Adam\'s apple). Scissors for single stray hairs.'],
+        ['Body', 'Once a week if you like: the Multigroom body attachment for chest and underarms (shorter underarm hair = less sweat odour).'],
         ['Oil', 'Warm 4 drops Balea MEN Bartöl in your palms and massage deep into beard and skin.'],
       ],
     },
   };
-  /** The routines for one day, in the order you do them. shift: 'morning' | 'evening' | null; dow: 0 = Sunday. */
-  function forDay(shift, dow) {
+  /** The routines for one day, in the order you do them. shift: 'morning' | 'evening' | null; dow: 0 = Sunday; dom: day of the month. */
+  function forDay(shift, dow, dom) {
     if (shift === 'morning') return ['m-am', 'm-pm', 'm-hair'];
     if (shift === 'evening') return ['e-am', 'e-hair', 'e-pm'];
     if (dow === 6) return ['off-am', 'off-hair', 'laundry', 'bathroom', 'sat-bha'];
-    if (dow === 0) return ['sun-am', 'sun-hair', 'kitchen', 'sun-beard', 'off-pm'];
+    if (dow === 0) return ['sun-am', 'whiten', 'sun-hair', 'kitchen', 'floors', ...(dom && dom <= 7 ? ['monthly'] : []), 'sun-beard', 'off-pm'];
     return ['off-am', 'off-hair', 'off-pm'];
   }
   /** Skin (face, teeth, body), Hair or Home: the small label on each routine. */
-  const kindOf = (id) => R[id].kind || (/hair/.test(id) ? 'Hair' : /beard/.test(id) ? 'Beard' : 'Skin');
+  const kindOf = (id) => R[id].kind || (/hair/.test(id) ? 'Hair' : /beard/.test(id) ? 'Beard' : id === 'whiten' ? 'Teeth' : 'Skin');
   return { R, forDay, kindOf };
 })();

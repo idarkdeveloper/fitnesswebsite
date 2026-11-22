@@ -2172,3 +2172,6 @@ button.cs-row { cursor: pointer; }
 .workout-card.lime-card .start-btn { background: #0e1116; color: #c6f432; }
 .workout-card.lime-card :focus-visible { outline-color: #0e1116; }
 .workout-card.lime-card .wc-list summary, .workout-card.lime-card .link-btn { color: #0e1116; }
+/* Exercise rows inside the lemon card keep their own dark surface and light text */
+.workout-card.lime-card .sess-row, .workout-card.lime-card .sess-row b { color: var(--text); }
+.workout-card.lime-card .sess-row .meta, .workout-card.lime-card .sess-row .muted { color: var(--muted); }

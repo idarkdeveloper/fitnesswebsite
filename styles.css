@@ -2085,3 +2085,51 @@ button.cs-row { cursor: pointer; }
 .workout-card.lime-card { margin-top: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 16%, var(--surface)) 0%, var(--surface) 70%); border: 1.5px solid color-mix(in srgb, var(--primary) 55%, transparent); }
 .workout-card.lime-card .eyebrow { color: var(--primary); }
 .workout-card.lime-card .icon-btn { border-color: color-mix(in srgb, var(--primary) 45%, var(--control-border)); }
+
+/* ---------- Loading: launch screen, page skeleton, progress ring ---------- */
+/* Launch screen (#boot in index.html): the heart mark with the pulse line drawing itself. Its content only
+   fades in after 250 ms, so a fast start shows nothing extra. */
+.boot { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: var(--space-6); background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom)); color: var(--text); text-align: center; transition: opacity var(--dur-base) var(--ease); }
+.boot.out { opacity: 0; pointer-events: none; }
+.boot-in { display: flex; flex-direction: column; align-items: center; opacity: 0; animation: bootShow var(--dur-base) var(--ease) 250ms forwards; }
+.boot-mark { transform-origin: 50% 55%; animation: bootBeat 1.8s ease-in-out infinite; }
+.boot-heart { fill: var(--surface); stroke: var(--border-soft); stroke-width: 6; }
+.boot-rail, .boot-trace { stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; }
+.boot-rail { stroke: var(--border-soft); }
+.boot-trace { stroke: var(--primary); stroke-dasharray: 420; animation: bootTrace 1.8s var(--ease) infinite; }
+.boot-name { margin: var(--space-6) 0 0; font-family: var(--font-display); font-weight: 700; font-size: var(--fs-3xl); letter-spacing: -0.02em; line-height: 1.1; }
+.boot-sub { margin: var(--space-2) 0 0; color: var(--muted); font-size: var(--fs-body); }
+.boot-bar { width: 160px; height: 4px; margin-top: var(--space-8); border-radius: var(--r-pill); background: var(--border-soft); overflow: hidden; }
+.boot-bar span { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--primary); animation: bootSlide 1.4s var(--ease) infinite; }
+@keyframes bootShow { to { opacity: 1; } }
+@keyframes bootTrace { 0% { stroke-dashoffset: 420; } 55%, 80% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes bootBeat { 0%, 40%, 100% { transform: scale(1); } 48% { transform: scale(1.06); } 56% { transform: scale(0.99); } 64% { transform: scale(1.03); } }
+@keyframes bootSlide { from { transform: translateX(-100%); } to { transform: translateX(320%); } }
+@media (prefers-reduced-motion: reduce) { .boot-in { opacity: 1; } .boot-bar span { width: 100%; } }
+
+/* Page skeleton: blocks in the shape of the page while a new device fetches its data. */
+.sk { display: block; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--surface-2) 35%, var(--border-soft) 50%, var(--surface-2) 65%) 100% 0 / 200% 100%; animation: skShimmer 1.5s linear infinite; }
+@keyframes skShimmer { to { background-position: -100% 0; } }
+.sk-line { height: 13px; border-radius: var(--r-pill); }
+.sk-thin { height: 6px; border-radius: var(--r-pill); }
+.sk-title { height: 22px; }
+.sk-h1 { height: 30px; margin-top: var(--space-2); }
+.sk-num { height: 34px; }
+.sk-pic { height: 128px; border-radius: 0; }
+.sk-btn { height: 48px; }
+.sk-page, .sk-stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.sk-card, .sk-hero, .sk-pad { display: flex; flex-direction: column; gap: var(--space-3); }
+.sk-card.flush { padding: 0; overflow: hidden; }
+.sk-pad { padding: var(--space-5); }
+.sk-hero { padding: var(--space-5); border-radius: var(--r-md); border: 1px solid var(--border-soft); background: var(--surface); }
+.sk-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-2); }
+.sk-week .sk { height: 60px; }
+.sk-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+
+/* Progress ring: a wait whose progress is known (reading Health Connect). */
+.load-ring { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-6) 0; text-align: center; }
+.ring-wrap.lg { width: 160px; height: 160px; margin-bottom: var(--space-4); }
+.load-ring .ring-fg { stroke: var(--primary); }
+.ring-wrap.lg .ring-c b { font-size: var(--fs-display); }
+.ring-wrap.lg .ring-c i { font-style: normal; font-size: var(--fs-xl); color: var(--muted); margin-left: 2px; }
+.load-title { font-family: var(--font-display); font-size: var(--fs-2xl); letter-spacing: -0.01em; }

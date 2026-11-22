@@ -55,6 +55,7 @@ Watch records:
 | Steps (daily total) | Steps on Today and in the daily log |
 | Sleep sessions (time asleep, without awake stages) | Sleep, on the day you woke up |
 | Weight | Weight log |
+| Body fat % (from a smart scale's app, app build 19 or newer) | Body fat & muscle on the Body tab |
 | Exercise sessions, active calories | "Watch today" line on Today (this phone only) |
 
 The last 14 days are read when the app opens and when it comes back to the front. A value you typed in yourself is

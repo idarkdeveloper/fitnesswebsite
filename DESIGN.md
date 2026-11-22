@@ -203,7 +203,8 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 - **Crops.** Covers are 1:1 (Movement Library tiles, category hero). Progression images are 16:9 (home card, list rows, exercise hero, workout thumbnail). Every image keeps the subject centred so it survives the square crop.
 - **Registration.** Name each file `img/<id>.webp`, then run `node tools/image-prompts.js manifest`. Ids not in `img/manifest.js` keep the stick figure.
 - **Alt text.** On the exercise hero, the alt text is "Athlete demonstrating {name}". Elsewhere the image is decorative (`alt=""`), because the name is printed next to it.
-- **Honesty.** Images are labelled AI-generated in Privacy & Terms. Reject and regenerate any image with wrong form, extra fingers, floating equipment or brand marks.
+- **Dumbbell photos are Adobe Stock** (free tier, licensed through the Adobe connector, ids in `img/CREDITS.md`). Dumbbell exercises without a fitting photo (Romanian deadlift, bench squat, farmer's carry, lying triceps extension) keep their pencil sketch.
+- **Honesty.** Images are labelled AI-generated (bodyweight) or stock (dumbbell) in Privacy & Terms. Reject and regenerate any image with wrong form, extra fingers, floating equipment or brand marks.
 
 ## 9. Naming conventions
 

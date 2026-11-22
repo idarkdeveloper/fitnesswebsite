@@ -4544,6 +4544,9 @@ function codeSheet(email) {
    --------------------------------------------------------------- */
 const APK_URL = 'https://github.com/idarkdeveloper/fitnesswebsite/releases/latest/download/pulsefit.apk';
 const HC_READ = ['steps', 'sleep', 'weight', 'calories', 'workouts'];
+const BODYFAT_BUILD = 15;     // first Android build with the READ_BODY_FAT permission (body fat % from a smart scale's app)
+/** What this installed app may ask Health Connect for: older builds can't read body fat. */
+const hcRead = () => (appBuild >= BODYFAT_BUILD ? [...HC_READ, 'bodyFat'] : HC_READ);
 const isNativeApp = () => !!(window.androidBridge || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
 let hcPlugins = null;          // { Health, App } once the Capacitor core script is loaded
 let hcBusy = false;
@@ -4576,28 +4579,30 @@ function hcPut(day, field, v, imported) {
 
 /** Pull the last two weeks from Health Connect into the log. Quiet unless `loud`. */
 /* A sync you asked for from the Health sheet shows its real progress: one step per Health Connect read. */
-const HC_STEPS = ['Steps', 'Sleep', 'Weight', 'Active calories', 'Workouts', 'Permissions'];
+const HC_STEPS = ['Steps', 'Sleep', 'Weight', 'Active calories', 'Workouts', 'Permissions', 'Body fat'];
+let hcTotal = 6;               // reads in the running sync: 7 when this app build can read body fat
 function hcRing(done) {
-  const p = done / HC_STEPS.length;
+  const p = done / hcTotal;
   return `<div class="load-ring" id="hcRing" role="status" aria-label="Reading Health Connect">
       <div class="ring-wrap lg">${ringSvg(p, 160, 10)}<div class="ring-c"><b><span data-pct>${Math.round(p * 100)}</span><i>%</i></b></div></div>
       <b class="load-title">Reading Health Connect</b>
-      <span class="small muted" data-step>${done} of ${HC_STEPS.length} read</span>
+      <span class="small muted" data-step>${done} of ${hcTotal} read</span>
     </div>`;
 }
 function hcRingSet(done, label) {
   const el = $('#hcRing');
   if (!el) return;
-  const fg = $('.ring-fg', el), c = 2 * Math.PI * fg.r.baseVal.value, p = done / HC_STEPS.length;
+  const fg = $('.ring-fg', el), c = 2 * Math.PI * fg.r.baseVal.value, p = done / hcTotal;
   fg.setAttribute('stroke-dasharray', `${(c * p).toFixed(1)} ${c.toFixed(1)}`);
   $('[data-pct]', el).textContent = Math.round(p * 100);
-  $('[data-step]', el).textContent = done < HC_STEPS.length ? `${done} of ${HC_STEPS.length} read · ${label}` : 'All read';
+  $('[data-step]', el).textContent = done < hcTotal ? `${done} of ${hcTotal} read · ${label}` : 'All read';
 }
 async function hcSync(loud = false) {
   const h = hcState();
   if (!isNativeApp() || !h.enabled || hcBusy) return;
   hcBusy = true;
-  const ring = loud && sheetOpen();
+  const ring = loud && sheetOpen(), fat = appBuild >= BODYFAT_BUILD;
+  hcTotal = fat ? 7 : 6;
   let read = 0;
   const step = (p, i) => (ring ? p.finally(() => hcRingSet(++read, HC_STEPS[i])) : p);
   try {
@@ -4613,7 +4618,8 @@ async function hcSync(loud = false) {
       Health.readSamples({ dataType: 'weight', ...span, limit: 500 }),
       Health.queryAggregated({ dataType: 'calories', ...span, bucket: 'day', aggregation: 'sum' }),
       Health.queryWorkouts({ ...span, limit: 200 }),
-      Health.checkAuthorization({ read: HC_READ }),
+      Health.checkAuthorization({ read: hcRead() }),
+      ...(fat ? [Health.readSamples({ dataType: 'bodyFat', ...span, limit: 500 })] : []),
     ].map(step));
     const ok = (i) => (got[i].status === 'fulfilled' ? got[i].value : null);
     for (const b of (ok(0)?.samples || [])) {
@@ -4638,6 +4644,11 @@ async function hcSync(loud = false) {
     const wt = {};
     for (const sm of (ok(2)?.samples || [])) { const d = localKey(sm.endDate || sm.startDate); if (!wt[d] || sm.endDate > wt[d].at) wt[d] = { v: sm.value, at: sm.endDate }; }
     for (const [d, x] of Object.entries(wt)) if (x.v > 20 && x.v < 400 && hcPut(d, 'weight', Math.round(x.v * 10) / 10, imported)) changed++;
+    // Body fat % (a smart scale's app writes it): the latest reading of each day.
+    const bf = {};
+    for (const sm of ((fat && ok(6)?.samples) || [])) { const d = localKey(sm.endDate || sm.startDate); if (!bf[d] || sm.endDate > bf[d].at) bf[d] = { v: sm.value, at: sm.endDate }; }
+    for (const [d, x] of Object.entries(bf)) if (x.v >= 3 && x.v <= 70 && hcPut(d, 'bodyfat', Math.round(x.v * 10) / 10, imported)) changed++;
+    h.fatLast = Object.keys(bf).sort().pop() || h.fatLast || null;
     const day = {};                                                    // watch activity per day (this device only)
     for (const b of (ok(3)?.samples || [])) { const d = localKey(b.startDate); (day[d] = day[d] || {}).kcal = Math.round(b.values?.sum ?? b.value ?? 0); }
     for (const w of (ok(4)?.workouts || [])) {
@@ -4664,7 +4675,7 @@ async function hcConnect() {
     const { Health } = await hcLoad();
     const av = await Health.isAvailable();
     if (!av.available) { toast(/install|update|not_installed|unavailable/i.test(av.reason || '') ? 'Install or update "Health Connect" from the Play Store first' : `Health Connect isn't available: ${av.reason || 'unknown reason'}`); return; }
-    const res = await Health.requestAuthorization({ read: HC_READ });
+    const res = await Health.requestAuthorization({ read: hcRead() });
     if (!res.readAuthorized || !res.readAuthorized.length) { toast('No access given. You can allow it in Health Connect settings.'); return; }
     hcState().enabled = true; save();
     toast(`Connected: ${res.readAuthorized.join(', ')}`);
@@ -4673,6 +4684,16 @@ async function hcConnect() {
   } catch (e) { toast('Health Connect: ' + (e.message || 'something went wrong')); }
 }
 
+/** Body fat from Health Connect: needs a newer app build, your permission, and a scale app that shares it. */
+function hcFatStatus(h) {
+  if (appBuild && appBuild < BODYFAT_BUILD) return `<p class="small m-0 mt-3"><b>Body fat:</b> this version of the app can't read it yet. <a href="${APK_URL}">Download the latest app</a>, install it, then allow Body fat here.</p>`;
+  if ((h.denied || []).includes('bodyFat')) return `<div class="card flat soft mt-3"><p class="m-0"><b>Body fat: not allowed</b></p>
+    <p class="small muted m-0 mt-1">Allow it and the body fat % your smart scale's app saves to Health Connect fills in by itself. Muscle and visceral fat are not in Health Connect, so those stay typed in.</p>
+    <button class="btn block mt-3" data-action="health-connect">Allow body fat</button></div>`;
+  if (h.fatLast) return `<p class="small m-0 mt-3"><b>Last body fat read:</b> ${esc(fmtShort(fromKey(h.fatLast)))}.</p>`;
+  if (!h.last) return '';
+  return `<p class="small m-0 mt-3"><b>Body fat:</b> nothing in Health Connect from the last 14 days. It only arrives if your scale's app shares body fat with Health Connect.</p>`;
+}
 /** Sleep from Health Connect: what was last read, or why nothing arrives. */
 function hcSleepStatus(h) {
   const t = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -4715,8 +4736,9 @@ function healthSheet() {
   const d = (h.day || {})[todayKey()] || {};
   openSheet('Galaxy Watch & Samsung Health', h.enabled ? `
     <div class="card flat soft row-between"><span><b>Connected</b><span class="d-block small muted">Health Connect · synced ${esc(ago(h.last))}</span></span><span class="pill">${icon('check')} On</span></div>
-    <p class="small mt-3 m-0">Steps, sleep and weight for the last 14 days fill in automatically when you open PulseFit. Anything you type in yourself stays as you wrote it.</p>
+    <p class="small mt-3 m-0">Steps, sleep, weight and body fat for the last 14 days fill in automatically when you open PulseFit. Anything you type in yourself stays as you wrote it.</p>
     ${hcSleepStatus(h)}
+    ${hcFatStatus(h)}
     ${d.workouts || d.kcal ? `<p class="small m-0 mt-2">Today from your watch: ${[d.workouts ? `${d.workouts} workouts, ${d.min} min` : '', d.kcal ? `${nf(d.kcal)} active kcal` : ''].filter(Boolean).join(' · ')}.</p>` : ''}
     <button class="btn block lg mt-4" data-action="health-sync">${icon('refresh')} Sync now</button>
     <button class="btn ghost block mt-2" data-action="health-settings">Health Connect permissions</button>

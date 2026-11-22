@@ -2457,6 +2457,7 @@ function compHistorySheet() {
     <button class="btn ghost block mt-4" data-action="comp-edit" data-day="${todayKey()}">${icon('plus')} Add for another date</button>`);
 }
 let compDay = null;   // the date the body-composition sheet is showing
+let shareLines = null; // the text of the last shared report, so a wrong read can be copied and reported
 let compScan = null;  // numbers read from a shared scale report, shown in that sheet until saved
 const SHARE_BUILD = 28;       // first Android build that can receive a shared report image ("Share to Mizan")
 function compSheet(dayArg, scan) {
@@ -2481,6 +2482,7 @@ function compSheet(dayArg, scan) {
       </div>
     </details>
     <button class="btn block lg mt-5" data-action="comp-save">Save</button>
+    ${scan && shareLines ? '<button class="link-btn small mt-3" data-action="share-copy">Numbers wrong or missing? Copy what the app read</button>' : ''}
     <button class="link-btn small mt-3" data-action="comp-history">See all dates</button>`);
 }
 
@@ -2521,6 +2523,11 @@ function scaleDay(text) {
   else if ((m = /\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/.exec(text))) d = new Date(+m[1], +m[2] - 1, +m[3]);
   return d && !Number.isNaN(d.getTime()) && d <= new Date() ? dayKey(d) : todayKey();
 }
+/* A report can show the same thing twice, once in kg and once in % (Renpho: "Body Water 53.53 kg" at the top,
+   "Body Water 47.5 %" in the list). Take only the number whose unit fits the field; no unit is fine. */
+const SCALE_PCT = new Set(['bodyfat', 'subfat', 'bodywater', 'skeletal', 'protein']);
+const SCALE_MASS = new Set(['weight', 'muscle', 'ffm', 'bone']);
+const unitOk = (f, text) => (SCALE_PCT.has(f) ? !/\d\s*(kg|lbs?)\b/i.test(text) : SCALE_MASS.has(f) ? !/\d\s*%/.test(text) : true);
 function readScaleReport(lines) {
   const L = (lines || []).filter((l) => l && typeof l.t === 'string').map((l) => ({ ...l, t: l.t.trim(), cy: l.y + l.h / 2, r: l.x + l.w }));
   const vals = {};
@@ -2529,18 +2536,16 @@ function readScaleReport(lines) {
     const hits = L.filter((l) => label.test(l.t) && !(not && not.test(l.t))).sort((a, b) => b.y - a.y);   // lowest on the page first
     for (const hit of hits) {
       // 1. the number sits in the same line of text, after the label
-      let v = scaleNum(hit.t.replace(label, ''), f);
-      // 2. or in the text to the right, on the same row
-      if (!ok(f, v)) {
-        const row = L.filter((l) => l !== hit && l.x >= hit.x + hit.w * 0.6 && Math.abs(l.cy - hit.cy) < Math.max(l.h, hit.h) * 0.8 && /\d/.test(l.t)).sort((a, b) => a.x - b.x);
-        v = null;
-        for (const l of row) { const n = scaleNum(l.t, f); if (ok(f, n)) { v = n; break; } }
-      }
-      // 3. or directly under the label
-      if (!ok(f, v)) {
-        const under = L.filter((l) => l !== hit && l.y > hit.cy && l.y < hit.y + hit.h * 4 && l.x < hit.r && l.r > hit.x && /^\s*\d/.test(l.t)).sort((a, b) => a.y - b.y);
-        v = under.length ? scaleNum(under[0].t, f) : null;
-      }
+      let v = unitOk(f, hit.t) ? scaleNum(hit.t.replace(label, ''), f) : null;
+      // 2. or in the text to the right at the same height; 3. or directly under the label;
+      // 4. or to the right in a taller row (Renpho puts an "Over" chip under the label and centres the number
+      //    on both): look a little above and well below, and take the number closest in height.
+      const right = L.filter((l) => l !== hit && l.x >= hit.x + hit.w * 0.6 && /\d/.test(l.t) && unitOk(f, l.t))
+        .sort((a, c) => Math.abs(a.cy - hit.cy) - Math.abs(c.cy - hit.cy));
+      const pick = (list) => { for (const l of list) { const n = scaleNum(l.t, f); if (ok(f, n)) return n; } return null; };
+      if (!ok(f, v)) v = pick(right.filter((l) => Math.abs(l.cy - hit.cy) < Math.max(l.h, hit.h) * 0.8));
+      if (!ok(f, v)) v = pick(L.filter((l) => l !== hit && l.y > hit.cy && l.y < hit.y + hit.h * 2.6 && l.x < hit.r && l.r > hit.x && /^\s*\d/.test(l.t) && unitOk(f, l.t)).sort((a, c) => a.y - c.y).slice(0, 1));
+      if (!ok(f, v)) v = pick(right.filter((l) => l.cy > hit.y - hit.h * 0.6 && l.cy < hit.y + hit.h * 2.6));
       if (ok(f, v)) { vals[f] = COMP_INT.has(f) ? Math.round(v) : Math.round(v * 10) / 10; break; }
     }
   }
@@ -2553,6 +2558,7 @@ async function shareCheck() {
   try { const { Share } = await hcLoad(); r = await Share.pending(); } catch { return; }   // an app version without sharing
   if (!r || !r.shared) return;
   if (r.error || !Array.isArray(r.lines)) { toast("Couldn't open that image. Try sharing it again."); return; }
+  shareLines = r.lines;
   const scan = readScaleReport(r.lines);
   if (!Object.keys(scan.vals).length) { toast("Couldn't find weight, body fat or muscle in that image"); return; }
   if (['weight', 'bodyfat', 'muscle', 'visceral'].every((f) => scan.vals[f] == null) && Object.keys(scan.vals).length < 2) { toast("Couldn't find weight, body fat or muscle in that image"); return; }
@@ -2743,6 +2749,10 @@ const TRACK_ACTIONS = {
     $(`[data-action="rt-open"][data-id="${id}"]`)?.focus({ preventScroll: true });
   },
   'comp-edit': (el) => compSheet(el.dataset.day),
+  'share-copy': async () => {
+    try { await navigator.clipboard.writeText(JSON.stringify((shareLines || []).map((l) => [l.t, l.x, l.y, l.w, l.h]))); toast('Copied. Paste it to whoever looks after the app.'); }
+    catch { toast("Couldn't copy on this phone"); }
+  },
   'comp-save': () => {
     const day = compDay || tKey();
     const lim = COMP_LIMITS;

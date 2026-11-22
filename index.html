@@ -29,6 +29,20 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
+  <!-- First launch: shown while the app's files load, removed by app.js after the first render. -->
+  <div class="boot" id="boot" role="status" aria-label="PulseFit is loading">
+    <div class="boot-in">
+      <svg class="boot-mark" viewBox="72 120 368 268" width="160" height="160" fill="none" aria-hidden="true">
+        <path class="boot-heart" d="M256 362C200 323 146 282 139 228c-6-44 23-77 60-80 25-2 45 11 57 31 12-20 32-33 57-31 37 3 66 36 60 80-7 54-61 95-117 134z"/>
+        <path class="boot-rail" d="M88 259h128l25-55 26 109 28-55h129"/>
+        <path class="boot-trace" d="M88 259h128l25-55 26 109 28-55h129"/>
+      </svg>
+      <p class="boot-name">PulseFit</p>
+      <p class="boot-sub">Getting your day ready</p>
+      <div class="boot-bar" aria-hidden="true"><span></span></div>
+    </div>
+    <noscript><p class="boot-sub">PulseFit needs JavaScript enabled to run.</p></noscript>
+  </div>
   <div class="backdrop" aria-hidden="true"></div>
 
   <div class="shell">
@@ -49,10 +63,6 @@
   <nav class="tabbar" aria-label="Main" data-nav></nav>
 
   <div id="layer"></div>
-
-  <noscript>
-    <p style="padding:24px;color:#fff">PulseFit needs JavaScript enabled to run.</p>
-  </noscript>
 
   <script src="data.js"></script>
   <script src="dumbbells.js"></script>

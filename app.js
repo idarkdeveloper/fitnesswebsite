@@ -602,6 +602,43 @@ function focusKey(el) {
   const attrs = [...el.attributes].filter((a) => a.name.startsWith('data-') || a.name === 'role' || a.name === 'href');
   return attrs.length ? el.tagName.toLowerCase() + attrs.map((a) => `[${a.name}="${CSS.escape(a.value)}"]`).join('') : null;
 }
+/* ---------- Loading states ----------
+   Launch: the #boot screen in index.html covers the page until the first render (bootDone).
+   Slow page: a device that just signed in and has nothing saved yet shows a skeleton of the page while the
+   first sync fetches the account's data, instead of an empty day that then jumps. Never longer than 8 s,
+   and never when this device already has data (local data always shows at once). */
+const SK_VIEWS = ['today', 'track', 'progress', 'meals', 'routine'];
+let skShown = false, pullSince = 0;
+function firstPull() {
+  const S = window.PFSync;
+  if (!S || !S.signedIn()) return false;
+  const st = S.status();
+  if (st.lastSynced || !['idle', 'syncing'].includes(st.state)) return false;
+  if (state.workouts.length || state.meals.length || Object.keys(state.hlog).length || Object.keys(state.levels || {}).length) return false;
+  if (!pullSince) { pullSince = Date.now(); setTimeout(() => { if (skShown && !sheetOpen()) rerender(); }, 8100); }
+  return Date.now() - pullSince < 8000;
+}
+function skeletonView(name) {
+  const bar = (w, h = 'line') => `<span class="sk sk-${h}" style="width:${w}"></span>`;
+  const card = `<div class="card sk-card">${bar('35%')}${bar('60%', 'title')}${bar('100%', 'thin')}</div>`;
+  const today = `
+    <div class="sk-hero">${bar('40%')}${bar('55%', 'num')}${bar('100%', 'thin')}</div>
+    <div class="sk-week">${'<span class="sk"></span>'.repeat(7)}</div>
+    <div class="card sk-card flush"><span class="sk sk-pic"></span><div class="sk-pad">${bar('30%')}${bar('65%', 'title')}<span class="sk sk-btn"></span></div></div>
+    <div class="sk-two">${card}${card}</div>`;
+  return `<div class="sk-page" role="status" aria-label="Getting your data from your account">
+      <div aria-hidden="true">${bar('40%')}${bar('62%', 'h1')}</div>
+      <p class="small muted m-0">Getting your data from your account…</p>
+      <div class="sk-stack" aria-hidden="true">${name === 'today' ? today : card.repeat(4)}</div>
+    </div>`;
+}
+/** Take the launch screen away once the first page is drawn. */
+function bootDone() {
+  const b = $('#boot');
+  if (!b) return;
+  b.classList.add('out');
+  setTimeout(() => b.remove(), reducedMotion() ? 0 : 240);
+}
 function render() {
   const r = parseRoute();
   const view = VIEWS[r.name] || VIEWS.today;
@@ -610,7 +647,8 @@ function render() {
   const key = location.hash, sameRoute = key === lastRouteKey;
   // Views are rebuilt on every tap: put keyboard and screen-reader focus back on the same control (WCAG 2.4.3).
   const fk = sameRoute ? focusKey(document.activeElement) : null;
-  $('#view').innerHTML = view(r);
+  skShown = SK_VIEWS.includes(r.name) && firstPull();
+  $('#view').innerHTML = skShown ? skeletonView(r.name) : view(r);
   if (fk) { const el = $(fk, $('#view')); if (el) el.focus({ preventScroll: true }); }
   if (!sameRoute) {
     window.scrollTo(0, 0);
@@ -618,7 +656,7 @@ function render() {
     if (lastRouteKey !== '') $('#main')?.focus({ preventScroll: true });
     lastRouteKey = key;
   }
-  afterRender(r);
+  if (!skShown) afterRender(r);
   slideSegments();
   wireTabs($('#view'));
   if (pendingSummary) { const s = pendingSummary; pendingSummary = null; showSummary(s); }
@@ -4564,6 +4602,9 @@ function codeSheet(email) {
    --------------------------------------------------------------- */
 const APK_URL = 'https://github.com/idarkdeveloper/fitnesswebsite/releases/latest/download/pulsefit.apk';
 const HC_READ = ['steps', 'sleep', 'weight', 'calories', 'workouts'];
+const BODYFAT_BUILD = 19;     // first Android build with the READ_BODY_FAT permission (body fat % from a smart scale's app)
+/** What this installed app may ask Health Connect for: older builds can't read body fat. */
+const hcRead = () => (appBuild >= BODYFAT_BUILD ? [...HC_READ, 'bodyFat'] : HC_READ);
 const isNativeApp = () => !!(window.androidBridge || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
 let hcPlugins = null;          // { Health, App } once the Capacitor core script is loaded
 let hcBusy = false;
@@ -4595,11 +4636,35 @@ function hcPut(day, field, v, imported) {
 }
 
 /** Pull the last two weeks from Health Connect into the log. Quiet unless `loud`. */
+/* A sync you asked for from the Health sheet shows its real progress: one step per Health Connect read. */
+const HC_STEPS = ['Steps', 'Sleep', 'Weight', 'Active calories', 'Workouts', 'Permissions', 'Body fat'];
+let hcTotal = 6;               // reads in the running sync: 7 when this app build can read body fat
+function hcRing(done) {
+  const p = done / hcTotal;
+  return `<div class="load-ring" id="hcRing" role="status" aria-label="Reading Health Connect">
+      <div class="ring-wrap lg">${ringSvg(p, 160, 10)}<div class="ring-c"><b><span data-pct>${Math.round(p * 100)}</span><i>%</i></b></div></div>
+      <b class="load-title">Reading Health Connect</b>
+      <span class="small muted" data-step>${done} of ${hcTotal} read</span>
+    </div>`;
+}
+function hcRingSet(done, label) {
+  const el = $('#hcRing');
+  if (!el) return;
+  const fg = $('.ring-fg', el), c = 2 * Math.PI * fg.r.baseVal.value, p = done / hcTotal;
+  fg.setAttribute('stroke-dasharray', `${(c * p).toFixed(1)} ${c.toFixed(1)}`);
+  $('[data-pct]', el).textContent = Math.round(p * 100);
+  $('[data-step]', el).textContent = done < hcTotal ? `${done} of ${hcTotal} read · ${label}` : 'All read';
+}
 async function hcSync(loud = false) {
   const h = hcState();
   if (!isNativeApp() || !h.enabled || hcBusy) return;
   hcBusy = true;
+  const ring = loud && sheetOpen(), fat = appBuild >= BODYFAT_BUILD;
+  hcTotal = fat ? 7 : 6;
+  let read = 0;
+  const step = (p, i) => (ring ? p.finally(() => hcRingSet(++read, HC_STEPS[i])) : p);
   try {
+    if (ring) openSheet('Galaxy Watch & Samsung Health', hcRing(0));
     const { Health } = await hcLoad();
     const end = new Date(), start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 13);
     const span = { startDate: start.toISOString(), endDate: end.toISOString() };
@@ -4611,8 +4676,9 @@ async function hcSync(loud = false) {
       Health.readSamples({ dataType: 'weight', ...span, limit: 500 }),
       Health.queryAggregated({ dataType: 'calories', ...span, bucket: 'day', aggregation: 'sum' }),
       Health.queryWorkouts({ ...span, limit: 200 }),
-      Health.checkAuthorization({ read: HC_READ }),
-    ]);
+      Health.checkAuthorization({ read: hcRead() }),
+      ...(fat ? [Health.readSamples({ dataType: 'bodyFat', ...span, limit: 500 })] : []),
+    ].map(step));
     const ok = (i) => (got[i].status === 'fulfilled' ? got[i].value : null);
     for (const b of (ok(0)?.samples || [])) {
       const v = Math.round(b.values?.sum ?? b.value ?? 0);
@@ -4636,6 +4702,11 @@ async function hcSync(loud = false) {
     const wt = {};
     for (const sm of (ok(2)?.samples || [])) { const d = localKey(sm.endDate || sm.startDate); if (!wt[d] || sm.endDate > wt[d].at) wt[d] = { v: sm.value, at: sm.endDate }; }
     for (const [d, x] of Object.entries(wt)) if (x.v > 20 && x.v < 400 && hcPut(d, 'weight', Math.round(x.v * 10) / 10, imported)) changed++;
+    // Body fat % (a smart scale's app writes it): the latest reading of each day.
+    const bf = {};
+    for (const sm of ((fat && ok(6)?.samples) || [])) { const d = localKey(sm.endDate || sm.startDate); if (!bf[d] || sm.endDate > bf[d].at) bf[d] = { v: sm.value, at: sm.endDate }; }
+    for (const [d, x] of Object.entries(bf)) if (x.v >= 3 && x.v <= 70 && hcPut(d, 'bodyfat', Math.round(x.v * 10) / 10, imported)) changed++;
+    h.fatLast = Object.keys(bf).sort().pop() || h.fatLast || null;
     const day = {};                                                    // watch activity per day (this device only)
     for (const b of (ok(3)?.samples || [])) { const d = localKey(b.startDate); (day[d] = day[d] || {}).kcal = Math.round(b.values?.sum ?? b.value ?? 0); }
     for (const w of (ok(4)?.workouts || [])) {
@@ -4649,8 +4720,10 @@ async function hcSync(loud = false) {
     const failed = got.filter((g) => g.status === 'rejected').length;
     save();
     if (!sheetOpen() && !document.activeElement?.matches('input, textarea')) rerender();
+    if (ring) { await new Promise((r) => setTimeout(r, reducedMotion() ? 0 : 450)); if ($('#hcRing')) healthSheet(); }   // let the ring finish filling
     if (loud) toast(failed === got.length ? 'Could not read Health Connect. Check its permissions.' : h.denied.includes('sleep') ? 'Sleep is not allowed yet. Tap "Allow sleep".' : changed ? `Updated ${changed} ${changed === 1 ? 'entry' : 'entries'} from Health Connect` : 'Up to date with Health Connect');
   } catch (e) {
+    if ($('#hcRing')) healthSheet();
     if (loud) toast('Health Connect: ' + (e.message || 'something went wrong'));
   } finally { hcBusy = false; }
 }
@@ -4660,7 +4733,7 @@ async function hcConnect() {
     const { Health } = await hcLoad();
     const av = await Health.isAvailable();
     if (!av.available) { toast(/install|update|not_installed|unavailable/i.test(av.reason || '') ? 'Install or update "Health Connect" from the Play Store first' : `Health Connect isn't available: ${av.reason || 'unknown reason'}`); return; }
-    const res = await Health.requestAuthorization({ read: HC_READ });
+    const res = await Health.requestAuthorization({ read: hcRead() });
     if (!res.readAuthorized || !res.readAuthorized.length) { toast('No access given. You can allow it in Health Connect settings.'); return; }
     hcState().enabled = true; save();
     toast(`Connected: ${res.readAuthorized.join(', ')}`);
@@ -4669,6 +4742,16 @@ async function hcConnect() {
   } catch (e) { toast('Health Connect: ' + (e.message || 'something went wrong')); }
 }
 
+/** Body fat from Health Connect: needs a newer app build, your permission, and a scale app that shares it. */
+function hcFatStatus(h) {
+  if (appBuild && appBuild < BODYFAT_BUILD) return `<p class="small m-0 mt-3"><b>Body fat:</b> this version of the app can't read it yet. <a href="${APK_URL}">Download the latest app</a>, install it, then allow Body fat here.</p>`;
+  if ((h.denied || []).includes('bodyFat')) return `<div class="card flat soft mt-3"><p class="m-0"><b>Body fat: not allowed</b></p>
+    <p class="small muted m-0 mt-1">Allow it and the body fat % your smart scale's app saves to Health Connect fills in by itself. Muscle and visceral fat are not in Health Connect, so those stay typed in.</p>
+    <button class="btn block mt-3" data-action="health-connect">Allow body fat</button></div>`;
+  if (h.fatLast) return `<p class="small m-0 mt-3"><b>Last body fat read:</b> ${esc(fmtShort(fromKey(h.fatLast)))}.</p>`;
+  if (!h.last) return '';
+  return `<p class="small m-0 mt-3"><b>Body fat:</b> nothing in Health Connect from the last 14 days. It only arrives if your scale's app shares body fat with Health Connect.</p>`;
+}
 /** Sleep from Health Connect: what was last read, or why nothing arrives. */
 function hcSleepStatus(h) {
   const t = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -4711,8 +4794,9 @@ function healthSheet() {
   const d = (h.day || {})[todayKey()] || {};
   openSheet('Galaxy Watch & Samsung Health', h.enabled ? `
     <div class="card flat soft row-between"><span><b>Connected</b><span class="d-block small muted">Health Connect · synced ${esc(ago(h.last))}</span></span><span class="pill">${icon('check')} On</span></div>
-    <p class="small mt-3 m-0">Steps, sleep and weight for the last 14 days fill in automatically when you open PulseFit. Anything you type in yourself stays as you wrote it.</p>
+    <p class="small mt-3 m-0">Steps, sleep, weight and body fat for the last 14 days fill in automatically when you open PulseFit. Anything you type in yourself stays as you wrote it.</p>
     ${hcSleepStatus(h)}
+    ${hcFatStatus(h)}
     ${d.workouts || d.kcal ? `<p class="small m-0 mt-2">Today from your watch: ${[d.workouts ? `${d.workouts} workouts, ${d.min} min` : '', d.kcal ? `${nf(d.kcal)} active kcal` : ''].filter(Boolean).join(' · ')}.</p>` : ''}
     <button class="btn block lg mt-4" data-action="health-sync">${icon('refresh')} Sync now</button>
     <button class="btn ghost block mt-2" data-action="health-settings">Health Connect permissions</button>
@@ -5431,6 +5515,8 @@ if (window.PFInstall) window.PFInstall.onChange(() => { if (parseRoute().name ==
 // Called by sync.js once it loads: refresh the Account card when sync status changes.
 window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
   updateSidebarFoot();
+  // The first sync of a new device started or ended: swap the page and its skeleton.
+  if (SK_VIEWS.includes(parseRoute().name) && skShown !== firstPull() && !sheetOpen()) { rerender(); return; }
   if (parseRoute().name !== 'profile' || sheetOpen()) return;
   const line = $('[data-sync-line]');
   if (line && st.user) line.textContent = syncLine(st);                  // same card, new status
@@ -5444,6 +5530,7 @@ applyDislikes();
 applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');
 render();
+bootDone();
 checkReminder();
 /* ---------- Picking up a new version ----------
    Android keeps the app's page alive in the background, so a site update didn't show until the app was

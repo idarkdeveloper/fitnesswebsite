@@ -186,6 +186,7 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Ladder row | `.lad-row` | Family dot (`--h` hue), name, wide segment bar, count (mastered / total) |
 | Group label | `.group-label` | Uppercase section label above list groups (Profile, Groceries) |
 | Food picker | `.search`, `.pick .pill-step`, `.plan-pick`, `.rough` | Add food sheet |
+| Loading | `.boot`, `.sk`, `.load-ring` | Three, each for one kind of wait. **Launch** (`#boot`): the heart mark with the pulse line drawing itself, shown while the app's files load; its content appears only after 250 ms. **Skeleton** (`.sk` blocks in `.sk-page`): the page's shape while a newly signed-in device with nothing saved fetches its data; 8 s at most, never over local data. **Progress ring** (`.load-ring > .ring-wrap.lg`): only where progress is really known (Health Connect reads, one step each). No spinner anywhere else |
 | Step tick list | `.care-steps > li > .cs-row` (+ `.cs-box`) | The steps of a care routine; each row is a button with `aria-pressed`. On Routine a routine's card (`.rt-fold > .rt-head[aria-expanded]`) unfolds it; the same list is in the routine's sheet. All steps ticked = routine done |
 | Plan day strip | `.pd-strip > .pd` | Day + kcal; `.logged` state on planned meals |
 | Utilities | `.m-0`, `.mt-*`, `.mb-*`, `.ml-*`, `.gap-*`, `.wrap`, `.text-center`, `.fw-*`, `.t-*`, `.c-*`, `.static`, `.icon-sm`, `.d-block`, `.btn.sm` | Token-backed one-liners defined last in the cascade. Use them instead of `style=""` |

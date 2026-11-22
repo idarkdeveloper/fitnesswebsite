@@ -264,6 +264,7 @@ function defaultState() {
     foodsSeeded: false,                 // starter "My foods" added on this device (not synced)
     foodsSeededDE: false,               // German everyday foods added on this device (not synced)
     foodsSeededOut: false,              // restaurant favourites (pizza, kulcha, biryani…) added on this device
+    foodsSeededDrinks: false,           // teas and drinks (Zitroni tea …) added on this device
     hmigrated: false,                   // old tracker.html data imported on this device (not synced)
     progOrder: 2,                       // progression list version (see migrateProgOrder)
   };
@@ -2271,6 +2272,7 @@ function seedQuickFoods() {
     if (!state.foodsSeededDE) add(M.QUICK_DE || []);
     state.foodsSeeded = true; state.foodsSeededDE = true; changed = true;
   }
+  if (!state.foodsSeededDrinks && M.QUICK_DRINKS) { add(M.QUICK_DRINKS); state.foodsSeededDrinks = true; changed = true; }   // teas and drinks
   if (!state.foodsSeededOut && M.QUICK_OUT) { add(M.QUICK_OUT); state.foodsSeededOut = true; changed = true; }   // pizza, kulcha, biryani … from restaurants
   // Starter foods saved before nutrients existed get them, unless you changed their kcal or protein.
   if (!state.foodsNutFilled) {

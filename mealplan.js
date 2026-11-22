@@ -221,7 +221,7 @@ window.PF_MEALS = (function () {
     'q-chicken-curry': [15, 2.5, 5, 1.3], 'q-chicken-dish': [9, 2, 3, 1.2], 'q-paneer': [26, 13, 5, 1.1],
     'q-egg': [5, 1.6, 0.3, 0.2], 'q-chai': [3.5, 2.2, 13, 0.1], 'q-tea': [0.7, 0.4, 1, 0], 'q-biscuit': [1.5, 0.7, 2.5, 0.1],
     'q-bread': [1, 0.2, 1.5, 0.4], 'q-chai-biscuits': [6.5, 3.6, 18, 0.3], 'q-quark': [0.5, 0.2, 10, 0.2],
-    'q-vollkorn': [1, 0.2, 1.5, 0.5], 'q-doener': [30, 11, 8, 3.5], 'q-brezel': [2, 0.5, 1, 2.2], 'q-skyr': [0.3, 0.2, 5, 0.1],
+    'q-vollkorn': [1, 0.2, 1.5, 0.5], 'q-doener': [30, 11, 8, 3.5], 'q-brezel': [2, 0.5, 1, 2.2], 'q-skyr': [0.3, 0.2, 5, 0.1], 'q-zitroni-tea': [0, 0, 0, 0],
   };
   /** Full label nutrients for something with `kcal` and `protein` and an estimate row [fat, sat, sugar, salt]. */
   function nutFrom(kcal, protein, row) {
@@ -245,6 +245,11 @@ window.PF_MEALS = (function () {
   const QUICK_DE = [
     ['q-quark', 'Magerquark (250 g)', 170, 30], ['q-vollkorn', 'Vollkornbrot (1 slice)', 105, 4],
     ['q-doener', 'Döner kebab', 650, 35], ['q-brezel', 'Brezel (pretzel)', 220, 6], ['q-skyr', 'Skyr (150 g)', 95, 16],
+  ];
+
+  // Drinks you have often (seeded once into My foods). Herbal tea without sugar is about 2 kcal a cup.
+  const QUICK_DRINKS = [
+    ['q-zitroni-tea', 'Zitroni mint ginger tea (1 cup, no sugar)', 2, 0],
   ];
 
   // Restaurant and takeaway favourites (seeded once into My foods). Typical portions; restaurants vary a lot.
@@ -536,5 +541,5 @@ window.PF_MEALS = (function () {
 
   const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday. Halal: buy meat with a halal label or from a Turkish or halal butcher; for cheese look for "mikrobielles Lab" or "vegetarisch"; avoid Gelatine (gummies, some desserts and yoghurts) and Alkohol in the ingredients. Scanning a barcode checks this for you.';
 
-  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, POOLS, weekPlan, setDislikes, setBread, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
+  return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, QUICK_DRINKS, POOLS, weekPlan, setDislikes, setBread, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
 })();

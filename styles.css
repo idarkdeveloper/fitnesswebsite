@@ -1834,6 +1834,8 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 
 /* Food: combined card, ring + big number + quick add */
 .food-sum { padding: var(--space-4); }
+/* Food card: its name and the two add buttons sit in a row of their own, above the ring and the numbers. */
+.food-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .food-top { display: flex; align-items: center; gap: var(--space-4); }
 .tile-k { font-size: var(--fs-sm); color: var(--muted); }
 .big-v { font-size: 26px; font-weight: 700; line-height: 1.1; white-space: nowrap; }

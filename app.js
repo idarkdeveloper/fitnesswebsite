@@ -888,14 +888,16 @@ VIEWS.today = () => {
 
     <div class="sec-head"><h2 class="h2 m-0">${isToday ? 'Today at a glance' : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">Trends</button><a class="link-btn small" href="#/track">Daily log</a></span></div>
     <section class="card food-sum" aria-label="Food today">
+      <div class="food-head">
+        <div class="food-title">Food</div>
+        <span class="quick-pair"><button class="icon-btn round food-scan" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
+      </div>
       <div class="food-top">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>
         <div class="grow">
-          <div class="food-title">Food</div>
           <div class="big-v">${nf(eaten)} <small>kcal</small></div>
           ${T ? `<div class="small muted food-left">of ${nf(T.kcal)} · ${left >= 0 ? `${nf(left)} left` : `<span class="c-warn">${nf(-left)} over</span>`}</div>` : '<div class="small"><button class="link-btn" data-action="track-setup">Set your target</button></div>'}
         </div>
-        <span class="quick-pair"><button class="icon-btn round food-scan" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
       </div>
       ${macroTiles(tk, T, protein)}
       ${planTicks(tk)}

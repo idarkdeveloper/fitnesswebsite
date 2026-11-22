@@ -55,7 +55,8 @@ window.PF_CARE = (function () {
       steps: [
         ['Floss', 'Dontodent Zahnseidesticks between every tooth.'],
         ['Brush', '2 min with Elmex Sensitive. Twice a week use Perlweiss Schönheits Zahnweiß instead.'],
-        ['Tongue & rinse', 'Zungenreiniger 3×, then 30 s Dontodent Mundspülung.'],
+        ['Tongue', 'Dontodent Zungenreiniger 3× from back to front.'],
+        ['Rinse', '30 s Dontodent Mundspülung.'],
       ],
     },
     'teeth-am': {
@@ -63,7 +64,8 @@ window.PF_CARE = (function () {
       steps: [
         ['Floss', 'Dontodent Zahnseidesticks between every tooth.'],
         ['Brush', '2 min with Elmex Sensitive. Twice a week (e.g. Tuesday and Friday) use Perlweiss Schönheits Zahnweiß instead; keep Elmex for the other days.'],
-        ['Tongue & rinse', 'Dontodent Zungenreiniger 3×, then 30 s Dontodent Mundspülung.'],
+        ['Tongue', 'Dontodent Zungenreiniger 3× from back to front.'],
+        ['Rinse', '30 s Dontodent Mundspülung.'],
       ],
     },
     'teeth-night': {

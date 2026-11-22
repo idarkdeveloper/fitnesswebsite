@@ -186,6 +186,7 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Ladder row | `.lad-row` | Family dot (`--h` hue), name, wide segment bar, count (mastered / total) |
 | Group label | `.group-label` | Uppercase section label above list groups (Profile, Groceries) |
 | Food picker | `.search`, `.pick .pill-step`, `.plan-pick`, `.rough` | Add food sheet |
+| Step tick list | `.care-steps > li > .cs-row` (+ `.cs-box`) | The steps of a care routine; each row is a button with `aria-pressed`. On Routine a routine's card (`.rt-fold > .rt-head[aria-expanded]`) unfolds it; the same list is in the routine's sheet. All steps ticked = routine done |
 | Plan day strip | `.pd-strip > .pd` | Day + kcal; `.logged` state on planned meals |
 | Utilities | `.m-0`, `.mt-*`, `.mb-*`, `.ml-*`, `.gap-*`, `.wrap`, `.text-center`, `.fw-*`, `.t-*`, `.c-*`, `.static`, `.icon-sm`, `.d-block`, `.btn.sm` | Token-backed one-liners defined last in the cascade. Use them instead of `style=""` |
 

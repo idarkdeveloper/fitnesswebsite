@@ -34,40 +34,30 @@ The primitives are defined once in `styles.css` as `--{hue}-{stop}`. **Component
 
 Avoid the hue-drifted ends for UI fills: `--blue-50` leans cyan, and `--red-700` to `--red-900` are very deep reds (suitable only as ink).
 
-### 2.2 Role tokens per theme
+### 2.2 Role tokens per theme — "Lime on Graphite"
 
-Three themes: **Midnight** (default), **Light** and **Dark**. Components must use these role tokens, never raw hex.
+Three themes: **Graphite** (default, stored as `midnight`), **Light** and **Dark**. Graphite surfaces, a lime accent for the main action and progress, sky for secondary data (steps, protein, rest), amber for streaks and warnings. Components must use these role tokens, never raw hex. The `--blue/teal/amber/red/navy` primitives above stay only for exercise art.
 
-| Token | Role | Midnight | Light | Dark |
+| Token | Role | Graphite | Light | Dark |
 |---|---|---|---|---|
-| `--bg-top` / `--bg-bottom` | Page backdrop gradient | `#33478f` → `#120f45` | `#eef3fb` → `#e3eaf6` | `#0c0e13` → `#0a0b0f` |
-| `--surface` | Cards, sheets, list groups | `#1c2a55` (navy source) | `#ffffff` | `#161a22` |
-| `--surface-2` | Nested surfaces (options in sheets) | `#17224a` | `#f4f7fc` | `#11141a` |
-| `--surface-3` | Translucent fills (chips, hover) | white 6% | ink 5% | white 5% |
-| `--border` | Card / control outlines | `rgba(170,186,240,.42)` | `#cfd9ea` | `#2c3443` |
-| `--border-soft` | Dividers | `rgba(170,186,240,.14)` | `#e4eaf4` | `#1f2530` |
-| `--text` | Primary text | `#ffffff` | `navy-900` | `#f2f4f8` |
-| `--muted` | Secondary text | `navy-100` | `navy-600` | `#9aa3b5` |
-| `--faint` | Tertiary text (on surfaces only) | `navy-200` | `navy-500` | `#8e96a8` |
-| `--primary` | Primary buttons, current state | `blue-600` | `blue-600` | `blue-600` |
-| `--link` | Inline links and link buttons | `blue-200` | `blue-600` | `blue-200` |
-| `--accent` | Selected tab, stat outline, highlights | `teal-200` | `teal-600` | `teal-200` |
-| `--accent-ink` | Text on `--accent` | `teal-900` | `#ffffff` | `teal-900` |
-| `--success` | Completed level, mastered, done | `#7ee08a` | `#177a3b` | `#6fdc80` |
-| `--warn` | Flame/streak, earned badge, reminder banner | `amber-100` | `amber-600` | `amber-100` |
-| `--danger` | Destructive actions | `red-300` | `red-600` | `red-300` |
-| `--danger-ink` | Text on `--danger` | `red-900` | `#ffffff` | `red-900` |
-| `--track` | Empty progress tracks, locked badge rings | `navy-300` | `#c9d3e6` | `#3a4252` |
+| `--bg-top` / `--bg-bottom` | Page backdrop | `#121722` → `#0e1116` | `#f4f6f8` → `#eef1f4` | `#0a0b0e` → `#08090b` |
+| `--surface` | Cards, tiles, sheets, nav | `#161b24` | `#ffffff` | `#121418` |
+| `--surface-2` | Nested surfaces, stepper buttons | `#1b212c` | `#f3f5f8` | `#171a1f` |
+| `--surface-3` | Translucent fills | white 5% | ink 5% | white 5% |
+| `--border` | Control outlines (3:1) | `#4a5466` | `#8a94a3` | `#474e5a` |
+| `--border-soft` | Card outlines, dividers | `#262d3a` | `#e1e5ea` | `#22262d` |
+| `--text` | Primary text | `#f2f4f7` | `#0e1116` | `#f2f4f7` |
+| `--muted` / `--faint` | Secondary / tertiary text | `#98a2b3` / `#8d97a8` | `#4b5565` / `#5b6574` | `#9aa2b0` / `#8e96a4` |
+| `--primary` / `--primary-ink` | Main buttons, selected tab, progress, training-day numbers | lime `#c6f432` / `#0e1116` | olive `#3f6212` / white | lime / `#0e1116` |
+| `--link` | Links | lime | olive | lime |
+| `--accent` / `--accent-ink` | Secondary data (steps bar, protein, focus ring) | sky `#7cc4ff` / `#0e1116` | `#0b5d96` / white | sky / `#0e1116` |
+| `--success` | Done, mastered | lime | `#2f6b10` | lime |
+| `--warn` | Streak flame, warnings | amber `#ffb86b` | `#9a4d00` | amber |
+| `--danger` / `--danger-ink` | Destructive | `#ff8a7a` / `#2a0b06` | `#b42318` / white | `#ff8a7a` / `#2a0b06` |
+| `--hero-bg` / `--hero-ink` | The lime plan card (same in every theme) | `#c6f432` / `#0e1116` | same | same |
+| `--info-bg` / `--info-ink` | Rest row, self-care badge | `#1f2a3a` / `#d6e6f5` | `#e7f1fb` / `#0e2a44` | `#18222f` / `#d6e6f5` |
 
-The Dark theme keeps its own neutral greys for surfaces and text. It takes only the brand and status scales from the palette.
-
-**Contrast contract (WCAG 2.2 AA).** Measured with the bundled audit; minimum across all three themes:
-- `--text`, `--muted` and `--faint` on `--surface`: ≥ 4.6:1 (lowest is Light `--faint`).
-- `--text` and `--muted` on the page backdrop: ≥ 5.4:1. Light `--faint` measures 3.9–4.2:1 on the backdrop, so don't place `--faint` text directly on the page backdrop; use `--muted` there. Placeholders use `--muted` for this reason.
-- `--primary-ink` (white) on `--primary` (`blue-600`): 6.7:1.
-- `--accent-ink` on `--accent`: ≥ 5.9:1. `--danger-ink` on `--danger`: ≥ 5.6:1.
-- `--link` on `--surface`: ≥ 6.7:1.
-- Status colours (`--success`, `--accent`, `--warn`, `--danger`) are ≥ 5.1:1 on `--surface`, so they're safe for text and icons.
+Light uses olive instead of lime for buttons and text because lime on white is under 3:1; the hero card keeps lime with dark ink (15:1).
 
 **Colour is never the only signal.** Completed levels show a ✓ icon. Done days show "✓ Done". Locked items show a lock icon. Dot ladders carry an `aria-label` count.
 
@@ -75,7 +65,7 @@ The Dark theme keeps its own neutral greys for surfaces and text. It takes only 
 
 ## 3. Typography
 
-Family: **Roboto** (400 / 500 / 700 / 800), falling back to the system UI font.
+Families: **Space Grotesk** (`--font-display`, 500–700) for headings and every big number (tiles, rings, week strip, set counter, stepper); **Inter** (`--font-body`, 400–800) for everything else. Both fall back to the system UI font.
 
 | Role | Token | Size / weight | Usage |
 |---|---|---|---|
@@ -111,9 +101,9 @@ Hairline offsets of 1–3px (borders and badge nudges) stay raw by design. `--na
 
 | Radius | Value | Usage |
 |---|---|---|
-| `--r-sm` | 12px | Icon buttons, inputs inside cards, art thumbnails |
-| `--r-md` | 16px | Buttons, options, stat tiles |
-| `--r-lg` | 22px | Cards, sheets, nav bar corners |
+| `--r-sm` | 14px | Buttons, inputs, week-strip days, quick-add button |
+| `--r-md` | 20px | Cards, tiles, hero card, large buttons |
+| `--r-lg` | 24px | Stepper card, sheets, floating nav |
 | `--r-pill` | 999px | Chips, segmented control, progress bars |
 | `--r-round` | 50% | Rings, dots, medals, round icon buttons |
 
@@ -122,12 +112,14 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 ## 5. Layout
 
 - **Mobile first.** Single column, 16px gutter, content width capped at **760px**.
-- **< 960px:** fixed bottom tab bar (4 items, 24px icons, label always visible, about 64px tall plus the gesture area). `--nav-clear` (80px) is the bottom padding that keeps content clear of it.
+- **< 960px:** a floating rounded bottom menu, 12px from the sides and bottom, 24px corners (4 items, 24px icons, label always visible; the current one is lime). `--nav-clear` (104px) keeps content clear of it.
 - **Never wider than the screen.** `html, body` clip horizontal overflow; scroll rows (`.h-scroll`) and anything holding positioned children (`.badge`, `.ch-mini`) are `position: relative`; labels that could grow at large Android text sizes wrap instead of `nowrap`.
 - **≥ 960px:** a 240px sticky sidebar replaces the tab bar. Content stays centred and capped at 760px.
 - Grids: the Movement Library is 2 columns, or 3 from 700px. Stats are 2 columns. Streak badges are 4 columns. Ladder badges are 5 columns.
 - Hero art has a max height (320–380px) so it never dominates desktop.
 - **Summaries on Today, details in sheets.** Today holds only what you act on now, in this order: the 14-week plan summary, the week strip, today's session, food with the next meal, the four quick tiles, and one self-care row. Anything with a list (self-care routines, the plan's week-by-week table) shows one line with progress and a chevron, and opens a sheet. Don't add another full card to Today: add a summary row and a sheet.
+- **Today patterns (Lime on Graphite):** the plan is a lime hero card with the week's target as a 34px number; the week strip shows today inverted (light pill) and training days with a lime number; food is one card with the ring, a big "kcal left" number, protein in sky and a 48px lime "+" quick-add button; quick tiles lead with a 24px display-font number.
+- **Workout set screen:** "Exercise n of N" eyebrow, "Set x of y" 34px title, Target and Last set tiles, a stepper card with 56px buttons and a 64px number, a rest row with Change, and a full-width 60px "Set done" button.
 - **Daily log is split into tabs** (Food · Body · Steps & sleep, a `.segmented` control). Each tab can be linked as `#/track/<tab>`. Body holds weight, body fat & muscle, and measurements.
 - **Back navigation pattern:** every drill-down page (category, exercise, workout) starts with a `.topbar` that has a 44px back or close button and a centred title.
 

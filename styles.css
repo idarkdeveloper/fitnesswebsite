@@ -19,85 +19,103 @@
   --navy-500: #6073a3; --navy-600: #4a5c8a; --navy-700: #364671; --navy-800: #233057; --navy-900: #121d3e;
 }
 
+/* "Lime on Graphite" (DESIGN.md §2). Midnight is the signature theme: graphite surfaces, a lime
+   accent for the main action and progress, sky for secondary data, amber for streaks and warnings.
+   --hero-bg / --hero-ink is the lime plan card; it stays lime in every theme (dark ink, 15:1). */
 :root,
 :root[data-theme="midnight"] {
-  --bg-top: #33478f;
-  --bg-bottom: #120f45;
-  --surface: #1c2a55;
-  --surface-2: #17224a;
-  --surface-3: rgba(255, 255, 255, 0.06);
-  --border: rgba(170, 186, 240, 0.42);
-  --border-soft: rgba(170, 186, 240, 0.14);
-  --text: #ffffff;
-  --muted: var(--navy-100);
-  --faint: var(--navy-200);
-  --primary: var(--blue-600);
-  --link: var(--blue-200);
-  --primary-ink: #ffffff;
-  --accent: var(--teal-200);
-  --accent-ink: var(--teal-900);
-  --success: #7ee08a;
-  --warn: var(--amber-100);
-  --danger: var(--red-300);
-  --danger-ink: var(--red-900);
-  --track: var(--navy-300);
-  --nav-bg: #1c2a55;
-  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55);
-  --grain-opacity: 0.08;
+  --bg-top: #121722;
+  --bg-bottom: #0e1116;
+  --surface: #161b24;
+  --surface-2: #1b212c;
+  --surface-3: rgba(255, 255, 255, 0.05);
+  --border: #4a5466;
+  --border-soft: #262d3a;
+  --text: #f2f4f7;
+  --muted: #98a2b3;
+  --faint: #8d97a8;
+  --primary: #c6f432;
+  --link: #c6f432;
+  --primary-ink: #0e1116;
+  --accent: #7cc4ff;
+  --accent-ink: #0e1116;
+  --success: #c6f432;
+  --warn: #ffb86b;
+  --danger: #ff8a7a;
+  --danger-ink: #2a0b06;
+  --track: #2a3140;
+  --nav-bg: #161b24;
+  --hero-bg: #c6f432;
+  --hero-ink: #0e1116;
+  --chip-pos: #22301a;
+  --info-bg: #1f2a3a;
+  --info-ink: #d6e6f5;
+  --shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.7);
+  --grain-opacity: 0;
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  --bg-top: #eef3fb;
-  --bg-bottom: #e3eaf6;
+  --bg-top: #f4f6f8;
+  --bg-bottom: #eef1f4;
   --surface: #ffffff;
-  --surface-2: #f4f7fc;
-  --surface-3: rgba(15, 27, 51, 0.05);
-  --border: #cfd9ea;
-  --border-soft: #e4eaf4;
-  --text: var(--navy-900);
-  --muted: var(--navy-600);
-  --faint: var(--navy-500);
-  --primary: var(--blue-600);
-  --link: var(--blue-600);
+  --surface-2: #f3f5f8;
+  --surface-3: rgba(14, 17, 22, 0.05);
+  --border: #8a94a3;
+  --border-soft: #e1e5ea;
+  --text: #0e1116;
+  --muted: #4b5565;
+  --faint: #5b6574;
+  --primary: #3f6212;
+  --link: #3f6212;
   --primary-ink: #ffffff;
-  --accent: var(--teal-600);
+  --accent: #0b5d96;
   --accent-ink: #ffffff;
-  --success: #177a3b;
-  --warn: var(--amber-600);
-  --danger: var(--red-600);
+  --success: #2f6b10;
+  --warn: #9a4d00;
+  --danger: #b42318;
   --danger-ink: #ffffff;
-  --track: #c9d3e6;
+  --track: #e1e5ea;
   --nav-bg: #ffffff;
-  --shadow: 0 10px 30px -16px rgba(15, 27, 51, 0.25);
+  --hero-bg: #c6f432;
+  --hero-ink: #0e1116;
+  --chip-pos: #eaf6cf;
+  --info-bg: #e7f1fb;
+  --info-ink: #0e2a44;
+  --shadow: 0 10px 28px -16px rgba(14, 17, 22, 0.22);
   --grain-opacity: 0;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
-  --bg-top: #0c0e13;
-  --bg-bottom: #0a0b0f;
-  --surface: #161a22;
-  --surface-2: #11141a;
+  --bg-top: #0a0b0e;
+  --bg-bottom: #08090b;
+  --surface: #121418;
+  --surface-2: #171a1f;
   --surface-3: rgba(255, 255, 255, 0.05);
-  --border: #2c3443;
-  --border-soft: #1f2530;
-  --text: #f2f4f8;
-  --muted: #9aa3b5;
-  --faint: #8e96a8;
-  --primary: var(--blue-600);
-  --link: var(--blue-200);
-  --primary-ink: #ffffff;
-  --accent: var(--teal-200);
-  --accent-ink: var(--teal-900);
-  --success: #6fdc80;
-  --warn: var(--amber-100);
-  --danger: var(--red-300);
-  --danger-ink: var(--red-900);
-  --track: #3a4252;
-  --nav-bg: #13161d;
-  --shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.7);
-  --grain-opacity: 0.04;
+  --border: #474e5a;
+  --border-soft: #22262d;
+  --text: #f2f4f7;
+  --muted: #9aa2b0;
+  --faint: #8e96a4;
+  --primary: #c6f432;
+  --link: #c6f432;
+  --primary-ink: #0e1116;
+  --accent: #7cc4ff;
+  --accent-ink: #0e1116;
+  --success: #c6f432;
+  --warn: #ffb86b;
+  --danger: #ff8a7a;
+  --danger-ink: #2a0b06;
+  --track: #262a31;
+  --nav-bg: #121418;
+  --hero-bg: #c6f432;
+  --hero-ink: #0e1116;
+  --chip-pos: #1e2a14;
+  --info-bg: #18222f;
+  --info-ink: #d6e6f5;
+  --shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.8);
+  --grain-opacity: 0;
   color-scheme: dark;
 }
 
@@ -107,7 +125,7 @@
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-16: 64px;
   /* radius */
-  --r-sm: 12px; --r-md: 16px; --r-lg: 22px; --r-pill: 999px; --r-round: 50%;
+  --r-sm: 14px; --r-md: 20px; --r-lg: 24px; --r-pill: 999px; --r-round: 50%;
   /* type scale */
   --fs-xs: 12px; --fs-sm: 13px; --fs-label: 14px; --fs-body: 16px;
   --fs-lg: 18px; --fs-xl: 20px; --fs-2xl: 24px; --fs-3xl: 34px; --fs-display: 54px;
@@ -123,6 +141,8 @@
   --pro: #ffd76a;                          /* Pro label gold on dark pill */
   --pro-bg: rgba(0, 0, 0, 0.35);
   /* layout */
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --tap: 44px;
   --nav-clear: 96px;                       /* bottom padding that clears the tab bar */
 }
@@ -133,7 +153,7 @@
 html, body { margin: 0; padding: 0; }
 
 body {
-  font-family: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   color: var(--text);
   background: var(--bg-bottom);
   min-height: 100vh;
@@ -1749,3 +1769,110 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .halal-note.halal { border-color: var(--success); } .halal-note.halal svg { color: var(--success); }
 .halal-note.not { border-color: var(--danger); } .halal-note.not svg { color: var(--danger); }
 .halal-note.check svg { color: var(--warn); }
+
+/* =============================================================
+   Lime on Graphite (DESIGN.md §2, §5). Layout patterns from the
+   "PulseFit New Look" mockups: display-font numbers, 20 px cards,
+   lime hero plan card, floating rounded menu, pill tabs, tiles.
+   ============================================================= */
+.h1, .h2, .sess-title, .kpi-v, .ring-c b, .wk-day .dn, .q-tile .v, .big-num, .big-v, .hero-num b, .set-title, .stat-num {
+  font-family: var(--font-display);
+}
+.h1 { font-weight: 700; letter-spacing: -0.01em; }
+.h2 { font-weight: 700; font-size: var(--fs-xl); }
+.today-head .h1 { font-size: 28px; }
+.card { border: 1px solid var(--border-soft); border-radius: var(--r-md); }
+
+/* Hero plan card: lime in every theme, dark ink */
+.hero-card { display: flex; flex-direction: column; gap: 10px; padding: var(--space-4); border-radius: var(--r-md); border: 0; background: var(--hero-bg); color: var(--hero-ink); box-shadow: 0 14px 30px -18px color-mix(in srgb, var(--hero-bg) 70%, transparent); }
+.hero-card .row-between svg { color: var(--hero-ink); }
+.hero-eyebrow { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.hero-num { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.hero-num b { font-size: 34px; line-height: 1; font-weight: 700; letter-spacing: -0.01em; }
+.hero-num span { font-size: var(--fs-label); font-weight: 600; }
+.hero-card .goal-bar { margin: 0; background: rgba(14, 17, 22, 0.18); }
+.hero-card .goal-bar span { background: var(--hero-ink); }
+.hero-sub { font-size: var(--fs-sm); font-weight: 500; }
+.hero-card:focus-visible { outline-color: var(--text); }
+
+/* Week strip: today inverted, training days show a lime number */
+.wk-strip { gap: 6px; }
+.wk-day { min-height: 64px; justify-content: center; gap: 2px; padding: var(--space-2) 0; border-radius: var(--r-sm); border: 1px solid var(--border-soft); background: var(--surface); }
+.wk-day .wd { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.wk-day .dn { font-size: var(--fs-body); font-weight: 700; margin: 0; }
+.wk-day.train .dn { color: var(--primary); }
+.wk-day .mk { height: 14px; }
+.wk-day.today { background: var(--text); border-color: var(--text); }
+.wk-day.today .wd, .wk-day.today .dn, .wk-day.today .mk { color: var(--bg-bottom); }
+.wk-day.today .dot { background: var(--bg-bottom); }
+.wk-day.sel { background: var(--surface-2); border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.wk-day.sel .wd { color: var(--muted); }
+.wk-day.today.sel { background: var(--text); }
+.wk-day.today.sel .wd { color: var(--bg-bottom); }
+
+/* Food: combined card, ring + big number + quick add */
+.food-sum { padding: var(--space-4); }
+.food-top { display: flex; align-items: center; gap: var(--space-4); }
+.tile-k { font-size: var(--fs-sm); color: var(--muted); }
+.big-v { font-size: 26px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
+.big-v small { font-family: var(--font-body); font-size: var(--fs-label); font-weight: 500; color: var(--muted); }
+.sub2 { color: var(--text); opacity: 0.85; margin-top: 2px; }
+.quick-add { flex-shrink: 0; width: 48px; height: 48px; border-radius: var(--r-sm); border: 0; display: grid; place-items: center; background: var(--primary); color: var(--primary-ink); cursor: pointer; box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--primary) 80%, transparent); }
+.quick-add svg { width: 22px; height: 22px; stroke-width: 2.6; }
+.quick-add:active { transform: scale(0.96); }
+
+/* Tiles: big display numbers, 20 px corners */
+.q-grid { gap: 10px; }
+.q-tile { border: 1px solid var(--border-soft); border-radius: var(--r-md); padding: 14px; gap: 4px; }
+.q-tile .k { font-size: var(--fs-sm); }
+.q-tile .v { font-size: var(--fs-2xl); font-weight: 700; }
+.q-tile .bar { height: 6px; }
+.q-tile .bar > span { background: var(--accent); }
+.q-tile .bar > span.accent { background: var(--primary); }
+.q-plus { border-radius: 10px; }
+
+/* Self-care badge instead of a ring */
+.care-badge { flex-shrink: 0; width: 44px; height: 44px; border-radius: var(--r-sm); display: grid; place-items: center; background: var(--info-bg); color: var(--info-ink); font-weight: 700; font-size: var(--fs-label); font-family: var(--font-display); }
+.care-badge.all { background: var(--primary); color: var(--primary-ink); }
+.care-sum { border-radius: var(--r-md); }
+
+/* Pill tabs: the selected tab is lime with dark ink */
+.segmented { background: var(--surface); border: 1px solid var(--border-soft); }
+.segmented::before { background: var(--primary); box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--primary) 90%, transparent); }
+.segmented button[aria-selected="true"], .segmented button[role="radio"][aria-checked="true"] { color: var(--primary-ink); font-weight: 700; }
+
+/* Buttons: 20 px rounded, primary is lime with dark ink */
+.btn { border-radius: var(--r-sm); font-weight: 700; }
+.btn.lg { border-radius: var(--r-md); }
+.streak-pill { color: var(--warn); border: 1px solid var(--border-soft); background: var(--surface); min-height: var(--tap); }
+.streak-pill svg { color: var(--warn); }
+
+/* Floating rounded bottom menu */
+@media (max-width: 959px) {
+  .tabbar { left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); border-radius: var(--r-lg); border: 1px solid var(--border-soft); padding: 6px; box-shadow: 0 16px 34px -14px rgba(0, 0, 0, 0.6); }
+  .tab { border-radius: 18px; min-height: 56px; font-weight: 500; }
+  .tab[aria-current="page"] { color: var(--primary); font-weight: 600; }
+  :root { --nav-clear: 104px; }
+}
+
+/* Workout: one set at a time, mockup layout */
+.set-card { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.set-head { display: flex; flex-direction: column; gap: 6px; }
+.set-eyebrow { font-size: var(--fs-sm); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--primary); }
+.set-title { margin: 0; font-size: 34px; font-weight: 700; line-height: 1.1; }
+.set-sub { font-size: 15px; color: var(--muted); }
+.stat-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat-tile { display: flex; flex-direction: column; gap: 4px; padding: var(--space-4); border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--border-soft); }
+.stat-tile .big-v { font-size: 30px; }
+.step-card { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px var(--space-4); border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--border-soft); }
+.step-card .big-step { margin: 0; gap: 22px; }
+.step-btn { border-radius: 18px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+.big-num { width: 110px; font-weight: 700; }
+.rest-row { display: flex; align-items: center; gap: var(--space-3); padding: 14px var(--space-4); border-radius: var(--r-md); background: var(--info-bg); color: var(--info-ink); }
+.rest-row > svg { width: 22px; height: 22px; color: var(--accent); flex-shrink: 0; }
+.rest-row b { color: var(--info-ink); }
+.pill-btn { min-height: var(--tap); padding: 0 var(--space-3); border-radius: var(--r-pill); border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); background: transparent; color: var(--info-ink); font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; }
+.done-btn { min-height: 60px; border-radius: var(--r-md); font-size: var(--fs-lg); }
+.wo-segs .seg.cur, .wo-segs .seg.done { background: var(--primary); }
+.segmented button { font-size: var(--fs-body); }
+:root .wk-day.today.sel .wd, :root .wk-day.today .wd { color: var(--bg-bottom); }

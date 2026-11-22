@@ -7,7 +7,7 @@
      2. targets    every control is at least 24 x 24 px (WCAG 2.2 SC 2.5.8; DESIGN.md aims for 44)
      3. text       no text under 12 px, at the default text size (DESIGN.md type scale)
      4. icons      no inline icon blown up past 48 px by a missing size (the squeezed card, PR #52)
-     5. menu       the bottom menu spans the screen, no wider, and stays compact
+     5. menu       the floating bottom menu sits 12 px in from each side, never wider, and stays compact
      6. errors     no page errors, console errors or browser confirm()/alert() pop-ups
    And once per theme (Midnight, Light, Dark) on one phone:
      7. contrast   text against what is actually behind it: 4.5:1, or 3:1 for large text (WCAG 1.4.3)
@@ -78,7 +78,8 @@ async function check(p, label, scale) {
     const nav = document.querySelector('nav.tabbar');
     if (nav && getComputedStyle(nav).display !== 'none' && !document.querySelector('dialog[open]')) {
       const r = nav.getBoundingClientRect();
-      if (Math.round(r.width) !== vw) out.push(['menu', `bottom menu is ${Math.round(r.width)} px wide on a ${vw} px screen`]);
+      // The menu floats: 12 px in from each side (DESIGN.md §5), never wider than the screen.
+      if (r.left < 8 || r.right > vw - 8 || r.width < vw - 32) out.push(['menu', `bottom menu spans ${Math.round(r.left)}–${Math.round(r.right)} px on a ${vw} px screen`]);
       if (r.height > 72 * Math.max(1, scale * 0.85)) out.push(['menu', `bottom menu is ${Math.round(r.height)} px tall`]);
     }
     return out;

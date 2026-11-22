@@ -87,6 +87,7 @@ const TOTAL_PROGS = Object.keys(PROG).length;
 const CAT_HUE = {
   pushups: 215, pullups: 250, squats: 190, 'leg-raises': 280, bridges: 165, twists: 320,
   grip: 30, lunges: 140, dips: 0, 'elbow-levers': 45, 'clutch-flag': 200,
+  'db-bench': 225, 'db-row': 260, 'db-shoulder': 235, 'db-goblet': 180, 'db-rdl': 155, 'db-split': 130, 'db-curl': 15,
 };
 
 /* Stick-figure artwork (original vector poses, 160×100 canvas). */
@@ -104,6 +105,16 @@ const POSES = {
   'clutch-flag': { pole: 1, head: [110, 36], lines: [[102, 44, 66, 50], [66, 50, 22, 48], [102, 40, 100, 26], [98, 50, 100, 62]] },
 };
 
+// Dumbbell exercises (dumbbells.js): a bench and dumbbells drawn under simple poses.
+Object.assign(POSES, {
+  'db-bench': { bench: 1, head: [42, 56], lines: [[48, 60, 110, 60], [110, 60, 118, 74, 118, 88], [70, 60, 72, 34], [80, 60, 82, 34]], db: [[64, 32, 90, 32]] },
+  'db-row': { bench: 1, head: [52, 40], lines: [[58, 44, 104, 48], [104, 48, 104, 88], [62, 46, 62, 60], [96, 48, 108, 62, 112, 88], [80, 46, 82, 70]], db: [[74, 72, 90, 72]] },
+  'db-shoulder': { bench: 1, head: [80, 18], lines: [[80, 25, 80, 60], [80, 60, 104, 60, 104, 88], [80, 32, 62, 30, 62, 12], [80, 32, 98, 30, 98, 12]], db: [[54, 10, 70, 10], [90, 10, 106, 10]] },
+  'db-goblet': { ground: 1, head: [70, 24], lines: [[71, 31, 64, 58], [64, 58, 94, 60, 88, 85, 100, 85], [70, 38, 84, 42, 80, 34]], db: [[78, 28, 78, 44]] },
+  'db-rdl': { ground: 1, head: [52, 34], lines: [[58, 38, 92, 46], [92, 46, 96, 66, 98, 88], [70, 42, 72, 66]], db: [[64, 68, 80, 68]] },
+  'db-split': { bench: 1, head: [62, 18], lines: [[62, 25, 64, 52], [64, 52, 46, 66, 44, 88], [64, 52, 92, 70, 112, 60], [62, 32, 58, 52]], db: [[50, 54, 66, 54]] },
+  'db-curl': { ground: 1, head: [80, 16], lines: [[80, 23, 80, 56], [80, 56, 72, 88], [80, 56, 88, 88], [80, 30, 74, 44, 86, 40]], db: [[80, 36, 92, 44]] },
+});
 function figure(catId) {
   const pose = POSES[catId] || POSES.pushups;
   const prop = 'class="prop" stroke="currentColor" stroke-width="3"';
@@ -112,6 +123,8 @@ function figure(catId) {
   if (pose.bar) svg += `<line x1="${pose.bar[0]}" y1="${pose.bar[1]}" x2="${pose.bar[2]}" y2="${pose.bar[3]}" ${prop}/>`;
   if (pose.bars) svg += `<path d="M40 50H124M54 50V96M110 50V96" ${prop} fill="none"/>`;
   if (pose.pole) svg += `<path d="M100 4V96" ${prop} stroke-width="4"/>`;
+  if (pose.bench) svg += `<path d="M30 62H124M44 62V88M110 62V88M8 88H152" ${prop} fill="none"/>`;
+  (pose.db || []).forEach(([x1, y1, x2, y2]) => { svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="currentColor" stroke-width="9" stroke-linecap="round" opacity="0.55"/>`; });
   const body = 'stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"';
   (pose.lines || []).forEach((l) => {
     const pts = [];
@@ -145,6 +158,9 @@ const ROUTINES = [
   { id: 'foundation', name: 'Foundation Routine', desc: 'Two exercises a session, rotating through the core six.', sessions: [['pushups', 'leg-raises'], ['pullups', 'squats'], ['bridges', 'twists']] },
   { id: 'push-pull-legs', name: 'Push · Pull · Legs', desc: 'Classic three-way split with grip and core finishers.', sessions: [['pushups', 'twists'], ['pullups', 'grip'], ['squats', 'leg-raises', 'bridges']] },
   { id: 'full-body', name: 'Full Body Circuit', desc: 'Four big exercises every session. Best on 2–3 days a week.', sessions: [['pushups', 'pullups', 'squats', 'leg-raises']] },
+  { id: 'dumbbell-full', name: 'Dumbbell Full Body', desc: 'Your dumbbells and bench, whole body every session. Best on 3 days a week.', sessions: [['db-goblet', 'db-bench', 'db-row', 'leg-raises'], ['db-rdl', 'db-shoulder', 'db-split', 'db-curl']] },
+  { id: 'dumbbell-ul', name: 'Dumbbell Upper / Lower', desc: 'Upper body one day, legs the next. Best on 4 days a week.', sessions: [['db-bench', 'db-row', 'db-shoulder', 'db-curl'], ['db-goblet', 'db-rdl', 'db-split', 'leg-raises']] },
+  { id: 'hybrid', name: 'Dumbbells + Bodyweight', desc: 'Dumbbell strength work with pushups, pullups and bridges in between.', sessions: [['db-bench', 'db-row', 'leg-raises'], ['db-goblet', 'db-rdl', 'bridges'], ['pushups', 'pullups', 'db-shoulder', 'db-curl']] },
   { id: 'strength-pro', name: 'Strength Builder', desc: 'Adds dips, lunges, levers and the flag.', sessions: [['pushups', 'dips', 'elbow-levers'], ['pullups', 'grip', 'clutch-flag'], ['squats', 'lunges', 'bridges']] },
 ];
 const ROUTINE = Object.fromEntries(ROUTINES.map((r) => [r.id, r]));

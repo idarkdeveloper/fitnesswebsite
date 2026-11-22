@@ -22,7 +22,9 @@ const ICONS = {
   activity: 'M3 12h4l3-8 4 16 3-8h4',
   volume: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11',
   mute: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5',
-  barcode: 'M4 5v14M7 5v14M10 5v14M13 5v14M16 5v14M20 5v14M3 3h3M3 21h3M18 3h3M18 21h3',
+  // Google Material Symbols (Rounded, Apache-2.0 licence): filled shapes on a 960 grid, scaled to this 24 grid.
+  barcode: '<path fill="currentColor" stroke="none" transform="scale(0.025) translate(0 960)" d="M228.5-131.5Q217-120 200-120H80q-17 0-28.5-11.5T40-160v-120q0-17 11.5-28.5T80-320q17 0 28.5 11.5T120-280v80h80q17 0 28.5 11.5T240-160q0 17-11.5 28.5Zm680-177Q920-297 920-280v120q0 17-11.5 28.5T880-120H760q-17 0-28.5-11.5T720-160q0-17 11.5-28.5T760-200h80v-80q0-17 11.5-28.5T880-320q17 0 28.5 11.5ZM180-240q-8 0-14-6t-6-14v-440q0-8 6-14t14-6h40q8 0 14 6t6 14v440q0 8-6 14t-14 6h-40Zm106-6q-6-6-6-14v-440q0-8 6-14t14-6q8 0 14 6t6 14v440q0 8-6 14t-14 6q-8 0-14-6Zm134 6q-8 0-14-6t-6-14v-440q0-8 6-14t14-6h40q8 0 14 6t6 14v440q0 8-6 14t-14 6h-40Zm120 0q-8 0-14-6t-6-14v-440q0-8 6-14t14-6h80q8 0 14 6t6 14v440q0 8-6 14t-14 6h-80Zm146-6q-6-6-6-14v-440q0-8 6-14t14-6q8 0 14 6t6 14v440q0 8-6 14t-14 6q-8 0-14-6Zm80 0q-6-6-6-14v-440q0-8 6-14t14-6q8 0 14 6t6 14v440q0 8-6 14t-14 6q-8 0-14-6ZM228.5-771.5Q217-760 200-760h-80v80q0 17-11.5 28.5T80-640q-17 0-28.5-11.5T40-680v-120q0-17 11.5-28.5T80-840h120q17 0 28.5 11.5T240-800q0 17-11.5 28.5Zm503-57Q743-840 760-840h120q17 0 28.5 11.5T920-800v120q0 17-11.5 28.5T880-640q-17 0-28.5-11.5T840-680v-80h-80q-17 0-28.5-11.5T720-800q0-17 11.5-28.5Z"/>',
+  add: '<path fill="currentColor" stroke="none" transform="scale(0.025) translate(0 960)" d="M440-440H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200q-17 0-28.5-11.5T440-240v-200Z"/>',
   smile: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/>',
   cart: '<circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11h11l2-8H6.3"/>',
   meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 6s1 4 3 4v8',
@@ -890,7 +892,7 @@ VIEWS.today = () => {
     <section class="card food-sum" aria-label="Food today">
       <div class="food-head">
         <div class="food-title">Food</div>
-        <span class="quick-pair"><button class="quick-add ghost-q food-scan" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
+        <span class="quick-pair"><button class="quick-add ghost-q food-scan" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('add')}</button></span>
       </div>
       <div class="food-top">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>

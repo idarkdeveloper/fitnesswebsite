@@ -742,7 +742,7 @@ VIEWS.today = () => {
     const k = keyAdd(ws, i), d = fromKey(k);
     const done = workoutsOn(k).length > 0, train = sessionFor(d).length > 0;
     const mark = done ? icon('check') : train && k >= tk ? icon('dumbbell') : '<i class="dot"></i>';
-    return `<button class="wk-day ${k === selectedDay ? 'sel' : ''} ${done ? 'done' : ''}" data-action="pick-day" data-day="${k}" aria-pressed="${k === selectedDay}" aria-label="${esc(fmtLong(d))}: ${done ? 'workout done' : train ? 'training day' : 'rest day'}">
+    return `<button class="wk-day ${k === selectedDay ? 'sel' : ''} ${k === tk ? 'today' : ''} ${train ? 'train' : ''} ${done ? 'done' : ''}" data-action="pick-day" data-day="${k}" aria-pressed="${k === selectedDay}" aria-label="${esc(fmtLong(d))}: ${done ? 'workout done' : train ? 'training day' : 'rest day'}">
       <span class="wd">${WEEKDAY_SHORT[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="mk">${mark}</span></button>`;
   }).join('');
 
@@ -769,8 +769,8 @@ VIEWS.today = () => {
   const eaten = meals.reduce((a, m) => a + m.kcal, 0), protein = meals.reduce((a, m) => a + (m.protein || 0), 0);
   const left = T ? T.kcal - eaten : null;
   const ringCenter = T
-    ? `<b>${nf(Math.abs(left))}</b><small>${left >= 0 ? 'left' : 'over'}</small>`
-    : `<b>${nf(eaten)}</b><small>eaten</small>`;
+    ? `<b>${Math.round((eaten / T.kcal) * 100)}%</b><small>eaten</small>`
+    : `<b>${nf(eaten)}</b><small>kcal</small>`;
   let next = '';
   if (window.PF_MEALS) {
     const di = planIdx(tk);
@@ -822,16 +822,18 @@ VIEWS.today = () => {
 
     <div class="sec-head"><h2 class="h2 m-0">${isToday ? "Today's log" : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">Trends</button><a class="link-btn small" href="#/track">Daily log</a></span></div>
     <section class="card food-sum" aria-label="Food today">
-      <div class="row gap-4">
+      <div class="food-top">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>
         <div class="grow">
-          <div class="h3">Food</div>
-          <div class="small muted">${T ? `${nf(eaten)} of ${nf(T.kcal)} kcal · ${nf(protein)} / ${T.protein} g protein` : `${nf(eaten)} kcal today · <button class="link-btn" data-action="track-setup">set your target</button>`}</div>
-          ${meals.length ? todayNutLine(tk, T) : ''}
-          ${meals.length ? `<button class="chips-btn m-0 mt-2" data-action="food-list" data-today="1" aria-label="See or delete today's food (${meals.length} ${meals.length === 1 ? 'item' : 'items'})"><span class="chips m-0">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<span class="chip sm">+${meals.length - 3}</span>` : ''}<span class="chip sm edit-chip">${icon('edit', 'class="icon-sm"')} Edit</span></span></button>` : ''}
+          <div class="tile-k">Food</div>
+          ${T ? `<div class="big-v">${nf(Math.abs(left))} <small>kcal ${left >= 0 ? 'left' : 'over'}</small></div>
+          <div class="small sub2">Protein <b class="c-accent">${nf(protein)}</b> / ${T.protein} g</div>` : `<div class="big-v">${nf(eaten)} <small>kcal</small></div>
+          <div class="small sub2"><button class="link-btn" data-action="track-setup">Set your target</button></div>`}
         </div>
+        <button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button>
       </div>
-      <button class="btn ghost block mt-4" data-action="track-food" data-today="1">${icon('plus')} Add food</button>
+      ${meals.length ? todayNutLine(tk, T) : ''}
+      ${meals.length ? `<button class="chips-btn m-0 mt-3" data-action="food-list" data-today="1" aria-label="See or delete today's food (${meals.length} ${meals.length === 1 ? 'item' : 'items'})"><span class="chips m-0">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<span class="chip sm">+${meals.length - 3}</span>` : ''}<span class="chip sm edit-chip">${icon('edit', 'class="icon-sm"')} Edit</span></span></button>` : ''}
       ${window.PF_MEALS ? `<div class="divider-top mt-4">
         <div class="row-between"><span class="eyebrow muted">Plan · next up</span><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
         ${next}
@@ -1164,7 +1166,7 @@ function badgeHtml(b) {
 }
 
 const THEMES = [
-  { id: 'midnight', name: 'Midnight', dot: '#4a3fb5' },
+  { id: 'midnight', name: 'Graphite', dot: '#c6f432' },
   { id: 'light', name: 'Light', dot: '#ffffff' },
   { id: 'dark', name: 'Dark', dot: '#111111' },
 ];
@@ -2689,7 +2691,7 @@ function careRow(day) {
   const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, nextId = ids.find((id) => !careDone(day, id));
   const pct = n / ids.length;
   return `<button class="card care-sum mt-3" data-action="care-list" data-day="${day}" aria-label="Self-care and home: ${n} of ${ids.length} done${nextId ? `. Next: ${R[nextId].title}` : ''}. Open the list">
-      <span class="ring-wrap sm">${ringSvg(pct, 44, 5)}<span class="ring-c"><b class="small">${n}/${ids.length}</b></span></span>
+      <span class="care-badge${pct === 1 ? ' all' : ''}">${n}/${ids.length}</span>
       <span class="grow"><b class="d-block">Self-care &amp; home</b><span class="small muted">${nextId ? `Next: ${esc(R[nextId].at)} · ${esc(R[nextId].title)}` : 'All done for today'}</span></span>
       ${icon('chevR')}</button>`;
 }
@@ -2730,12 +2732,14 @@ function goalPlanCard(tk) {
   if (wk > G.WEEKS) return '';
   const w = Math.max(1, wk), ph = G.phaseOf(w), cur = avg7(tk) ?? latestOn('weight', tk)?.v;
   const target = G.targetKg(w);
-  const status = cur == null ? '' : cur <= target + 0.3 ? '<span class="c-success">on track</span>' : `<span class="muted">${kg(cur - target)} kg above</span>`;
-  return `<button class="card goal-sum mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}. Open the plan">
-      <span class="row-between"><span class="eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery week' : ''}` : `Starts Mon ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}</span>${icon('chevR')}</span>
-      <span class="goal-bar" aria-hidden="true"><span style="width:${(Math.max(0, wk - 1) / G.WEEKS) * 100}%"></span></span>
-      <span class="small d-block mt-2">${nf(ph.steps)} steps a day · strength Tue, Thu, Sat · ${esc(ph.cardio[0].replace(/^Sunday: /, 'Sun ').replace(/\.$/, ''))}</span>
-      <span class="small d-block muted">${wk ? 'This week\'s weight target' : 'Week 1 target'} <b>${kg(target)} kg</b>${cur != null ? ` · now ${kg(cur)}${wk ? ` ${status}` : ''}` : ''}</span>
+  const status = cur == null ? '' : cur <= target + 0.3 ? '<b>on track</b>' : `${kg(cur - target)} kg above`;
+  const when = wk ? 'kg target by Sunday' : 'kg, week 1 target';
+  return `<button class="goal-sum hero-card mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}. This week's target ${kg(target)} kilograms. Open the plan">
+      <span class="row-between"><span class="hero-eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery' : ''}` : `Starts Mon ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}</span>${icon('chevR')}</span>
+      <span class="hero-num"><b>${kg(target)}</b><span>${when}</span></span>
+      <span class="goal-bar" aria-hidden="true"><span style="width:${Math.max(4, (Math.max(0, wk - 1) / G.WEEKS) * 100)}%"></span></span>
+      <span class="hero-sub">${nf(ph.steps)} steps a day · strength Tue, Thu, Sat · ${esc(ph.cardio[0].replace(/^Sunday: /, 'Sun ').replace(/\.$/, ''))}</span>
+      ${cur != null ? `<span class="hero-sub">Now ${kg(cur)} kg${wk ? ` · ${status}` : ''}</span>` : ''}
     </button>`;
 }
 function goalPlanSheet() {
@@ -3457,16 +3461,27 @@ VIEWS.workout = () => {
         <div class="row-between gap-3"><h1 class="m-0">${esc(p.name)}</h1><button class="glass-btn" data-action="wo-howto" data-prog="${p.id}">${icon('info', 'class="icon-sm"')} How to</button></div>
       </div>
     </div>
-    ${cur ? `<section class="card set-card mt-4" aria-label="Current set">
-      <div class="eyebrow muted text-center">Set ${cur.si + 1} of ${e.values.length} · Target ${L.target}${p.type === 'hold' ? ' s' : ''}</div>
-      <div class="big-step">
-        <button class="step-btn" data-action="wo-step" data-d="${p.type === 'hold' ? -5 : -1}" aria-label="Less">${icon('minus')}</button>
-        <input class="big-num" type="number" inputmode="numeric" min="0" max="999" value="${cur.v}" data-set data-e="${cur.ei}" data-s="${cur.si}" aria-label="${unit}" />
-        <button class="step-btn" data-action="wo-step" data-d="${p.type === 'hold' ? 5 : 1}" aria-label="More">${icon('plus')}</button>
+    ${cur ? `<section class="set-card mt-4" aria-labelledby="setH">
+      <div class="set-head">
+        <span class="set-eyebrow">Exercise ${ei + 1} of ${draft.entries.length}</span>
+        <h2 class="set-title" id="setH">Set ${cur.si + 1} of ${e.values.length}</h2>
+        <span class="set-sub">Target ${L.target}${p.type === 'hold' ? ' s' : ` ${unit}`}${p.perSide ? ' per side' : ''} · ${isMastered(p.id) ? 'mastered' : `level ${lvl}`}</span>
       </div>
-      <div class="text-center small muted">${unit}${p.perSide ? ' per side' : ''}</div>
+      <div class="stat-tiles mt-4">
+        <div class="stat-tile"><span class="tile-k">Target</span><span class="big-v">${L.target} <small>${p.type === 'hold' ? 's' : 'reps'}</small></span></div>
+        <div class="stat-tile"><span class="tile-k">Last set</span><span class="big-v">${lastSetVal(cur) ?? '–'} ${lastSetVal(cur) != null ? `<small>${p.type === 'hold' ? 's' : 'reps'}</small>` : ''}</span></div>
+      </div>
+      <div class="step-card mt-3">
+        <span class="small muted" id="stepL">${p.type === 'hold' ? 'Seconds held' : 'Reps done'}${p.perSide ? ', per side' : ''}</span>
+        <div class="big-step">
+          <button class="step-btn" data-action="wo-step" data-d="${p.type === 'hold' ? -5 : -1}" aria-label="${p.type === 'hold' ? '5 seconds less' : 'One fewer rep'}">${icon('minus')}</button>
+          <input class="big-num" type="number" inputmode="numeric" min="0" max="999" value="${cur.v}" data-set data-e="${cur.ei}" data-s="${cur.si}" aria-labelledby="stepL" />
+          <button class="step-btn" data-action="wo-step" data-d="${p.type === 'hold' ? 5 : 1}" aria-label="${p.type === 'hold' ? '5 seconds more' : 'One more rep'}">${icon('plus')}</button>
+        </div>
+        ${p.type === 'hold' && !resting ? `<button class="btn subtle sm" data-action="hold-timer" data-e="${cur.ei}">${icon(holdTimer && holdTimer.e === cur.ei ? 'pause' : 'play')} ${holdTimer && holdTimer.e === cur.ei ? 'Stop hold' : 'Time this hold'}</button>` : ''}
+      </div>
+      ${resting ? '' : `<div class="rest-row mt-3">${icon('timer')}<span class="grow">Rest after this set <b>${state.restSeconds} s</b></span><button class="pill-btn" data-action="rest-settings">Change</button></div>`}
       <div class="mt-4">${main}</div>
-      ${p.type === 'hold' && !resting ? `<button class="btn subtle block mt-2" data-action="hold-timer" data-e="${cur.ei}">${icon(holdTimer && holdTimer.e === cur.ei ? 'pause' : 'play')} ${holdTimer && holdTimer.e === cur.ei ? 'Stop hold' : 'Time this hold'}</button>` : ''}
       <p class="small muted text-center m-0 mt-3">${helper}</p>
     </section>` : `<section class="card set-card mt-4">${main}<p class="small muted text-center m-0 mt-3">${helper}</p></section>`}
     <section class="card set-list mt-4" aria-label="All sets">
@@ -3483,6 +3498,14 @@ VIEWS.workout = () => {
       ${cur ? `<button class="link-btn" data-action="finish-workout" ${doneN ? '' : 'disabled'}>Finish early</button>` : ''}
     </div>`;
 };
+
+/** What you did on the set before this one: the previous set of this exercise today, or the same set last time. */
+function lastSetVal(cur) {
+  const e = draft.entries[cur.ei];
+  if (cur.si > 0 && e.done[cur.si - 1]) return e.values[cur.si - 1];
+  const prev = [...state.workouts].reverse().map((w) => (w.entries || []).find((x) => x.progId === e.progId)).find(Boolean);
+  return prev && prev.values ? prev.values[Math.min(cur.si, prev.values.length - 1)] ?? null : null;
+}
 
 /** Keep the elapsed clock ticking while the workout screen is open. */
 let woTick = null;
@@ -4707,7 +4730,7 @@ function applyTheme() {
   const t = THEMES.some((x) => x.id === state.profile.theme) ? state.profile.theme : 'midnight';
   document.documentElement.setAttribute('data-theme', t);
   const meta = $('meta[name="theme-color"]');
-  if (meta) meta.content = { midnight: '#1c2a55', light: '#ffffff', dark: '#13161d' }[t];
+  if (meta) meta.content = { midnight: '#0e1116', light: '#f4f6f8', dark: '#08090b' }[t];
 }
 
 /** The meal plan reminder's text for a day of the week (0 = Sun). From Friday the plan shown is next week's. */

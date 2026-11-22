@@ -21,7 +21,7 @@
   --primary: #c6f432;
   --link: #c6f432;
   --primary-ink: #0e1116;
-  --accent: #7cc4ff;
+  --accent: #d8f86a;
   --accent-ink: #0e1116;
   --success: #3ddc97;
   --warn: #ffb86b;
@@ -31,8 +31,8 @@
   --nav-bg: #161b24;
   --hero-bg: #c6f432;
   --hero-ink: #0e1116;
-  --info-bg: #1f2a3a;
-  --info-ink: #d6e6f5;
+  --info-bg: #232b16;
+  --info-ink: #eef7d0;
   --shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.7);
   --grain-opacity: 0;
   --success-ink: #0e1116;
@@ -55,7 +55,7 @@
   --primary: #3f6212;
   --link: #3f6212;
   --primary-ink: #ffffff;
-  --accent: #0b5d96;
+  --accent: #4d6b06;
   --accent-ink: #ffffff;
   --success: #2f6b10;
   --warn: #9a4d00;
@@ -65,8 +65,8 @@
   --nav-bg: #ffffff;
   --hero-bg: #c6f432;
   --hero-ink: #0e1116;
-  --info-bg: #e7f1fb;
-  --info-ink: #0e2a44;
+  --info-bg: #eef5dc;
+  --info-ink: #1f2a05;
   --shadow: 0 10px 28px -16px rgba(14, 17, 22, 0.22);
   --grain-opacity: 0;
   --success-ink: #ffffff;
@@ -89,7 +89,7 @@
   --primary: #c6f432;
   --link: #c6f432;
   --primary-ink: #0e1116;
-  --accent: #7cc4ff;
+  --accent: #d8f86a;
   --accent-ink: #0e1116;
   --success: #3ddc97;
   --warn: #ffb86b;
@@ -99,8 +99,8 @@
   --nav-bg: #121418;
   --hero-bg: #c6f432;
   --hero-ink: #0e1116;
-  --info-bg: #18222f;
-  --info-ink: #d6e6f5;
+  --info-bg: #1c2312;
+  --info-ink: #eef7d0;
   --shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.8);
   --grain-opacity: 0;
   --success-ink: #08090b;
@@ -2165,6 +2165,28 @@ button.cs-row { cursor: pointer; }
 .ring-wrap.lg .ring-c i { font-style: normal; font-size: var(--fs-xl); color: var(--muted); margin-left: 2px; }
 .load-title { font-family: var(--font-display); font-size: var(--fs-2xl); letter-spacing: -0.01em; }
 
+/* Today's workout: light-to-dark lemon gradient (no black), dark ink on top, same in every theme */
+.workout-card.lime-card { background: linear-gradient(135deg, #e4fb8c 0%, #c6f432 45%, #9fcc1c 100%); border: 0; color: #0e1116; box-shadow: 0 14px 30px -18px rgba(120, 160, 20, 0.7); }
+.workout-card.lime-card .eyebrow { color: #2c3a05; }
+.workout-card.lime-card .sess-title, .workout-card.lime-card b { color: #0e1116; }
+.workout-card.lime-card .muted, .workout-card.lime-card .small.muted { color: #2b3410; }
+.workout-card.lime-card .icon-btn, .workout-card.lime-card .btn.ghost { background: rgba(255, 255, 255, 0.35); border-color: rgba(14, 17, 22, 0.55); color: #0e1116; }
+.workout-card.lime-card .icon-btn:hover, .workout-card.lime-card .btn.ghost:hover { background: rgba(255, 255, 255, 0.55); }
+.workout-card.lime-card .start-btn { background: #0e1116; color: #c6f432; }
+.workout-card.lime-card :focus-visible { outline-color: #0e1116; }
+.workout-card.lime-card .wc-list summary, .workout-card.lime-card .link-btn { color: #0e1116; }
+/* Exercise rows inside the lemon card keep their own dark surface and light text */
+.workout-card.lime-card .sess-row, .workout-card.lime-card .sess-row b { color: var(--text); }
+.workout-card.lime-card .sess-row .meta, .workout-card.lime-card .sess-row .muted { color: var(--muted); }
+
+/* Workout card: white text only, so the lemon gradient is deepened enough for white to read (4.75:1 to 8.8:1) */
+.workout-card.lime-card { background: linear-gradient(135deg, #5f7d08 0%, #4a6604 55%, #3a5203 100%); color: #ffffff; box-shadow: 0 14px 30px -18px rgba(60, 90, 5, 0.8); }
+.workout-card.lime-card .eyebrow, .workout-card.lime-card .sess-title, .workout-card.lime-card b,
+.workout-card.lime-card .muted, .workout-card.lime-card .small.muted, .workout-card.lime-card .wc-list summary, .workout-card.lime-card .link-btn { color: #ffffff; }
+.workout-card.lime-card .icon-btn, .workout-card.lime-card .btn.ghost { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.7); color: #ffffff; }
+.workout-card.lime-card .icon-btn:hover, .workout-card.lime-card .btn.ghost:hover { background: rgba(255, 255, 255, 0.22); }
+.workout-card.lime-card .start-btn { background: #ffffff; color: #2c3d02; }
+.workout-card.lime-card :focus-visible { outline-color: #ffffff; }
 /* Status bar: when the page is drawn under the phone's status bar (--safe-top), a strip in the page colour stays
    behind the clock and icons, so text scrolling up never runs through them. No height in a normal browser tab. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); background: var(--bg-top); z-index: 60; pointer-events: none; }

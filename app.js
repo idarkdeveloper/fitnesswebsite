@@ -804,7 +804,7 @@ VIEWS.today = () => {
     : `<div class="wc-body"><div class="row-between gap-3"><div><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">Rest day</h2></div>
         <button class="icon-btn round" data-action="pick-routine" aria-label="Adjust routine (${esc(r.name)})">${icon('sliders')}</button></div>
         <div class="rest-day mt-3">${icon('moon')}<div><div class="fw-bold">Rest &amp; recover</div><p class="muted small m-0">No session on this day. A walk or some mobility work is a great idea.</p></div></div>
-        <div class="row gap-2 mt-3"><button class="btn ghost grow" data-action="track-steps" data-today="1">${icon('run')} Log a walk</button><button class="btn ghost grow" data-action="mobility" aria-label="Start 10 minutes of mobility">${icon('timer')} Mobility 10m</button></div></div>`;
+        <div class="row gap-2 mt-3 rest-acts"><button class="btn ghost grow" data-action="track-steps" data-today="1">${icon('run')} Log a walk</button><button class="btn ghost grow" data-action="mobility" aria-label="Start 10 minutes of mobility">${icon('timer')} Mobility 10m</button></div></div>`;
 
   // Today's log
   const T = targets(tk);
@@ -884,7 +884,6 @@ VIEWS.today = () => {
         <div class="row-between"><span class="eyebrow muted">Next meal</span><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
         ${next}
       </section>` : ''}
-    ${careRow(tk)}
     ${watchLine(tk)}`;
 };
 /* Exercise section: two tabs, Exercises (the picture grid) and Progress (strength, body, steps & sleep, workouts). */
@@ -3045,17 +3044,6 @@ function rtTimesSheet() {
     <button class="btn block lg mt-2" data-action="rt-times-save">Save</button>`);
 }
 
-/** Today: one line for self-care: how many are done and what's next; the full list opens in a sheet. */
-function careRow(day) {
-  const ids = careIds(day);
-  if (!ids.length) return '';
-  const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, nextId = ids.find((id) => !careDone(day, id));
-  const pct = n / ids.length;
-  return `<button class="card care-sum mt-3" data-action="care-list" data-day="${day}" aria-label="Self-care and home: ${n} of ${ids.length} done${nextId ? `. Next: ${R[nextId].title}` : ''}. Open the list">
-      <span class="care-badge${pct === 1 ? ' all' : ''}">${n}/${ids.length}</span>
-      <span class="grow"><b class="d-block">Self-care &amp; home</b><span class="small muted">${nextId ? `Next: ${esc(R[nextId].at)} · ${esc(R[nextId].title)}` : 'All done for today'}</span></span>
-      ${icon('chevR')}</button>`;
-}
 function careListSheet(day) {
   openSheet('Self-care & home', `${careCard(day).replace(/<section[^>]*>|<\/section>/g, '').replace(/<div class="row-between"><h2[^]*?<\/h2>/, '<div class="row-between"><span></span>')}`);
 }
@@ -3096,7 +3084,7 @@ function goalPlanCard(tk) {
   const status = cur == null ? '' : cur <= target + 0.3 ? '<b>on track</b>' : `${kg(cur - target)} kg above`;
   const when = wk ? 'kg target by Sunday' : 'kg, week 1 target';
   return `<button class="goal-sum hero-card mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}. This week's target ${kg(target)} kilograms. Open the plan">
-      <span class="row-between"><span class="hero-eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery' : ''}` : `Starts Mon ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}</span>${icon('chevR')}</span>
+      <span class="row-between"><span class="hero-eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery' : ''}` : `${G.WEEKS}-week plan`}</span>${icon('chevR')}</span>
       <span class="hero-num"><b>${kg(target)}</b><span>${when}</span></span>
       <span class="goal-bar" aria-hidden="true"><span style="width:${(Math.max(0, wk - 1) / G.WEEKS) * 100}%"></span></span>
       ${wk ? '' : `<span class="hero-sub hero-upcoming">${keyAdd(tk, 1) === G.START ? 'Starts tomorrow' : `Starts ${esc(fmtShort(fromKey(G.START)))}`} · rest today</span>`}

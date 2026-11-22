@@ -180,7 +180,7 @@ window.PF_CARE = (function () {
       ],
     },
     'off-pm': {
-      at: 'Evening', title: 'Evening skin care', sub: 'Cleanse and moisture before bed',
+      at: 'Evening', title: 'Evening skin care', sub: 'Cleanse and moisturise before bed',
       steps: [
         ['Face wash', 'Balea MEN Sensitive Waschgel.'],
         ['Moisture', '3–4 drops Glycerin serum on damp skin, sealed with Balea Gesichtscreme Gel Aqua.'],

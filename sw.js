@@ -2,7 +2,7 @@
    - App files: network first (you always get the latest when online), cached copy when offline.
    - Exercise images and fonts: served from cache, refreshed in the background.
    - Never touches Supabase or any other site's requests (sync must always hit the network). */
-const SHELL = 'pf-shell-v68';
+const SHELL = 'pf-shell-v70';
 const MEDIA = 'pf-media-v1';
 const SHELL_FILES = [
   './', './index.html', './styles.css', './app.js', './data.js', './dumbbells.js', './theme-boot.js', './pwa.js',
@@ -52,7 +52,7 @@ self.addEventListener('fetch', (ev) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
-    if (url.pathname.includes('/img/') && url.pathname.endsWith('.webp')) ev.respondWith(staleWhileRevalidate(req, ev));
+    if (url.pathname.includes('/img/') && (url.pathname.endsWith('.webp') || url.pathname.endsWith('.svg'))) ev.respondWith(staleWhileRevalidate(req, ev));
     else ev.respondWith(networkFirst(req));
   } else if (FONT_HOSTS.includes(url.hostname)) {
     ev.respondWith(staleWhileRevalidate(req, ev));

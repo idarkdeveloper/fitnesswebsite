@@ -17,6 +17,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 global.window = {};
 require(path.join(ROOT, 'data.js'));
+require(path.join(ROOT, 'dumbbells.js'));
 const CATS = window.PF_DATA.categories;
 
 /* ---------- shared style block (identical in every prompt for a consistent set) ---------- */
@@ -67,6 +68,24 @@ const SETTING = {
 };
 
 /* Hand-written peak positions (what the camera sees). Ids missing here fall back to the tutorial steps. */
+/* Dumbbell exercises get ONE photo each (16:9, id = the exercise id); every weight step shows it (app.js media()).
+   Home setting to match the owner's kit: dumbbells and a flat bench. */
+const DB_SETTING = 'in a tidy home gym corner with a black flat bench';
+const DB_POSE = {
+  'db-bench': 'lying on his back on the flat bench, feet flat on the floor, pressing two hex dumbbells straight up over his chest, arms nearly straight',
+  'db-row': 'one knee and the same-side hand on the flat bench, back flat and parallel to the floor, the other hand rowing a dumbbell up to his hip, elbow close to the body',
+  'db-shoulder': 'sitting upright on the flat bench, feet flat, pressing two dumbbells overhead, arms nearly straight, ribs down',
+  'db-goblet': 'in the bottom of a squat, holding one dumbbell vertically against his chest with both hands, chest up, heels down, knees over toes',
+  'db-rdl': 'hinged forward at the hips with a flat back, knees softly bent, two dumbbells hanging close to his shins, neck in line with the back',
+  'db-split': 'in a Bulgarian split squat, rear foot laces-down on the flat bench behind him, front knee bent to 90 degrees, a dumbbell in each hand at his sides',
+  'db-curl': 'standing tall, elbows pinned to his sides, curling two dumbbells up to shoulder height, palms facing up',
+  'db-benchsquat': 'squatting down until his hips just touch the flat bench behind him, arms holding one dumbbell at his chest, chest up, heels down',
+  'db-hipthrust': 'upper back resting across the side of the flat bench, feet flat on the floor, hips lifted so thighs and torso form a straight line, a dumbbell held on his hips with both hands',
+  'db-carry': 'walking tall across the room holding a heavy dumbbell in each hand at his sides, shoulders back, mid-stride',
+  'db-lateral': 'standing tall, raising two dumbbells out to the sides to shoulder height, elbows slightly bent, front view',
+  'db-triceps': 'lying on his back on the flat bench, upper arms vertical, elbows bent so two dumbbells are lowered beside his head',
+};
+
 const POSE_OVERRIDE = {
   "wall-pushups": "standing leaning into a wall, palms at shoulder height, elbows bent, chest close to the wall, body straight",
   "incline-pushups": "hands on a waist-high bench, body straight and angled, chest lowered to the bench edge",
@@ -202,6 +221,14 @@ function brief(subject, aspect, file, note = '') {
 function buildAll() {
   const items = [];
   CATS.forEach((c) => {
+    if (DB_POSE[c.id]) {
+      items.push({
+        id: c.id, kind: 'cover', title: c.name,
+        ...brief(`Athlete doing ${c.name.toLowerCase()} ${DB_SETTING}: ${DB_POSE[c.id]}.`, '16:9', `img/${c.id}.webp`, 'Real dumbbells with clearly visible handles and plates; the bench is stable and flat.'),
+        usedIn: 'Exercise grid, category hero, every weight step, workout session',
+      });
+      return;
+    }
     const signature = c.progressions[Math.min(c.progressions.length - 1, Math.floor(c.progressions.length * 0.6))];
     items.push({
       id: c.id, kind: 'cover', title: `${c.name} (cover)`,

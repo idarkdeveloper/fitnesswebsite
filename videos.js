@@ -84,4 +84,18 @@ window.PF_VIDEOS = {
   "straddle-clutch-flags": ["sQdDJb4UO-M", "CLUTCH FLAG: Tutorial", "Hybrid Calisthenics"],
   "full-clutch-flags": ["djiSlMbVTmI", "clutch flags - easier than they look 👀", "Hybrid Calisthenics"],
   "straight-flat-leg-raises": ["hav89ezKkPA", "Leg Raises - Step 5 - Flat Straight Leg Raises", "Convicted Condition"],
+
+  /* Dumbbell exercises: one short form video per exercise, used for every weight step (app.js stockVideo). */
+  "db-bench": ["M0tN99QgPyU", "How to Do the Flat Dumbbell Bench Press | Perfect Form in 30 Seconds", "All Strength Training"],
+  "db-row": ["PgpQ4-jHiq4", "One Arm Dumbbell Row - Back Exercise - Bodybuilding.com", "Bodybuilding.com"],
+  "db-shoulder": ["t-hqRPjpaw8", "Exercise Demo: Seated Dumbbell Shoulder Press", "Andrew Coates"],
+  "db-goblet": ["gCESNsDsbqk", "Goblet Squats: Proper Form & Technique", "BuiltLean®"],
+  "db-rdl": ["hQgFixeXdZo", "Dumbbell Romanian (RDL) Deadlift |TECHNIQUE for Beginners", "Mike | J2FIT Strength & Conditioning"],
+  "db-split": ["vLuhN_glFZ8", "Dumbbell Bulgarian Split Squat (Full Tutorial) - Single Leg Exercise for QUADS", "Mike | J2FIT Strength & Conditioning"],
+  "db-curl": ["cBSD6mQIPQk", "Dumbbell Bicep Curl | Nuffield Health", "Nuffield Health"],
+  "db-benchsquat": ["7LpLZOdz68A", "Bodyweight Box Squat | Step-by-Step Tutorial", "Physio Plus Fitness"],
+  "db-hipthrust": ["29OfN4ztW_g", "Dumbbell Hip Thrust (FULL TUTORIAL) - Glute Exercises for Beginners", "Mike | J2FIT Strength & Conditioning"],
+  "db-carry": ["p5MNNosenJc", "The Dumbbell Farmers Carry", "CrossFit"],
+  "db-lateral": ["XPPfnSEATJA", "How to do a Dumbbell Lateral Raise", "National Academy of Sports Medicine (NASM)"],
+  "db-triceps": ["MO_03opCc0g", "How To: Laying Dumbbell Tricep Extension", "ScottHermanFitness"],
 };

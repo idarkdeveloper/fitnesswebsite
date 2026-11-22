@@ -2205,7 +2205,7 @@ function foodSheet() {
     <details class="other-food mt-3"><summary><span class="fw-bold">Other food</span><span class="small muted">name · kcal · label nutrients</span></summary>
       <div class="field"><label for="fName">Food</label><input class="input" id="fName" maxlength="60" placeholder="e.g. Butter-Spritzgebäck" autocomplete="off" /></div>
       <div class="grid2">
-        <div class="field"><label for="fBasis">Label values are</label><select class="input" id="fBasis"><option value="serving">per serving / piece</option><option value="100g">per 100 g</option></select></div>
+        <div class="field"><label for="fBasis">Label values are</label><select class="input" id="fBasis"><option value="serving">per serving</option><option value="100g">per 100 g</option></select></div>
         <div class="field" id="fGramsField" hidden><label for="fGrams">You ate (g)</label><input class="input" id="fGrams" type="number" inputmode="decimal" min="1" max="5000" /></div>
       </div>
       <div class="grid2">

@@ -1734,3 +1734,18 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 /* Skip link: first Tab stop on every page; hidden until focused. Matters most on wide screens, where the sidebar comes first. */
 .skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 12px 16px; border-radius: var(--r-sm); background: var(--primary); color: var(--primary-ink); font-weight: 700; text-decoration: none; transform: translateY(-200%); }
 .skip-link:focus { transform: none; }
+
+.check-row { display: flex; gap: var(--space-3); align-items: flex-start; cursor: pointer; }
+.check-row input { width: 22px; height: 22px; margin-top: 2px; flex-shrink: 0; accent-color: var(--primary); }
+
+/* Barcode scanner: camera preview with a guide line. */
+.scan-box { position: relative; border-radius: var(--r-md, 16px); overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
+.scan-box video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scan-line { position: absolute; left: 10%; right: 10%; top: 50%; height: 2px; background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+/* Halal verdict for a scanned product: icon + words, never colour alone. */
+.halal-note { display: flex; gap: var(--space-2); align-items: flex-start; margin: var(--space-3) 0 0; padding: var(--space-3); border-radius: var(--r-sm); border: 1px solid var(--border-soft); font-size: var(--fs-sm); }
+.halal-note svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+.halal-note.halal { border-color: var(--success); } .halal-note.halal svg { color: var(--success); }
+.halal-note.not { border-color: var(--danger); } .halal-note.not svg { color: var(--danger); }
+.halal-note.check svg { color: var(--warn); }

@@ -1929,3 +1929,12 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .quick-add.ghost-q { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
 .scan-btn { flex-shrink: 0; }
 .scan-box[hidden] { display: none; }
+/* Meal: food history */
+.food-hist { padding: var(--space-1) var(--space-3); list-style: none; margin: 0; }
+.food-hist li + li { border-top: 1px solid var(--border-soft); }
+.fh-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 52px; padding: var(--space-2) var(--space-1); background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: var(--r-sm); }
+.fh-row.sel { background: var(--surface-2); }
+.fh-d { width: 6.5em; flex-shrink: 0; font-weight: 600; font-size: var(--fs-label); }
+.fh-bar { min-width: 0; }
+.fh-bar .progress { display: block; }
+.fh-v { text-align: right; flex-shrink: 0; font-size: var(--fs-label); }

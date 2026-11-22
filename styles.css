@@ -1910,7 +1910,7 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .fchip.on { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
 
 /* Five-item bottom menu (Today, Exercise, Meal, Care, Profile) */
-.tabbar { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.tabbar { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .tab span { white-space: nowrap; }
 .segmented.seg-sm button { font-size: var(--fs-label); padding-left: 2px; padding-right: 2px; }
 /* Own demo clips */
@@ -1974,3 +1974,5 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .rt-now { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--primary); color: var(--primary-ink); font-size: var(--fs-xs); font-weight: 700; vertical-align: 2px; }
 .myday-row { display: flex; align-items: center; gap: var(--space-3); color: inherit; text-decoration: none; }
 .myday-row > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+/* Six menu items: tighter labels so they fit at large text sizes */
+@media (max-width: 959px) { .tab { font-size: 11px; letter-spacing: -0.01em; } .tab svg { width: 22px; height: 22px; } }

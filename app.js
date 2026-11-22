@@ -2413,6 +2413,7 @@ function setupSheet() {
 }
 
 const TRACK_ACTIONS = {
+  'food-day': (el) => { const k = el.dataset.day; trackDay = k >= todayKey() ? null : k; rerender(); window.scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' }); },
   'track-day': (el) => {
     const n = Number(el.dataset.n);
     trackDay = n === 0 ? null : keyAdd(tKey(), n);
@@ -2760,7 +2761,9 @@ VIEWS.care = (r) => {
   if (!window.PF_CARE) return '<p class="muted">Care routines are missing.</p>';
   const day = todayKey(), R = window.PF_CARE.R, todayIds = careIds(day);
   const ids = Object.keys(R).filter((id) => CARE_KIND(id) === careTab);
-  const now = ids.filter((id) => todayIds.includes(id)), other = ids.filter((id) => !todayIds.includes(id));
+  // Today's list keeps the day's own order (already by time); other days sort by time of day too.
+  const rank = (id) => { const at = R[id].at, m = /^(\d\d):(\d\d)/.exec(at); if (m) { const h = +m[1]; return (h < 3 ? h + 24 : h) * 60 + +m[2]; } return { Morning: 480, 'Late morning': 630, Midday: 750, Afternoon: 900, Evening: 1140 }[at] ?? 720; };
+  const now = todayIds.filter((id) => CARE_KIND(id) === careTab), other = ids.filter((id) => !todayIds.includes(id)).sort((x, y) => rank(x) - rank(y));
   const row = (id, isToday) => {
     const rr = R[id], done = isToday && careDone(day, id);
     return `<li class="${done ? 'done' : ''}">
@@ -3158,15 +3161,46 @@ VIEWS.meals = (r) => {
   else if (r && r.arg === 'plan') planTab = 'week';
   return VIEWS.plan(r);
 };
+/** Meal section, Meals tab: pick a day (‹ ›), its water and food, and the last 14 days of food history. */
+function mealDayPanel() {
+  const day = tKey(), isToday = day === todayKey(), Td = targets(day);
+  const nav = `<div class="day-nav card flat soft mt-4">
+      <button class="icon-btn round bare" data-action="track-day" data-n="-1" aria-label="Previous day">${icon('chevL')}</button>
+      <div class="text-center"><div class="fw-bold">${isToday ? 'Today' : esc(fmtShort(fromKey(day)))}</div>
+        ${isToday ? `<div class="muted small">${esc(fmtShort(fromKey(day)))}</div>` : '<button class="link-btn small" data-action="track-day" data-n="0">Back to today</button>'}</div>
+      <button class="icon-btn round bare" data-action="track-day" data-n="1" aria-label="Next day" ${isToday ? 'disabled' : ''}>${icon('chevR')}</button>
+    </div>`;
+  return `${nav}${waterCard(day)}${trackFoodCard(day, Td, isToday ? 'today' : 'this day')}${foodHistory(day)}`;
+}
+/** The last 14 days: calories against the target, protein, and a tap to open that day. */
+function foodHistory(selected) {
+  const tk = todayKey();
+  const rows = Array.from({ length: 14 }, (_, i) => keyAdd(tk, -i)).map((k) => {
+    const ms = state.meals.filter((m) => m.day === k);
+    const kc = ms.reduce((a, m) => a + m.kcal, 0), pr = ms.reduce((a, m) => a + (m.protein || 0), 0), T = targets(k);
+    const pct = T && kc ? Math.min(100, (kc / T.kcal) * 100) : 0, over = T && kc > T.kcal * 1.05;
+    const label = k === tk ? 'Today' : k === keyAdd(tk, -1) ? 'Yesterday' : fromKey(k).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    return `<li><button class="fh-row ${k === selected ? 'sel' : ''}" data-action="food-day" data-day="${k}" aria-label="${esc(label)}: ${ms.length ? `${nf(kc)} kcal, ${nf(pr)} grams protein` : 'nothing logged'}. Open this day">
+        <span class="fh-d">${esc(label)}</span>
+        <span class="grow fh-bar" aria-hidden="true">${ms.length ? `<span class="progress thin ${over ? 'over' : ''}"><span style="width:${pct}%"></span></span>` : ''}</span>
+        <span class="fh-v">${ms.length ? `<b>${nf(kc)}</b> kcal<span class="d-block small muted">${nf(pr)} g protein</span>` : '<span class="small muted">–</span>'}</span>
+      </button></li>`;
+  }).join('');
+  const logged = Array.from({ length: 7 }, (_, i) => keyAdd(tk, -i)).map((k) => state.meals.filter((m) => m.day === k).reduce((a, m) => a + m.kcal, 0)).filter((v) => v > 0);
+  const avg = logged.length ? logged.reduce((a, b) => a + b, 0) / logged.length : null;
+  return `<h2 class="h2 mv-h">History</h2>
+    ${avg != null ? `<p class="small muted m-0 mb-2">Last 7 days: about <b>${nf(avg)} kcal</b> a day on the ${logged.length} day${logged.length === 1 ? '' : 's'} you logged.</p>` : ''}
+    <ul class="food-hist card list-card">${rows}</ul>`;
+}
 /** Meal section: water and today's food at the top of the Meals tab, then the week plan; Grocery is the shopping list. */
 function waterCard(day) {
   const p = hp(), wg = p.waterGoal || HDEF.waterGoal, w = hget(day, 'water') || 0;
   return `<section class="card water-card mt-4" aria-labelledby="waterH">
       <div class="row gap-3">
         <span class="water-ic" aria-hidden="true">${icon('care')}</span>
-        <button class="grow plain text-left" data-action="track-water" data-today="1" aria-label="Water: ${L1(w)} of ${L1(wg)} litres. Edit">
+        <button class="grow plain text-left" data-action="track-water" aria-label="Water: ${L1(w)} of ${L1(wg)} litres. Edit">
           <span class="tile-k d-block" id="waterH">Water</span><span class="big-v">${L1(w)} <small>of ${L1(wg)} L</small></span></button>
-        <button class="pill-btn water-add" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus', 'class="icon-sm"')} 250 ml</button>
+        <button class="pill-btn water-add" data-action="track-water-add" data-ml="250" aria-label="Add a glass of water, 250 millilitres">${icon('plus', 'class="icon-sm"')} 250 ml</button>
       </div>
       <span class="progress thin mt-3" aria-hidden="true"><span style="width:${Math.min(100, (w / wg) * 100)}%"></span></span>
     </section>`;
@@ -3216,7 +3250,7 @@ VIEWS.plan = () => {
     const dislikeRow = `<button class="card flat soft shift-row mt-2" data-action="dislike-sheet">
         ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => DISLIKE_NAMES[x] || ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}${hp().bread === 'durum' ? ' · Dürüm instead of roti' : ''}</span></span>${icon('chevR')}</button>`;
     body = `
-      ${wkOff ? '' : `${waterCard(tk)}${trackFoodCard(tk, T, 'today')}`}
+      ${wkOff ? '' : mealDayPanel()}
       <h2 class="h2 mv-h">Meal plan</h2>
       ${shiftRow}
       ${dislikeRow}

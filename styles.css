@@ -3,22 +3,6 @@
    Three themes driven by CSS custom properties on <html data-theme>
    ============================================================= */
 
-/* Palette primitives — "PulseFit" palette (Material stops, OKLCH), generated
-   from harmonies of brand blue #2466d4. 50 = lightest, 900 = darkest.
-   Components never use these directly; themes map them to role tokens. */
-:root {
-  --blue-50: #bcf3ff; --blue-100: #9dd8ff; --blue-200: #7fbdff; --blue-300: #63a2ff; --blue-400: #4888f5;
-  --blue-500: #2e6fdb; --blue-600: #1556bf; --blue-700: #003ea2; --blue-800: #002684; --blue-900: #000e63;
-  --teal-50: #a6ffff; --teal-100: #81eafc; --teal-200: #5cd1e4; --teal-300: #31b7cc; --teal-400: #009fb3;
-  --teal-500: #00869b; --teal-600: #006e82; --teal-700: #00566a; --teal-800: #003f51; --teal-900: #002939;
-  --amber-50: #ffe8a2; --amber-100: #ffcc7e; --amber-200: #edb15c; --amber-300: #d59738; --amber-400: #bc7e02;
-  --amber-500: #a36500; --amber-600: #894e00; --amber-700: #703700; --amber-800: #562200; --amber-900: #3c0f00;
-  --red-50: #ffccb5; --red-100: #ffad95; --red-200: #ff8e76; --red-300: #ff7159; --red-400: #e8533d;
-  --red-500: #cc3620; --red-600: #af1200; --red-700: #920000; --red-800: #730000; --red-900: #540000;
-  --navy-50: #e0f1ff; --navy-100: #c5d7ff; --navy-200: #aabdec; --navy-300: #90a3d4; --navy-400: #788bbc;
-  --navy-500: #6073a3; --navy-600: #4a5c8a; --navy-700: #364671; --navy-800: #233057; --navy-900: #121d3e;
-}
-
 /* "Lime on Graphite" (DESIGN.md §2). Midnight is the signature theme: graphite surfaces, a lime
    accent for the main action and progress, sky for secondary data, amber for streaks and warnings.
    --hero-bg / --hero-ink is the lime plan card; it stays lime in every theme (dark ink, 15:1). */
@@ -39,7 +23,7 @@
   --primary-ink: #0e1116;
   --accent: #7cc4ff;
   --accent-ink: #0e1116;
-  --success: #c6f432;
+  --success: #3ddc97;
   --warn: #ffb86b;
   --danger: #ff8a7a;
   --danger-ink: #2a0b06;
@@ -47,11 +31,13 @@
   --nav-bg: #161b24;
   --hero-bg: #c6f432;
   --hero-ink: #0e1116;
-  --chip-pos: #22301a;
   --info-bg: #1f2a3a;
   --info-ink: #d6e6f5;
   --shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.7);
   --grain-opacity: 0;
+  --success-ink: #0e1116;
+  --control-border: #616c80;
+  --state-mix: #ffffff;
   color-scheme: dark;
 }
 
@@ -79,11 +65,13 @@
   --nav-bg: #ffffff;
   --hero-bg: #c6f432;
   --hero-ink: #0e1116;
-  --chip-pos: #eaf6cf;
   --info-bg: #e7f1fb;
   --info-ink: #0e2a44;
   --shadow: 0 10px 28px -16px rgba(14, 17, 22, 0.22);
   --grain-opacity: 0;
+  --success-ink: #ffffff;
+  --control-border: #767f8e;
+  --state-mix: #000000;
   color-scheme: light;
 }
 
@@ -103,7 +91,7 @@
   --primary-ink: #0e1116;
   --accent: #7cc4ff;
   --accent-ink: #0e1116;
-  --success: #c6f432;
+  --success: #3ddc97;
   --warn: #ffb86b;
   --danger: #ff8a7a;
   --danger-ink: #2a0b06;
@@ -111,12 +99,41 @@
   --nav-bg: #121418;
   --hero-bg: #c6f432;
   --hero-ink: #0e1116;
-  --chip-pos: #1e2a14;
   --info-bg: #18222f;
   --info-ink: #d6e6f5;
   --shadow: 0 12px 30px -14px rgba(0, 0, 0, 0.8);
   --grain-opacity: 0;
+  --success-ink: #08090b;
+  --control-border: #606878;
+  --state-mix: #ffffff;
   color-scheme: dark;
+}
+
+/* Semantic colour layer (Role x Prominence x State). Every theme feeds the role
+   primitives above; these names are what new components should use.
+   fill = strong background, on-fill = text on it, ink = text/icon on a surface,
+   tint = subtle background, hover/pressed mix toward --state-mix. */
+:root {
+  --color-surface: var(--surface); --color-surface-raised: var(--surface-2); --color-bg: var(--bg-bottom);
+  --color-control-border: var(--control-border); --color-neutral-border: var(--border);
+  --color-brand-fill: var(--primary);   --color-brand-on-fill: var(--primary-ink);   --color-brand-ink: var(--primary);
+  --color-info-fill: var(--accent);     --color-info-on-fill: var(--accent-ink);     --color-info-ink: var(--accent);
+  --color-success-fill: var(--success); --color-success-on-fill: var(--success-ink); --color-success-ink: var(--success);
+  --color-warning-fill: var(--warn);    --color-warning-on-fill: var(--primary-ink); --color-warning-ink: var(--warn);
+  --color-danger-fill: var(--danger);   --color-danger-on-fill: var(--danger-ink);   --color-danger-ink: var(--danger);
+  --color-neutral-fill: var(--muted);   --color-neutral-on-fill: var(--bg-bottom);   --color-neutral-ink: var(--muted);
+}
+:root, :root[data-theme] {
+  --color-brand-tint: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  --color-info-tint: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  --color-success-tint: color-mix(in srgb, var(--success) 12%, var(--surface));
+  --color-warning-tint: color-mix(in srgb, var(--warn) 12%, var(--surface));
+  --color-danger-tint: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  --color-brand-fill-hover: color-mix(in srgb, var(--primary) 90%, var(--state-mix));
+  --color-brand-fill-pressed: color-mix(in srgb, var(--primary) 80%, var(--state-mix));
+  --color-success-fill-hover: color-mix(in srgb, var(--success) 90%, var(--state-mix));
+  --color-danger-fill-hover: color-mix(in srgb, var(--danger) 90%, var(--state-mix));
+  --color-fill-disabled: color-mix(in srgb, var(--muted) 38%, var(--surface));
 }
 
 /* shared scale tokens (see DESIGN.md §3–§4, §6) */
@@ -137,7 +154,6 @@
   --on-art-muted: rgba(255, 255, 255, 0.45);
   --art-dim: rgba(10, 12, 30, 0.55);       /* locked-art veil */
   --scrim: rgba(5, 8, 25, 0.6);            /* modal backdrop */
-  --success-ink: #0b2a14;                  /* ink on --success fills */
   --pro: #ffd76a;                          /* Pro label gold on dark pill */
   --pro-bg: rgba(0, 0, 0, 0.35);
   /* layout */
@@ -363,7 +379,7 @@ img, svg { display: block; }
 .btn[disabled] { opacity: 0.5; cursor: not-allowed; filter: none; }
 .btn.block { width: 100%; }
 .btn.lg { min-height: 56px; font-size: var(--fs-lg); border-radius: var(--r-md); }
-.btn.ghost { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+.btn.ghost { background: transparent; border: 1.5px solid var(--control-border); color: var(--text); }
 .btn.subtle { background: var(--surface-3); color: var(--text); }
 .btn.accent { background: var(--accent); color: var(--accent-ink); }
 .btn.danger { background: var(--danger); color: var(--danger-ink); }
@@ -373,7 +389,7 @@ img, svg { display: block; }
   width: 48px; height: 48px;
   display: inline-grid; place-items: center;
   border-radius: var(--r-sm);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--control-border);
   background: transparent;
   flex-shrink: 0;
 }
@@ -826,7 +842,7 @@ hr.sep { border: 0; border-top: 1px solid var(--border-soft); margin: var(--spac
   min-height: 56px;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--r-sm);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--control-border);
   background: var(--surface-3);
   font-size: var(--fs-lg);
 }
@@ -883,7 +899,7 @@ hr.sep { border: 0; border-top: 1px solid var(--border-soft); margin: var(--spac
   font-size: var(--fs-xl);
   font-weight: 700;
   border-radius: var(--r-sm);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--control-border);
   background: transparent;
 }
 .stepper button {
@@ -897,7 +913,7 @@ hr.sep { border: 0; border-top: 1px solid var(--border-soft); margin: var(--spac
 .stepper .unit { font-size: var(--fs-sm); color: var(--muted); margin-left: 2px; }
 .set-done {
   width: 44px; height: 44px; border-radius: var(--r-round);
-  border: 2px solid var(--border);
+  border: 2px solid var(--control-border);
   background: transparent;
   display: grid; place-items: center;
   color: var(--muted);
@@ -963,7 +979,7 @@ dialog.sheet::backdrop {
   width: 100%;
   padding: var(--space-4) var(--space-4);
   border-radius: var(--r-md);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--control-border);
   background: var(--surface-2);
   text-align: left;
 }
@@ -977,7 +993,7 @@ dialog.sheet::backdrop {
 .weekdays button {
   aspect-ratio: 1;
   border-radius: var(--r-sm);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--control-border);
   background: transparent;
   font-weight: 700;
 }
@@ -1370,13 +1386,13 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .step-btn { width: 56px; height: 56px; border-radius: 50%; background: var(--surface-3); border: 1.5px solid var(--border-soft); display: grid; place-items: center; }
 .big-num { width: 140px; border: 0; background: transparent; text-align: center; font-size: 64px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; -moz-appearance: textfield; }
 .big-num::-webkit-outer-spin-button, .big-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.btn.done-btn { background: var(--success); color: var(--success-ink, #0b2a14); }
+.btn.done-btn { background: var(--success); color: var(--success-ink); }
 .btn.rest-btn { background: var(--surface-3); color: var(--text); border: 1.5px solid var(--border); }
 .btn.rest-btn b { font-variant-numeric: tabular-nums; margin: 0 var(--space-1); }
 .set-list { padding: var(--space-2) var(--space-4); }
 .set-li { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3) 0; background: none; border: 0; border-bottom: 1px solid var(--border-soft); color: var(--muted); text-align: left; font-size: var(--fs-body); }
 .set-li .st { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--track); display: grid; place-items: center; flex-shrink: 0; }
-.set-li .st svg { width: 14px; height: 14px; color: var(--success-ink, #0b2a14); }
+.set-li .st svg { width: 14px; height: 14px; color: var(--success-ink); }
 .set-li.done .st { background: var(--success); border-color: var(--success); }
 .set-li.cur { color: var(--text); font-weight: 700; }
 .set-li.cur .st { border-color: var(--primary); }
@@ -1426,11 +1442,11 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .acct-card > svg { color: var(--muted); width: 22px; height: 22px; }
 .avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: var(--primary-ink); display: grid; place-items: center; font-size: var(--fs-xl); font-weight: 800; flex-shrink: 0; }
 .theme-seg button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); }
-.tdot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--border); display: inline-block; }
+.tdot { width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--control-border); display: inline-block; }
 
 /* Add food */
 .sheet-meta { margin-top: calc(-1 * var(--space-2)); }
-.search { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-4); min-height: 52px; border-radius: var(--r-sm); border: 1.5px solid var(--border); background: var(--surface-3); color: var(--muted); }
+.search { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-4); min-height: 52px; border-radius: var(--r-sm); border: 1.5px solid var(--control-border); background: var(--surface-3); color: var(--muted); }
 .search svg { width: 18px; height: 18px; flex-shrink: 0; }
 .search input { flex: 1; border: 0; background: transparent; font-size: var(--fs-body); color: var(--text); min-width: 0; }
 .search input:focus { outline: none; }
@@ -1686,7 +1702,7 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .care-list { list-style: none; margin: 0; padding: 0; }
 .care-list li { display: flex; align-items: center; gap: var(--space-2); border-top: 1px solid var(--border-soft); }
 .care-list li:first-child { border-top: 0; }
-.care-tick { flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--border); background: transparent; color: var(--primary-ink); cursor: pointer; }
+.care-tick { flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--control-border); background: transparent; color: var(--primary-ink); cursor: pointer; }
 .care-tick svg { width: 20px; height: 20px; }
 .care-list li.done .care-tick { background: var(--success); border-color: var(--success); color: var(--bg); }
 .care-row { display: flex; align-items: center; gap: var(--space-3); min-height: 56px; padding: var(--space-2) 0; color: inherit; background: none; border: 0; font: inherit; cursor: pointer; min-width: 0; }
@@ -1962,7 +1978,7 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .rt-list { list-style: none; margin: 0; padding: 0; position: relative; }
 .rt-list::before { content: ""; position: absolute; left: 21px; top: 22px; bottom: 22px; width: 2px; background: var(--border-soft); }
 .rt-list li { position: relative; display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-2) 0; }
-.rt-tick { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-bottom); display: grid; place-items: center; color: var(--primary-ink); cursor: pointer; position: relative; z-index: 1; }
+.rt-tick { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--control-border); background: var(--bg-bottom); display: grid; place-items: center; color: var(--primary-ink); cursor: pointer; position: relative; z-index: 1; }
 .rt-tick svg { width: 20px; height: 20px; stroke-width: 3; }
 .rt-tick.on { background: var(--success); border-color: var(--success); }
 .rt-dot { flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; position: relative; z-index: 1; }
@@ -1998,3 +2014,57 @@ button.cs-row { cursor: pointer; }
 .myday-row > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
 /* Six menu items: tighter labels so they fit at large text sizes */
 @media (max-width: 959px) { .tab { font-size: 11px; letter-spacing: -0.01em; } .tab svg { width: 22px; height: 22px; } }
+
+/* ---- Today refinements (v91) ---- */
+/* Hero plan card: dark surface, lime accent border + glow instead of a solid lime block */
+.hero-card { gap: 8px; padding: 14px 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, var(--surface)) 0%, var(--surface) 65%); color: var(--text); border: 1.5px solid color-mix(in srgb, var(--primary) 55%, transparent); box-shadow: none; }
+.hero-card .row-between svg { color: var(--muted); }
+.hero-eyebrow { color: var(--primary); }
+.hero-num b { color: var(--primary); }
+.hero-card .goal-bar { background: var(--surface-3, var(--border-soft)); }
+.hero-card .goal-bar span { background: var(--primary); }
+.hero-card .hero-sub { color: var(--muted); }
+.hero-card .hero-upcoming { color: var(--text); font-weight: 600; }
+.hero-pill { align-self: flex-start; display: inline-flex; gap: 4px; align-items: baseline; padding: 4px 12px; border-radius: 999px; font-size: var(--fs-sm); background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--text); }
+.hero-pill b { font-weight: 700; }
+.hero-card:focus-visible { outline-color: var(--primary); }
+
+/* Week strip: today = dark fill with a lime ring; workout days = olive tint, lime number */
+.wk-day.train { background: color-mix(in srgb, var(--primary) 10%, var(--surface)); border-color: color-mix(in srgb, var(--primary) 30%, transparent); }
+.wk-day.train .dn, .wk-day.train .mk { color: var(--primary); }
+.wk-day.today, .wk-day.today.sel { background: var(--surface-2); border: 1.5px solid var(--primary); box-shadow: 0 0 0 1px var(--primary), 0 0 14px -4px color-mix(in srgb, var(--primary) 60%, transparent); }
+:root .wk-day.today .wd, :root .wk-day.today.sel .wd { color: var(--primary); }
+.wk-day.today .dn { color: var(--text); }
+.wk-day.today .mk { color: var(--primary); }
+.wk-day.today.sel .wd { color: var(--primary); }
+.wk-day.done .mk { color: var(--success); }
+
+/* My day: progress ring + quick tick */
+.myday-row { padding: 12px 12px 12px 16px; }
+.myday-link { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-3); color: inherit; text-decoration: none; min-height: 48px; }
+.myday-row .ring-wrap.sm { width: 44px; height: 44px; }
+.myday-row .ring-c b { font-size: 12px; letter-spacing: -0.02em; }
+.rt-tick.sm { width: 40px; height: 40px; }
+.rt-tick.sm:hover { border-color: var(--primary); }
+
+/* Dismissible intro tip */
+.intro-wrap { position: relative; display: flex; align-items: center; }
+.intro-wrap .intro-row { padding-right: 52px; }
+.intro-x { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; color: var(--muted); }
+
+/* Today rhythm: 16px between cards */
+.hero-card.mt-3, .wk-strip, .myday-row, .intro-wrap { margin-top: 16px; }
+
+/* Bottom nav: Material-style pill behind the active icon */
+.tabbar .tab svg { box-sizing: content-box; padding: 3px 16px; border-radius: 999px; transition: background-color .2s ease; }
+.tabbar .tab[aria-current="page"] svg { background: color-mix(in srgb, var(--primary) 22%, transparent); }
+:root[data-theme="light"] .tabbar .tab[aria-current="page"] svg { background: color-mix(in srgb, var(--primary) 16%, transparent); }
+@media (prefers-reduced-motion: reduce) { .tabbar .tab svg { transition: none; } }
+
+.myday-row .rt-tick svg { color: var(--faint, var(--muted)); opacity: .55; }
+.myday-row .rt-tick:hover svg { color: var(--primary); opacity: 1; }
+.today-head { flex-wrap: wrap; row-gap: var(--space-2); }
+.today-head > div { min-width: 0; }
+.today-head .h1 { overflow-wrap: anywhere; }
+.rest-acts .btn { padding-inline: 12px; white-space: nowrap; gap: 6px; min-width: 0; }
+@media (max-width: 380px) { .rest-acts { flex-wrap: wrap; } .rest-acts .btn { flex: 1 1 140px; } }

@@ -32,6 +32,7 @@ const ICONS = {
   chevR: 'M9 5.5l6.5 6.5L9 18.5',
   chevL: 'M15 5.5 8.5 12l6.5 6.5',
   swap: 'M4 8h15.5L15.5 4M20 16H4.5l4 4',
+  sliders: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
   timer: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.8l2.3 2M9.5 2.5h5M19 6l1.5-1.5"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10.5" rx="2.2" fill="currentColor" stroke="none"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.6" r="1.3" fill="#000" stroke="none" opacity=".45"/>',
   check: 'M5 12.5l4.5 4.5L19 7.5',
@@ -681,7 +682,8 @@ function greeting() {
   const h = new Date().getHours();
   const part = h < 5 ? 'Evening' : h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening';
   const name = state.profile.name.trim();
-  return name ? `${part}, ${esc(name.split(' ')[0])}` : `Good ${part.toLowerCase()}`;
+  const first = name.split(' ')[0];
+  return name ? `${part}, ${esc(first.charAt(0).toUpperCase() + first.slice(1).toLowerCase())}` : `Good ${part.toLowerCase()}`;
 }
 
 function dayStatus(d) {
@@ -740,7 +742,7 @@ function ringSvg(pct, size = 88, stroke = 9) {
   const r = (size - stroke) / 2, c = 2 * Math.PI * r, p = clamp(pct, 0, 1);
   return `<svg class="ring" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
     <circle cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}" class="ring-bg"/>
-    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}" class="ring-fg" stroke-dasharray="${(c * p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size / 2} ${size / 2})"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${r}" stroke-width="${stroke}" class="ring-fg"${p > 0 ? '' : ' stroke-opacity="0"'} stroke-dasharray="${(c * p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size / 2} ${size / 2})"/>
   </svg>`;
 }
 const routineShort = (r) => r.name.replace(/\s*Routine$/i, '');
@@ -765,7 +767,7 @@ VIEWS.today = () => {
   const week = Array.from({ length: 7 }, (_, i) => {
     const k = keyAdd(ws, i), d = fromKey(k);
     const done = workoutsOn(k).length > 0, train = sessionFor(d).length > 0;
-    const mark = done ? icon('check') : train && k >= tk ? icon('dumbbell') : '<i class="dot"></i>';
+    const mark = done ? icon('check') : train && k >= tk ? icon('dumbbell') : '';
     return `<button class="wk-day ${k === selectedDay ? 'sel' : ''} ${k === tk ? 'today' : ''} ${train ? 'train' : ''} ${done ? 'done' : ''}" data-action="pick-day" data-day="${k}" aria-pressed="${k === selectedDay}" aria-label="${esc(fmtLong(d))}: ${done ? 'workout done' : train ? 'training day' : 'rest day'}">
       <span class="wd">${WEEKDAY_SHORT[d.getDay()]}</span><span class="dn">${d.getDate()}</span><span class="mk">${mark}</span></button>`;
   }).join('');
@@ -790,7 +792,7 @@ VIEWS.today = () => {
         <div class="row-between gap-3">
           <div><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">${esc(routineShort(r))}</h2>
             <div class="small muted">${plural(cats.length, 'exercise')} · ${plural(sets, 'set')}${status.done ? ' · done ✓' : ''}</div></div>
-          <button class="icon-btn round" data-action="pick-routine" aria-label="Change routine (${esc(r.name)})">${icon('swap')}</button>
+          <button class="icon-btn round" data-action="pick-routine" aria-label="Adjust routine (${esc(r.name)})">${icon('sliders')}</button>
         </div>
         <div class="wc-thumbs">${thumbs}</div>
         <button class="btn block lg start-btn" data-action="start-workout" ${isFuture ? 'disabled' : ''}>${icon('play')} ${status.done ? 'Train again' : isFuture ? 'Upcoming' : 'Start workout'}</button>
@@ -800,8 +802,9 @@ VIEWS.today = () => {
         </details>
       </div>`
     : `<div class="wc-body"><div class="row-between gap-3"><div><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">Rest day</h2></div>
-        <button class="icon-btn round" data-action="pick-routine" aria-label="Change routine (${esc(r.name)})">${icon('swap')}</button></div>
-        <div class="rest-day mt-3">${icon('moon')}<div><div class="fw-bold">Rest &amp; recover</div><p class="muted small m-0">No session on this day. A walk or some mobility work is a great idea.</p></div></div></div>`;
+        <button class="icon-btn round" data-action="pick-routine" aria-label="Adjust routine (${esc(r.name)})">${icon('sliders')}</button></div>
+        <div class="rest-day mt-3">${icon('moon')}<div><div class="fw-bold">Rest &amp; recover</div><p class="muted small m-0">No session on this day. A walk or some mobility work is a great idea.</p></div></div>
+        <div class="row gap-2 mt-3 rest-acts"><button class="btn ghost grow" data-action="track-steps" data-today="1">${icon('run')} Log a walk</button><button class="btn ghost grow" data-action="mobility" aria-label="Start 10 minutes of mobility">${icon('timer')} Mobility 10m</button></div></div>`;
 
   // Today's log
   const T = targets(tk);
@@ -853,7 +856,7 @@ VIEWS.today = () => {
     ${goalPlanCard(tk)}
     <div class="wk-strip">${week}</div>
     <section class="card session-card workout-card mt-4" aria-labelledby="sessH">${session}</section>
-    ${!state.workouts.length && !state.seenIntro ? `<button class="intro-row mt-3" data-action="intro-sheet">${icon('chart')}<span class="grow">New here? <b>How levels work</b></span>${icon('chevR')}</button>` : ''}
+    ${!state.workouts.length && !state.seenIntro ? `<div class="intro-wrap mt-3"><button class="intro-row" data-action="intro-sheet">${icon('chart')}<span class="grow">New here? <b>How levels work</b></span>${icon('chevR')}</button><button class="icon-btn round bare intro-x" data-action="intro-dismiss" aria-label="Hide this tip">${icon('x')}</button></div>` : ''}
 
     <div class="sec-head"><h2 class="h2 m-0">${isToday ? 'Today at a glance' : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">Trends</button><a class="link-btn small" href="#/track">Daily log</a></span></div>
     <section class="card food-sum" aria-label="Food today">
@@ -881,7 +884,6 @@ VIEWS.today = () => {
         <div class="row-between"><span class="eyebrow muted">Next meal</span><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
         ${next}
       </section>` : ''}
-    ${careRow(tk)}
     ${watchLine(tk)}`;
 };
 /* Exercise section: two tabs, Exercises (the picture grid) and Progress (strength, body, steps & sleep, workouts). */
@@ -2940,15 +2942,28 @@ function stockSheet(k) {
 }
 
 
+/** Rest days: ten easy minutes of mobility, from the warm-up moves. */
+function mobilitySheet() {
+  const ids = ['catcow', 'hipcircles', 'armcircles', 'trunkrot', 'legswings', 'glutebridge', 'deadbug', 'shoulderopen', 'march'];
+  openSheet('10-minute mobility', `
+    <p class="small muted m-0 sheet-meta">Slow and easy, no pain. About a minute each, with a breather between.</p>
+    <ol class="num-steps mt-3">${ids.map((id) => { const [n, how, sec, reps, side] = WARMUPS[id]; return `<li><b>${esc(n)}</b> · ${sec ? `${sec * (side ? 2 : 1) + 20} s` : `${reps}${side ? ' each side' : ''}, twice`}<span class="d-block small muted">${esc(how)}</span></li>`; }).join('')}</ol>
+    <button class="btn block lg mt-4" data-action="rt-tick" data-k="mobility" data-day="${todayKey()}" data-close="1">${icon('check')} Done</button>`);
+}
 /** Today: one line that opens My day, with what's next. */
 function myDayRow(day) {
   rtPreview = null;                     // Today always shows the real day
   const items = dayTimeline(day), nowM = new Date().getHours() * 60 + new Date().getMinutes(), W = rtMin(dayTimes(day).wake);
   const nowAdj = nowM < W - 60 ? nowM + 1440 : nowM, nx = items.find((it) => !rtDone(day, it) && !it.info && it.min + 30 >= nowAdj);
   const done = items.filter((it) => !it.info && rtDone(day, it)).length, total = items.filter((it) => !it.info).length;
-  return `<a class="card myday-row mt-3" href="#/routine" aria-label="My day: ${done} of ${total} done${nx ? `. Next at ${rtClock(nx.min)}: ${esc(nx.title)}` : ''}. Open the day plan">
-      <span class="care-badge">${done}/${total}</span>
-      <span class="grow"><b class="d-block">My day</b><span class="small muted">${nx ? `Next ${rtClock(nx.min)} · ${esc(nx.title)}` : 'All done. Sleep well.'}</span></span>${icon('chevR')}</a>`;
+  const quick = !nx ? '' : nx.care ? `<button class="rt-tick sm" data-action="care-tick" data-id="${nx.care}" data-day="${day}" aria-pressed="false" aria-label="Mark ${esc(nx.title)} done">${icon('check')}</button>`
+    : nx.meal ? `<button class="rt-tick sm" data-action="plan-log" data-day="${nx.meal.di}" data-wk="${nx.meal.wk}" data-m="${nx.meal.j}" aria-label="Log ${esc(nx.title.toLowerCase())}">${icon('check')}</button>`
+    : nx.workout ? '' : `<button class="rt-tick sm" data-action="rt-tick" data-k="${nx.key}" data-day="${day}" aria-pressed="false" aria-label="Mark ${esc(nx.title)} done">${icon('check')}</button>`;
+  return `<div class="card myday-row mt-4">
+      <a class="myday-link" href="#/routine" aria-label="My day: ${done} of ${total} done${nx ? `. Next at ${rtClock(nx.min)}: ${esc(nx.title)}` : ''}. Open the routine">
+        <span class="ring-wrap sm">${ringSvg(total ? done / total : 0, 44, 5)}<span class="ring-c"><b class="small">${Math.round(total ? (done / total) * 100 : 0)}%</b></span></span>
+        <span class="grow"><b class="d-block">My day</b><span class="small muted">${nx ? `Next ${rtClock(nx.min)} · ${esc(nx.title)}` : 'All done. Sleep well.'}</span></span></a>
+      ${quick}</div>`;
 }
 /* ---------- My day (#/routine): one timeline from waking to sleep ----------
    Pulls together the shift, care routines (care.js), planned meals (mealplan.js), the workout and the step goal.
@@ -3069,17 +3084,6 @@ function rtTimesSheet() {
     <button class="btn block lg mt-2" data-action="rt-times-save">Save</button>`);
 }
 
-/** Today: one line for self-care: how many are done and what's next; the full list opens in a sheet. */
-function careRow(day) {
-  const ids = careIds(day);
-  if (!ids.length) return '';
-  const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, nextId = ids.find((id) => !careDone(day, id));
-  const pct = n / ids.length;
-  return `<button class="card care-sum mt-3" data-action="care-list" data-day="${day}" aria-label="Self-care and home: ${n} of ${ids.length} done${nextId ? `. Next: ${R[nextId].title}` : ''}. Open the list">
-      <span class="care-badge${pct === 1 ? ' all' : ''}">${n}/${ids.length}</span>
-      <span class="grow"><b class="d-block">Self-care &amp; home</b><span class="small muted">${nextId ? `Next: ${esc(R[nextId].at)} · ${esc(R[nextId].title)}` : 'All done for today'}</span></span>
-      ${icon('chevR')}</button>`;
-}
 function careListSheet(day) {
   openSheet('Self-care & home', `${careCard(day).replace(/<section[^>]*>|<\/section>/g, '').replace(/<div class="row-between"><h2[^]*?<\/h2>/, '<div class="row-between"><span></span>')}`);
 }
@@ -3120,11 +3124,12 @@ function goalPlanCard(tk) {
   const status = cur == null ? '' : cur <= target + 0.3 ? '<b>on track</b>' : `${kg(cur - target)} kg above`;
   const when = wk ? 'kg target by Sunday' : 'kg, week 1 target';
   return `<button class="goal-sum hero-card mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}. This week's target ${kg(target)} kilograms. Open the plan">
-      <span class="row-between"><span class="hero-eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery' : ''}` : `Starts Mon ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}</span>${icon('chevR')}</span>
+      <span class="row-between"><span class="hero-eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery' : ''}` : `${G.WEEKS}-week plan`}</span>${icon('chevR')}</span>
       <span class="hero-num"><b>${kg(target)}</b><span>${when}</span></span>
-      <span class="goal-bar" aria-hidden="true"><span style="width:${Math.max(4, (Math.max(0, wk - 1) / G.WEEKS) * 100)}%"></span></span>
-      <span class="hero-sub">${nf(ph.steps)} steps a day · strength Tue, Thu, Sat · ${esc(ph.cardio[0].replace(/^Sunday: /, 'Sun ').replace(/\.$/, ''))}</span>
-      ${cur != null ? `<span class="hero-sub">Now ${kg(cur)} kg${wk ? ` · ${status}` : ''}</span>` : ''}
+      <span class="goal-bar" aria-hidden="true"><span style="width:${(Math.max(0, wk - 1) / G.WEEKS) * 100}%"></span></span>
+      ${wk ? '' : `<span class="hero-sub hero-upcoming">${keyAdd(tk, 1) === G.START ? 'Starts tomorrow' : `Starts ${esc(fmtShort(fromKey(G.START)))}`} · rest today</span>`}
+      <span class="hero-sub">${wk ? '' : 'From then: '}${nf(ph.steps)} steps a day · strength Tue, Thu, Sat · ${esc(ph.cardio[0].replace(/^Sunday: /, 'Sun ').replace(/\.$/, ''))}</span>
+      ${cur != null ? `<span class="hero-pill">Now <b>${kg(cur)} kg</b>${wk ? ` · ${status}` : ''}</span>` : ''}
     </button>`;
 }
 function goalPlanSheet() {
@@ -4979,8 +4984,10 @@ const ACTIONS = {
     save(); closeSheet(); rerender(); toast(`${name} added`);
   },
   'stock-open': (el) => stockSheet(el.dataset.k),
-  'rt-tick': (el) => { const { k, day } = el.dataset, was = hget(day, `rt:${k}`) === 1; hset(day, `rt:${k}`, was ? null : 1); save(); rerender(); },
+  'rt-tick': (el) => { const { k, day } = el.dataset, was = hget(day, `rt:${k}`) === 1; hset(day, `rt:${k}`, was ? null : 1); save(); if (el.dataset.close) closeSheet(); rerender(); if (!was) toast('Done'); },
   'rt-times': () => rtTimesSheet(),
+  'intro-dismiss': () => { state.seenIntro = true; save(); rerender(); },
+  'mobility': () => mobilitySheet(),
   'rt-preview': (el) => { rtPreview = el.dataset.v || null; rerender(); },
   'rt-times-save': () => { const w = $('#rtWake')?.value, s = $('#rtSleep')?.value; if (w) state.hprofile.wake = w; if (s) state.hprofile.sleepAt = s; save(); closeSheet(); rerender(); toast(`Wake ${w}, sleep ${s}`); },
   'dm-toggle': (el) => { const k = el.dataset.k; state.careshop = state.careshop || {}; if (state.careshop[k]) delete state.careshop[k]; else state.careshop[k] = 1; save(); rerender(); stockSheet(k); toast(state.careshop[k] ? 'On your dm list' : 'Taken off the dm list'); },

@@ -26,7 +26,7 @@ const SCREENS = ['', 'track', 'track/body', 'track/habits', 'movements', 'catego
 // [name, button that opens it, screen it is on (default Today)]
 const SHEETS = [['Trends sheet', '[data-action="habit-history"]'], ['Add food sheet', '[data-action="track-food"]'],
   ["Foods you don't eat sheet", '[data-action="dislike-sheet"]', 'plan'], ['Body fat & muscle sheet', '[data-action="comp-log"]', 'track/body'],
-  ['Self-care list sheet', '.care-sum'], ['14-week plan sheet', '.goal-sum'], ['Measurement ruler sheet', '.mb-tile[data-f="waist"]', 'track/body']];
+  ['Wake & sleep times sheet', '[data-action="rt-times"]', 'routine'], ['14-week plan sheet', '.goal-sum'], ['Measurement ruler sheet', '.mb-tile[data-f="waist"]', 'track/body']];
 const BIG_ART = '.art, .ring-wrap, .wchart, .habit-chart, .medal, .hero, .celebrate, .lv-art, .ex-hero, .thumb, .mb-fig';
 
 async function check(p, label, scale) {

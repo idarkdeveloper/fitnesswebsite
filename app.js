@@ -323,15 +323,11 @@ const today = () => startOfDay(new Date());
 const mondayIndex = (d) => (d.getDay() + 6) % 7; // Mon=0 … Sun=6
 const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function ordinal(n) {
-  const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const WEEKDAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const fmtLong = (d) => `${WEEKDAY_LONG[d.getDay()]}, ${MONTHS[d.getMonth()]} ${ordinal(d.getDate())}`;
-const fmtShort = (d) => `${WEEKDAY_LONG[d.getDay()].slice(0, 3)}, ${MONTHS[d.getMonth()].slice(0, 3)} ${ordinal(d.getDate())}`;
-const fmtTime = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase();
+const fmtLong = (d) => `${WEEKDAY_LONG[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+const fmtShort = (d) => `${WEEKDAY_LONG[d.getDay()].slice(0, 3)} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)}`;
+const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
 function routine() {
   return ROUTINE[state.routineId] || ROUTINES[0];
@@ -408,8 +404,8 @@ function achievements() {
     { id: 'w10', name: 'Ten Down', num: 10, icon: 'dumbbell', earned: workouts >= 10, hint: 'Train on 10 different days' },
     { id: 'w50', name: 'Half Century', num: 50, icon: 'dumbbell', earned: workouts >= 50, hint: 'Train on 50 different days' },
     { id: 'm1', name: 'First Mastery', icon: 'check', earned: mastered >= 1, hint: 'Complete level 3 of any progression' },
-    { id: 'm5', name: 'Five Mastered', num: 5, icon: 'award', earned: mastered >= 5, hint: 'Master 5 progressions' },
-    { id: 'm20', name: 'Twenty Mastered', num: 20, icon: 'trophy', earned: mastered >= 20, hint: 'Master 20 progressions' },
+    { id: 'm5', name: 'Five Mastered', num: 5, icon: 'award', earned: mastered >= 5, hint: 'Master 5 stages' },
+    { id: 'm20', name: 'Twenty Mastered', num: 20, icon: 'trophy', earned: mastered >= 20, hint: 'Master 20 stages' },
     { id: 'x6', name: 'Explorer', num: 6, icon: 'sparkle', earned: started >= 6, hint: 'Start 6 exercises' },
     ...LADDERS.map((l) => { const s = ladderSteps(l); return { id: l.id, name: l.name, icon: l.icon, earned: s.done >= s.total, hint: `Finish all ${s.total} steps of the ${l.name}` }; }),
   ];
@@ -852,7 +848,7 @@ VIEWS.today = () => {
       </div>`
     : `<div class="wc-body"><div class="row-between gap-3 nowrap-row"><div class="grow min-w-0"><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">Rest day</h2><div class="small muted">A walk or some mobility work helps you recover.</div></div>
         <button class="icon-btn round" data-action="pick-routine" aria-label="Adjust routine (${esc(r.name)})">${icon('sliders')}</button></div>
-        <div class="row gap-2 mt-3 rest-acts"><button class="btn ghost grow" data-action="track-steps" data-today="1">${icon('run')} Log a walk</button><button class="btn ghost grow" data-action="mobility" aria-label="Start 10 minutes of mobility">${icon('timer')} Mobility 10m</button></div></div>`;
+        <div class="row gap-2 mt-3 rest-acts"><button class="btn ghost grow" data-action="track-steps" data-today="1">${icon('run')} Log a walk</button><button class="btn ghost grow" data-action="mobility" aria-label="Start 10 minutes of mobility">${icon('timer')} 10-min mobility</button></div></div>`;
 
   // Today's log
   const T = targets(tk);
@@ -861,7 +857,7 @@ VIEWS.today = () => {
   const left = T ? T.kcal - eaten : null;
   const ringCenter = T
     ? `<b>${Math.round((eaten / T.kcal) * 100)}%</b>`
-    : `<b>${nf(eaten)}</b><small>kcal</small>`;
+    : '<b>–</b>';
   const p = hp();
   const w = hget(tk, 'weight'), wl = latestOn('weight', tk), a = avg7(tk), rate = weeklyRate(tk);
   const cur = a ?? wl?.v;
@@ -879,10 +875,10 @@ VIEWS.today = () => {
       ? `<div class="q-tile has-chip t-${tone}"><button class="q-main" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>${chip}</div>`
       : `<button class="q-tile t-${tone}" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>`;
   };
-  const stepSub = steps == null ? 'Not logged yet' : steps >= sg ? 'Goal reached' : `${nf(sg - steps)} to go today`;
-  const sleepSub = sleep == null ? (isNativeApp() && (state.health?.denied || []).includes('sleep') ? 'allow in Health Connect' : `Target ${fmtSleep(lg)}`)
+  const stepSub = steps == null ? `Not logged · goal ${nf(sg)}` : steps >= sg ? 'Goal reached' : `${nf(sg - steps)} to go today`;
+  const sleepSub = sleep == null ? (isNativeApp() && (state.health?.denied || []).includes('sleep') ? 'allow in Health Connect' : `Not logged · goal ${fmtSleep(lg)}`)
     : sleep < lg ? `<b class="c-warn">Below target · ${fmtSleep(lg)}</b>` : `Target reached · ${fmtSleep(lg)}`;
-  const wsub = wl == null ? 'Log your morning weight'
+  const wsub = wl == null ? (p.goalWeight ? `Not logged · goal ${kg(p.goalWeight)} kg` : 'Not logged')
     : [rate != null && Math.abs(rate) >= 0.05 ? `${rate < 0 ? '↓' : '↑'} ${Math.abs(rate).toFixed(1)} kg a week` : '',
       p.goalWeight && cur != null && cur - p.goalWeight > 0.05 ? `${kg(cur - p.goalWeight)} kg to goal` : ''].filter(Boolean).join(' · ') || (w != null ? 'Logged today' : `Last: ${fmtShort(fromKey(wl.day))}`);
 
@@ -909,7 +905,7 @@ VIEWS.today = () => {
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>
         <div class="grow">
           <div class="big-v">${nf(eaten)} <small>kcal</small></div>
-          ${T ? `<div class="small muted food-left">of ${nf(T.kcal)} · ${left >= 0 ? `${nf(left)} left` : `<span class="c-warn">${nf(-left)} over</span>`}</div>` : '<div class="small"><button class="link-btn" data-action="track-setup">Set your target</button></div>'}
+          ${T ? `<div class="small muted food-left">of ${nf(T.kcal)} · ${left >= 0 ? `${nf(left)} left` : `<span class="c-warn">${nf(-left)} over</span>`}</div>` : '<div class="small muted">No target yet · <button class="link-btn" data-action="track-setup">Set your target</button></div>'}
         </div>
       </div>
       ${macroTiles(tk, T, protein)}
@@ -943,7 +939,7 @@ VIEWS.movements = (r, inSection = false) => {
   const shown = CATS.filter((c) => movFilter === 'all' || (movFilter === 'progress' ? isStarted(c.id) : !isStarted(c.id)));
   const card = (c) => {
     const started = isStarted(c.id), cur = currentIdx(c.id), p = c.progressions[cur], n = c.progressions.length;
-    const sub = started ? `${isMastered(p.id) ? 'Mastered' : `Level ${workingLevel(p.id)}`} · ${cur + 1} of ${n}` : `Not started · ${n} steps`;
+    const sub = started ? `${isMastered(p.id) ? 'Mastered' : `Level ${workingLevel(p.id)}`} · ${cur + 1} of ${n}` : `Not started · ${n} stages`;
     const segs = c.progressions.map((q, i) => (isMastered(q.id) ? 'done' : started && i === cur ? 'cur' : 'off'));
     return `<a class="mv-card" href="#/category/${c.id}" aria-label="${esc(c.name)}: ${esc(started ? `${p.name}, ${sub}` : sub)}">
       ${art(c.id, { cls: 'mv-img', shift: started ? cur * 4 : 0, img: started ? p.id : c.id })}
@@ -956,7 +952,7 @@ VIEWS.movements = (r, inSection = false) => {
   const chip = (id, label) => `<button class="fchip ${movFilter === id ? 'on' : ''}" data-action="mov-filter" data-f="${id}" aria-pressed="${movFilter === id}">${label}</button>`;
   return `
     ${inSection ? '' : '<h1 class="h1 m-0">Exercises</h1>'}
-    <p class="muted m-0 mt-3">${CATS.length} exercises · ${TOTAL_PROGS} progressions · ${masteredCount()} mastered</p>
+    <p class="muted m-0 mt-3">${CATS.length} exercises · ${TOTAL_PROGS} stages · ${masteredCount()} mastered</p>
     <div class="row gap-2 mt-4 wrap">${chip('all', 'All')}${chip('progress', 'In progress')}${chip('new', 'Not started')}</div>
     ${shown.length ? rows : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick an exercise and start with progression 1.' : 'You have started every exercise.'}</p>`}`;
 };
@@ -973,8 +969,8 @@ VIEWS.category = (r) => {
     <div class="art cat-hero" style="--h:${CAT_HUE[c.id] ?? 210}">
       ${media(c.id, c.id)}
     </div>
-    <h1 class="h2">${esc(c.name)} progressions</h1>
-    <p class="muted t-lg m-0">${esc(c.blurb || '')} Browse the ${c.progressions.length} progressions below and pick one you can do comfortably and safely. When in doubt, start with progression 1 and work your way up.</p>
+    <h1 class="h2">${esc(c.name)} stages</h1>
+    <p class="muted t-lg m-0">${esc(c.blurb || '')} Browse the ${c.progressions.length} stages below and pick one you can do comfortably and safely. When in doubt, start with stage 1 and work your way up.</p>
     <div class="prog-list">
       ${c.progressions.map((p, i) => {
         const done = levelDone(p.id);
@@ -1179,7 +1175,7 @@ function progressBody() {
   if (r != null && toGo != null && toGo > 0.05) {
     const planned = p.rate || 0.5;
     const head = r <= -planned * 0.6 ? 'On track.' : r < -0.05 ? 'Slower than planned.' : 'Not losing yet.';
-    const eta = r < -0.05 ? ` At this rate you reach ${kg(p.goalWeight)} kg around ${addDays(today(), Math.round((toGo / -r) * 7)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.` : ' Check your food log for a week; if it stays flat for 3 weeks, lower your target a little.';
+    const eta = r < -0.05 ? ` At this rate you reach ${kg(p.goalWeight)} kg around ${addDays(today(), Math.round((toGo / -r) * 7)).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}.` : ' Check your food log for a week; if it stays flat for 3 weeks, lower your target a little.';
     verdict = `<div class="note-box mt-3"><b>${head}</b>${eta}</div>`;
   } else if (toGo != null && toGo <= 0.05) verdict = '<div class="note-box mt-3"><b>Goal reached.</b> Set a new goal in Profile → Goals.</div>';
 
@@ -1207,7 +1203,7 @@ function progressBody() {
     </section>
     ${compCard(tk, 'data-today="1"').replace('id="compH"', 'id="compHp"').replace('aria-labelledby="compH"', 'aria-labelledby="compHp"')}
     <section class="card mt-4" aria-labelledby="mH">
-      <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+, /, ''))})` : 'In centimetres'}</div></div><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></span></div>
+      <div class="row-between"><div><h2 class="h3" id="mH">Measurements</h2><div class="small muted">${firstDay ? `Latest · change since first entry (${esc(fmtShort(fromKey(firstDay)).replace(/^\w+ /, ''))})` : 'In centimetres'}</div></div><span class="row gap-2"><button class="btn subtle sm" data-action="measure-history">Trends</button><button class="btn subtle sm" data-action="track-measure" data-today="1">Log</button></span></div>
       ${measureBoard(tk)}
       <p class="small muted m-0 mt-3">Measure every week or two, same time of day. Waist keeps going down even in weeks when the scale doesn't.</p>
     </section>
@@ -1226,7 +1222,7 @@ function progressHistory() {
   if (!sorted.length) return `<div class="empty">${icon('calendar')}<div>No workouts yet. Your sessions will show up here.</div><a class="btn mt-3" href="#/today">Go to today's session</a></div>`;
   const groups = [];
   sorted.forEach((w) => {
-    const label = new Date(w.at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const label = new Date(w.at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
     let g = groups[groups.length - 1];
     if (!g || g.label !== label) { g = { label, items: [] }; groups.push(g); }
     g.items.push(w);
@@ -1681,7 +1677,7 @@ function trackWeightCard(day, T, thisDay, isToday) {
     trend = `${r < 0 ? 'Losing' : 'Gaining'} about ${Math.abs(r).toFixed(2)} kg a week (last 4 weeks).`;
     if (toGo > 0 && r < -0.05) {
       const eta = addDays(fromKey(day), Math.round((toGo / -r) * 7));
-      trend += ` At this rate you reach your goal around ${eta.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}.`;
+      trend += ` At this rate you reach your goal around ${eta.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}.`;
     }
   }
   return `
@@ -1743,7 +1739,7 @@ function compCard(day, logAttr = '') {
   const first = COMP.map(([f]) => firstOf(f)?.day).filter(Boolean).sort()[0];
   return `
     <section class="card mt-4" aria-labelledby="compH">
-      <div class="row-between"><div><h2 class="h3" id="compH">Body fat &amp; muscle</h2><div class="small muted">${first ? `Latest · change since first reading (${esc(fmtShort(fromKey(first)).replace(/^\w+, /, ''))})` : 'From your smart scale'}</div></div><span class="row gap-2">${any ? '<button class="btn subtle sm" data-action="comp-history">Trends</button>' : ''}<button class="btn subtle sm" data-action="comp-log" ${logAttr}>Log</button></span></div>
+      <div class="row-between"><div><h2 class="h3" id="compH">Body fat &amp; muscle</h2><div class="small muted">${first ? `Latest · change since first reading (${esc(fmtShort(fromKey(first)).replace(/^\w+ /, ''))})` : 'From your smart scale'}</div></div><span class="row gap-2">${any ? '<button class="btn subtle sm" data-action="comp-history">Trends</button>' : ''}<button class="btn subtle sm" data-action="comp-log" ${logAttr}>Log</button></span></div>
       ${any ? `
       <div class="m-grid mt-3">
         ${tile('Body fat', bf, firstOf('bodyfat'), kg, '%', true)}
@@ -1773,7 +1769,7 @@ function compChart() {
   const a = bf[0], b = bf[bf.length - 1];
   return `<svg class="habit-chart comp-chart mt-3" viewBox="0 0 ${W} ${H + 16}" role="img" aria-label="Body fat from ${kg(a.v)}% on ${esc(fmtShort(fromKey(a.day)))} to ${kg(b.v)}% on ${esc(fmtShort(fromKey(b.day)))}${mu.length > 1 ? `; muscle mass from ${kg(mu[0].v)} to ${kg(mu[mu.length - 1].v)} kg` : ''}.">
     ${mu.length > 1 ? line(mu, 'cp-mu') : ''}${line(bf, 'cp-bf')}
-    <text class="hb-t" x="0" y="${H + 14}">${esc(fmtShort(fromKey(a.day)).replace(/^\w+, /, ''))}</text><text class="hb-t" x="${W}" y="${H + 14}" text-anchor="end">${esc(fmtShort(fromKey(b.day)).replace(/^\w+, /, ''))}</text></svg>
+    <text class="hb-t" x="0" y="${H + 14}">${esc(fmtShort(fromKey(a.day)).replace(/^\w+ /, ''))}</text><text class="hb-t" x="${W}" y="${H + 14}" text-anchor="end">${esc(fmtShort(fromKey(b.day)).replace(/^\w+ /, ''))}</text></svg>
     <div class="small muted mt-1 comp-key"><span class="ck bf"></span>Body fat %${mu.length > 1 ? '<span class="ck mu"></span>Muscle mass' : ''}</div>`;
 }
 
@@ -1897,7 +1893,7 @@ function weightChart(endDay) {
   const y = (v) => TP + ((hi - v) / (hi - lo)) * (H - TP - B);
   const ticks = [lo, (lo + hi) / 2, hi].map((v) => Math.round(v * 10) / 10);
   const line = pts.filter((p) => p.a != null).map((p, j) => `${j ? 'L' : 'M'}${x(p.i).toFixed(1)} ${y(p.a).toFixed(1)}`).join(' ');
-  const label = (k) => fromKey(k).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const label = (k) => fromKey(k).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const step = (W - L - R) / (N - 1);
   const data = pts.map((p) => ({ d: fmtShort(fromKey(p.k)), w: p.w, a: p.a == null ? null : Math.round(p.a * 10) / 10 }));
   const first = ws[0], last = ws[ws.length - 1];
@@ -3005,7 +3001,7 @@ function stockSheet(k) {
 /** Rest days: ten easy minutes of mobility, from the warm-up moves. */
 function mobilitySheet() {
   const ids = ['catcow', 'hipcircles', 'armcircles', 'trunkrot', 'legswings', 'glutebridge', 'deadbug', 'shoulderopen', 'march'];
-  openSheet('10-minute mobility', `
+  openSheet('10-min mobility', `
     <p class="small muted m-0 sheet-meta">Slow and easy, no pain. About a minute each, with a breather between.</p>
     <ol class="num-steps mt-3">${ids.map((id) => { const [n, how, sec, reps, side] = WARMUPS[id]; return `<li><b>${esc(n)}</b> · ${sec ? `${sec * (side ? 2 : 1) + 20} s` : `${reps}${side ? ' each side' : ''}, twice`}<span class="d-block small muted">${esc(how)}</span></li>`; }).join('')}</ol>
     <button class="btn block lg mt-4" data-action="rt-tick" data-k="mobility" data-day="${todayKey()}" data-close="1">${icon('check')} Done</button>`);
@@ -3230,7 +3226,7 @@ function goalPlanCard(tk) {
   const target = G.targetKg(w);
   const status = cur == null ? '' : cur <= target + 0.3 ? '<b>on track</b>' : `${kg(cur - target)} kg above`;
   const when = wk ? 'kg target by Sunday' : 'kg, week 1 target';
-  return `<button class="goal-sum hero-card mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}. This week's target ${kg(target)} kilograms. Open the plan">
+  return `<button class="goal-sum hero-card mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+ /, ''))}`}. This week's target ${kg(target)} kilograms. Open the plan">
       <span class="row-between"><span class="hero-eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery' : ''}` : `${G.WEEKS}-week plan`}</span>${icon('chevR')}</span>
       <span class="hero-num"><b>${kg(target)}</b><span>${when}</span></span>
       <span class="goal-bar" aria-hidden="true"><span style="width:${(Math.max(0, wk - 1) / G.WEEKS) * 100}%"></span></span>
@@ -3244,7 +3240,7 @@ function goalPlanSheet() {
   const cur = avg7(tk) ?? latestOn('weight', tk)?.v;
   const rows = Array.from({ length: G.WEEKS }, (_, i) => {
     const n = i + 1, ph = G.phaseOf(n);
-    return `<li class="${n === wk ? 'cur' : n < wk ? 'past' : ''}"><span class="gw">W${n}</span><span class="grow small">${esc(fmtShort(fromKey(G.weekStart(n))).replace(/^\w+, /, ''))} · ${ph.name}${n === G.RECOVERY ? ' · recovery' : ''}</span><span class="small">${nf(ph.steps)} steps</span><b class="small">${kg(G.targetKg(n))} kg</b></li>`;
+    return `<li class="${n === wk ? 'cur' : n < wk ? 'past' : ''}"><span class="gw">W${n}</span><span class="grow small">${esc(fmtShort(fromKey(G.weekStart(n))).replace(/^\w+ /, ''))} · ${ph.name}${n === G.RECOVERY ? ' · recovery' : ''}</span><span class="small">${nf(ph.steps)} steps</span><b class="small">${kg(G.targetKg(n))} kg</b></li>`;
   }).join('');
   const ph = G.phaseOf(wk);
   openSheet('14-week plan', `
@@ -3581,6 +3577,9 @@ function foodHistory(selected) {
   }).join('');
   const logged = Array.from({ length: 7 }, (_, i) => keyAdd(tk, -i)).map((k) => state.meals.filter((m) => m.day === k).reduce((a, m) => a + m.kcal, 0)).filter((v) => v > 0);
   const avg = logged.length ? logged.reduce((a, b) => a + b, 0) / logged.length : null;
+  const any = Array.from({ length: 14 }, (_, i) => keyAdd(tk, -i)).some((k) => state.meals.some((m) => m.day === k));
+  if (!any) return `<h2 class="h2 mv-h">History</h2>
+    <p class="card soft small muted m-0">Nothing logged in the last 2 weeks. Foods you add appear here by day.</p>`;
   return `<h2 class="h2 mv-h">History</h2>
     ${avg != null ? `<p class="small muted m-0 mb-2">Last 7 days: about <b>${nf(avg)} kcal</b> a day on the ${logged.length} day${logged.length === 1 ? '' : 's'} you logged.</p>` : ''}
     <ul class="food-hist card list-card">${rows}</ul>`;
@@ -3692,7 +3691,7 @@ VIEWS.plan = () => {
       <button role="tab" aria-selected="${planTab === 'groceries'}" data-action="plan-tab" data-tab="groceries">Grocery · ${all.length}</button>
     </div>
     <div class="chips wk-switch mt-3 mb-0" role="group" aria-label="Which week">
-      ${['This week', 'Next week'].map((n, w) => `<button class="chip ${wkOff === w ? 'on' : ''}" aria-pressed="${wkOff === w}" data-action="plan-week" data-w="${w}">${n}${w && ti >= 4 ? ' · new' : ''}</button>`).join('')}
+      ${['This week', 'Next week'].map((n, w) => `<button class="chip ${wkOff === w ? 'on' : ''}" aria-pressed="${wkOff === w}" data-action="plan-week" data-w="${w}">${n}${w && ti >= 4 ? ' · ready' : ''}</button>`).join('')}
     </div>
     <div role="tabpanel">${body}</div>
     <p class="muted small mt-5">General healthy-eating guidance, not medical advice. If you have diabetes, kidney problems or take regular medication, check the plan with your doctor or a dietitian first.</p>`;
@@ -4482,7 +4481,7 @@ function planReminderIcs() {
 
 
 const FAQ = [
-  ['How do progressions work?', 'Each exercise (Pushups, Squats…) is a ladder of progressions from easiest to hardest. Every progression has three levels. Hit a level\'s target (for example, 2 sets of 15) and it is marked complete. Finish level 3 and the next progression unlocks as your current one.'],
+  ['How do stages work?', 'Each exercise (Pushups, Squats…) is a ladder of stages from easiest to hardest. Every stage has three levels. Hit a level\'s target (for example, 2 sets of 15) and it is marked complete. Finish level 3 and the next stage unlocks as your current one.'],
   ['Where should I start?', 'Pick the progression you can do comfortably for the level 1 target with clean form. If in doubt, start at progression 1 — the early steps build tendon strength and technique.'],
   ['What counts toward my streak?', 'Any workout logged on a scheduled training day. Rest days never break your streak.'],
   ['How do I log a single exercise?', 'Open any exercise and tap "Log sets". It is saved like a workout and counts toward levels and badges.'],
@@ -4496,7 +4495,7 @@ function privacySheet() {
   openSheet('Privacy & Terms', `
     <p><strong>Privacy.</strong> Everything you enter is stored in your browser's local storage. Clearing your browser data or using Reset All Progress deletes it.</p>
     <p><strong>Barcode scanning.</strong> The camera is used only while the scan screen is open and the picture stays on the phone; only the barcode number is sent to Open Food Facts (a free, open food database) to look up the product.</p>
-    <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, progressions, joined ladders, health logs (weight, food, steps, sleep, water, measurements), targets, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
+    <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, stages, joined ladders, health logs (weight, food, steps, sleep, water, measurements), targets, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
     <p><strong>Imagery.</strong> Exercise photos are AI-generated illustrations (mostly with Figma), not photographs of real athletes. Follow the written cues for exact form.</p>
     <p><strong>Terms.</strong> PulseFit is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);
 }
@@ -5058,7 +5057,7 @@ const ACTIONS = {
   'dismiss-intro': () => { state.seenIntro = true; save(); if (sheetOpen()) closeSheet(); rerender(); },
   'intro-sheet': () => openSheet('How PulseFit works', `
     <ol class="howto-list">
-      <li>${icon('dumbbell')}<span><b>Each exercise is a ladder of progressions.</b> Start on a progression you can do with clean form, progression 1 if unsure.</span></li>
+      <li>${icon('dumbbell')}<span><b>Each exercise is a ladder of stages.</b> Start on a stage you can do with clean form, stage 1 if unsure.</span></li>
       <li>${icon('check')}<span><b>Hit a level's target</b> (e.g. 2 sets of 15) to complete it. Finish level 3 to move up to the next progression.</span></li>
       <li>${icon('calendar')}<span><b>Train on your scheduled days.</b> Rest days never break your streak.</span></li>
     </ol>

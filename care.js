@@ -12,7 +12,7 @@ window.PF_CARE = (function () {
       ],
     },
     'm-pm': {
-      at: '16:45', title: 'After-shift reset', sub: 'Shower off the workday and overnight moisture',
+      at: '16:45', title: 'After-shift reset', sub: 'Shower off the workday, then moisturise for the night',
       steps: [
         ['Shower', 'Balea med pH 5.5 Duschgel, all over, to wash off the shift\'s sweat.'],
         ['Face wash', 'Balea MEN Sensitive Waschgel, gently.'],

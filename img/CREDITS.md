@@ -20,4 +20,11 @@ Generated with Canva AI (2026-11-22), same athlete in both:
 | db-rdl.webp | MAHbm2vXfDQ |
 | db-carry.webp | MAHbm0BH2h0 |
 
+Generated with Figma AI (2026-11-22, gpt-image-2.5-flare):
+
+| File | Figma file / node |
+|---|---|
+| db-benchsquat.webp | PulseFit exercise photos, 1:2 |
+| db-triceps.webp | PulseFit exercise photos, 1:3 |
+
 All other photos in this folder are AI-generated (see `tools/image-prompts.js`). Sketches in `sketch/` are drawn by `tools/sketches.js`.

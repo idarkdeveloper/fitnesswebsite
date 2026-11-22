@@ -177,7 +177,7 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Session row | `.sess-row` | Thumbnail, name, meta, level dots (`.segs.dots`) |
 | Segment bar | `.segs` (+ `.wide`, `.dots`) | `i.done` success, `i.cur` primary, `i.lock` dimmed, others `--track` |
 | Ring | `ringSvg()` + `.ring-wrap > .ring-c` | `--accent` arc on `--track`; calories left on Today, grocery progress |
-| Quick tile | `.q-grid > .q-tile` | Label, + chip, value, sub, 5px bar |
+| Quick tile | `.q-grid > .q-tile` (+ `.t-lime`, `.t-sky`, `.t-amber`) | An icon on a tinted square in front of the name (`.q-head > .q-ic + .k`), value, one status line, a 6px bar. One colour per tile (`--tone`): lime weight, sky steps and water, amber sleep. The whole tile opens its editor; water also has a `+ 250 ml` button (`.q-chip`) in place of the bar |
 | Status list | `.mv-list > .mv-row` | Movements; `.fchip` filter chips |
 | Hero header | `.ex-hero2`, `.wo-hero` | Photo with fade, glass controls (`.glass`, `.glass-chip`, `.glass-btn`) |
 | Level card | `.lvl-card .lv-row > .lv` | Three bars: done / current (sets hit) / off |

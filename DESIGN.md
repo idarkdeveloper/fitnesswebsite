@@ -1,6 +1,6 @@
-# PulseFit Design Language
+# Mizan Design Language
 
-> Source of truth for PulseFit's visual and interaction decisions.
+> Source of truth for Mizan's visual and interaction decisions.
 > The tokens are implemented as CSS custom properties at the top of `styles.css`, set per theme on `<html data-theme>`.
 > Status: **v1, extracted from the shipped app.** It covers colour, type, spacing, radius and the component inventory.
 > Not covered yet: motion tokens and an icon grid spec.
@@ -17,7 +17,7 @@
 
 ### 2.1 Palette primitives
 
-The **"PulseFit" palette** was generated with the ui-color-palette tool from harmonies of the original brand blue `#2466d4`:
+The **"Mizan" palette** was generated with the ui-color-palette tool from harmonies of the original brand blue `#2466d4`:
 
 - **Harmony sources:** primary `#2466d4`; analogous teal `#24bed4`; complementary amber `#d49224`; compound red `#d43a24`; neutral navy `#1c2a55`.
 - **Scale:** Material stops 50–900, OKLCH colour space, lightness 96 → 24. Shade 50 is the lightest.
@@ -193,7 +193,7 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 
 ## 8. Imagery
 
-- **Icons are Google Material Symbols** (Rounded, weight 400, Apache-2.0), inlined in `ICONS` in `app.js` as one filled path each, so they work offline and within the CSP. `icon(name)` draws them in the text colour on a 24 grid. Add a new one by taking the symbol's 24px SVG path from Google Fonts and wrapping it in `G(...)`. Only the three exercise figures (pushup, pullup, squat) are drawn for PulseFit, because Google has no symbol for them.
+- **Icons are Google Material Symbols** (Rounded, weight 400, Apache-2.0), inlined in `ICONS` in `app.js` as one filled path each, so they work offline and within the CSP. `icon(name)` draws them in the text colour on a 24 grid. Add a new one by taking the symbol's 24px SVG path from Google Fonts and wrapping it in `G(...)`. Only the three exercise figures (pushup, pullup, squat) are drawn for Mizan, because Google has no symbol for them.
 
 - **Dumbbell exercises use pencil sketches** (`img/sketch/<id>.svg`, drawn by `node tools/sketches.js`): an outlined side-view figure on paper `#f4f1ea`, the working muscles filled lime, a dashed arrow for the direction of movement. Every weight step of an exercise shows that exercise's sketch. They are shown whole (`object-fit: contain`), never cropped.
 

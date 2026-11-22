@@ -1,4 +1,4 @@
-/* PulseFit 14-week plan: 23 Nov 2026 – 28 Feb 2027, the first stretch towards the owner's goal of 85 kg.
+/* Mizan 14-week plan: 23 Nov 2026 – 28 Feb 2027, the first stretch towards the owner's goal of 85 kg.
    A safe pace is 0.7–1 kg a week, so this block aims for about 100 kg by the end of February and 85 kg around
    September–October 2027. Three phases raise steps and add conditioning; week 9 is an easier recovery week. */
 window.PF_GOALPLAN = (function () {

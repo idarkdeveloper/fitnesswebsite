@@ -1,4 +1,4 @@
-/* PulseFit recipes for the meal plan dishes (mealplan.js), written for one person with a German kitchen in mind.
+/* Mizan recipes for the meal plan dishes (mealplan.js), written for one person with a German kitchen in mind.
    Amounts come from the dish itself, so a recipe always matches the plan's calories. In steps, {ingredient} is
    replaced by that ingredient's name, or by what you bought instead (see "Bought something else instead?").
    t = minutes, sp = spices and fresh bits (not on the grocery list), tip = a practical note. */

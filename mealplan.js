@@ -1,4 +1,4 @@
-/* PulseFit meal data: quick foods, an Indian weight-loss meal plan built from what German supermarkets sell,
+/* Mizan meal data: quick foods, an Indian weight-loss meal plan built from what German supermarkets sell,
    and the ingredients that build the grocery list. A new week plan is generated every Monday (see weekPlan).
    Calories and protein are typical home-cooking estimates per serving (moderate oil). They're meant to be roughly
    right and consistent; the weekly weight trend tells you whether to adjust. */

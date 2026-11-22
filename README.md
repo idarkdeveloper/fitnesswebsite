@@ -1,4 +1,6 @@
-# PulseFit — Bodyweight Progression Trainer
+# Mizan — your day in balance
+
+> Formerly PulseFit. The Android package id, the APK file name (`pulsefit.apk`), storage keys and the `pulsefit://` link scheme keep the old name so installed apps and saved data carry over.
 
 A mobile-first fitness web app for mastering bodyweight training one
 progression at a time. Each movement family is a ladder of exercises from
@@ -10,9 +12,9 @@ There's no build step, no backend and nothing to install. Open `index.html`
 in a browser, or deploy the folder to any static host. The included workflow
 deploys it to GitHub Pages.
 
-**Install it as a phone app.** PulseFit is an installable web app (PWA): it
+**Install it as a phone app.** Mizan is an installable web app (PWA): it
 gets a home-screen icon, opens full screen and works offline.
-- **Android (Chrome):** Profile → **Install PulseFit app**, or the browser menu → **Install app**.
+- **Android (Chrome):** Profile → **Install Mizan app**, or the browser menu → **Install app**.
 - **iPhone (Safari):** Share → **Add to Home Screen**.
 
 On iPhone, the installed app has its own storage, so sign in to sync again
@@ -40,14 +42,14 @@ progression and shows any new badges.
 those days, and the other days are rest days. Rest days never break your
 streak.
 
-The old standalone tracker (`tracker.html`) now redirects to the Track tab. Its saved profile, steps, sleep and meals are imported once, automatically, the first time PulseFit opens on that device.
+The old standalone tracker (`tracker.html`) now redirects to the Track tab. Its saved profile, steps, sleep and meals are imported once, automatically, the first time Mizan opens on that device.
 
 
 ## Android app: Galaxy Watch & Samsung Health
 
-A website can't read Health Connect, so PulseFit also comes as a small Android app. It is the same site inside a
+A website can't read Health Connect, so Mizan also comes as a small Android app. It is the same site inside a
 [Capacitor](https://capacitorjs.com) shell (`android/`, `capacitor.config.json`), so every site update reaches the app
-without a new install. Inside the app, PulseFit reads **Health Connect**, where Samsung Health stores what your Galaxy
+without a new install. Inside the app, Mizan reads **Health Connect**, where Samsung Health stores what your Galaxy
 Watch records:
 
 | From Health Connect | Goes to |
@@ -59,16 +61,16 @@ Watch records:
 | Exercise sessions, active calories | "Watch today" line on Today (this phone only) |
 
 The last 14 days are read when the app opens and when it comes back to the front. A value you typed in yourself is
-never overwritten. PulseFit only reads; every Health Connect write permission is removed in `AndroidManifest.xml`.
+never overwritten. Mizan only reads; every Health Connect write permission is removed in `AndroidManifest.xml`.
 Privacy page: `privacy.html`.
 
-**Reminders:** in the app, the training reminder and the weekly meal plan reminder are real Android notifications (`@capacitor/local-notifications`), so they arrive while PulseFit is closed. They are inexact (Android may delay them a few minutes) unless you turn on Android's "Alarms and reminders" for PulseFit (Profile → Reminder → Deliver reminders on time); the app never opens that screen on its own. Profile → Reminder → Send a test notification checks the setup. **Water reminder** (Profile → Body & targets): every 1–4 hours in a time window, stopping for the day once your water goal is reached; the notification has a **+ Glass (250 ml)** button that logs a glass without opening the app. The next 4 weeks are scheduled ahead and rebuilt whenever you open the app or change a setting; a training day you've already done is skipped. In a browser they still only fire while the page is open.
+**Reminders:** in the app, the training reminder and the weekly meal plan reminder are real Android notifications (`@capacitor/local-notifications`), so they arrive while Mizan is closed. They are inexact (Android may delay them a few minutes) unless you turn on Android's "Alarms and reminders" for Mizan (Profile → Reminder → Deliver reminders on time); the app never opens that screen on its own. Profile → Reminder → Send a test notification checks the setup. **Water reminder** (Profile → Body & targets): every 1–4 hours in a time window, stopping for the day once your water goal is reached; the notification has a **+ Glass (250 ml)** button that logs a glass without opening the app. The next 4 weeks are scheduled ahead and rebuilt whenever you open the app or change a setting; a training day you've already done is skipped. In a browser they still only fire while the page is open.
 
 **Home-screen widget:** a Day Streak widget (`StreakWidget.java`) shows your streak, today's session or "Done today ✓", and calories left and steps. The page sends it fresh numbers through the `PulseFitWidget` plugin whenever your data changes; add it from Profile → Home screen widget.
 
 **Install:** on the phone, open
 [the latest APK](https://github.com/idarkdeveloper/fitnesswebsite/releases/latest/download/pulsefit.apk), open the file
-and allow installing from your browser. In PulseFit: Profile → Account to sign in, then Profile → Galaxy Watch &
+and allow installing from your browser. In Mizan: Profile → Account to sign in, then Profile → Galaxy Watch &
 Samsung Health → Connect. In Samsung Health: Settings → Health Connect, allow Steps, Sleep, Weight and Exercise.
 
 **Sign-in inside the app** uses the email link, which comes back to the app through `pulsefit://login`. Add
@@ -118,7 +120,7 @@ The app shows stick-figure art until you add photos. To make them with Gemini:
 
 ### Generating images with the OpenAI API (optional)
 
-`tools/generate-images.js` creates the images for you with OpenAI's image models. It runs on **your computer**. Never put an API key in the website: PulseFit is a public static site, so anyone could read the key and spend your credits.
+`tools/generate-images.js` creates the images for you with OpenAI's image models. It runs on **your computer**. Never put an API key in the website: Mizan is a public static site, so anyone could read the key and spend your credits.
 
 1. Create a key at <https://platform.openai.com/api-keys>. Copy `.env.example` to `.env` in the repo root (git-ignored) and paste the key in:
    ```
@@ -206,7 +208,7 @@ Add or edit exercises in `data.js`. Each progression has `type`
 
 ## Disclaimer
 
-PulseFit is general fitness education, not medical advice. Train within your
+Mizan is general fitness education, not medical advice. Train within your
 abilities and stop if anything hurts.
 
 ## License

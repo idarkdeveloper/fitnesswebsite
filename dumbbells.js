@@ -1,4 +1,4 @@
-/* PulseFit dumbbell exercises, for the owner's home kit: dumbbells up to 20 kg and a flat gym bench.
+/* Mizan dumbbell exercises, for the owner's home kit: dumbbells up to 20 kg and a flat gym bench.
    Each exercise is a ladder of weights. A weight has three levels (3 × 8, 3 × 10, 3 × 12 reps), the
    "double progression" used in gyms: once you get 3 × 12 at a weight, the next weight unlocks and you
    start again at 3 × 8. Weights are per dumbbell. Loaded after data.js, before app.js. */

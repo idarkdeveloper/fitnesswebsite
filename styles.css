@@ -412,7 +412,7 @@ img, svg { display: block; }
   font-size: var(--fs-lg);
   color: var(--muted);
 }
-.segmented button[aria-selected="true"] {
+.segmented button[aria-selected="true"], .segmented button[role="radio"][aria-checked="true"] {
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 700;
@@ -1066,7 +1066,7 @@ dialog.sheet::backdrop {
   transition: transform var(--dur-base) var(--ease);
 }
 .segmented { padding: var(--space-1); }
-.segmented button[aria-selected="true"] { background: transparent; }
+.segmented button[aria-selected="true"], .segmented button[role="radio"][aria-checked="true"] { background: transparent; }
 .segmented button { transition: color var(--dur-fast) var(--ease); }
 
 /* Inputs: visible focus without the generic outline */

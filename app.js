@@ -560,15 +560,27 @@ function updateSidebarFoot() {
 const VIEWS = {};
 let lastRouteKey = '';
 let pendingSummary = null;
+/** A selector that finds "the same" control after the view is rebuilt: its id, or its data-action and data-* values. */
+function focusKey(el) {
+  if (!el || !$('#view').contains(el)) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  const attrs = [...el.attributes].filter((a) => a.name.startsWith('data-') || a.name === 'role' || a.name === 'href');
+  return attrs.length ? el.tagName.toLowerCase() + attrs.map((a) => `[${a.name}="${CSS.escape(a.value)}"]`).join('') : null;
+}
 function render() {
   const r = parseRoute();
   const view = VIEWS[r.name] || VIEWS.today;
   renderNav(r.name);
   document.body.dataset.route = r.name;        // e.g. hides the tab bar during a workout
+  const key = location.hash, sameRoute = key === lastRouteKey;
+  // Views are rebuilt on every tap: put keyboard and screen-reader focus back on the same control (WCAG 2.4.3).
+  const fk = sameRoute ? focusKey(document.activeElement) : null;
   $('#view').innerHTML = view(r);
-  const key = location.hash;
-  if (key !== lastRouteKey) {
+  if (fk) { const el = $(fk, $('#view')); if (el) el.focus({ preventScroll: true }); }
+  if (!sameRoute) {
     window.scrollTo(0, 0);
+    // A new page: start screen readers at its top (the first load leaves focus where the browser put it).
+    if (lastRouteKey !== '') $('#main')?.focus({ preventScroll: true });
     lastRouteKey = key;
   }
   afterRender(r);
@@ -1021,7 +1033,7 @@ function progressStrength() {
     <div class="sec-head"><h2 class="h2 m-0">Challenges</h2><span class="small muted">${LADDERS.filter((l) => state.joined[l.id]).length} joined</span></div>
     <div class="h-scroll">${ch}</div>
     <div class="sec-head"><h2 class="h2 m-0">Badges</h2><span class="small muted">${ach.filter((a) => a.earned).length} / ${ach.length}</span></div>
-    <div class="badge-row h-scroll">${ach.map(badgeHtml).join('')}</div>
+    <div class="badge-row h-scroll" tabindex="0" role="region" aria-label="Badges, scroll sideways">${ach.map(badgeHtml).join('')}</div>
     <div class="card list-card mt-5">
       ${recent.length ? recent.map(historyRow).join('') : '<p class="muted m-0 p-row">No workouts yet. Your sessions will show up here.</p>'}
       ${state.workouts.length ? '<button class="link-btn p-row" data-action="prog-tab" data-tab="history">All workouts</button>' : ''}
@@ -1188,7 +1200,7 @@ VIEWS.profile = () => {
 
     <h2 class="group-label">Appearance</h2>
     <div class="segmented theme-seg" role="radiogroup" aria-label="Theme" style="--n:3;--i:${Math.max(0, THEMES.findIndex((t) => t.id === pf.theme))}">
-      ${THEMES.map((t) => `<button role="radio" aria-checked="${pf.theme === t.id}" aria-selected="${pf.theme === t.id}" data-action="theme" data-theme="${t.id}"><i class="tdot" style="background:${t.dot}"></i>${t.name}</button>`).join('')}
+      ${THEMES.map((t) => `<button role="radio" aria-checked="${pf.theme === t.id}" data-action="theme" data-theme="${t.id}"><i class="tdot" style="background:${t.dot}"></i>${t.name}</button>`).join('')}
     </div>
 
 
@@ -1651,7 +1663,7 @@ function measureOneSheet(f, dayArg) {
   const lo = Math.max(10, Math.floor(v - 20)), hi = Math.min(300, Math.ceil(v + 20));
   openSheet(MB_LABEL[f], `
     <div class="mo-val" aria-hidden="true"><output id="moOut">${kg(v)}</output><small> cm</small></div>
-    <div class="mo-ruler"><input type="range" id="moRange" min="${lo}" max="${hi}" step="0.1" value="${v}" aria-label="${MB_LABEL[f]} in centimetres" /></div>
+    <div class="mo-ruler"><input type="range" id="moRange" min="${lo}" max="${hi}" step="0.1" value="${v}" aria-label="${MB_LABEL[f]} in centimetres" aria-valuetext="${kg(v)} centimetres" /></div>
     <div class="mo-scale small muted" aria-hidden="true"><span>${lo}</span><span>${Math.round((lo + hi) / 2)}</span><span>${hi}</span></div>
     <div class="grid2 mt-3">
       <div class="field"><label for="moNum">Exact (cm)</label><input class="input" id="moNum" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${kg(v)}" /></div>
@@ -2267,7 +2279,7 @@ const TRACK_ACTIONS = {
   'comp-history': compHistorySheet,
   'care-open': (el) => careSheet(el.dataset.id, el.dataset.day),
   'care-list': (el) => careListSheet(el.dataset.day),
-  'track-tab': (el) => { trackTab = el.dataset.tab; history.replaceState(null, '', `#/track/${trackTab}`); rerender(); },
+  'track-tab': (el) => { trackTab = el.dataset.tab; history.replaceState(null, '', `#/track/${trackTab}`); lastRouteKey = location.hash; rerender(); },
   'goal-plan': () => goalPlanSheet(),
   'care-tick': (el) => {
     const { id, day } = el.dataset, was = careDone(day, id);
@@ -2547,7 +2559,7 @@ function goalPlanCard(tk) {
   const w = Math.max(1, wk), ph = G.phaseOf(w), cur = avg7(tk) ?? latestOn('weight', tk)?.v;
   const target = G.targetKg(w);
   const status = cur == null ? '' : cur <= target + 0.3 ? '<span class="c-success">on track</span>' : `<span class="muted">${kg(cur - target)} kg above</span>`;
-  return `<button class="card goal-sum mt-3" data-action="goal-plan" aria-label="14-week plan, week ${w} of ${G.WEEKS}, ${ph.name}. Open the plan">
+  return `<button class="card goal-sum mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}. Open the plan">
       <span class="row-between"><span class="eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery week' : ''}` : `Starts Mon ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}</span>${icon('chevR')}</span>
       <span class="goal-bar" aria-hidden="true"><span style="width:${(Math.max(0, wk - 1) / G.WEEKS) * 100}%"></span></span>
       <span class="small d-block mt-2">${nf(ph.steps)} steps a day · strength Tue, Thu, Sat · ${esc(ph.cardio[0].replace(/^Sunday: /, 'Sun ').replace(/\.$/, ''))}</span>
@@ -4397,12 +4409,24 @@ document.addEventListener('pointerdown', (ev) => {
   if (holdRepeat) { clearTimeout(holdRepeat.t); clearInterval(holdRepeat.i); holdRepeat = null; }
 }, true));
 
+/** Tab controls (role="tablist"): arrow keys, Home and End move between tabs and select them, as the ARIA tabs pattern expects. */
+document.addEventListener('keydown', (ev) => {
+  const t = ev.target;
+  if (!t.matches || !t.matches('[role="tablist"] [role="tab"]') || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
+  const tabs = [...t.closest('[role="tablist"]').querySelectorAll('[role="tab"]')], i = tabs.indexOf(t);
+  const j = ev.key === 'Home' ? 0 : ev.key === 'End' ? tabs.length - 1 : (i + (ev.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  ev.preventDefault();
+  const again = focusKey(tabs[j]);            // the views rebuild on click: find the new tab by its key afterwards
+  tabs[j].click();
+  const nt = again && $(again);
+  (nt || tabs[j]).focus();
+});
 document.addEventListener('input', (ev) => {
   const t = ev.target;
   if (t.id === 'moRange' || t.id === 'moNum') {                    // measurement ruler and exact field stay in step
     const v = parseNum(t.value);
     if (v == null) return;
-    if (t.id === 'moRange') { const n = $('#moNum'); if (n) n.value = kg(v); }
+    if (t.id === 'moRange') { const n = $('#moNum'); if (n) n.value = kg(v); t.setAttribute('aria-valuetext', `${kg(v)} centimetres`); }
     else { const r = $('#moRange'); if (r && v >= +r.min && v <= +r.max) r.value = v; }
     const o = $('#moOut'); if (o) o.textContent = kg(v);
     return;

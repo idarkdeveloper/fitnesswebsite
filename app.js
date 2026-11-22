@@ -557,13 +557,14 @@ const sheetOpen = () => !!$('#layer dialog.sheet[open]');
 /* ---------------------------------------------------------------
    7. Router
    --------------------------------------------------------------- */
-/* Five sections (the owner's sketch): Today is the dashboard; Exercise holds exercises + progress,
+/* Six sections (the owner's sketch plus Routine): Today is the dashboard; Exercise holds exercises + progress,
    Meal holds the plan, food log, water and groceries, Care holds skin, hair and cleaning routines. */
 const NAV = [
   { id: 'today', label: 'Today', icon: 'home' },
   { id: 'exercises', label: 'Exercise', icon: 'run' },
   { id: 'meals', label: 'Meal', icon: 'meal' },
   { id: 'care', label: 'Care', icon: 'care' },
+  { id: 'routine', label: 'Routine', icon: 'calendar' },
   { id: 'profile', label: 'Profile', icon: 'user' },
 ];
 
@@ -575,7 +576,7 @@ function parseRoute() {
 }
 
 function renderNav(active) {
-  const section = { movements: 'exercises', category: 'exercises', exercise: 'exercises', progress: 'exercises', activity: 'exercises', challenges: 'exercises', workout: 'today', home: 'today', track: 'today', routine: 'today', plan: 'meals' }[active] || active;
+  const section = { movements: 'exercises', category: 'exercises', exercise: 'exercises', progress: 'exercises', activity: 'exercises', challenges: 'exercises', workout: 'today', home: 'today', track: 'today', plan: 'meals' }[active] || active;
   const html = NAV.map((n) => `
     <a class="tab" href="#/${n.id}" ${section === n.id ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $$('[data-nav]').forEach((el) => { el.innerHTML = html; });
@@ -3004,8 +3005,7 @@ VIEWS.routine = () => {
     return `<li class="${cls}">${tick}${open}</li>`;
   };
   return `
-    <a class="link-plain small" href="#/today">${icon('chevL', 'class="icon-sm"')} Today</a>
-    <h1 class="h1 mt-2 m-0">My day</h1>
+    <h1 class="h1 m-0">Routine</h1>
     <p class="muted m-0 mt-1">${sh ? `${SHIFTS[sh].name}: wake ${wake}, sleep ${sleep}` : `Day off: wake ${wake}, sleep ${sleep}`}${rtPreview ? ' · preview' : ` · ${done} of ${total} done`}</p>
     <div class="chips mt-3" role="group" aria-label="Show the plan for">
       ${[[null, 'This day'], ['off', 'Day off'], ['morning', 'Early shift'], ['evening', 'Late shift']].map(([v, l]) => `<button class="chip ${rtPreview === v ? 'on' : ''}" aria-pressed="${rtPreview === v}" data-action="rt-preview" data-v="${v || ''}">${l}</button>`).join('')}
@@ -4750,7 +4750,7 @@ async function syncNativeReminders({ ask = false } = {}) {
 }
 window.PF_notifPush = () => { clearTimeout(notifTimer); notifTimer = setTimeout(() => syncNativeReminders(), 800); };
 
-const TOP_SECTIONS = ['today', 'home', 'exercises', 'movements', 'progress', 'activity', 'meals', 'plan', 'care', 'profile'];
+const TOP_SECTIONS = ['today', 'home', 'exercises', 'movements', 'progress', 'activity', 'meals', 'plan', 'care', 'routine', 'profile'];
 /** The Android back button (and gesture). Capacitor hands it to us instead of going back in the web history,
     which used to jump between sections: Care → Meal → Care. */
 function handleBack(App) {

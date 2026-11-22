@@ -851,19 +851,8 @@ VIEWS.today = () => {
   const eaten = meals.reduce((a, m) => a + m.kcal, 0), protein = meals.reduce((a, m) => a + (m.protein || 0), 0);
   const left = T ? T.kcal - eaten : null;
   const ringCenter = T
-    ? `<b>${Math.round((eaten / T.kcal) * 100)}%</b><small>eaten</small>`
+    ? `<b>${Math.round((eaten / T.kcal) * 100)}%</b>`
     : `<b>${nf(eaten)}</b><small>kcal</small>`;
-  let next = '';
-  if (window.PF_MEALS) {
-    const di = planIdx(tk);
-    const dmeals = dayInfo(di, weekStart(tk)).meals;
-    const j = dmeals.findIndex((m) => !planLogged(tk, m.label));
-    next = j < 0
-      ? '<p class="small muted m-0 mt-2">All of today\'s plan is logged. Nice work.</p>'
-      : `<div class="next-meal mt-2"><span class="plan-k accent">${dmeals[j].label}${dmeals[j].at ? `<span class="plan-t">${mealWhen(dmeals[j])}</span>` : ''}</span>
-          <span class="grow">${dishLinks(dmeals[j], weekStart(tk))}<span class="d-block small muted">${nf(dmeals[j].kcal)} kcal · ${nf(dmeals[j].protein)} g protein</span></span>
-          <button class="btn subtle sm" data-action="plan-log" data-day="${di}" data-wk="${weekStart(tk)}" data-m="${j}" aria-label="Log ${dmeals[j].label.toLowerCase()} today">${icon('plus')} Log</button></div>`;
-  }
   const p = hp();
   const w = hget(tk, 'weight'), wl = latestOn('weight', tk), a = avg7(tk), rate = weeklyRate(tk);
   const cur = a ?? wl?.v;
@@ -902,15 +891,15 @@ VIEWS.today = () => {
       <div class="food-top">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>
         <div class="grow">
-          <div class="tile-k">Food</div>
-          ${T ? `<div class="big-v">${nf(Math.abs(left))} <small>kcal ${left >= 0 ? 'left' : 'over'}</small></div>
-          <div class="small sub2">Protein <b class="c-accent">${nf(protein)}</b> / ${T.protein} g</div>` : `<div class="big-v">${nf(eaten)} <small>kcal</small></div>
-          <div class="small sub2"><button class="link-btn" data-action="track-setup">Set your target</button></div>`}
+          <div class="food-title">Food</div>
+          <div class="big-v">${nf(eaten)} <small>kcal</small></div>
+          ${T ? `<div class="small muted food-left">of ${nf(T.kcal)} · ${left >= 0 ? `${nf(left)} left` : `<span class="c-warn">${nf(-left)} over</span>`}</div>` : '<div class="small"><button class="link-btn" data-action="track-setup">Set your target</button></div>'}
         </div>
-        <span class="quick-pair"><button class="quick-add ghost-q" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
+        <span class="quick-pair"><button class="icon-btn round food-scan" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
       </div>
-      ${meals.length ? todayNutLine(tk, T) : ''}
-      ${meals.length ? `<button class="chips-btn m-0 mt-3" data-action="food-list" data-today="1" aria-label="See or delete today's food (${meals.length} ${meals.length === 1 ? 'item' : 'items'})"><span class="chips m-0">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<span class="chip sm">+${meals.length - 3}</span>` : ''}<span class="chip sm edit-chip">${icon('edit', 'class="icon-sm"')} Edit</span></span></button>` : ''}
+      ${macroTiles(tk, T, protein)}
+      ${planTicks(tk)}
+      ${meals.length ? `<button class="link-btn small mt-2" data-action="food-list" data-today="1">${icon('edit', 'class="icon-sm"')} Today's food (${meals.length})</button>` : ''}
     </section>
     <div class="q-grid mt-3">
       ${tile('track-weight', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, true, w != null || wl ? `Weight: ${kg(w ?? wl.v)} kilograms. Log weight` : 'Weight: not logged. Log weight')}
@@ -919,10 +908,6 @@ VIEWS.today = () => {
       ${tile('track-water', 'Water', L1(water), 'L', `of ${L1(wg)} L`, (water || 0) / wg, false, `Water: ${L1(water)} litres. Edit`,
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
-    ${window.PF_MEALS ? `<section class="card next-card mt-3" aria-label="Next meal">
-        <div class="row-between"><span class="eyebrow muted">Next meal</span><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
-        ${next}
-      </section>` : ''}
     ${watchLine(tk)}`;
 };
 /* Exercise section: two tabs, Exercises (the picture grid) and Progress (strength, body, steps & sleep, workouts). */
@@ -1604,6 +1589,26 @@ function nutrientsPanel(day, T) {
       <p class="small">They are the EU reference intakes printed on food labels as <b>% RI</b> or <b>% RM</b> (Referenzmenge): fat 70 g, saturates 20 g, carbs 260 g, sugar 90 g and salt 6 g for 2,000 kcal.
       ${ref.scaled ? `Fat, saturates, carbs and sugar are scaled to your ${nf(ref.kcal)} kcal target. Protein is your own target (1.6 g per kg of goal weight).` : 'Set your calorie target to scale them to you. Protein uses 50 g until then.'}
       Fat, saturates, sugar and salt are upper limits, not goals. Less sugar and salt is better.</p></details>`;
+}
+/** Today card: protein, fat, sugar and salt as four small tiles on one line. */
+function macroTiles(day, T, protein) {
+  const { tot } = dayNutrients(day), ref = nutReference(T);
+  const pT = T ? T.protein : ref.protein;
+  const t = (k, label, v, max, upper) => {
+    const over = upper && v > max;
+    return `<div class="mac ${k}${over ? ' over' : ''}"><span class="mac-k">${label}</span><b>${k === 'salt' ? (Math.round(v * 10) / 10).toFixed(1) : nf(v)}<small>/${max} g</small></b><span class="mac-bar"><span style="width:${Math.min(100, max ? (v / max) * 100 : 0)}%"></span></span></div>`;
+  };
+  return `<div class="mac-row mt-3">${t('protein', 'Protein', protein, pT)}${t('fat', 'Fat', tot.fat, ref.fat, true)}${t('sugar', 'Sugar', tot.sugar, ref.sugar, true)}${t('salt', 'Salt', tot.salt, ref.salt, true)}</div>
+    <button class="link-btn small mt-2" data-action="nutrients" data-today="1">All nutrients</button>`;
+}
+/** Today card: the day's planned meals as tick rows (tick logs the meal). */
+function planTicks(day) {
+  if (!window.PF_MEALS) return '';
+  const di = planIdx(day), wk = weekStart(day), dm = dayInfo(di, wk).meals;
+  return `<ul class="meal-ticks mt-3" aria-label="Today's meals">${dm.map((m, j) => {
+    const ok = planLogged(day, m.label);
+    return `<li class="${ok ? 'done' : ''}">${ok ? `<span class="rt-tick sm on" aria-label="${m.label} logged">${icon('check')}</span>` : `<button class="rt-tick sm" data-action="plan-log" data-day="${di}" data-wk="${wk}" data-m="${j}" aria-label="Log ${m.label.toLowerCase()}"></button>`}<span class="grow"><b>${m.label}</b><span class="small muted d-block">${esc(m.text.length > 38 ? m.text.slice(0, 37) + '…' : m.text)}</span></span><span class="small muted nowrap">${nf(m.kcal)} kcal</span></li>`;
+  }).join('')}</ul>`;
 }
 /** Today card: fat, sugar and salt so far against the daily amounts, and a link to the full list. */
 function todayNutLine(day, T) {

@@ -2008,7 +2008,7 @@ function scanSheet() {
   const can = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
   openSheet('Scan a barcode', `
     ${can ? `<div class="scan-box"><video id="scanVideo" playsinline muted aria-label="Camera view: point it at the barcode"></video><span class="scan-line" aria-hidden="true"></span></div>
-      <p class="small muted m-0 mt-2">Point the camera at the barcode on the pack. It reads it by itself.</p>`
+      <p class="small muted m-0 mt-2" id="scanHint">Point the camera at the barcode on the pack. It reads it by itself.</p><div id="scanHelp" class="mt-2"></div>`
       : '<p class="small muted m-0">This browser can\'t read barcodes with the camera. Type the numbers printed under the barcode instead.</p>'}
     <div class="field mt-3"><label for="scanCode">Barcode number (EAN)</label><input class="input" id="scanCode" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="e.g. 4001724819905" /></div>
     <button class="btn block lg mt-3" data-action="scan-lookup">Look up</button>
@@ -2030,9 +2030,21 @@ async function startScan() {
         if (r && r[0]) { const code = r[0].rawValue; stopScan(); const i = $('#scanCode'); if (i) i.value = code; lookupBarcode(code); }
       } catch { /* keep trying */ }
     }, 350);
-  } catch {
+  } catch (err) {
     stopScan();
-    scanMsg('The camera isn\'t available (allow camera access, or type the number).');
+    // Hide the empty camera box and say exactly how to turn the camera on (or type the number instead).
+    const box = $('.scan-box'); if (box) box.hidden = true; const hint = $('#scanHint'); if (hint) hint.hidden = true;
+    const denied = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+    const old = isNativeApp() && appBuild && appBuild < CAMERA_BUILD;
+    const help = $('#scanHelp');
+    if (help) help.innerHTML = old
+      ? `<div class="note-box"><b>Update the app to scan with the camera.</b> This version of PulseFit can't use the camera yet. Install the latest build from <a href="https://github.com/idarkdeveloper/fitnesswebsite/releases/tag/android" target="_blank" rel="noopener">the PulseFit release page</a>, or type the number below.</div>`
+      : `<div class="note-box"><b>Camera blocked.</b> ${isNativeApp()
+          ? 'On your phone: <b>Settings → Apps → PulseFit → Permissions → Camera → Allow only while using the app</b>. Then come back and tap Try again.'
+          : 'Tap the lock or camera icon next to the address bar, allow the camera for this site, then tap Try again.'}
+          ${denied ? '' : ' If another app is using the camera, close it first.'}</div>
+        <button class="btn ghost block mt-2" data-action="scan-retry">${icon('refresh')} Try again</button>`;
+    scanMsg('');
   }
 }
 /** Halal check from Open Food Facts: a halal label wins; otherwise look for pork, gelatine, alcohol and other
@@ -2427,6 +2439,7 @@ const TRACK_ACTIONS = {
   },
   'track-food': () => { foodPick = null; foodSheet(); },
   'scan-open': () => scanSheet(),
+  'scan-retry': () => scanSheet(),
   'scan-lookup': () => lookupBarcode($('#scanCode')?.value),
   'food-repeat-day': (el) => {
     const day = el.dataset.day, prev = state.meals.filter((m) => m.day === keyAdd(day, -1));
@@ -4410,6 +4423,7 @@ const HEALTH_ACTIONS = {
 const NOTIF_DAYS = 28;
 let notifPerm = null;          // 'granted' | 'denied' | 'prompt' | … once checked
 let notifExact = null;         // Android "Alarms & reminders" (exact timing): 'granted' | 'denied' | null
+const CAMERA_BUILD = 14;      // first Android build with the CAMERA permission (barcode scanning)
 let appBuild = 0;              // the installed app's build number (versionCode)
 let notifSig = '';
 let notifTimer = null;

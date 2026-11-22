@@ -1928,3 +1928,4 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .quick-pair { display: flex; gap: var(--space-2); flex-shrink: 0; }
 .quick-add.ghost-q { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
 .scan-btn { flex-shrink: 0; }
+.scan-box[hidden] { display: none; }

@@ -22,6 +22,7 @@ const ICONS = {
   activity: 'M3 12h4l3-8 4 16 3-8h4',
   volume: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11',
   mute: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5',
+  barcode: 'M4 5v14M7 5v14M10 5v14M13 5v14M16 5v14M20 5v14M3 3h3M3 21h3M18 3h3M18 21h3',
   meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 6s1 4 3 4v8',
   care: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
   award: '<circle cx="12" cy="8.5" r="5.5"/><path d="M8.6 13 7 21.5l5-2.8 5 2.8L15.4 13"/>',
@@ -858,7 +859,7 @@ VIEWS.today = () => {
           <div class="small sub2">Protein <b class="c-accent">${nf(protein)}</b> / ${T.protein} g</div>` : `<div class="big-v">${nf(eaten)} <small>kcal</small></div>
           <div class="small sub2"><button class="link-btn" data-action="track-setup">Set your target</button></div>`}
         </div>
-        <button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button>
+        <span class="quick-pair"><button class="quick-add ghost-q" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
       </div>
       ${meals.length ? todayNutLine(tk, T) : ''}
       ${meals.length ? `<button class="chips-btn m-0 mt-3" data-action="food-list" data-today="1" aria-label="See or delete today's food (${meals.length} ${meals.length === 1 ? 'item' : 'items'})"><span class="chips m-0">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<span class="chip sm">+${meals.length - 3}</span>` : ''}<span class="chip sm edit-chip">${icon('edit', 'class="icon-sm"')} Edit</span></span></button>` : ''}
@@ -1589,7 +1590,7 @@ function trackFoodCard(day, T, thisDay) {
         <div class="progress mt-3 ${left < 0 ? 'over' : ''}" role="progressbar" aria-label="Calories eaten" aria-valuemin="0" aria-valuemax="${T.kcal}" aria-valuenow="${Math.round(eaten)}"><span style="width:${pct}%"></span></div>
         <div class="row-between small muted mt-2"><span>Eaten ${nf(eaten)} kcal</span><span>Protein ${nf(protein)} / ${T.protein} g</span></div>` : ''}
       ${meals.length ? `<h3 class="sheet-sub">Nutrients</h3><div class="mt-2">${nutrientsPanel(day, T)}</div>` : ''}
-      <button class="btn block mt-4" data-action="track-food">${icon('plus')} Add food</button>
+      <div class="row gap-2 mt-4"><button class="btn grow" data-action="track-food">${icon('plus')} Add food</button><button class="btn ghost scan-btn" data-action="scan-open">${icon('barcode')} Scan</button></div>
       ${repeatDayBtn(day)}
       ${meals.length ? `<ul class="food-list mt-3">${meals.map((m) => `
         <li>
@@ -2007,7 +2008,7 @@ function scanSheet() {
   const can = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
   openSheet('Scan a barcode', `
     ${can ? `<div class="scan-box"><video id="scanVideo" playsinline muted aria-label="Camera view: point it at the barcode"></video><span class="scan-line" aria-hidden="true"></span></div>
-      <p class="small muted m-0 mt-2">Point the camera at the barcode on the pack. It reads it by itself.</p>`
+      <p class="small muted m-0 mt-2" id="scanHint">Point the camera at the barcode on the pack. It reads it by itself.</p><div id="scanHelp" class="mt-2"></div>`
       : '<p class="small muted m-0">This browser can\'t read barcodes with the camera. Type the numbers printed under the barcode instead.</p>'}
     <div class="field mt-3"><label for="scanCode">Barcode number (EAN)</label><input class="input" id="scanCode" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="e.g. 4001724819905" /></div>
     <button class="btn block lg mt-3" data-action="scan-lookup">Look up</button>
@@ -2029,9 +2030,21 @@ async function startScan() {
         if (r && r[0]) { const code = r[0].rawValue; stopScan(); const i = $('#scanCode'); if (i) i.value = code; lookupBarcode(code); }
       } catch { /* keep trying */ }
     }, 350);
-  } catch {
+  } catch (err) {
     stopScan();
-    scanMsg('The camera isn\'t available (allow camera access, or type the number).');
+    // Hide the empty camera box and say exactly how to turn the camera on (or type the number instead).
+    const box = $('.scan-box'); if (box) box.hidden = true; const hint = $('#scanHint'); if (hint) hint.hidden = true;
+    const denied = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+    const old = isNativeApp() && appBuild && appBuild < CAMERA_BUILD;
+    const help = $('#scanHelp');
+    if (help) help.innerHTML = old
+      ? `<div class="note-box"><b>Update the app to scan with the camera.</b> This version of PulseFit can't use the camera yet. Install the latest build from <a href="https://github.com/idarkdeveloper/fitnesswebsite/releases/tag/android" target="_blank" rel="noopener">the PulseFit release page</a>, or type the number below.</div>`
+      : `<div class="note-box"><b>Camera blocked.</b> ${isNativeApp()
+          ? 'On your phone: <b>Settings → Apps → PulseFit → Permissions → Camera → Allow only while using the app</b>. Then come back and tap Try again.'
+          : 'Tap the lock or camera icon next to the address bar, allow the camera for this site, then tap Try again.'}
+          ${denied ? '' : ' If another app is using the camera, close it first.'}</div>
+        <button class="btn ghost block mt-2" data-action="scan-retry">${icon('refresh')} Try again</button>`;
+    scanMsg('');
   }
 }
 /** Halal check from Open Food Facts: a halal label wins; otherwise look for pork, gelatine, alcohol and other
@@ -2119,7 +2132,7 @@ function foodSheet() {
   openSheet('Add food', `
     <p class="small muted m-0 sheet-meta">to ${esc(onDayLabel())}${T ? ` · ${nf(Math.max(0, T.kcal - eaten))} kcal left` : ''}</p>
     <label class="search mt-3">${icon('search')}<input id="foodSearch" type="search" aria-label="Search foods" placeholder="Search foods and dishes: pizza, kulcha, dal…" autocomplete="off" /></label>
-    <button class="btn ghost block mt-2" data-action="scan-open">${icon('search')} Scan a barcode</button>
+    <button class="btn ghost block mt-2" data-action="scan-open">${icon('barcode')} Scan a barcode</button>
     ${pickPanel}
     <div class="row-between mt-4"><h3 class="sheet-sub m-0">My foods</h3><span class="small muted">tap · choose servings · add</span></div>
     ${saved.length ? `<div class="chips mt-2">${saved.map(([id, x]) => `<button class="chip ${foodPick && foodPick.id === id ? 'on' : ''}" data-name="${esc(x.name.toLowerCase())}" data-action="track-pick" data-food="${esc(id)}">${esc(x.name)} · ${nf(x.kcal)}</button>`).join('')}</div>` : '<p class="muted small m-0 mt-2">No saved foods yet. Add one under "Other food".</p>'}
@@ -2426,6 +2439,7 @@ const TRACK_ACTIONS = {
   },
   'track-food': () => { foodPick = null; foodSheet(); },
   'scan-open': () => scanSheet(),
+  'scan-retry': () => scanSheet(),
   'scan-lookup': () => lookupBarcode($('#scanCode')?.value),
   'food-repeat-day': (el) => {
     const day = el.dataset.day, prev = state.meals.filter((m) => m.day === keyAdd(day, -1));
@@ -4409,6 +4423,7 @@ const HEALTH_ACTIONS = {
 const NOTIF_DAYS = 28;
 let notifPerm = null;          // 'granted' | 'denied' | 'prompt' | … once checked
 let notifExact = null;         // Android "Alarms & reminders" (exact timing): 'granted' | 'denied' | null
+const CAMERA_BUILD = 14;      // first Android build with the CAMERA permission (barcode scanning)
 let appBuild = 0;              // the installed app's build number (versionCode)
 let notifSig = '';
 let notifTimer = null;

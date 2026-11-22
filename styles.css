@@ -2161,3 +2161,14 @@ button.cs-row { cursor: pointer; }
 .ring-wrap.lg .ring-c b { font-size: var(--fs-display); }
 .ring-wrap.lg .ring-c i { font-style: normal; font-size: var(--fs-xl); color: var(--muted); margin-left: 2px; }
 .load-title { font-family: var(--font-display); font-size: var(--fs-2xl); letter-spacing: -0.01em; }
+
+/* Today's workout: light-to-dark lemon gradient (no black), dark ink on top, same in every theme */
+.workout-card.lime-card { background: linear-gradient(135deg, #e4fb8c 0%, #c6f432 45%, #9fcc1c 100%); border: 0; color: #0e1116; box-shadow: 0 14px 30px -18px rgba(120, 160, 20, 0.7); }
+.workout-card.lime-card .eyebrow { color: #2c3a05; }
+.workout-card.lime-card .sess-title, .workout-card.lime-card b { color: #0e1116; }
+.workout-card.lime-card .muted, .workout-card.lime-card .small.muted { color: #2b3410; }
+.workout-card.lime-card .icon-btn, .workout-card.lime-card .btn.ghost { background: rgba(255, 255, 255, 0.35); border-color: rgba(14, 17, 22, 0.55); color: #0e1116; }
+.workout-card.lime-card .icon-btn:hover, .workout-card.lime-card .btn.ghost:hover { background: rgba(255, 255, 255, 0.55); }
+.workout-card.lime-card .start-btn { background: #0e1116; color: #c6f432; }
+.workout-card.lime-card :focus-visible { outline-color: #0e1116; }
+.workout-card.lime-card .wc-list summary, .workout-card.lime-card .link-btn { color: #0e1116; }

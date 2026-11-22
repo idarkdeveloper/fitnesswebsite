@@ -62,6 +62,10 @@ Watch records:
 
 The last 14 days are read when the app opens and when it comes back to the front. A value you typed in yourself is
 never overwritten. Mizan only reads; every Health Connect write permission is removed in `AndroidManifest.xml`.
+
+**Muscle mass and visceral fat** are not in Health Connect. Share the report image from the scale's app (Renpho:
+Share → Mizan) and the app reads weight, body fat, muscle mass and visceral fat from it on the phone
+(`ShareBridgePlugin.java`, ML Kit text recognition, no network), then opens the body sheet filled in for you to check and save.
 Privacy page: `privacy.html`.
 
 **Reminders:** in the app, the training reminder and the weekly meal plan reminder are real Android notifications (`@capacitor/local-notifications`), so they arrive while Mizan is closed. They are inexact (Android may delay them a few minutes) unless you turn on Android's "Alarms and reminders" for Mizan (Profile → Reminder → Deliver reminders on time); the app never opens that screen on its own. Profile → Reminder → Send a test notification checks the setup. **Water reminder** (Profile → Body & targets): every 1–4 hours in a time window, stopping for the day once your water goal is reached; the notification has a **+ Glass (250 ml)** button that logs a glass without opening the app. The next 4 weeks are scheduled ahead and rebuilt whenever you open the app or change a setting; a training day you've already done is skipped. In a browser they still only fire while the page is open.

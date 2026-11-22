@@ -2171,3 +2171,5 @@ button.cs-row { cursor: pointer; }
 /* Status bar: when the page is drawn under the phone's status bar (--safe-top), a strip in the page colour stays
    behind the clock and icons, so text scrolling up never runs through them. No height in a normal browser tab. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); background: var(--bg-top); z-index: 60; pointer-events: none; }
+/* Icons in the two rest-day buttons keep their size when the label is long. */
+.rest-acts .btn svg { flex-shrink: 0; }

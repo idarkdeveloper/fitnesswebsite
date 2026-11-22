@@ -20,6 +20,8 @@ const ICONS = {
   home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
   run: '<circle cx="14" cy="4.5" r="2"/><path d="M6 21l3.5-5.5 3 2V22M9.5 15.5 11 9.5l4 2.5 3.5-.5M11 9.5 8 10.5 6.5 13.5"/>',
   activity: 'M3 12h4l3-8 4 16 3-8h4',
+  volume: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11',
+  mute: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5',
   meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 6s1 4 3 4v8',
   care: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
   award: '<circle cx="12" cy="8.5" r="5.5"/><path d="M8.6 13 7 21.5l5-2.8 5 2.8L15.4 13"/>',
@@ -229,6 +231,7 @@ function defaultState() {
     routineId: 'foundation',
     trainingDays: [1, 2, 4, 5],         // 0 = Sun … 6 = Sat
     restSeconds: 90,
+    voice: true,                        // spoken workout coach (Web Speech API, on-device)
     current: {},                        // catId -> progression index (presence = started)
     levels: {},                         // progId -> highest level completed (0-3)
     workouts: [],                       // {id, at, routineId, entries:[{progId, level, values[], passed}]}
@@ -1262,6 +1265,8 @@ VIEWS.profile = () => {
       ${row('rest-settings', 'Rest timer', `${state.restSeconds} seconds`)}
       <div class="list-item static"><span class="grow"><span>Warm-up<span class="li-sub">${state.warmup !== false ? 'A few minutes of moves for that day, before each workout' : 'Off'}</span></span></span>
         <button class="toggle" role="switch" aria-checked="${state.warmup !== false}" data-action="toggle-warmup" aria-label="Warm-up before workouts"></button></div>
+      ${canSpeak() ? `<div class="list-item static"><span class="grow"><span>Voice coach<span class="li-sub">${state.voice ? 'Reads out each set and counts down your rest' : 'Off'}</span></span></span>
+        <button class="toggle" role="switch" aria-checked="${!!state.voice}" data-action="toggle-voice" aria-label="Voice coach"></button></div>` : ''}
       <div class="list-item static"><button class="grow text-left plain" data-action="reminders"><span>Reminder<span class="li-sub">${state.reminder.enabled ? `Daily at ${esc(state.reminder.time)}` : 'Off'}</span></span></button>
         <button class="toggle" role="switch" aria-checked="${state.reminder.enabled}" data-action="toggle-reminder" aria-label="Daily reminder"></button></div>
     </div>
@@ -3432,6 +3437,47 @@ function entryEditor(e, i) {
 /** Flat list of every set in the session draft, in order. */
 const draftSets = () => draft.entries.flatMap((e, ei) => e.values.map((v, si) => ({ ei, si, v, done: e.done[si] })));
 /** The set being worked on: the chosen one if it isn't done yet, else the first set not done. */
+/* ---------- Voice coach: the phone's own text-to-speech reads out sets and counts down rests ---------- */
+const canSpeak = () => 'speechSynthesis' in window && typeof SpeechSynthesisUtterance === 'function';
+let voicePick = null;
+function speak(text, { interrupt = true } = {}) {
+  if (!state.voice || !canSpeak() || !text) return;
+  try {
+    const synth = window.speechSynthesis;
+    if (interrupt) synth.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    if (!voicePick) { const vs = synth.getVoices(); voicePick = vs.find((v) => /^en-(GB|IN|US)/.test(v.lang) && /natural|google|samantha|daniel/i.test(v.name)) || vs.find((v) => /^en/.test(v.lang)) || null; }
+    if (voicePick) u.voice = voicePick;
+    u.lang = voicePick ? voicePick.lang : 'en-GB'; u.rate = 1; u.pitch = 1;
+    synth.speak(u);
+  } catch { /* speech is a nice-to-have */ }
+}
+const spokenName = (p) => p.name.replace(/·\s*([\d.]+)\s*kg/, 'with $1 kilos').replace(/·/g, ',');
+/** What to say for the set on screen: exercise (when it changes), set number and target. */
+function setLine(c) {
+  const e = draft.entries[c.ei], { p } = PROG[e.progId], L = p.levels[workingLevel(p.id) - 1];
+  const target = p.type === 'hold' ? `hold ${L.target} seconds` : `${L.target} reps${p.perSide ? ' each side' : ''}`;
+  return `${c.si === 0 ? `${spokenName(p)}. ` : ''}Set ${c.si + 1} of ${e.values.length}. ${target}.`;
+}
+let lastSpokenSet = '';
+function coachOnRender() {
+  if (!draft || draft.mode !== 'session') return;
+  if (draft.warm && !draft.warm.done) {
+    const w = draft.warm, key = `${draft.date}|warm|${w.i}`;
+    if (key === lastSpokenSet) return;
+    lastSpokenSet = key;
+    const [name, , sec, reps, side] = WARMUPS[w.list[w.i]];
+    speak(`${w.i === 0 ? 'Warm-up. ' : ''}${name}. ${sec ? `${sec} seconds` : `${reps}`}${side ? ' each side' : ''}.`);
+    return;
+  }
+  const c = curSet();
+  if (!c || restTimer) return;
+  const key = `${draft.started}|${c.ei}|${c.si}`;
+  if (key === lastSpokenSet) return;
+  lastSpokenSet = key;
+  speak(setLine(c));
+}
+
 function curSet() {
   const all = draftSets();
   if (draft.cur) {
@@ -3552,7 +3598,7 @@ VIEWS.workout = () => {
     <div class="wo-top">
       <button class="icon-btn round bare" data-action="cancel-workout" aria-label="Cancel workout">${icon('x')}</button>
       <div class="text-center"><div class="fw-bold">${esc(routine().name)}</div><div class="small muted"><span id="woElapsed">${fmtClock(elapsed)}</span> elapsed</div></div>
-      <span class="fw-bold wo-count" aria-label="Exercise ${ei + 1} of ${draft.entries.length}">${ei + 1}/${draft.entries.length}</span>
+      ${canSpeak() ? `<button class="icon-btn round bare" data-action="toggle-voice" aria-pressed="${!!state.voice}" aria-label="Voice coach ${state.voice ? 'on' : 'off'}">${icon(state.voice ? 'volume' : 'mute')}</button>` : `<span class="fw-bold wo-count" aria-label="Exercise ${ei + 1} of ${draft.entries.length}">${ei + 1}/${draft.entries.length}</span>`}
     </div>
     ${segBar(segs, 'wo-segs')}
     <div class="wo-hero mt-4">
@@ -3670,7 +3716,9 @@ const WORKOUT_ACTIONS = {
     draft.entries[c.ei].done[c.si] = true;
     draft.cur = null;
     saveDraft();
-    if (curSet()) startRest(); else stopRest();
+    const nx = curSet();
+    if (nx) { startRest(); lastSpokenSet = `${draft.started}|${nx.ei}|${nx.si}`; speak(`Set done. Rest ${state.restSeconds} seconds.`); }
+    else { stopRest(); speak('Last set done. Great work. Tap finish to save your workout.'); }
     rerender();
     popOnce($(`[data-action="wo-goto"][data-e="${c.ei}"][data-s="${c.si}"]`));
   },
@@ -3699,6 +3747,7 @@ const slideStep = (car) => car.clientWidth + (parseFloat(getComputedStyle(car).c
 function afterRender(r) {
   if (r.name === 'track' || (r.name === 'progress' && progTab === 'body')) wireWeightChart();
   wireWorkout(r.name === 'workout');
+  if (r.name === 'workout') coachOnRender();
 }
 
 /* ---------------------------------------------------------------
@@ -3766,11 +3815,13 @@ function startRest() {
   const end = Date.now() + state.restSeconds * 1000;
   if (parseRoute().name === 'workout' && draft && draft.mode === 'session') {
     // The workout screen shows the countdown in its main button.
+    let said = null;
     const tick = () => {
       const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
       const t = $('#restTime');
       if (t) t.textContent = `${Math.floor(left / 60)}:${pad(left % 60)}`;
-      if (left <= 0) { beep(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch { /* ignore */ } stopRest(); if (parseRoute().name === 'workout') rerender(); toast('Rest over, next set'); }
+      if (left !== said && (left === 10 || (left <= 3 && left >= 1))) { said = left; speak(left === 10 ? '10 seconds' : String(left)); }
+      if (left <= 0) { const n = draft && curSet(); if (n) speak(`Go. ${setLine(n)}`); beep(); try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch { /* ignore */ } stopRest(); if (parseRoute().name === 'workout') rerender(); toast('Rest over, next set'); }
     };
     restTimer = { end, int: setInterval(tick, 250) };
     return;
@@ -4570,7 +4621,8 @@ const ACTIONS = {
   'add-set': (el) => { const e = draft.entries[el.dataset.e]; e.values.push(e.values[e.values.length - 1] ?? 0); e.done.push(false); saveDraft(); refreshDraftView(); },
   'remove-set': (el) => { const e = draft.entries[el.dataset.e]; if (e.values.length > 1) { e.values.pop(); e.done.pop(); } saveDraft(); refreshDraftView(); },
   'hold-timer': (el) => toggleHold(Number(el.dataset.e)),
-  'skip-rest': () => { stopRest(); if (parseRoute().name === 'workout') rerender(); },
+  'skip-rest': () => { stopRest(); const n = draft && draft.mode === 'session' && curSet(); if (n) speak(setLine(n)); if (parseRoute().name === 'workout') rerender(); },
+  'toggle-voice': () => { state.voice = !state.voice; save(); if (!state.voice && canSpeak()) window.speechSynthesis.cancel(); rerender(); toast(state.voice ? 'Voice coach on' : 'Voice coach off'); if (state.voice) speak('Voice coach on.'); },
   'ex-section': (el) => { exSection = el.dataset.tab; history.replaceState(null, '', `#/exercises/${exSection}`); lastRouteKey = location.hash; rerender(); },
   'care-tab': (el) => { careTab = el.dataset.tab; history.replaceState(null, '', `#/care/${careTab}`); lastRouteKey = location.hash; rerender(); },
   'ex-tab': (el) => {

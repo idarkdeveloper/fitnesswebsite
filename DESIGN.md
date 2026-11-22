@@ -119,6 +119,8 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 - Hero art has a max height (320–380px) so it never dominates desktop.
 - **Summaries on Today, details in sheets.** Today holds only what you act on now, in this order: the 14-week plan summary, the week strip, today's session, food with the next meal, the four quick tiles, and one self-care row. Anything with a list (self-care routines, the plan's week-by-week table) shows one line with progress and a chevron, and opens a sheet. Don't add another full card to Today: add a summary row and a sheet.
 - **Today patterns (Lime on Graphite):** the plan is a lime hero card with the week's target as a 34px number; the week strip shows today inverted (light pill) and training days with a lime number; food is one card with the ring, a big "kcal left" number, protein in sky and a 48px lime "+" quick-add button; quick tiles lead with a 24px display-font number.
+- **Today's workout card:** a picture header (first exercise) with a time badge, the routine name, exercise and set counts, a row of 56px exercise thumbnails, a full-width Start button, and the full list folded into "See all" (`<details>`). The next meal is its own small card after the tiles.
+- **Exercises page:** a picture grid (2 columns, 3 from 700px), dumbbell exercises first under "With dumbbells", then "Bodyweight".
 - **Workout set screen:** "Exercise n of N" eyebrow, "Set x of y" 34px title, Target and Last set tiles, a stepper card with 56px buttons and a 64px number, a rest row with Change, and a full-width 60px "Set done" button.
 - **Daily log is split into tabs** (Food · Body · Steps & sleep, a `.segmented` control). Each tab can be linked as `#/track/<tab>`. Body holds weight, body fat & muscle, and measurements.
 - **Back navigation pattern:** every drill-down page (category, exercise, workout) starts with a `.topbar` that has a 44px back or close button and a centred title.
@@ -188,6 +190,8 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Utilities | `.m-0`, `.mt-*`, `.mb-*`, `.ml-*`, `.gap-*`, `.wrap`, `.text-center`, `.fw-*`, `.t-*`, `.c-*`, `.static`, `.icon-sm`, `.d-block`, `.btn.sm` | Token-backed one-liners defined last in the cascade. Use them instead of `style=""` |
 
 ## 8. Imagery
+
+- **Dumbbell exercises use pencil sketches** (`img/sketch/<id>.svg`, drawn by `node tools/sketches.js`): an outlined side-view figure on paper `#f4f1ea`, the working muscles filled lime, a dashed arrow for the direction of movement. Every weight step of an exercise shows that exercise's sketch. They are shown whole (`object-fit: contain`), never cropped.
 
 **Default art** is original vector stick figures on a per-family gradient (`--h` hue per family, shifted per progression). It is always the fallback.
 

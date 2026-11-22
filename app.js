@@ -144,7 +144,15 @@ function figure(catId) {
 
 /** Generated photo for an id (category cover or progression) if listed in img/manifest.js, else the stick figure. */
 const IMAGES = window.PF_IMAGES || {};
+/** Pencil sketches for the dumbbell exercises (tools/sketches.js); every weight step uses its exercise's sketch. */
+const SKETCHES = new Set(['db-bench', 'db-row', 'db-shoulder', 'db-goblet', 'db-rdl', 'db-split', 'db-curl', 'db-benchsquat', 'db-hipthrust', 'db-carry', 'db-lateral', 'db-triceps']);
+function sketchSrc(id) {
+  const m = /^db-[a-z]+/.exec(id || '');
+  return m && SKETCHES.has(m[0]) ? `img/sketch/${m[0]}.svg` : null;
+}
 function media(catId, imgId, alt = '') {
+  const sk = !(imgId && IMAGES[imgId]) && sketchSrc(imgId || catId);
+  if (sk) return `${figure(catId)}<img class="photo sketch" src="${sk}" alt="${esc(alt)}" loading="lazy" decoding="async" />`;
   const src = imgId && IMAGES[imgId];
   // The figure stays underneath as the loading placeholder; the photo covers it once decoded.
   return src
@@ -750,18 +758,34 @@ VIEWS.today = () => {
     const c = CAT[cid], p = currentProg(cid), lvl = workingLevel(p.id), L = p.levels[lvl - 1];
     return `<a class="sess-row" href="#/exercise/${p.id}">
       ${art(cid, { cls: 'thumb', shift: currentIdx(cid) * 4, img: p.id })}
-      <span class="grow"><span class="nm">${esc(p.name)}</span><span class="meta">${esc(c.name)} · ${currentIdx(cid) + 1} of ${c.progressions.length} · ${isMastered(p.id) ? 'Mastered' : `Level ${lvl}`} · ${L.sets} × ${L.target}${p.type === 'hold' ? ' s' : ''}</span></span>
+      <span class="grow"><span class="nm">${esc(p.name)}</span><span class="meta">${esc(c.name)} · ${isMastered(p.id) ? 'Mastered' : `Level ${lvl}`} · ${L.sets} × ${L.target}${p.type === 'hold' ? ' s' : ''}</span></span>
       ${segBar(levelStates(p), 'dots')}
     </a>`;
   }).join('');
   const sets = cats.reduce((a, cid) => { const p = currentProg(cid); return a + p.levels[workingLevel(p.id) - 1].sets; }, 0);
   const mins = Math.max(5, Math.round((sets * (state.restSeconds + 45)) / 60)) + (state.warmup !== false && cats.length ? warmupMinutes(cats) : 0);
   const isFuture = sel > today();
+  const first = cats.length ? currentProg(cats[0]) : null;
+  const thumbs = cats.map((cid) => { const p = currentProg(cid); return `<a class="wc-thumb" href="#/exercise/${p.id}" aria-label="${esc(p.name)}">${art(cid, { cls: 'thumb', shift: currentIdx(cid) * 4, img: p.id })}</a>`; }).join('');
   const session = cats.length ? `
-      <div class="sess-list">${rows}</div>
-      <button class="btn block lg start-btn" data-action="start-workout" ${isFuture ? 'disabled' : ''}>${icon('play')} ${status.done ? 'Train again' : isFuture ? 'Upcoming' : `Start · about ${mins} min`}</button>
-      <div class="row-between small muted mt-3"><span>Rest timer ${state.restSeconds} s</span><button class="link-btn" data-action="rest-settings">Change</button></div>`
-    : `<div class="rest-day">${icon('moon')}<div><div class="fw-bold">Rest &amp; recover</div><p class="muted small m-0">No session on this day. A walk or some mobility work is a great idea.</p></div></div>`;
+      <div class="wc-art">${art(cats[0], { cls: 'wc-hero', shift: currentIdx(cats[0]) * 4, img: first.id })}
+        <span class="wc-badge">${icon('timer', 'class="icon-sm"')} about ${mins} min</span></div>
+      <div class="wc-body">
+        <div class="row-between gap-3">
+          <div><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">${esc(routineShort(r))}</h2>
+            <div class="small muted">${plural(cats.length, 'exercise')} · ${plural(sets, 'set')}${status.done ? ' · done ✓' : ''}</div></div>
+          <button class="icon-btn round" data-action="pick-routine" aria-label="Change routine (${esc(r.name)})">${icon('swap')}</button>
+        </div>
+        <div class="wc-thumbs">${thumbs}</div>
+        <button class="btn block lg start-btn" data-action="start-workout" ${isFuture ? 'disabled' : ''}>${icon('play')} ${status.done ? 'Train again' : isFuture ? 'Upcoming' : 'Start workout'}</button>
+        <details class="wc-list"><summary>${icon('chevR', 'class="icon-sm"')} See all ${plural(cats.length, 'exercise')} · rest ${state.restSeconds} s</summary>
+          <div class="sess-list">${rows}</div>
+          <div class="row-between small muted mt-3"><span>Rest timer ${state.restSeconds} s</span><button class="link-btn" data-action="rest-settings">Change</button></div>
+        </details>
+      </div>`
+    : `<div class="wc-body"><div class="row-between gap-3"><div><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">Rest day</h2></div>
+        <button class="icon-btn round" data-action="pick-routine" aria-label="Change routine (${esc(r.name)})">${icon('swap')}</button></div>
+        <div class="rest-day mt-3">${icon('moon')}<div><div class="fw-bold">Rest &amp; recover</div><p class="muted small m-0">No session on this day. A walk or some mobility work is a great idea.</p></div></div></div>`;
 
   // Today's log
   const T = targets(tk);
@@ -811,16 +835,10 @@ VIEWS.today = () => {
     ${planBanner()}
     ${goalPlanCard(tk)}
     <div class="wk-strip">${week}</div>
-    <section class="card session-card mt-4" aria-labelledby="sessH">
-      <div class="row-between">
-        <div><div class="eyebrow">${isToday ? "Today's session" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">${esc(routineShort(r))} · ${cats.length ? `${plural(cats.length, 'exercise')}` : 'Rest day'}</h2></div>
-        <button class="icon-btn round" data-action="pick-routine" aria-label="Change routine (${esc(r.name)})">${icon('swap')}</button>
-      </div>
-      ${session}
-    </section>
+    <section class="card session-card workout-card mt-4" aria-labelledby="sessH">${session}</section>
     ${!state.workouts.length && !state.seenIntro ? `<button class="intro-row mt-3" data-action="intro-sheet">${icon('chart')}<span class="grow">New here? <b>How levels work</b></span>${icon('chevR')}</button>` : ''}
 
-    <div class="sec-head"><h2 class="h2 m-0">${isToday ? "Today's log" : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">Trends</button><a class="link-btn small" href="#/track">Daily log</a></span></div>
+    <div class="sec-head"><h2 class="h2 m-0">${isToday ? 'Today at a glance' : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">Trends</button><a class="link-btn small" href="#/track">Daily log</a></span></div>
     <section class="card food-sum" aria-label="Food today">
       <div class="food-top">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>
@@ -834,10 +852,6 @@ VIEWS.today = () => {
       </div>
       ${meals.length ? todayNutLine(tk, T) : ''}
       ${meals.length ? `<button class="chips-btn m-0 mt-3" data-action="food-list" data-today="1" aria-label="See or delete today's food (${meals.length} ${meals.length === 1 ? 'item' : 'items'})"><span class="chips m-0">${meals.slice(-3).map((m) => `<span class="chip sm">${esc(m.name.length > 22 ? m.name.slice(0, 21) + '…' : m.name)}</span>`).join('')}${meals.length > 3 ? `<span class="chip sm">+${meals.length - 3}</span>` : ''}<span class="chip sm edit-chip">${icon('edit', 'class="icon-sm"')} Edit</span></span></button>` : ''}
-      ${window.PF_MEALS ? `<div class="divider-top mt-4">
-        <div class="row-between"><span class="eyebrow muted">Plan · next up</span><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
-        ${next}
-      </div>` : ''}
     </section>
     <div class="q-grid mt-3">
       ${tile('track-weight', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, true, w != null || wl ? `Weight: ${kg(w ?? wl.v)} kilograms. Log weight` : 'Weight: not logged. Log weight')}
@@ -846,6 +860,10 @@ VIEWS.today = () => {
       ${tile('track-water', 'Water', L1(water), 'L', `of ${L1(wg)} L`, (water || 0) / wg, false, `Water: ${L1(water)} litres. Edit`,
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
+    ${window.PF_MEALS ? `<section class="card next-card mt-3" aria-label="Next meal">
+        <div class="row-between"><span class="eyebrow muted">Next meal</span><a class="link-btn small" href="#/plan">Week &amp; groceries</a></div>
+        ${next}
+      </section>` : ''}
     ${careRow(tk)}
     ${watchLine(tk)}`;
 };
@@ -856,22 +874,24 @@ VIEWS.home = VIEWS.today;
 let movFilter = 'all';
 VIEWS.movements = () => {
   const shown = CATS.filter((c) => movFilter === 'all' || (movFilter === 'progress' ? isStarted(c.id) : !isStarted(c.id)));
-  const rows = shown.map((c) => {
+  const card = (c) => {
     const started = isStarted(c.id), cur = currentIdx(c.id), p = c.progressions[cur], n = c.progressions.length;
-    const sub = started ? `${p.name} · ${isMastered(p.id) ? 'Mastered' : `Level ${workingLevel(p.id)}`} · ${cur + 1} of ${n}` : `Not started · ${n} progressions`;
+    const sub = started ? `${isMastered(p.id) ? 'Mastered' : `Level ${workingLevel(p.id)}`} · ${cur + 1} of ${n}` : `Not started · ${n} steps`;
     const segs = c.progressions.map((q, i) => (isMastered(q.id) ? 'done' : started && i === cur ? 'cur' : 'off'));
-    return `<a class="mv-row" href="#/category/${c.id}">
-      ${art(c.id, { cls: 'thumb sq', shift: started ? cur * 4 : 0, img: started ? p.id : c.id })}
-      <span class="grow"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(sub)}</span>${segBar(segs)}</span>
-      ${icon('chevR')}
+    return `<a class="mv-card" href="#/category/${c.id}" aria-label="${esc(c.name)}: ${esc(started ? `${p.name}, ${sub}` : sub)}">
+      ${art(c.id, { cls: 'mv-img', shift: started ? cur * 4 : 0, img: started ? p.id : c.id })}
+      <span class="mv-txt"><span class="nm">${esc(c.name)}</span><span class="sub">${esc(sub)}</span>${segBar(segs)}</span>
     </a>`;
-  }).join('');
+  };
+  const db = shown.filter((c) => c.id.startsWith('db-')), bw = shown.filter((c) => !c.id.startsWith('db-'));
+  const group = (title, list) => (list.length ? `<h2 class="h2 mv-h">${title} <span class="muted small">${list.length}</span></h2><div class="mv-grid">${list.map(card).join('')}</div>` : '');
+  const rows = group('With dumbbells', db) + group('Bodyweight', bw);
   const chip = (id, label) => `<button class="fchip ${movFilter === id ? 'on' : ''}" data-action="mov-filter" data-f="${id}" aria-pressed="${movFilter === id}">${label}</button>`;
   return `
     <h1 class="h1 m-0">Exercises</h1>
     <p class="muted m-0 mt-1">${CATS.length} exercises · ${TOTAL_PROGS} progressions · ${masteredCount()} mastered</p>
     <div class="row gap-2 mt-4 wrap">${chip('all', 'All')}${chip('progress', 'In progress')}${chip('new', 'Not started')}</div>
-    ${shown.length ? `<div class="mv-list mt-4">${rows}</div>` : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick an exercise and start with progression 1.' : 'You have started every exercise.'}</p>`}`;
+    ${shown.length ? rows : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick an exercise and start with progression 1.' : 'You have started every exercise.'}</p>`}`;
 };
 
 VIEWS.category = (r) => {

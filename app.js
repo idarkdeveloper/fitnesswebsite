@@ -244,6 +244,7 @@ function defaultState() {
     challengeStart: null,
     hprofile: {},                       // body profile & targets (Track tab)
     hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
+    stock: {},                          // care products you own: id -> { name, brand, size, unit, perUse, kind, left, pid }
     foods: {},                          // saved foods: id -> { name, kcal, protein? }
     meals: [],                          // {id, day, at, name, kcal, protein?}
     grocery: {},                        // "weekMonday|ingredient" -> 1 (bought as suggested) or { b: amount bought, sub?: stand-in, sb?: its amount }
@@ -2527,7 +2528,9 @@ const TRACK_ACTIONS = {
   'care-tick': (el) => {
     const { id, day } = el.dataset, was = careDone(day, id);
     hset(day, `care:${id}`, was ? null : 1);
+    const low = useProducts(id, was ? -1 : 1);
     save();
+    if (low.length) setTimeout(() => toast(`Running low: ${low.join(', ')}`), 1600);
     if (el.dataset.close) closeSheet();
     rerender();
     if (!el.dataset.close && $('#sheetBody .care-list')) careListSheet(day);
@@ -2757,7 +2760,7 @@ function careCard(day) {
 let careTab = 'skin';
 const CARE_KIND = (id) => (/hair|beard/.test(id) ? 'hair' : ['laundry', 'bathroom', 'kitchen', 'floors', 'monthly'].includes(id) ? 'cleaning' : 'skin');
 VIEWS.care = (r) => {
-  if (r && ['skin', 'hair', 'cleaning'].includes(r.arg)) careTab = r.arg;
+  if (r && ['skin', 'hair', 'cleaning', 'products'].includes(r.arg)) careTab = r.arg;
   if (!window.PF_CARE) return '<p class="muted">Care routines are missing.</p>';
   const day = todayKey(), R = window.PF_CARE.R, todayIds = careIds(day);
   const ids = Object.keys(R).filter((id) => CARE_KIND(id) === careTab);
@@ -2773,21 +2776,107 @@ VIEWS.care = (r) => {
       </button></li>`;
   };
   const n = now.filter((id) => careDone(day, id)).length;
-  const label = { skin: 'Skin', hair: 'Hair', cleaning: 'Cleaning' };
+  const label = { skin: 'Skin', hair: 'Hair', cleaning: 'Cleaning', products: 'Products' };
   return `
     <h1 class="h1 m-0">Care</h1>
     <p class="muted m-0 mt-1">${shiftOn(day) ? `${SHIFTS[shiftOn(day)].name} today · timed around it` : 'Your routines, timed around your shifts'}</p>
-    <div class="segmented mt-3" role="tablist" aria-label="Care section" style="--n:3;--i:${['skin', 'hair', 'cleaning'].indexOf(careTab)}">
-      ${['skin', 'hair', 'cleaning'].map((k) => `<button role="tab" aria-selected="${careTab === k}" data-action="care-tab" data-tab="${k}">${label[k]}</button>`).join('')}
+    <div class="segmented seg-sm mt-3" role="tablist" aria-label="Care section" style="--n:4;--i:${['skin', 'hair', 'cleaning', 'products'].indexOf(careTab)}">
+      ${['skin', 'hair', 'cleaning', 'products'].map((k) => `<button role="tab" aria-selected="${careTab === k}" data-action="care-tab" data-tab="${k}">${label[k]}</button>`).join('')}
     </div>
-    <div role="tabpanel">
+    <div role="tabpanel">${careTab === 'products' ? productsPanel() : `
       <section class="card mt-4" aria-labelledby="careTodayH">
         <div class="row-between"><h2 class="h3" id="careTodayH">Today</h2>${now.length ? `<span class="small muted">${n} of ${now.length} done</span>` : ''}</div>
         ${now.length ? `<ul class="care-list mt-2">${now.map((id) => row(id, true)).join('')}</ul>` : `<p class="small muted m-0 mt-2">Nothing for ${label[careTab].toLowerCase()} today.${careTab === 'cleaning' ? ' Laundry and cleaning are on the weekend.' : ''}</p>`}
       </section>
-      ${other.length ? `<h2 class="h2 mv-h">Other days</h2><ul class="care-list card list-card">${other.map((id) => row(id, false)).join('')}</ul>` : ''}
+      ${other.length ? `<h2 class="h2 mv-h">Other days</h2><ul class="care-list card list-card">${other.map((id) => row(id, false)).join('')}</ul>` : ''}`}
     </div>`;
 };
+/* ---------- Care products you own (Care → Products) ----------
+   state.stock[id] = { pid, name, brand, size, unit, perUse, kind, left }. Ticking a routine done takes perUse off each
+   product it uses (care-products.js PF_PRODUCT_USES); un-ticking puts it back. Synced like the rest (sync-core MAP_REGS). */
+const PRODUCTS = () => window.PF_PRODUCTS || {};
+const stockQty = (v, unit) => `${v >= 10 || Number.isInteger(v) ? nf(Math.round(v)) : (Math.round(v * 10) / 10).toLocaleString('en-GB')} ${unit}`;
+const usesLeft = (it) => (it.perUse > 0 ? Math.floor(it.left / it.perUse + 1e-9) : null);
+const isLow = (it) => it.left <= 0 || it.left / it.size < 0.15 || (it.left < it.size && usesLeft(it) != null && usesLeft(it) < 3);
+function useProducts(routineId, dir) {
+  const ids = (window.PF_PRODUCT_USES || {})[routineId] || [], low = [];
+  ids.forEach((pid) => {
+    const it = state.stock[pid];
+    if (!it) return;
+    const wasLow = isLow(it);
+    it.left = Math.max(0, Math.round((it.left - dir * it.perUse) * 100) / 100);
+    state.stock[pid] = { ...it };                               // new object: the sync layer sees the change
+    if (dir > 0 && !wasLow && isLow(it)) low.push(it.name.replace(/^(Balea( MEN| med| Professional)?|Denkmit|Profissimo|Dontodent|ebelin) /, ''));
+  });
+  return low;
+}
+function addProduct(pid) {
+  const p = PRODUCTS()[pid];
+  if (!p || state.stock[pid]) return;
+  state.stock[pid] = { pid, name: p.name, brand: p.brand, size: p.size, unit: p.unit, perUse: p.perUse, kind: p.kind, left: p.size };
+}
+function stockRow(k) {
+  const it = state.stock[k], pct = it.size ? Math.min(100, (it.left / it.size) * 100) : 0, u = usesLeft(it), low = isLow(it);
+  return `<li><button class="stock-row" data-action="stock-open" data-k="${esc(k)}" aria-label="${esc(it.name)}: ${stockQty(it.left, it.unit)} left${u != null ? `, about ${u} uses` : ''}${low ? ', running low' : ''}. Edit">
+      <span class="grow"><b class="d-block">${esc(it.name)}</b>
+        <span class="progress thin mt-2 ${low ? 'over' : ''}" aria-hidden="true"><span style="width:${pct}%"></span></span>
+        <span class="small ${low ? 'c-warn' : 'muted'} d-block mt-1">${stockQty(it.left, it.unit)} of ${stockQty(it.size, it.unit)}${u != null ? ` · about ${u} use${u === 1 ? '' : 's'} left` : ''}</span></span>
+      ${icon('chevR')}</button></li>`;
+}
+function productsPanel() {
+  const keys = Object.keys(state.stock || {}), lowKeys = keys.filter((k) => isLow(state.stock[k]));
+  const groups = [['skin', 'Skin & teeth'], ['hair', 'Hair & beard'], ['cleaning', 'Laundry & cleaning']];
+  if (!keys.length) {
+    return `<section class="card mt-4 text-center empty-stock">
+        <h2 class="h3">What you own</h2>
+        <p class="small muted mt-2 mb-3">Add your products once. Each time you tick a routine done, PulseFit takes what it uses off the pack, so you see how much is left and what to buy.</p>
+        <button class="btn block" data-action="stock-add-all">${icon('plus')} Add all ${Object.keys(PRODUCTS()).length} from your dm orders</button>
+        <button class="btn ghost block mt-2" data-action="stock-add">Pick products one by one</button>
+      </section>`;
+  }
+  return `
+    <div class="row-between mt-4"><span class="small muted">${keys.length} product${keys.length === 1 ? '' : 's'}</span><button class="btn sm" data-action="stock-add">${icon('plus')} Add product</button></div>
+    ${lowKeys.length ? `<h2 class="h2 mv-h">Running low</h2><ul class="stock-list card list-card callout">${lowKeys.map(stockRow).join('')}</ul>` : ''}
+    ${groups.map(([kind, title]) => { const ks = keys.filter((k) => (state.stock[k].kind || 'skin') === kind).sort((a, b) => state.stock[a].name.localeCompare(state.stock[b].name)); return ks.length ? `<h2 class="h2 mv-h">${title}</h2><ul class="stock-list card list-card">${ks.map(stockRow).join('')}</ul>` : ''; }).join('')}`;
+}
+function stockAddSheet() {
+  const P = PRODUCTS(), groups = [['skin', 'Skin & teeth'], ['hair', 'Hair & beard'], ['cleaning', 'Laundry & cleaning']];
+  const free = Object.keys(P).filter((pid) => !state.stock[pid]);
+  openSheet('Add a product', `
+    <p class="small muted m-0 sheet-meta">Quick pick from your dm orders, or add your own below.</p>
+    ${free.length ? `<label class="search mt-3">${icon('search')}<input id="stockSearch" type="search" aria-label="Search products" placeholder="Search: shampoo, Balea, WC…" autocomplete="off" /></label>
+    ${groups.map(([kind, title]) => { const ps = free.filter((pid) => P[pid].kind === kind); return ps.length ? `<h3 class="sheet-sub" data-group>${title}</h3><div class="chips mt-2">${ps.map((pid) => `<button class="chip" data-action="stock-pick" data-p="${pid}" data-name="${esc((P[pid].name + ' ' + P[pid].brand).toLowerCase())}">${icon('plus', 'class="icon-sm"')} ${esc(P[pid].name)} · ${stockQty(P[pid].size, P[pid].unit)}</button>`).join('')}</div>` : ''; }).join('')}` : '<p class="small muted mt-3">You have added every product from your orders.</p>'}
+    <h3 class="sheet-sub">Something else</h3>
+    <div class="field mt-2"><label for="stName">Name</label><input class="input" id="stName" autocomplete="off" placeholder="e.g. Nivea Men Shaving Gel" /></div>
+    <div class="row gap-2"><div class="field grow"><label for="stSize">Pack size</label><input class="input" id="stSize" type="number" inputmode="decimal" min="0" step="any" placeholder="200" /></div>
+      <div class="field grow"><label for="stUnit">Unit</label><select class="select" id="stUnit">${['ml', 'g', 'pcs', 'washes', 'uses'].map((u) => `<option>${u}</option>`).join('')}</select></div></div>
+    <div class="row gap-2"><div class="field grow"><label for="stPer">Used each time</label><input class="input" id="stPer" type="number" inputmode="decimal" min="0" step="any" placeholder="2" /></div>
+      <div class="field grow"><label for="stKind">Section</label><select class="select" id="stKind"><option value="skin">Skin &amp; teeth</option><option value="hair">Hair &amp; beard</option><option value="cleaning">Laundry &amp; cleaning</option></select></div></div>
+    <button class="btn block mt-2" data-action="stock-custom-save">Add product</button>`);
+  const s = $('#stockSearch');
+  if (s) s.addEventListener('input', () => {
+    const q = s.value.trim().toLowerCase();
+    $$('#sheetBody [data-action="stock-pick"]').forEach((b) => { b.hidden = !!q && !b.dataset.name.includes(q); });
+  });
+}
+function stockSheet(k) {
+  const it = state.stock[k];
+  if (!it) return;
+  const step = it.unit === 'ml' || it.unit === 'g' ? Math.max(1, Math.round(it.size / 20)) : 1, u = usesLeft(it);
+  const routines = Object.entries(window.PF_PRODUCT_USES || {}).filter(([, l]) => l.includes(it.pid)).map(([r]) => window.PF_CARE?.R[r]?.title).filter(Boolean);
+  openSheet(it.name, `
+    <p class="small muted m-0 sheet-meta">${esc(it.brand || 'Your product')} · pack ${stockQty(it.size, it.unit)} · about ${stockQty(it.perUse, it.unit)} each use</p>
+    <div class="stock-adj mt-4">
+      <button class="step-btn" data-action="stock-adj" data-k="${esc(k)}" data-d="-${step}" aria-label="${stockQty(step, it.unit)} less">${icon('minus')}</button>
+      <div class="text-center"><div class="big-v">${stockQty(it.left, it.unit)}</div><div class="small muted">left${u != null ? ` · about ${u} uses` : ''}</div></div>
+      <button class="step-btn" data-action="stock-adj" data-k="${esc(k)}" data-d="${step}" aria-label="${stockQty(step, it.unit)} more">${icon('plus')}</button>
+    </div>
+    ${routines.length ? `<p class="small muted mt-3 m-0">Used in: ${esc([...new Set(routines)].join(', '))}. Ticking one done takes about ${stockQty(it.perUse, it.unit)} off.</p>` : '<p class="small muted mt-3 m-0">Not in a routine: change the amount here when you use it.</p>'}
+    <button class="btn block lg mt-4" data-action="stock-refill" data-k="${esc(k)}">${icon('refresh')} New pack (full again)</button>
+    <button class="btn ghost block mt-2" data-action="stock-empty" data-k="${esc(k)}">Mark as empty</button>
+    <button class="link-btn danger-text mt-3" data-action="stock-remove" data-k="${esc(k)}">${icon('trash', 'class="icon-sm"')} I don't use this any more</button>`);
+}
+
 /** Today: one line for self-care: how many are done and what's next; the full list opens in a sheet. */
 function careRow(day) {
   const ids = careIds(day);
@@ -4687,6 +4776,21 @@ const ACTIONS = {
   'skip-rest': () => { stopRest(); const n = draft && draft.mode === 'session' && curSet(); if (n) speak(setLine(n)); if (parseRoute().name === 'workout') rerender(); },
   'toggle-voice': () => { state.voice = !state.voice; save(); if (!state.voice && canSpeak()) window.speechSynthesis.cancel(); rerender(); toast(state.voice ? 'Voice coach on' : 'Voice coach off'); if (state.voice) speak('Voice coach on.'); },
   'ex-section': (el) => { exSection = el.dataset.tab; history.replaceState(null, '', `#/exercises/${exSection}`); lastRouteKey = location.hash; rerender(); },
+  'stock-add': () => stockAddSheet(),
+  'stock-add-all': () => { Object.keys(PRODUCTS()).forEach(addProduct); save(); rerender(); toast(`Added ${Object.keys(state.stock).length} products, all full. Adjust any that are half used.`); },
+  'stock-pick': (el) => { addProduct(el.dataset.p); save(); rerender(); el.remove(); toast(`${PRODUCTS()[el.dataset.p].name} added`); },
+  'stock-custom-save': () => {
+    const name = ($('#stName')?.value || '').trim(), size = parseNum($('#stSize')?.value), per = parseNum($('#stPer')?.value);
+    if (!name || !(size > 0)) { toast('Add a name and the pack size'); return; }
+    const k = `c-${Date.now().toString(36)}`;
+    state.stock[k] = { pid: k, name, brand: '', size, unit: $('#stUnit').value, perUse: per > 0 ? per : 0, kind: $('#stKind').value, left: size };
+    save(); closeSheet(); rerender(); toast(`${name} added`);
+  },
+  'stock-open': (el) => stockSheet(el.dataset.k),
+  'stock-adj': (el) => { const it = state.stock[el.dataset.k]; if (!it) return; state.stock[el.dataset.k] = { ...it, left: Math.max(0, Math.min(it.size * 3, Math.round((it.left + Number(el.dataset.d)) * 100) / 100)) }; save(); rerender(); stockSheet(el.dataset.k); },
+  'stock-refill': (el) => { const it = state.stock[el.dataset.k]; if (!it) return; state.stock[el.dataset.k] = { ...it, left: it.size }; save(); closeSheet(); rerender(); toast(`${it.name}: full again`); },
+  'stock-empty': (el) => { const it = state.stock[el.dataset.k]; if (!it) return; state.stock[el.dataset.k] = { ...it, left: 0 }; save(); closeSheet(); rerender(); },
+  'stock-remove': (el) => { const it = state.stock[el.dataset.k]; delete state.stock[el.dataset.k]; save(); closeSheet(); rerender(); if (it) toast(`${it.name} removed`); },
   'care-tab': (el) => { careTab = el.dataset.tab; history.replaceState(null, '', `#/care/${careTab}`); lastRouteKey = location.hash; rerender(); },
   'ex-tab': (el) => {
     const from = EX_TABS.indexOf(exTab);

@@ -22,7 +22,7 @@ const BASE = (process.argv[2] || 'http://localhost:8765/').replace(/\/?$/, '/');
 const OUT = process.argv[3] || 'design-qa';
 const PHONES = [['Galaxy S24', devices['Galaxy S24']], ['Galaxy S8', devices['Galaxy S8']], ['Pixel 7', devices['Pixel 7']]];
 const TEXT_SIZES = [1, 1.3, 1.6, 2];                  // Android font size setting, up to the largest (200%)
-const SCREENS = ['', 'track', 'track/body', 'track/habits', 'movements', 'category/pushups', 'category/db-bench', 'exercise/wall-pushups', 'progress', 'profile', 'plan', 'exercises/progress', 'meals', 'meals/grocery', 'care/skin', 'care/cleaning'];
+const SCREENS = ['', 'track', 'track/body', 'track/habits', 'movements', 'category/pushups', 'category/db-bench', 'exercise/wall-pushups', 'progress', 'profile', 'plan', 'exercises/progress', 'meals', 'meals/grocery', 'care/skin', 'care/cleaning', 'care/products'];
 // [name, button that opens it, screen it is on (default Today)]
 const SHEETS = [['Trends sheet', '[data-action="habit-history"]'], ['Add food sheet', '[data-action="track-food"]'],
   ["Foods you don't eat sheet", '[data-action="dislike-sheet"]', 'plan'], ['Body fat & muscle sheet', '[data-action="comp-log"]', 'track/body'],

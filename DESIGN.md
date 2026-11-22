@@ -3,7 +3,7 @@
 > Source of truth for PulseFit's visual and interaction decisions.
 > The tokens are implemented as CSS custom properties at the top of `styles.css`, set per theme on `<html data-theme>`.
 > Status: **v1, extracted from the shipped app.** It covers colour, type, spacing, radius and the component inventory.
-> Not covered yet: motion tokens and an icon grid spec.
+> Not covered yet: an icon grid spec. Last synced with the code: the design-system audit after PR #93.
 
 ## 1. Principles
 
@@ -15,28 +15,13 @@
 
 ## 2. Colour
 
-### 2.1 Palette primitives
+### 2.1 Source colours
 
-The **"PulseFit" palette** was generated with the ui-color-palette tool from harmonies of the original brand blue `#2466d4`:
-
-- **Harmony sources:** primary `#2466d4`; analogous teal `#24bed4`; complementary amber `#d49224`; compound red `#d43a24`; neutral navy `#1c2a55`.
-- **Scale:** Material stops 50–900, OKLCH colour space, lightness 96 → 24. Shade 50 is the lightest.
-
-The primitives are defined once in `styles.css` as `--{hue}-{stop}`. **Components never use primitives directly**; they use the role tokens in §2.2.
-
-| Scale | 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 |
-|---|---|---|---|---|---|---|---|---|---|---|
-| `--blue-*` | `#bcf3ff` | `#9dd8ff` | `#7fbdff` | `#63a2ff` | `#4888f5` | `#2e6fdb` | `#1556bf` | `#003ea2` | `#002684` | `#000e63` |
-| `--teal-*` | `#a6ffff` | `#81eafc` | `#5cd1e4` | `#31b7cc` | `#009fb3` | `#00869b` | `#006e82` | `#00566a` | `#003f51` | `#002939` |
-| `--amber-*` | `#ffe8a2` | `#ffcc7e` | `#edb15c` | `#d59738` | `#bc7e02` | `#a36500` | `#894e00` | `#703700` | `#562200` | `#3c0f00` |
-| `--red-*` | `#ffccb5` | `#ffad95` | `#ff8e76` | `#ff7159` | `#e8533d` | `#cc3620` | `#af1200` | `#920000` | `#730000` | `#540000` |
-| `--navy-*` | `#e0f1ff` | `#c5d7ff` | `#aabdec` | `#90a3d4` | `#788bbc` | `#6073a3` | `#4a5c8a` | `#364671` | `#233057` | `#121d3e` |
-
-Avoid the hue-drifted ends for UI fills: `--blue-50` leans cyan, and `--red-700` to `--red-900` are very deep reds (suitable only as ink).
+The palette is **"Lime on Graphite"**: lime `#c6f432` (brand), lemon `#d8f86a` (secondary data), amber `#ffb86b` (streaks, warnings), coral `#ff8a7a` (danger) and mint `#3ddc97` (done, dark themes), on graphite neutrals. There are no primitive ramps in `styles.css` any more (the old `--blue/teal/amber/red/navy` ramps were removed as unused); each theme sets its role tokens directly. **No blue anywhere in the UI.**
 
 ### 2.2 Role tokens per theme — "Lime on Graphite"
 
-Three themes: **Graphite** (default, stored as `midnight`), **Light** and **Dark**. Graphite surfaces, a lime accent for the main action and progress, sky for secondary data (steps, protein, rest), amber for streaks and warnings. Components must use these role tokens, never raw hex. The `--blue/teal/amber/red/navy` primitives above stay only for exercise art.
+Three themes: **Graphite** (default, stored as `midnight`), **Light** and **Dark**. Graphite surfaces, lime for the main action and progress, lemon for secondary data (rings, steps, water, sleep bar), amber for streaks and warnings, mint for done. Components must use these role tokens (or the semantic layer in §2.3), never raw hex.
 
 | Token | Role | Graphite | Light | Dark |
 |---|---|---|---|---|
@@ -44,24 +29,28 @@ Three themes: **Graphite** (default, stored as `midnight`), **Light** and **Dark
 | `--surface` | Cards, tiles, sheets, nav | `#161b24` | `#ffffff` | `#121418` |
 | `--surface-2` | Nested surfaces, stepper buttons | `#1b212c` | `#f3f5f8` | `#171a1f` |
 | `--surface-3` | Translucent fills | white 5% | ink 5% | white 5% |
-| `--border` | Control outlines (3:1) | `#4a5466` | `#8a94a3` | `#474e5a` |
+| `--border` | Decorative outlines | `#4a5466` | `#8a94a3` | `#474e5a` |
+| `--control-border` | Outlines of controls (ticks, inputs, steppers, ghost buttons), 3:1 or more on bg and cards | `#616c80` | `#767f8e` | `#606878` |
 | `--border-soft` | Card outlines, dividers | `#262d3a` | `#e1e5ea` | `#22262d` |
 | `--text` | Primary text | `#f2f4f7` | `#0e1116` | `#f2f4f7` |
 | `--muted` / `--faint` | Secondary / tertiary text | `#98a2b3` / `#8d97a8` | `#4b5565` / `#5b6574` | `#9aa2b0` / `#8e96a4` |
 | `--primary` / `--primary-ink` | Main buttons, selected tab, progress, training-day numbers | lime `#c6f432` / `#0e1116` | olive `#3f6212` / white | lime / `#0e1116` |
 | `--link` | Links | lime | olive | lime |
-| `--accent` / `--accent-ink` | Secondary data (steps bar, protein, focus ring) | sky `#7cc4ff` / `#0e1116` | `#0b5d96` / white | sky / `#0e1116` |
-| `--success` | Done, mastered | lime | `#2f6b10` | lime |
+| `--accent` / `--accent-ink` | Secondary data (food ring, steps, water, focus ring) | lemon `#d8f86a` / `#0e1116` | olive `#4d6b06` / white | lemon / `#0e1116` |
+| `--success` / `--success-ink` | Done, mastered, ticked | mint `#3ddc97` / `#0e1116` | `#2f6b10` / white | mint / `#08090b` |
 | `--warn` | Streak flame, warnings | amber `#ffb86b` | `#9a4d00` | amber |
 | `--danger` / `--danger-ink` | Destructive | `#ff8a7a` / `#2a0b06` | `#b42318` / white | `#ff8a7a` / `#2a0b06` |
-| `--hero-bg` / `--hero-ink` | The lime plan card (same in every theme) | `#c6f432` / `#0e1116` | same | same |
-| `--info-bg` / `--info-ink` | Rest row, self-care badge | `#1f2a3a` / `#d6e6f5` | `#e7f1fb` / `#0e2a44` | `#18222f` / `#d6e6f5` |
+| `--feature-bg` / `--feature-ink` (+ `-line`, `-fill`, `-fill-hover`, `-cta-ink`, `-glow`) | Today's workout card: lemon-olive gradient `#5f7d08` → `#3a5203`, white text 4.75–8.8:1 (same in every theme) | gradient / white | same | same |
+| `--state-mix` | What hover/pressed fills mix toward | white | black | white |
+| `--info-bg` / `--info-ink` | Info boxes, rest row (lemon-tinted) | `#232b16` / `#eef7d0` | `#eef5dc` / `#1f2a05` | `#1c2312` / `#eef7d0` |
 
-Light uses olive instead of lime for buttons and text because lime on white is under 3:1; the hero card keeps lime with dark ink (15:1).
+Light uses olive instead of lime for buttons and text because lime on white is under 3:1.
 
 **Colour is never the only signal.** Completed levels show a ✓ icon. Done days show "✓ Done". Locked items show a lock icon. Dot ladders carry an `aria-label` count.
 
-**Palette gap:** the palette has no green, so `--success` keeps its hand-picked values. If a green is added, derive it from the tetradic harmony (`#24d43a`) with the same Material and OKLCH settings.
+### 2.3 Semantic layer (use this in new components)
+
+`--color-<role>-<prominence>` for the roles **brand, info, success, warning, danger, neutral**: `-fill` (strong background), `-on-fill` (text on it), `-ink` (text/icon on a surface), `-tint` (subtle background, 12% over the surface). States: `--color-brand-fill-hover` / `-pressed`, `--color-success-fill-hover`, `--color-danger-fill-hover` (mixed toward `--state-mix`) and `--color-fill-disabled`. Surfaces: `--color-surface`, `--color-surface-raised`, `--color-bg`, `--color-control-border`, `--color-neutral-border`. Every ink and on-fill pair is 4.5:1 or more in all three themes.
 
 ## 3. Typography
 
@@ -75,11 +64,13 @@ Families: **Space Grotesk** (`--font-display`, 500–700) for headings and every
 | Headline (`.h3`) / body large | `--fs-lg` | 18 / 700 or 400 | Card titles; overview, steps, cues |
 | Body | `--fs-body` | 16 / 400 | Default |
 | Label | `--fs-label` | 14 / 500–700 | Buttons, stats, list secondary text |
-| Caption (`.small`) | `--fs-sm` | 13 / 400 | Meta lines ("Progression 2 of 10") |
+| Caption (`.small`) | `--fs-sm` | 13 / 400 | Meta lines ("Stage 2 of 10") |
 | Micro | `--fs-xs` | 12 / 700–800 | Pills, 5-up ladder badge labels, sidebar footer |
+| Nav label | `--fs-2xs` | 11 / 600 | Bottom menu labels only (six items) |
+| Numbers | `--fs-num-sm` / `-md` / `-lg` | 26 / 28 / 40 | Big values in tiles, the food card and stat tiles |
 | Emoji display | `--fs-display` | 54 | Workout summary emoji only |
 
-Minimum text size is 12px (`--fs-xs`).
+Minimum text size is 12px (`--fs-xs`), except the bottom-menu labels (11px). Raw `font-size` px values are only used for one-off display numbers.
 
 ## 4. Spacing, radius, elevation
 
@@ -87,9 +78,13 @@ Minimum text size is 12px (`--fs-xs`).
 
 | Token | Value | Typical use |
 |---|---|---|
+| `--space-0_5` | 2px | Hairline gaps (label over value) |
 | `--space-1` | 4px | Icon-label gaps |
+| `--space-1_5` | 6px | Tight chip and strip gaps |
 | `--space-2` | 8px | Chip gaps, tight stacks |
+| `--space-2_5` | 10px | Tile and card internal gaps |
 | `--space-3` | 12px | Control gaps, grid gaps |
+| `--space-3_5` | 14px | Quick-tile padding |
 | `--space-4` | 16px | Mobile page gutter, card stack gap |
 | `--space-5` | 20px | Card inset (default) |
 | `--space-6` | 24px | Section separation, card inset (large) |
@@ -97,7 +92,7 @@ Minimum text size is 12px (`--fs-xs`).
 | `--space-10` | 40px | Desktop top padding |
 | `--space-16` | 64px | Desktop bottom padding |
 
-Hairline offsets of 1–3px (borders and badge nudges) stay raw by design. `--nav-clear` (96px) is the mobile bottom padding that clears the tab bar.
+Hairline offsets of 1px and 3px (borders and badge nudges) stay raw by design; every other padding, margin and gap uses the scale. `--nav-clear` (96px) is the mobile bottom padding that clears the tab bar.
 
 | Radius | Value | Usage |
 |---|---|---|
@@ -107,19 +102,23 @@ Hairline offsets of 1–3px (borders and badge nudges) stay raw by design. `--na
 | `--r-pill` | 999px | Chips, segmented control, progress bars |
 | `--r-round` | 50% | Rings, dots, medals, round icon buttons |
 
-Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest bar. Sheets use a blurred scrim instead of extra shadow.
+Elevation: one shadow token, `--shadow`, used on cards and the rest bar; the workout card uses `--feature-glow`. Sheets use a blurred scrim instead of extra shadow.
 
 ## 5. Layout
 
 - **Mobile first.** Single column, 16px gutter, content width capped at **760px**.
-- **< 960px:** a floating rounded bottom menu, 12px from the sides and bottom, 24px corners (4 items, 24px icons, label always visible; the current one is lime). `--nav-clear` (104px) keeps content clear of it.
+- **< 960px:** a floating rounded bottom menu, 12px from the sides and bottom, 24px corners (six items: Today, Exercise, Meal, Care, Routine, Profile; 22px icons, label always visible; the current one is lime with a Material-style pill behind the icon). `--nav-clear` (104px) keeps content clear of it.
 - **Never wider than the screen.** `html, body` clip horizontal overflow; scroll rows (`.h-scroll`) and anything holding positioned children (`.badge`, `.ch-mini`) are `position: relative`; labels that could grow at large Android text sizes wrap instead of `nowrap`.
 - **≥ 960px:** a 240px sticky sidebar replaces the tab bar. Content stays centred and capped at 760px.
 - Grids: the Movement Library is 2 columns, or 3 from 700px. Stats are 2 columns. Streak badges are 4 columns. Ladder badges are 5 columns.
 - Hero art has a max height (320–380px) so it never dominates desktop.
-- **Summaries on Today, details in sheets.** Today holds only what you act on now, in this order: the 14-week plan summary, the week strip, today's session, food with the next meal, the four quick tiles, and one self-care row. Anything with a list (self-care routines, the plan's week-by-week table) shows one line with progress and a chevron, and opens a sheet. Don't add another full card to Today: add a summary row and a sheet.
-- **Today patterns (Lime on Graphite):** the plan is a lime hero card with the week's target as a 34px number; the week strip shows today inverted (light pill) and training days with a lime number; food is one card with the ring, a big "kcal left" number, protein in sky and a 48px lime "+" quick-add button; quick tiles lead with a 24px display-font number.
-- **Today's workout card:** a picture header (first exercise) with a time badge, the routine name, exercise and set counts, a row of 56px exercise thumbnails, a full-width Start button, and the full list folded into "See all" (`<details>`). The next meal is its own small card after the tiles.
+- **Summaries on Today, details in sheets.** Today holds only what you act on now, in this order: greeting with streak; **My day** (progress ring, next item, one-tap tick); **Today's workout** (lemon-olive `--feature-*` card, white text); the **week strip** (rolling: the last five days, today and tomorrow); the **14-week plan** (a plain card with lime numbers); the dismissible "New here?" tip; **Today at a glance**: the food card and the four quick tiles. Anything with a list opens a sheet. Don't add another full card to Today: add a summary row and a sheet.
+- **Week strip:** today has a dark fill with a lime ring; workout days (Tue, Thu, Sat) an olive tint with a lime number; no dot on plain rest days.
+- **Rest day:** the workout card shows "Rest day", one line of advice and two actions: **Log a walk** and **10-min mobility** (a sheet of 9 warm-up moves).
+- **Food card:** a bold **FOOD** title with the barcode and **+** buttons in a top row; the ring shows only the %; the kcal eaten is large, with "of 2,190 · 840 left" under it (no target: "–" in the ring and "No target yet · Set your target"); **Protein, Fat, Sugar, Salt** as four small tiles on one line (Protein highlighted, the others turn amber when over); the day's planned meals as tick rows (a tick logs the meal); "Today's food (n)" opens the logged list.
+- **Quick tiles:** an icon on a tinted square in front of the name, one colour per tile (`.t-lime` weight, `.t-accent` steps and water, `.t-amber` sleep); empty tiles say "Not logged · goal …".
+- **Today's workout card:** on a training day a picture header (first exercise) with a time badge, the routine name, exercise and set counts, a row of 56px exercise thumbnails, a full-width white Start button, and the full list folded into "See all" (`<details>`).
+- **Routine page:** the day as a timeline (wake, care routines, meals, prayers, workout, walk, wind down, sleep), each with a tick; previews for day off, early and late shift. **Prayer times** are worked out on the phone (`prayer.js`) and pinned at their time, with "before you wake: set an alarm" and "during your shift: pray in your break" notes; Friday shows Jumu'ah.
 - **Exercises page:** a picture grid (2 columns, 3 from 700px), dumbbell exercises first under "With dumbbells", then "Bodyweight".
 - **Workout set screen:** "Exercise n of N" eyebrow, "Set x of y" 34px title, Target and Last set tiles, a stepper card with 56px buttons and a 64px number, a rest row with Change, and a full-width 60px "Set done" button.
 - **Daily log is split into tabs** (Food · Body · Steps & sleep, a `.segmented` control). Each tab can be linked as `#/track/<tab>`. Body holds weight, body fat & muscle, and measurements.
@@ -130,7 +129,7 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 - **Touch targets ≥ 44 × 44px** (WCAG 2.5.8 floor is 24px; we target 44). Small visuals such as carousel dots and the info icon get an invisible padded hit area.
 - **One primary button per view.** Use `.btn` for the primary action, `.btn.ghost` or `.btn.subtle` for secondary actions, and `.link-btn` only inside text.
 - **Destructive actions** that lose a lot (reset, delete workout, discard workout with ticked sets) always confirm. Small, quick removals (a logged food) skip the confirm and show an **Undo** toast for 5 s instead.
-- **Feedback:** every save shows a toast or a summary sheet. Ticking a set starts the rest timer.
+- **Feedback:** every save shows a toast (a one-line pill above the menu; Undo is a small lime button) or a summary sheet. Ticking a set starts the rest timer.
 - **Motion:** tokens `--dur-press` (80ms, pressed scale), `--dur-fast` (150ms, colour and border), `--dur-base` (220ms, tab indicator, sheet settle, page fade) and `--dur-slow` (400ms, progress fill), all on `--ease` (`cubic-bezier(0.2, 0.8, 0.2, 1)`). Everything is disabled under `prefers-reduced-motion`.
 - **Motion patterns** (the 12 principles, applied sparingly):
   - **Sheets** rise in on `--ease` and leave the way they came: down and fading, 170ms, accelerating (`.closing`), for the close button, Esc, the back gesture and tapping outside alike.
@@ -177,7 +176,11 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 | Session row | `.sess-row` | Thumbnail, name, meta, level dots (`.segs.dots`) |
 | Segment bar | `.segs` (+ `.wide`, `.dots`) | `i.done` success, `i.cur` primary, `i.lock` dimmed, others `--track` |
 | Ring | `ringSvg()` + `.ring-wrap > .ring-c` | `--accent` arc on `--track`; calories left on Today, grocery progress |
-| Quick tile | `.q-grid > .q-tile` (+ `.t-lime`, `.t-sky`, `.t-amber`) | An icon on a tinted square in front of the name (`.q-head > .q-ic + .k`), value, one status line, a 6px bar. One colour per tile (`--tone`): lime weight, sky steps and water, amber sleep. The whole tile opens its editor; water also has a `+ 250 ml` button (`.q-chip`) in place of the bar |
+| Quick tile | `.q-grid > .q-tile` (+ `.t-lime`, `.t-accent`, `.t-amber`) | An icon on a tinted square in front of the name (`.q-head > .q-ic + .k`), value, one status line, a 6px bar. One colour per tile (`--tone`): lime weight, lemon steps and water, amber sleep. The whole tile opens its editor; water also has a `+ 250 ml` button (`.q-chip`) in place of the bar |
+| Tick | `.rt-tick` (+ `.sm`, `.on`) | A 44px (40px `.sm`) round tick with a `--control-border` outline; `.on` fills mint with a check. Used on Routine, My day and meal ticks. `aria-pressed` carries the state |
+| Macro tiles | `.mac-row > .mac` (+ `.protein`, `.over`) | Four equal tiles on one line (two per row under 380px): label, value / limit, 4px bar. Protein is lime; Fat, Sugar, Salt turn amber when over the daily amount |
+| Meal ticks | `.meal-ticks > li` | A tick, the meal name and dish, and kcal on the right; ticking logs the planned meal, a logged meal is struck through |
+| Feature card | `.workout-card.lime-card` | Today's workout on the `--feature-*` tokens: lemon-olive gradient, white text, frosted outline buttons, a white Start button |
 | Status list | `.mv-list > .mv-row` | Movements; `.fchip` filter chips |
 | Hero header | `.ex-hero2`, `.wo-hero` | Photo with fade, glass controls (`.glass`, `.glass-chip`, `.glass-btn`) |
 | Level card | `.lvl-card .lv-row > .lv` | Three bars: done / current (sets hit) / off |
@@ -269,3 +272,14 @@ One name per thing, everywhere in the app:
 | Position | `Pushups · 2 of 10` | `Pushups 2`, `Day 7 of 7` |
 
 Numbers use `toLocaleString('en-US')` (`1,775 kcal`), and weights always carry their unit (`25.2 kg to goal`).
+
+
+## 12. Formats and words
+
+- **Dates are day-first:** "Sunday 22 November", short "Sun 22 Nov" (no ordinals). Times are 24-hour ("15:00"). Use `fmtLong` / `fmtShort` or `toLocaleDateString('en-GB', …)`, never `en-US`.
+- **Exercise ladder:** an exercise has **stages** (was "progressions"); a stage has **levels**. "Steps" only means walking.
+- **Empty states** say what is missing and what to do: "Nothing logged in the last 2 weeks. Foods you add appear here by day."
+
+## 13. States checklist
+
+Every interactive component has: a visible focus (global `:focus-visible`, 2px), a pressed state, a hover on pointer devices (`@media (hover: hover)`), and a disabled state (`opacity .45`, `cursor: not-allowed`). Unchecked controls use `--control-border` (3:1).

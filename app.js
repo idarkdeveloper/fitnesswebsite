@@ -914,9 +914,9 @@ VIEWS.today = () => {
     </section>
     <div class="q-grid mt-3">
       ${tile('track-weight', 'scale', 'lime', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, w != null || wl ? `Weight: ${kg(w ?? wl.v)} kilograms. Log weight` : 'Weight: not logged. Log weight')}
-      ${tile('track-steps', 'steps', 'sky', 'Steps', steps != null ? nf(steps) : '–', `/ ${nf(sg)}`, stepSub, steps != null ? steps / sg : 0, steps != null ? `Steps: ${nf(steps)} of ${nf(sg)}. Edit` : 'Steps: not logged. Log steps')}
+      ${tile('track-steps', 'steps', 'accent', 'Steps', steps != null ? nf(steps) : '–', `/ ${nf(sg)}`, stepSub, steps != null ? steps / sg : 0, steps != null ? `Steps: ${nf(steps)} of ${nf(sg)}. Edit` : 'Steps: not logged. Log steps')}
       ${tile('track-sleep', 'moon', 'amber', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', sleepSub, sleep != null ? sleep / lg : 0, sleep != null ? `Sleep: ${fmtSleep(sleep)} of ${fmtSleep(lg)}. Edit` : 'Sleep: not logged. Log sleep')}
-      ${tile('track-water', 'care', 'sky', 'Water', L1(water), `L of ${L1(wg)} L`, '', (water || 0) / wg, `Water: ${L1(water)} of ${L1(wg)} litres. Edit`,
+      ${tile('track-water', 'care', 'accent', 'Water', L1(water), `L of ${L1(wg)} L`, '', (water || 0) / wg, `Water: ${L1(water)} of ${L1(wg)} litres. Edit`,
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
     ${watchLine(tk)}`;

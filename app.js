@@ -599,6 +599,43 @@ function focusKey(el) {
   const attrs = [...el.attributes].filter((a) => a.name.startsWith('data-') || a.name === 'role' || a.name === 'href');
   return attrs.length ? el.tagName.toLowerCase() + attrs.map((a) => `[${a.name}="${CSS.escape(a.value)}"]`).join('') : null;
 }
+/* ---------- Loading states ----------
+   Launch: the #boot screen in index.html covers the page until the first render (bootDone).
+   Slow page: a device that just signed in and has nothing saved yet shows a skeleton of the page while the
+   first sync fetches the account's data, instead of an empty day that then jumps. Never longer than 8 s,
+   and never when this device already has data (local data always shows at once). */
+const SK_VIEWS = ['today', 'track', 'progress', 'meals', 'routine'];
+let skShown = false, pullSince = 0;
+function firstPull() {
+  const S = window.PFSync;
+  if (!S || !S.signedIn()) return false;
+  const st = S.status();
+  if (st.lastSynced || !['idle', 'syncing'].includes(st.state)) return false;
+  if (state.workouts.length || state.meals.length || Object.keys(state.hlog).length || Object.keys(state.levels || {}).length) return false;
+  if (!pullSince) { pullSince = Date.now(); setTimeout(() => { if (skShown && !sheetOpen()) rerender(); }, 8100); }
+  return Date.now() - pullSince < 8000;
+}
+function skeletonView(name) {
+  const bar = (w, h = 'line') => `<span class="sk sk-${h}" style="width:${w}"></span>`;
+  const card = `<div class="card sk-card">${bar('35%')}${bar('60%', 'title')}${bar('100%', 'thin')}</div>`;
+  const today = `
+    <div class="sk-hero">${bar('40%')}${bar('55%', 'num')}${bar('100%', 'thin')}</div>
+    <div class="sk-week">${'<span class="sk"></span>'.repeat(7)}</div>
+    <div class="card sk-card flush"><span class="sk sk-pic"></span><div class="sk-pad">${bar('30%')}${bar('65%', 'title')}<span class="sk sk-btn"></span></div></div>
+    <div class="sk-two">${card}${card}</div>`;
+  return `<div class="sk-page" role="status" aria-label="Getting your data from your account">
+      <div aria-hidden="true">${bar('40%')}${bar('62%', 'h1')}</div>
+      <p class="small muted m-0">Getting your data from your account…</p>
+      <div class="sk-stack" aria-hidden="true">${name === 'today' ? today : card.repeat(4)}</div>
+    </div>`;
+}
+/** Take the launch screen away once the first page is drawn. */
+function bootDone() {
+  const b = $('#boot');
+  if (!b) return;
+  b.classList.add('out');
+  setTimeout(() => b.remove(), reducedMotion() ? 0 : 240);
+}
 function render() {
   const r = parseRoute();
   const view = VIEWS[r.name] || VIEWS.today;
@@ -607,7 +644,8 @@ function render() {
   const key = location.hash, sameRoute = key === lastRouteKey;
   // Views are rebuilt on every tap: put keyboard and screen-reader focus back on the same control (WCAG 2.4.3).
   const fk = sameRoute ? focusKey(document.activeElement) : null;
-  $('#view').innerHTML = view(r);
+  skShown = SK_VIEWS.includes(r.name) && firstPull();
+  $('#view').innerHTML = skShown ? skeletonView(r.name) : view(r);
   if (fk) { const el = $(fk, $('#view')); if (el) el.focus({ preventScroll: true }); }
   if (!sameRoute) {
     window.scrollTo(0, 0);
@@ -615,7 +653,7 @@ function render() {
     if (lastRouteKey !== '') $('#main')?.focus({ preventScroll: true });
     lastRouteKey = key;
   }
-  afterRender(r);
+  if (!skShown) afterRender(r);
   slideSegments();
   wireTabs($('#view'));
   if (pendingSummary) { const s = pendingSummary; pendingSummary = null; showSummary(s); }
@@ -4537,11 +4575,33 @@ function hcPut(day, field, v, imported) {
 }
 
 /** Pull the last two weeks from Health Connect into the log. Quiet unless `loud`. */
+/* A sync you asked for from the Health sheet shows its real progress: one step per Health Connect read. */
+const HC_STEPS = ['Steps', 'Sleep', 'Weight', 'Active calories', 'Workouts', 'Permissions'];
+function hcRing(done) {
+  const p = done / HC_STEPS.length;
+  return `<div class="load-ring" id="hcRing" role="status" aria-label="Reading Health Connect">
+      <div class="ring-wrap lg">${ringSvg(p, 160, 10)}<div class="ring-c"><b><span data-pct>${Math.round(p * 100)}</span><i>%</i></b></div></div>
+      <b class="load-title">Reading Health Connect</b>
+      <span class="small muted" data-step>${done} of ${HC_STEPS.length} read</span>
+    </div>`;
+}
+function hcRingSet(done, label) {
+  const el = $('#hcRing');
+  if (!el) return;
+  const fg = $('.ring-fg', el), c = 2 * Math.PI * fg.r.baseVal.value, p = done / HC_STEPS.length;
+  fg.setAttribute('stroke-dasharray', `${(c * p).toFixed(1)} ${c.toFixed(1)}`);
+  $('[data-pct]', el).textContent = Math.round(p * 100);
+  $('[data-step]', el).textContent = done < HC_STEPS.length ? `${done} of ${HC_STEPS.length} read · ${label}` : 'All read';
+}
 async function hcSync(loud = false) {
   const h = hcState();
   if (!isNativeApp() || !h.enabled || hcBusy) return;
   hcBusy = true;
+  const ring = loud && sheetOpen();
+  let read = 0;
+  const step = (p, i) => (ring ? p.finally(() => hcRingSet(++read, HC_STEPS[i])) : p);
   try {
+    if (ring) openSheet('Galaxy Watch & Samsung Health', hcRing(0));
     const { Health } = await hcLoad();
     const end = new Date(), start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - 13);
     const span = { startDate: start.toISOString(), endDate: end.toISOString() };
@@ -4554,7 +4614,7 @@ async function hcSync(loud = false) {
       Health.queryAggregated({ dataType: 'calories', ...span, bucket: 'day', aggregation: 'sum' }),
       Health.queryWorkouts({ ...span, limit: 200 }),
       Health.checkAuthorization({ read: HC_READ }),
-    ]);
+    ].map(step));
     const ok = (i) => (got[i].status === 'fulfilled' ? got[i].value : null);
     for (const b of (ok(0)?.samples || [])) {
       const v = Math.round(b.values?.sum ?? b.value ?? 0);
@@ -4591,8 +4651,10 @@ async function hcSync(loud = false) {
     const failed = got.filter((g) => g.status === 'rejected').length;
     save();
     if (!sheetOpen() && !document.activeElement?.matches('input, textarea')) rerender();
+    if (ring) { await new Promise((r) => setTimeout(r, reducedMotion() ? 0 : 450)); if ($('#hcRing')) healthSheet(); }   // let the ring finish filling
     if (loud) toast(failed === got.length ? 'Could not read Health Connect. Check its permissions.' : h.denied.includes('sleep') ? 'Sleep is not allowed yet. Tap "Allow sleep".' : changed ? `Updated ${changed} ${changed === 1 ? 'entry' : 'entries'} from Health Connect` : 'Up to date with Health Connect');
   } catch (e) {
+    if ($('#hcRing')) healthSheet();
     if (loud) toast('Health Connect: ' + (e.message || 'something went wrong'));
   } finally { hcBusy = false; }
 }
@@ -5355,6 +5417,8 @@ if (window.PFInstall) window.PFInstall.onChange(() => { if (parseRoute().name ==
 // Called by sync.js once it loads: refresh the Account card when sync status changes.
 window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
   updateSidebarFoot();
+  // The first sync of a new device started or ended: swap the page and its skeleton.
+  if (SK_VIEWS.includes(parseRoute().name) && skShown !== firstPull() && !sheetOpen()) { rerender(); return; }
   if (parseRoute().name !== 'profile' || sheetOpen()) return;
   const line = $('[data-sync-line]');
   if (line && st.user) line.textContent = syncLine(st);                  // same card, new status
@@ -5368,6 +5432,7 @@ applyDislikes();
 applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');
 render();
+bootDone();
 checkReminder();
 /* ---------- Picking up a new version ----------
    Android keeps the app's page alive in the background, so a site update didn't show until the app was

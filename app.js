@@ -2761,7 +2761,9 @@ VIEWS.care = (r) => {
   if (!window.PF_CARE) return '<p class="muted">Care routines are missing.</p>';
   const day = todayKey(), R = window.PF_CARE.R, todayIds = careIds(day);
   const ids = Object.keys(R).filter((id) => CARE_KIND(id) === careTab);
-  const now = ids.filter((id) => todayIds.includes(id)), other = ids.filter((id) => !todayIds.includes(id));
+  // Today's list keeps the day's own order (already by time); other days sort by time of day too.
+  const rank = (id) => { const at = R[id].at, m = /^(\d\d):(\d\d)/.exec(at); if (m) { const h = +m[1]; return (h < 3 ? h + 24 : h) * 60 + +m[2]; } return { Morning: 480, 'Late morning': 630, Midday: 750, Afternoon: 900, Evening: 1140 }[at] ?? 720; };
+  const now = todayIds.filter((id) => CARE_KIND(id) === careTab), other = ids.filter((id) => !todayIds.includes(id)).sort((x, y) => rank(x) - rank(y));
   const row = (id, isToday) => {
     const rr = R[id], done = isToday && careDone(day, id);
     return `<li class="${done ? 'done' : ''}">

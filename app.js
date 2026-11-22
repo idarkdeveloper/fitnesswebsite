@@ -2713,7 +2713,7 @@ const shiftOn = (dayKey) => { const sh = shiftForWeek(weekStart(dayKey)); return
 /** "18:30 · lunchbox" for a meal on a shift day. */
 /* ---------- Self-care: skin, teeth, hair and beard routines (care.js), timed to the day's shift ----------
    Ticks are stored as hlog "YYYY-MM-DD|care:<routine>" = 1, so they sync with everything else. */
-const careIds = (day) => (window.PF_CARE ? window.PF_CARE.forDay(shiftOn(day), fromKey(day).getDay()) : []);
+const careIds = (day) => (window.PF_CARE ? window.PF_CARE.forDay(shiftOn(day), fromKey(day).getDay(), fromKey(day).getDate()) : []);
 const careDone = (day, id) => hget(day, `care:${id}`) === 1;
 function careCard(day) {
   const ids = careIds(day);
@@ -2735,7 +2735,7 @@ function careCard(day) {
 }
 /* Care section (#/care/skin|hair|cleaning): every routine of that kind; today's ones first, with a done tick. */
 let careTab = 'skin';
-const CARE_KIND = (id) => (/hair|beard/.test(id) ? 'hair' : ['laundry', 'bathroom', 'kitchen'].includes(id) ? 'cleaning' : 'skin');
+const CARE_KIND = (id) => (/hair|beard/.test(id) ? 'hair' : ['laundry', 'bathroom', 'kitchen', 'floors', 'monthly'].includes(id) ? 'cleaning' : 'skin');
 VIEWS.care = (r) => {
   if (r && ['skin', 'hair', 'cleaning'].includes(r.arg)) careTab = r.arg;
   if (!window.PF_CARE) return '<p class="muted">Care routines are missing.</p>';

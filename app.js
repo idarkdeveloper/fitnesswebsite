@@ -23,6 +23,7 @@ const ICONS = {
   volume: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11',
   mute: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5',
   barcode: 'M4 5v14M7 5v14M10 5v14M13 5v14M16 5v14M20 5v14M3 3h3M3 21h3M18 3h3M18 21h3',
+  smile: '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/>',
   cart: '<circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11h11l2-8H6.3"/>',
   meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 6s1 4 3 4v8',
   care: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
@@ -574,7 +575,7 @@ function parseRoute() {
 }
 
 function renderNav(active) {
-  const section = { movements: 'exercises', category: 'exercises', exercise: 'exercises', progress: 'exercises', activity: 'exercises', challenges: 'exercises', workout: 'today', home: 'today', track: 'today', plan: 'meals' }[active] || active;
+  const section = { movements: 'exercises', category: 'exercises', exercise: 'exercises', progress: 'exercises', activity: 'exercises', challenges: 'exercises', workout: 'today', home: 'today', track: 'today', routine: 'today', plan: 'meals' }[active] || active;
   const html = NAV.map((n) => `
     <a class="tab" href="#/${n.id}" ${section === n.id ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $$('[data-nav]').forEach((el) => { el.innerHTML = html; });
@@ -847,6 +848,7 @@ VIEWS.today = () => {
     </div>
     ${reminderBanner()}
     ${planBanner()}
+    ${myDayRow(tk)}
     ${goalPlanCard(tk)}
     <div class="wk-strip">${week}</div>
     <section class="card session-card workout-card mt-4" aria-labelledby="sessH">${session}</section>
@@ -2901,6 +2903,112 @@ function stockSheet(k) {
     <button class="link-btn danger-text mt-3" data-action="stock-remove" data-k="${esc(k)}">${icon('trash', 'class="icon-sm"')} I don't use this any more</button>`);
 }
 
+
+/** Today: one line that opens My day, with what's next. */
+function myDayRow(day) {
+  const items = dayTimeline(day), nowM = new Date().getHours() * 60 + new Date().getMinutes(), W = rtMin(dayTimes(day).wake);
+  const nowAdj = nowM < W - 60 ? nowM + 1440 : nowM, nx = items.find((it) => !rtDone(day, it) && !it.info && it.min + 30 >= nowAdj);
+  const done = items.filter((it) => !it.info && rtDone(day, it)).length, total = items.filter((it) => !it.info).length;
+  return `<a class="card myday-row mt-3" href="#/routine" aria-label="My day: ${done} of ${total} done${nx ? `. Next at ${rtClock(nx.min)}: ${esc(nx.title)}` : ''}. Open the day plan">
+      <span class="care-badge">${done}/${total}</span>
+      <span class="grow"><b class="d-block">My day</b><span class="small muted">${nx ? `Next ${rtClock(nx.min)} · ${esc(nx.title)}` : 'All done. Sleep well.'}</span></span>${icon('chevR')}</a>`;
+}
+/* ---------- My day (#/routine): one timeline from waking to sleep ----------
+   Pulls together the shift, care routines (care.js), planned meals (mealplan.js), the workout and the step goal.
+   Wake and sleep times are yours (hprofile.wake / .sleep, default 07:00 and 22:00 on days off);
+   shift days use the shift's own times. Items without their own record tick into hlog "day|rt:<key>". */
+const rtMin = (hm) => { const m = /^(\d{1,2}):(\d\d)/.exec(hm || ''); return m ? +m[1] * 60 + +m[2] : null; };
+const rtClock = (m) => { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`; };
+function dayTimes(day) {
+  const sh = shiftOn(day), p = hp();
+  if (sh === 'morning') return { wake: '03:00', sleep: '20:30' };
+  if (sh === 'evening') return { wake: '09:15', sleep: '01:00' };
+  return { wake: p.wake || '07:00', sleep: p.sleepAt || '22:00' };
+}
+function dayTimeline(day) {
+  const d = fromKey(day), sh = shiftOn(day), { wake, sleep } = dayTimes(day), W = rtMin(wake);
+  let S = rtMin(sleep); if (S <= W) S += 1440;
+  const items = [];
+  const add = (min, o) => items.push({ min, ...o });
+  const at = (hm, fallback) => { let m = rtMin(hm); if (m == null) m = fallback; if (m < W - 60) m += 1440; return m; };
+  add(W, { key: 'wake', icon: 'bell', title: 'Wake up', sub: 'A big glass of water, open the curtains: daylight sets your body clock.' });
+  // Care routines of the day, at their own time or spread through the morning/evening.
+  const C = window.PF_CARE, word = { Morning: W + 10, 'Late morning': W + 210, Midday: W + 330, Afternoon: W + 480, Evening: S - 120, Bedtime: S - 25 };
+  if (C) careIds(day).forEach((id, i) => {
+    const r = C.R[id], kind = CARE_KIND(id);
+    let m = rtMin(r.at) != null ? at(r.at) : (word[r.at] ?? W + 60);
+    if (r.at === 'Morning') m = W + 10 + ({ teeth: 0, skin: 25, hair: 35 }[kind] ?? 40);
+    const fixed = { whiten: W + 210, 'sun-hair': W + 150, 'sun-beard': W + 540, monthly: W + 570 }[id];   // whiten before lunch (no food 1 h after)
+    if (fixed != null && !sh) m = fixed;
+    add(m + i * 0.01, { key: `care:${id}`, icon: kind === 'cleaning' ? 'sparkle' : kind === 'teeth' ? 'smile' : 'care', title: r.title, sub: r.sub, care: id });
+  });
+  if (!sh) add(W + 20, { key: 'shower', icon: 'care', title: 'Shower', sub: 'Balea med Duschgel; finish with 30 s cool water to wake up.' });
+  // Work block on shift days.
+  if (sh) { const [a1, b1] = SHIFTS[sh].hours.split('–'); add(at(a1) - 30, { key: 'work', icon: 'timer', title: SHIFTS[sh].name, sub: `${SHIFTS[sh].hours} · break ${SHIFTS[sh].pause}. Leave 30 min before.`, info: true }); }
+  // Meals from the plan.
+  if (window.PF_MEALS) {
+    const di = planIdx(day), wk = weekStart(day), dm = dayInfo(di, wk).meals;
+    const def = { Breakfast: W + 60, Lunch: W + 330, Snack: W + 570, Dinner: S - 180 };
+    dm.forEach((m, j) => {
+      add(m.at ? at(m.at) : (def[m.label] ?? W + 300), { key: `meal:${m.label}`, icon: 'meal', title: m.label, sub: `${m.text} · ${nf(m.kcal)} kcal`, meal: { di, wk, j, label: m.label } });
+    });
+  }
+  // Workout and walk.
+  if (sessionFor(d).length) add(sh === 'evening' ? W + 75 : sh === 'morning' ? at('17:15') : at('17:30'), { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min`, workout: true });
+  const sg = hp().stepGoal || HDEF.stepGoal;
+  add(sh === 'evening' ? W + 120 : S - 150, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
+  add(S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: 'Screens away, dim lights, lay out tomorrow\'s clothes and food.' });
+  add(S, { key: 'sleep', icon: 'moon', title: 'Sleep', sub: `Lights out. ${fmtSleep(((W + 1440) - S) % 1440 || 0)} until you wake.` });
+  items.sort((x, y) => x.min - y.min);
+  // Two things at the same time: keep meals where they are and move the other one on by 15 minutes.
+  for (let i = 1; i < items.length; i++) {
+    if (items[i].min - items[i - 1].min < 10 && items[i].key !== 'sleep') {
+      if (items[i].meal && !items[i - 1].meal && i > 1 && items[i].min - items[i - 2].min >= 10) { const t = items[i - 1]; items[i - 1] = items[i]; items[i] = t; }
+      items[i].min = items[i - 1].min + 15;
+    }
+  }
+  return items.sort((x, y) => x.min - y.min);
+}
+const rtDone = (day, it) => it.care ? careDone(day, it.care) : it.meal ? planLogged(day, it.meal.label) : it.workout ? dayStatus(fromKey(day)).done : hget(day, `rt:${it.key}`) === 1;
+VIEWS.routine = () => {
+  const day = tKey(), isToday = day === todayKey(), items = dayTimeline(day), { wake, sleep } = dayTimes(day), sh = shiftOn(day);
+  const nowM = new Date().getHours() * 60 + new Date().getMinutes(), W = rtMin(wake);
+  const nowAdj = nowM < W - 60 ? nowM + 1440 : nowM;
+  const nextIdx = isToday ? items.findIndex((it) => !rtDone(day, it) && it.min + 30 >= nowAdj) : -1;
+  const done = items.filter((it) => !it.info && rtDone(day, it)).length, total = items.filter((it) => !it.info).length;
+  const row = (it, i) => {
+    const ok = rtDone(day, it), cls = `${ok ? 'done' : ''} ${i === nextIdx ? 'now' : ''}`;
+    const tick = it.info ? '<span class="rt-dot" aria-hidden="true"></span>'
+      : it.meal ? (ok ? `<span class="rt-tick on" aria-label="Logged">${icon('check')}</span>` : `<button class="rt-tick" data-action="plan-log" data-day="${it.meal.di}" data-wk="${it.meal.wk}" data-m="${it.meal.j}" aria-label="Log ${it.title.toLowerCase()}"></button>`)
+      : it.workout ? (ok ? `<span class="rt-tick on" aria-label="Done">${icon('check')}</span>` : `<a class="rt-tick" href="#/today" aria-label="Go to today's workout"></a>`)
+      : it.care ? `<button class="rt-tick ${ok ? 'on' : ''}" data-action="care-tick" data-id="${it.care}" data-day="${day}" aria-pressed="${ok}" aria-label="${esc(it.title)}: ${ok ? 'done, tap to undo' : 'mark done'}">${ok ? icon('check') : ''}</button>`
+      : `<button class="rt-tick ${ok ? 'on' : ''}" data-action="rt-tick" data-k="${it.key}" data-day="${day}" aria-pressed="${ok}" aria-label="${esc(it.title)}: ${ok ? 'done, tap to undo' : 'mark done'}">${ok ? icon('check') : ''}</button>`;
+    const body = `<span class="rt-time">${rtClock(it.min)}</span><span class="grow"><b class="d-block">${esc(it.title)}${i === nextIdx ? ' <span class="rt-now">Next</span>' : ''}</b><span class="small muted">${esc(it.sub)}</span></span>`;
+    const open = it.care ? `<button class="rt-body plain text-left" data-action="care-open" data-id="${it.care}" data-day="${day}">${body}${icon('chevR')}</button>` : `<div class="rt-body">${body}</div>`;
+    return `<li class="${cls}">${tick}${open}</li>`;
+  };
+  return `
+    <a class="link-plain small" href="#/today">${icon('chevL', 'class="icon-sm"')} Today</a>
+    <h1 class="h1 mt-2 m-0">My day</h1>
+    <p class="muted m-0 mt-1">${sh ? `${SHIFTS[sh].name}: wake ${wake}, sleep ${sleep}` : `Day off: wake ${wake}, sleep ${sleep}`} · ${done} of ${total} done</p>
+    <div class="day-nav card flat soft mt-3">
+      <button class="icon-btn round bare" data-action="track-day" data-n="-1" aria-label="Previous day">${icon('chevL')}</button>
+      <div class="text-center"><div class="fw-bold">${isToday ? 'Today' : esc(fmtShort(fromKey(day)))}</div>${isToday ? `<div class="muted small">${esc(fmtShort(fromKey(day)))}</div>` : '<button class="link-btn small" data-action="track-day" data-n="0">Back to today</button>'}</div>
+      <button class="icon-btn round bare" data-action="track-day" data-n="1" aria-label="Next day">${icon('chevR')}</button>
+    </div>
+    <ol class="rt-list mt-4">${items.map(row).join('')}</ol>
+    <button class="btn ghost block mt-4" data-action="rt-times">${icon('timer')} Wake &amp; sleep time on days off</button>
+    <p class="small muted mt-3">Shift days use the shift's own times. 7–9 hours of sleep is the target: it is also when your body repairs muscle and controls appetite.</p>`;
+};
+function rtTimesSheet() {
+  const p = hp();
+  openSheet('Wake & sleep', `
+    <p class="small muted m-0 sheet-meta">For days off. Shift days follow the shift.</p>
+    <div class="row gap-2 mt-3"><div class="field grow"><label for="rtWake">Wake up</label><input class="input" id="rtWake" type="time" value="${esc(p.wake || '07:00')}" /></div>
+      <div class="field grow"><label for="rtSleep">Sleep</label><input class="input" id="rtSleep" type="time" value="${esc(p.sleepAt || '22:00')}" /></div></div>
+    <button class="btn block lg mt-2" data-action="rt-times-save">Save</button>`);
+}
+
 /** Today: one line for self-care: how many are done and what's next; the full list opens in a sheet. */
 function careRow(day) {
   const ids = careIds(day);
@@ -4811,6 +4919,9 @@ const ACTIONS = {
     save(); closeSheet(); rerender(); toast(`${name} added`);
   },
   'stock-open': (el) => stockSheet(el.dataset.k),
+  'rt-tick': (el) => { const { k, day } = el.dataset, was = hget(day, `rt:${k}`) === 1; hset(day, `rt:${k}`, was ? null : 1); save(); rerender(); },
+  'rt-times': () => rtTimesSheet(),
+  'rt-times-save': () => { const w = $('#rtWake')?.value, s = $('#rtSleep')?.value; if (w) state.hprofile.wake = w; if (s) state.hprofile.sleepAt = s; save(); closeSheet(); rerender(); toast(`Wake ${w}, sleep ${s}`); },
   'dm-toggle': (el) => { const k = el.dataset.k; state.careshop = state.careshop || {}; if (state.careshop[k]) delete state.careshop[k]; else state.careshop[k] = 1; save(); rerender(); stockSheet(k); toast(state.careshop[k] ? 'On your dm list' : 'Taken off the dm list'); },
   'dm-bought': (el) => {
     const k = el.dataset.k, P = PRODUCTS()[k];

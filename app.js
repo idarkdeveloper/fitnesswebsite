@@ -78,6 +78,8 @@ const ICONS = {
   sparkle: G('m706-706-70-32q-6-3-8.5-8t-2.5-10q0-5 2.5-10t8.5-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 8.5t-10 2.5q-5 0-10-2.5t-8-8.5l-32-70ZM260-380l-160-73q-9-4-13-11.5T83-480q0-8 4-15.5t13-11.5l160-73 73-160q4-9 11.5-13t15.5-4q8 0 15.5 4t11.5 13l73 160 160 73q9 4 13 11.5t4 15.5q0 8-4 15.5T620-453l-160 73-73 160q-4 9-11.5 13t-15.5 4q-8 0-15.5-4T333-220l-73-160Zm100 26 40-86 86-40-86-40-40-86-40 86-86 40 86 40 40 86Zm350 204-70-32q-6-3-9-8t-3-10q0-5 3-10t9-8l70-32 32-70q3-6 8-9t10-3q5 0 10 3t8 9l32 70 70 32q6 3 9 8t3 10q0 5-3 10t-9 8l-70 32-32 70q-3 6-8 9t-10 3q-5 0-10-3t-8-9l-32-70ZM360-480Z'),   // auto_awesome
   moon: G('M484-80q-84 0-157.5-32t-128-86.5Q144-253 112-326.5T80-484q0-128 72-232t193-146q22-8 41 5.5t18 36.5q-3 85 27 162t90 137q60 60 137 90t162 27q26-1 38.5 17.5T863-345q-44 120-147.5 192.5T484-80Zm0-80q88 0 163-44t118-121q-86-8-163-43.5T464-465q-61-61-97-138t-43-163q-77 43-120.5 118.5T160-484q0 135 94.5 229.5T484-160Zm-20-305Z'),   // bedtime
   chart: G('M108-255q-12-12-11.5-28.5T108-311l211-214q23-23 57-23t57 23l103 104 208-206h-64q-17 0-28.5-11.5T640-667q0-17 11.5-28.5T680-707h160q17 0 28.5 11.5T880-667v160q0 17-11.5 28.5T840-467q-17 0-28.5-11.5T800-507v-64L593-364q-23 23-57 23t-57-23L376-467 164-255q-11 11-28 11t-28-11Z'),   // trending_up
+  scale: G('M480-480q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Zm-74-106q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm60 0q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm60 0q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z'),   // monitor_weight
+  steps: G('M216-580q39 0 74 14t64 41l382 365h24q17 0 28.5-11.5T800-200q0-8-1.5-17T788-235L605-418l-71-214-74 18q-38 10-69-14t-31-63v-84l-28-14-154 206q-1 1-1 1.5t-1 1.5h40Zm0 80h-46q3 7 7.5 13t10.5 11l324 295q11 11 25 16t29 5h54L299-467q-17-17-38.5-25t-44.5-8ZM566-80q-30 0-57-11t-50-31L134-417q-46-42-51.5-103T114-631l154-206q17-23 45.5-30.5T368-861l28 14q21 11 32.5 30t11.5 42v84l74-19q30-8 58 7.5t38 44.5l65 196 170 170q20 20 27.5 43t7.5 49q0 50-35 85t-85 35H566Z'),   // steps
   // Drawn for PulseFit (Google has no symbol for these exercises): 2px outline on a 24 grid.
   pushup: 'M2.5 19.5h19M4.5 9.5a1.8 1.8 0 1 0 0-.01M7 11l13 4.5M8.5 11.6V19',
   pullup: 'M3 4h18M7 4l2.2 6.5M17 4l-2.2 6.5M12 8.2a1.8 1.8 0 1 0 0-.01M9.2 10.5h5.6M12 10.5v6M12 16.5 10 21.5M12 16.5l2 5',
@@ -867,14 +869,18 @@ VIEWS.today = () => {
   const steps = hget(tk, 'steps'), sleep = hget(tk, 'sleep'), water = hget(tk, 'water');
   const sg = p.stepGoal || HDEF.stepGoal, lg = p.sleepGoal || HDEF.sleepGoal, wg = p.waterGoal || HDEF.waterGoal;
   // Every tile opens its editor. Water also gets a separate, labelled one-tap "+ 250 ml" button.
-  const tile = (action, k, v, u, sub, pct, accent, label, chip = '') => {
-    const inner = `<span class="row-between"><span class="k">${k}</span>${chip ? '' : `<span class="q-plus">${icon('plus')}</span>`}</span>
+  // Each has its own icon and colour (tone): lime weight, sky steps and water, amber sleep.
+  const tile = (action, ic, tone, k, v, u, sub, pct, label, chip = '') => {
+    const inner = `<span class="q-head"><span class="q-ic">${icon(ic)}</span><span class="k">${k}</span></span>
       <span class="v">${v}${u ? ` <small>${u}</small>` : ''}</span><span class="sub">${sub}</span>
-      <span class="bar"><span class="${accent ? 'accent' : ''}" style="width:${clamp(pct, 0, 1) * 100}%"></span></span>`;
+      ${chip ? '' : `<span class="bar"><span style="width:${clamp(pct, 0, 1) * 100}%"></span></span>`}`;
     return chip
-      ? `<div class="q-tile has-chip"><button class="q-main" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>${chip}</div>`
-      : `<button class="q-tile" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>`;
+      ? `<div class="q-tile has-chip t-${tone}"><button class="q-main" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>${chip}</div>`
+      : `<button class="q-tile t-${tone}" data-action="${action}" data-today="1" aria-label="${label}">${inner}</button>`;
   };
+  const stepSub = steps == null ? 'Not logged yet' : steps >= sg ? 'Goal reached' : `${nf(sg - steps)} to go today`;
+  const sleepSub = sleep == null ? (isNativeApp() && (state.health?.denied || []).includes('sleep') ? 'allow in Health Connect' : `Target ${fmtSleep(lg)}`)
+    : sleep < lg ? `<b class="c-warn">Below target · ${fmtSleep(lg)}</b>` : `Target reached · ${fmtSleep(lg)}`;
   const wsub = wl == null ? 'Log your morning weight'
     : [rate != null && Math.abs(rate) >= 0.05 ? `${rate < 0 ? '↓' : '↑'} ${Math.abs(rate).toFixed(1)} kg a week` : '',
       p.goalWeight && cur != null && cur - p.goalWeight > 0.05 ? `${kg(cur - p.goalWeight)} kg to goal` : ''].filter(Boolean).join(' · ') || (w != null ? 'Logged today' : `Last: ${fmtShort(fromKey(wl.day))}`);
@@ -910,10 +916,10 @@ VIEWS.today = () => {
       ${meals.length ? `<button class="link-btn small mt-2" data-action="food-list" data-today="1">${icon('edit', 'class="icon-sm"')} Today's food (${meals.length})</button>` : ''}
     </section>
     <div class="q-grid mt-3">
-      ${tile('track-weight', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, true, w != null || wl ? `Weight: ${kg(w ?? wl.v)} kilograms. Log weight` : 'Weight: not logged. Log weight')}
-      ${tile('track-steps', 'Steps', steps != null ? nf(steps) : '–', '', `of ${nf(sg)}`, steps != null ? steps / sg : 0, false, steps != null ? `Steps: ${nf(steps)} of ${nf(sg)}. Edit` : 'Steps: not logged. Log steps')}
-      ${tile('track-sleep', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', sleep == null && isNativeApp() && (state.health?.denied || []).includes('sleep') ? 'allow in Health Connect' : `of ${fmtSleep(lg)}`, sleep != null ? sleep / lg : 0, false, sleep != null ? `Sleep: ${fmtSleep(sleep)}. Edit` : 'Sleep: not logged. Log sleep')}
-      ${tile('track-water', 'Water', L1(water), 'L', `of ${L1(wg)} L`, (water || 0) / wg, false, `Water: ${L1(water)} litres. Edit`,
+      ${tile('track-weight', 'scale', 'lime', 'Weight', w != null ? kg(w) : wl ? kg(wl.v) : '–', wl ? 'kg' : '', wsub, goalPct, w != null || wl ? `Weight: ${kg(w ?? wl.v)} kilograms. Log weight` : 'Weight: not logged. Log weight')}
+      ${tile('track-steps', 'steps', 'sky', 'Steps', steps != null ? nf(steps) : '–', `/ ${nf(sg)}`, stepSub, steps != null ? steps / sg : 0, steps != null ? `Steps: ${nf(steps)} of ${nf(sg)}. Edit` : 'Steps: not logged. Log steps')}
+      ${tile('track-sleep', 'moon', 'amber', 'Sleep', sleep != null ? fmtSleep(sleep) : '–', '', sleepSub, sleep != null ? sleep / lg : 0, sleep != null ? `Sleep: ${fmtSleep(sleep)} of ${fmtSleep(lg)}. Edit` : 'Sleep: not logged. Log sleep')}
+      ${tile('track-water', 'care', 'sky', 'Water', L1(water), `L of ${L1(wg)} L`, '', (water || 0) / wg, `Water: ${L1(water)} of ${L1(wg)} litres. Edit`,
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
     ${watchLine(tk)}`;

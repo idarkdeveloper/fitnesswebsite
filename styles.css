@@ -1324,8 +1324,6 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 @media (min-width: 640px) { .q-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .q-tile { display: flex; flex-direction: column; gap: 2px; padding: var(--space-4); border-radius: var(--r-md); border: 1.5px solid var(--border); background: var(--surface); box-shadow: var(--shadow); text-align: left; min-width: 0; }
 .q-tile .k { font-size: var(--fs-label); color: var(--muted); }
-.q-plus { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-3); display: grid; place-items: center; }
-.q-plus svg { width: 16px; height: 16px; }
 .q-tile .v { font-size: var(--fs-2xl); font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; }
 .q-tile .v small { font-size: var(--fs-sm); font-weight: 500; color: var(--muted); }
 .q-tile .sub { font-size: var(--fs-xs); color: var(--muted); min-height: 2.6em; }
@@ -1853,7 +1851,6 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .q-tile .bar { height: 6px; }
 .q-tile .bar > span { background: var(--accent); }
 .q-tile .bar > span.accent { background: var(--primary); }
-.q-plus { border-radius: 10px; }
 
 /* Self-care badge instead of a ring */
 .care-badge { flex-shrink: 0; width: 44px; height: 44px; border-radius: var(--r-sm); display: grid; place-items: center; background: var(--info-bg); color: var(--info-ink); font-weight: 700; font-size: var(--fs-label); font-family: var(--font-display); }
@@ -2173,3 +2170,20 @@ button.cs-row { cursor: pointer; }
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); background: var(--bg-top); z-index: 60; pointer-events: none; }
 /* Icons in the two rest-day buttons keep their size when the label is long. */
 .rest-acts .btn svg { flex-shrink: 0; }
+
+/* Quick tiles (weight, steps, sleep, water): an icon on a tinted square in front of the name, and one colour per
+   tile (--tone) shared by the icon, the bar and, on water, the number and the add button. */
+.q-tile.t-lime { --tone: var(--primary); }
+.q-tile.t-sky { --tone: var(--accent); }
+.q-tile.t-amber { --tone: var(--warn); }
+.q-head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); min-width: 0; }
+.q-ic { flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--r-sm); display: grid; place-items: center; background: color-mix(in srgb, var(--tone) 14%, transparent); color: var(--tone); }
+.q-ic svg { width: 22px; height: 22px; }
+.q-tile .k { color: var(--muted); font-weight: 600; overflow-wrap: anywhere; }
+.q-tile .bar { margin-top: auto; }
+.q-tile .bar > span, .q-tile .bar > span.accent { background: var(--tone); }
+.q-tile .sub b { font-weight: 600; }
+.q-tile.has-chip .v { color: var(--tone); }
+.q-tile.has-chip .v small { color: var(--muted); white-space: normal; }
+.q-tile.has-chip .q-main { flex: 1; padding: 14px 14px var(--space-2); }
+.q-chip { margin: auto 14px 14px; border-radius: var(--r-sm); border-color: color-mix(in srgb, var(--tone) 40%, transparent); background: color-mix(in srgb, var(--tone) 12%, transparent); color: var(--tone); }

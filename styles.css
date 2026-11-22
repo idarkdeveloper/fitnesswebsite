@@ -1938,3 +1938,12 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .fh-bar { min-width: 0; }
 .fh-bar .progress { display: block; }
 .fh-v { text-align: right; flex-shrink: 0; font-size: var(--fs-label); }
+/* Care → Products */
+.stock-list { padding: var(--space-1) var(--space-3); list-style: none; margin: 0; }
+.stock-list li + li { border-top: 1px solid var(--border-soft); }
+.stock-row { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 64px; padding: var(--space-3) var(--space-1); background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.stock-row > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+.stock-row .progress { display: block; }
+.stock-adj { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
+.empty-stock { padding: var(--space-5); }
+#sheetBody .chips [hidden] { display: none; }

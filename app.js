@@ -4460,6 +4460,18 @@ async function syncNativeReminders({ ask = false } = {}) {
 }
 window.PF_notifPush = () => { clearTimeout(notifTimer); notifTimer = setTimeout(() => syncNativeReminders(), 800); };
 
+const TOP_SECTIONS = ['today', 'home', 'exercises', 'movements', 'progress', 'activity', 'meals', 'plan', 'care', 'profile'];
+/** The Android back button (and gesture). Capacitor hands it to us instead of going back in the web history,
+    which used to jump between sections: Care → Meal → Care. */
+function handleBack(App) {
+  if (sheetOpen() || sheetClosing) { closeSheet(); return; }
+  const r = parseRoute();
+  if (r.name === 'workout') { $('[data-action="cancel-workout"]')?.click(); return; }
+  if (r.name === 'today' || r.name === 'home') { try { App.minimizeApp(); } catch { /* older app */ } return; }
+  if (TOP_SECTIONS.includes(r.name)) { location.hash = '#/today'; return; }
+  if (history.length > 1) history.back(); else location.hash = '#/today';
+}
+
 /** Native app: sync on start and whenever the app comes back to the front; handle the email sign-in link. */
 async function hcBoot() {
   if (!isNativeApp()) return;
@@ -4472,6 +4484,8 @@ async function hcBoot() {
       syncNativeReminders();
       if (Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync();
     });
+    // Android back: close an open sheet first; from a section go to Today; from Today leave the app.
+    App.addListener('backButton', () => handleBack(App));
     const onUrl = (url) => { if (url && url.startsWith('pulsefit://login') && window.PFSync && window.PFSync.handleAuthLink) window.PFSync.handleAuthLink(url); };
     App.addListener('appUrlOpen', ({ url }) => onUrl(url));
     const launch = await App.getLaunchUrl();

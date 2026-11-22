@@ -107,12 +107,13 @@ window.PF_CARE = (function () {
       note: 'Summer: a fruit-fly trap next to the fruit bowl, and ARDAP only around window frames and skirting, never on food surfaces.',
     },
     'floors': {
-      kind: 'Home', at: 'Afternoon', title: 'Floors', sub: 'Sunday: vacuum, then wet-clean',
+      kind: 'Home', at: 'Late morning', title: 'Floors', sub: 'Saturday: vacuum, then wet-clean',
       steps: [
         ['Vacuum', 'Cordless vacuum through every room, the crevice tool along skirting boards and under the bed.'],
         ['Wet-clean', 'Wet-dry floor cleaner over hard floors with a capful of roborock floor cleaning solution in the clean-water tank. Kitchen and bathroom last.'],
         ['Empty & dry', 'Empty the dirty-water tank, run the self-clean, and leave the roller to dry so it doesn\'t smell.'],
       ],
+      note: 'Saturday, not Sunday: Sundays and holidays are quiet days in Germany, so no vacuuming then. Most house rules also ask for quiet 13:00–15:00 and after 20:00 (22:00 at the latest), so vacuum between 10:00 and 13:00.',
     },
     'whiten': {
       at: 'Midday', title: 'Teeth whitening', sub: 'Sunday: Perlweiss strips or gel, once a week',
@@ -129,7 +130,7 @@ window.PF_CARE = (function () {
         ['Fridge', 'Clear out old food, wipe the shelves with Allzweckreiniger Soda Power, put in a new Denkmit Kühlschrank-Frische.'],
         ['Bed', 'Wash the mattress protector at 60 °C; air the mattress for an hour; air the neck pillow by the window.'],
         ['Toilet', 'New Denkmit WC-Blauspüler in the cistern.'],
-        ['Vacuums', 'Rinse the vacuum filters and let them dry 24 h; robot vacuum: new bag, filter and mop pads from the 18-piece kit when they look grey.'],
+        ['Vacuums', 'Rinse the vacuum filters and let them dry 24 h (quiet, so fine on a Sunday); robot vacuum: new bag, filter and mop pads from the 18-piece kit when they look grey. Don\'t run any vacuum today.'],
         ['Bin', 'New Mülleimer-Deo pad when the scent has gone.'],
       ],
     },
@@ -191,8 +192,8 @@ window.PF_CARE = (function () {
   function forDay(shift, dow, dom) {
     if (shift === 'morning') return ['m-am', 'm-pm', 'm-hair'];
     if (shift === 'evening') return ['e-am', 'e-hair', 'e-pm'];
-    if (dow === 6) return ['off-am', 'off-hair', 'laundry', 'bathroom', 'sat-bha'];
-    if (dow === 0) return ['sun-am', 'whiten', 'sun-hair', 'kitchen', 'floors', ...(dom && dom <= 7 ? ['monthly'] : []), 'sun-beard', 'off-pm'];
+    if (dow === 6) return ['off-am', 'off-hair', 'laundry', 'floors', 'bathroom', 'sat-bha'];
+    if (dow === 0) return ['sun-am', 'whiten', 'sun-hair', 'kitchen', ...(dom && dom <= 7 ? ['monthly'] : []), 'sun-beard', 'off-pm'];
     return ['off-am', 'off-hair', 'off-pm'];
   }
   /** Skin (face, teeth, body), Hair or Home: the small label on each routine. */

@@ -104,4 +104,5 @@ window.PF_VIDEOS = {
    Keyed by exercise id; every weight step uses its exercise's clip. */
 window.PF_CLIPS = {
   "db-goblet": "video/db-goblet.mp4",
+  "db-bench": "video/db-bench.mp4",
 };

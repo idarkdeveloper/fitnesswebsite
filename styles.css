@@ -970,7 +970,7 @@ dialog.sheet::backdrop {
   background: var(--on-art);
   transition: transform var(--dur-fast) var(--ease);
 }
-.toggle[aria-checked="true"] { background: var(--success); }
+.toggle[aria-checked="true"] { background: var(--primary); }
 .toggle[aria-checked="true"]::after { transform: translateX(22px); }
 
 .faq details {
@@ -1223,7 +1223,7 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .ring-c small { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 3px; }
 
 /* Today */
-.today-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+.today-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 /* A long greeting at a large text size wraps instead of pushing the streak pill off the screen. */
 .today-head > div { min-width: 0; overflow-wrap: anywhere; }
 .today-head .streak-pill { flex-shrink: 0; }
@@ -1732,7 +1732,7 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 }
 .h1 { font-weight: 700; letter-spacing: -0.01em; }
 .h2 { font-weight: 700; font-size: var(--fs-xl); }
-.today-head .h1 { font-size: var(--fs-num-md); }
+.today-head .h1 { font-size: var(--fs-3xl); }
 .card { border: 1px solid var(--border-soft); border-radius: var(--r-md); }
 
 /* Hero plan card: lime in every theme, dark ink */
@@ -2145,3 +2145,35 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .quick-add:disabled, .rt-tick:disabled, .chip:disabled, .toast-btn:disabled, .input:disabled {
   opacity: 0.45; cursor: not-allowed; box-shadow: none; transform: none;
 }
+
+/* Layout rhythm: 16px between cards, 24px above a section title, 12px from title to its content */
+.today-head + * { margin-top: var(--space-4); }
+.sec-head { margin: var(--space-6) 0 var(--space-3); }
+.mv-h { margin: var(--space-6) 0 var(--space-3); }
+.mv-h.row-between { display: flex; justify-content: space-between; align-items: baseline; }
+.intro-wrap { margin-top: var(--space-4); }
+.day-nav + .intro-row, .day-nav + .rt-list, .intro-row + .rt-list { margin-top: var(--space-4); }
+.food-sum + .q-grid { margin-top: var(--space-4); }
+/* A one-line card that opens a sheet (Meal → History) */
+.hist-row { width: 100%; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); text-align: left; color: var(--text); font: inherit; cursor: pointer; }
+.hist-row > svg:first-child { width: 22px; height: 22px; color: var(--primary); flex-shrink: 0; }
+.hist-row > svg:last-child { width: 18px; height: 18px; color: var(--muted); }
+
+/* One day-strip look everywhere: the Meal plan strip uses the Today week-strip cells */
+.pd { min-height: 64px; justify-content: center; gap: var(--space-0_5); padding: var(--space-2) 0; border-radius: var(--r-sm); border: 1px solid var(--border-soft); background: var(--surface); color: var(--text); cursor: pointer; }
+.pd .wd { text-transform: none; font-weight: 500; }
+.pd .kc { font-family: var(--font-display); font-size: var(--fs-label); font-weight: 700; }
+.pd .sh:empty { display: none; }
+.pd.sel { background: var(--surface-2); border: 1.5px solid var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.pd.sel .wd, :root[data-theme="light"] .pd.sel .wd { color: var(--primary); }
+
+/* Routine timeline: plain rows are text on the timeline, not cards; the next item and fold-out routines stay boxed */
+.rt-list li { padding: var(--space-1) 0; }
+.rt-body:not(.rt-fold) { background: transparent; border-color: transparent; padding-top: var(--space-2_5); padding-bottom: var(--space-2_5); }
+.rt-list li.now .rt-body { background: var(--surface); }
+@media (hover: hover) { .rt-body.tap:not(.rt-fold):hover { background: var(--surface); } }
+
+/* Exercise art placeholder (while a photo loads, or with no photo): muted graphite with a lime figure instead of a neon gradient */
+.art { background: radial-gradient(120% 90% at 30% 20%, color-mix(in srgb, var(--primary) 14%, var(--surface-2)) 0%, var(--surface-2) 60%, var(--surface) 100%); }
+.art svg.fig { color: var(--primary); }
+.art svg.fig .prop { stroke: color-mix(in srgb, var(--primary) 45%, transparent); }

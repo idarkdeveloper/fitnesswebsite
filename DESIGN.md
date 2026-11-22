@@ -274,6 +274,17 @@ One name per thing, everywhere in the app:
 Numbers use `toLocaleString('en-US')` (`1,775 kcal`), and weights always carry their unit (`25.2 kg to goal`).
 
 
+## 11b. Layout rules (from the layout audit)
+
+- **Page header:** every page starts with a 34px `.h1` and one muted line of context under it (Today: the date; Exercise: "23 exercises · 0 mastered"; Meal, Routine, Care: what the page covers). Profile's account card plays that role.
+- **Rhythm:** 16px between cards, 24px above a section title (`.sec-head`, `.mv-h`), 12px from a title to its content. Section titles are 20px `.h2` outside cards; small uppercase group labels are only for Profile settings.
+- **One food card:** Today, Meal and the Daily log all use the same food card (ring, FOOD title, kcal eaten, four macro tiles). Meal adds Add food / Scan and the list of logged items. History lives in a sheet ("History · last 14 days ›").
+- **One day-strip look:** the Today week strip and the Meal plan strip use the same cells (64px, `--r-sm`, today/selected with a lime ring).
+- **Routine rows:** plain items are text on the timeline (no box); only the next item and fold-out routines are boxed cards.
+- **Switches:** "on" is lime (`--primary`); mint (`--success`) is only for done ticks.
+- **Chip rows** must fit one line at 390px: Routine "This day · Off · Early · Late"; Care tabs "Skin · Teeth · Hair · Home · Products".
+- **Exercise art placeholder:** graphite with a lime figure (shown while a photo loads), never a neon gradient.
+
 ## 12. Formats and words
 
 - **Dates are day-first:** "Sunday 22 November", short "Sun 22 Nov" (no ordinals). Times are 24-hour ("15:00"). Use `fmtLong` / `fmtShort` or `toLocaleDateString('en-GB', …)`, never `en-US`.

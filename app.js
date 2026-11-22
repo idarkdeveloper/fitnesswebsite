@@ -884,7 +884,7 @@ VIEWS.today = () => {
 
   return `
     <div class="today-head">
-      <div><div class="small muted fw-500">${esc(fmtLong(today()))}</div><h1 class="h1 m-0">${greeting()}</h1></div>
+      <div><h1 class="h1 m-0">${greeting()}</h1><p class="muted m-0 mt-1">${esc(fmtLong(today()))}</p></div>
       <button class="streak-pill" data-action="info-streak" aria-label="${streak} day streak">${icon('flame')} ${streak}</button>
     </div>
     ${reminderBanner()}
@@ -929,7 +929,7 @@ const exSectionTabs = () => `<div class="segmented mt-3" role="tablist" aria-lab
 VIEWS.exercises = (r) => {
   if (r && r.arg === 'progress') exSection = 'progress';
   else if (r && r.arg === 'list') exSection = 'list';
-  return `<h1 class="h1 m-0">Exercise</h1>${exSectionTabs()}<div role="tabpanel">${exSection === 'progress' ? progressPanel() : VIEWS.movements(r, true)}</div>`;
+  return `<h1 class="h1 m-0">Exercise</h1><p class="muted m-0 mt-1">${CATS.length} exercises · ${masteredCount()} mastered</p>${exSectionTabs()}<div role="tabpanel">${exSection === 'progress' ? progressPanel() : VIEWS.movements(r, true)}</div>`;
 };
 VIEWS.home = VIEWS.today;
 
@@ -952,7 +952,7 @@ VIEWS.movements = (r, inSection = false) => {
   const chip = (id, label) => `<button class="fchip ${movFilter === id ? 'on' : ''}" data-action="mov-filter" data-f="${id}" aria-pressed="${movFilter === id}">${label}</button>`;
   return `
     ${inSection ? '' : '<h1 class="h1 m-0">Exercises</h1>'}
-    <p class="muted m-0 mt-3">${CATS.length} exercises · ${TOTAL_PROGS} stages · ${masteredCount()} mastered</p>
+    <p class="small muted m-0 mt-3">${TOTAL_PROGS} stages in all, easiest first</p>
     <div class="row gap-2 mt-4 wrap">${chip('all', 'All')}${chip('progress', 'In progress')}${chip('new', 'Not started')}</div>
     ${shown.length ? rows : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick an exercise and start with progression 1.' : 'You have started every exercise.'}</p>`}`;
 };
@@ -1644,15 +1644,18 @@ function trackFoodCard(day, T, thisDay) {
   const eaten = meals.reduce((a, m) => a + m.kcal, 0);
   const protein = meals.reduce((a, m) => a + (m.protein || 0), 0);
   const left = T ? T.kcal - eaten : null;
-  const pct = T ? Math.min(100, (eaten / T.kcal) * 100) : 0;
+  // Same design as the Today food card: ring, kcal eaten, four macro tiles.
   return `
-    <section class="card mt-4" aria-labelledby="foodH">
-      <div class="row-between"><h2 class="h3" id="foodH">Food</h2>${T ? `<span class="muted small">Target ${nf(T.kcal)} kcal</span>` : ''}</div>
-      <div class="kpi mt-3"><span class="kpi-v">${nf(T ? Math.abs(left) : eaten)}</span><span class="kpi-u">${T ? (left >= 0 ? 'kcal left' : 'kcal over') : 'kcal eaten'}</span></div>
-      ${T ? `
-        <div class="progress mt-3 ${left < 0 ? 'over' : ''}" role="progressbar" aria-label="Calories eaten" aria-valuemin="0" aria-valuemax="${T.kcal}" aria-valuenow="${Math.round(eaten)}"><span style="width:${pct}%"></span></div>
-        <div class="row-between small muted mt-2"><span>Eaten ${nf(eaten)} kcal</span><span>Protein ${nf(protein)} / ${T.protein} g</span></div>` : ''}
-      ${meals.length ? `<h3 class="sheet-sub">Nutrients</h3><div class="mt-2">${nutrientsPanel(day, T)}</div>` : ''}
+    <section class="card food-sum mt-4" aria-labelledby="foodH">
+      <div class="food-top">
+        <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${T ? `<b>${Math.round((eaten / T.kcal) * 100)}%</b>` : '<b>–</b>'}</div></div>
+        <div class="grow">
+          <h2 class="food-title m-0" id="foodH">Food</h2>
+          <div class="big-v">${nf(eaten)} <small>kcal</small></div>
+          ${T ? `<div class="small muted food-left">of ${nf(T.kcal)} · ${left >= 0 ? `${nf(left)} left` : `<span class="c-warn">${nf(-left)} over</span>`}</div>` : '<div class="small muted">No target yet · <button class="link-btn" data-action="track-setup">Set your target</button></div>'}
+        </div>
+      </div>
+      ${macroTiles(day, T, protein)}
       <div class="row gap-2 mt-4"><button class="btn grow" data-action="track-food">${icon('plus')} Add food</button><button class="btn ghost scan-btn" data-action="scan-open">${icon('barcode')} Scan</button></div>
       ${repeatDayBtn(day)}
       ${meals.length ? `<ul class="food-list mt-3">${meals.map((m) => `
@@ -2477,7 +2480,8 @@ function setupSheet() {
 }
 
 const TRACK_ACTIONS = {
-  'food-day': (el) => { const k = el.dataset.day; trackDay = k >= todayKey() ? null : k; rerender(); window.scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' }); },
+  'food-history': (el) => openSheet('Food history', foodHistory(el.dataset.day).replace(/<h2 class="h2 mv-h">History<\/h2>/, '')),
+  'food-day': (el) => { if ($('#sheetBody .food-hist')) closeSheet(); const k = el.dataset.day; trackDay = k >= todayKey() ? null : k; rerender(); window.scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' }); },
   'track-day': (el) => {
     const n = Number(el.dataset.n);
     trackDay = n === 0 ? null : keyAdd(tKey(), n);
@@ -2874,7 +2878,7 @@ VIEWS.care = (r) => {
       </button></li>`;
   };
   const n = now.filter((id) => careDone(day, id)).length;
-  const label = { skin: 'Skin', teeth: 'Teeth', hair: 'Hair', cleaning: 'Cleaning', products: 'Products' };
+  const label = { skin: 'Skin', teeth: 'Teeth', hair: 'Hair', cleaning: 'Home', products: 'Products' };
   return `
     <h1 class="h1 m-0">Care</h1>
     <p class="muted m-0 mt-1">${shiftOn(day) ? `${SHIFTS[shiftOn(day)].name} today · timed around it` : 'Your routines, timed around your shifts'}</p>
@@ -2882,9 +2886,9 @@ VIEWS.care = (r) => {
       ${['skin', 'teeth', 'hair', 'cleaning', 'products'].map((k) => `<button role="tab" aria-selected="${careTab === k}" data-action="care-tab" data-tab="${k}">${label[k]}</button>`).join('')}
     </div>
     <div role="tabpanel">${careTab === 'products' ? productsPanel() : `
-      <section class="card mt-4" aria-labelledby="careTodayH">
-        <div class="row-between"><h2 class="h3" id="careTodayH">Today</h2>${now.length ? `<span class="small muted">${n} of ${now.length} done</span>` : ''}</div>
-        ${now.length ? `<ul class="care-list mt-2">${now.map((id) => row(id, true)).join('')}</ul>` : `<p class="small muted m-0 mt-2">Nothing for ${label[careTab].toLowerCase()} today.${careTab === 'cleaning' ? ' Laundry and cleaning are on the weekend.' : ''}</p>`}
+      <div class="mv-h row-between"><h2 class="h2 m-0" id="careTodayH">Today</h2>${now.length ? `<span class="small muted">${n} of ${now.length} done</span>` : ''}</div>
+      <section class="card" aria-labelledby="careTodayH">
+        ${now.length ? `<ul class="care-list">${now.map((id) => row(id, true)).join('')}</ul>` : `<p class="small muted m-0 mt-2">Nothing for ${label[careTab].toLowerCase()} today.${careTab === 'cleaning' ? ' Laundry and cleaning are on the weekend.' : ''}</p>`}
       </section>
       ${other.length ? `<h2 class="h2 mv-h">Other days</h2><ul class="care-list card list-card">${other.map((id) => row(id, false)).join('')}</ul>` : ''}`}
     </div>`;
@@ -3137,7 +3141,7 @@ VIEWS.routine = () => {
     <h1 class="h1 m-0">Routine</h1>
     <p class="muted m-0 mt-1">${sh ? `${SHIFTS[sh].name}: wake ${wake}, sleep ${sleep}` : `Day off: wake ${wake}, sleep ${sleep}`}${rtPreview ? ' · preview' : ` · ${done} of ${total} done`}</p>
     <div class="chips mt-3" role="group" aria-label="Show the plan for">
-      ${[[null, 'This day'], ['off', 'Day off'], ['morning', 'Early shift'], ['evening', 'Late shift']].map(([v, l]) => `<button class="chip ${rtPreview === v ? 'on' : ''}" aria-pressed="${rtPreview === v}" data-action="rt-preview" data-v="${v || ''}">${l}</button>`).join('')}
+      ${[[null, 'This day'], ['off', 'Off'], ['morning', 'Early'], ['evening', 'Late']].map(([v, l]) => `<button class="chip ${rtPreview === v ? 'on' : ''}" aria-pressed="${rtPreview === v}" data-action="rt-preview" data-v="${v || ''}">${l}</button>`).join('')}
     </div>
     ${rtPreview ? `<p class="small muted m-0 mt-2">How ${rtPreview === 'off' ? 'a day off' : `an ${rtPreview === 'morning' ? 'early' : 'late'}-shift day`} goes. Tap "This day" to tick things off. <button class="link-btn small" data-action="shift-sheet" data-wk="${weekStart(day)}">Set my shifts</button></p>` : ''}
     <div class="day-nav card flat soft mt-3">
@@ -3559,7 +3563,8 @@ function mealDayPanel() {
         ${isToday ? `<div class="muted small">${esc(fmtShort(fromKey(day)))}</div>` : '<button class="link-btn small" data-action="track-day" data-n="0">Back to today</button>'}</div>
       <button class="icon-btn round bare" data-action="track-day" data-n="1" aria-label="Next day" ${isToday ? 'disabled' : ''}>${icon('chevR')}</button>
     </div>`;
-  return `${nav}${waterCard(day)}${trackFoodCard(day, Td, isToday ? 'today' : 'this day')}${foodHistory(day)}`;
+  return `${nav}${waterCard(day)}${trackFoodCard(day, Td, isToday ? 'today' : 'this day')}
+    <button class="card list-row hist-row mt-4" data-action="food-history" data-day="${day}">${icon('chart')}<span class="grow"><b class="d-block">History</b><span class="small muted">Calories and protein, last 14 days</span></span>${icon('chevR')}</button>`;
 }
 /** The last 14 days: calories against the target, protein, and a tap to open that day. */
 function foodHistory(selected) {

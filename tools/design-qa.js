@@ -21,7 +21,7 @@ const path = require('path');
 const BASE = (process.argv[2] || 'http://localhost:8765/').replace(/\/?$/, '/');
 const OUT = process.argv[3] || 'design-qa';
 const PHONES = [['Galaxy S24', devices['Galaxy S24']], ['Galaxy S8', devices['Galaxy S8']], ['Pixel 7', devices['Pixel 7']]];
-const TEXT_SIZES = [1, 1.3, 1.6];                     // Android font size setting, as the app's WebView applies it
+const TEXT_SIZES = [1, 1.3, 1.6, 2];                  // Android font size setting, up to the largest (200%)
 const SCREENS = ['', 'track', 'track/body', 'track/habits', 'movements', 'category/pushups', 'category/db-bench', 'exercise/wall-pushups', 'progress', 'profile', 'plan'];
 // [name, button that opens it, screen it is on (default Today)]
 const SHEETS = [['Trends sheet', '[data-action="habit-history"]'], ['Add food sheet', '[data-action="track-food"]'],

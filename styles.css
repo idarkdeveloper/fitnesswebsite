@@ -1371,7 +1371,7 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .lad-row .nm { font-weight: 700; font-size: var(--fs-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lad-row .cnt { text-align: right; font-size: var(--fs-xs); color: var(--muted); }
 .lad-dot { width: 10px; height: 10px; border-radius: 50%; background: hsl(var(--h) 75% 58%); }
-.legend { display: flex; gap: var(--space-4); }
+.legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); }
 .legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .legend i { width: 14px; height: 4px; border-radius: 2px; background: var(--track); }
 .legend i.done { background: var(--success); } .legend i.cur { background: var(--primary); }
@@ -1730,3 +1730,7 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .goal-weeks li.cur { background: color-mix(in srgb, var(--accent) 14%, transparent); border-radius: var(--r-sm); padding-inline: var(--space-2); }
 .goal-weeks li.cur .gw { color: var(--accent); }
 .goal-weeks li.past { opacity: 0.7; }
+
+/* Skip link: first Tab stop on every page; hidden until focused. Matters most on wide screens, where the sidebar comes first. */
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 12px 16px; border-radius: var(--r-sm); background: var(--primary); color: var(--primary-ink); font-weight: 700; text-decoration: none; transform: translateY(-200%); }
+.skip-link:focus { transform: none; }

@@ -1,6 +1,6 @@
 name: Android app
 
-# Builds the PulseFit Android app: a Capacitor shell that loads the live site and reads Health Connect
+# Builds the Mizan Android app: a Capacitor shell that loads the live site and reads Health Connect
 # (Samsung Health, Galaxy Watch). The site itself updates through GitHub Pages, so a new APK is only
 # needed when the Android shell changes. On main the APK is published as the "android" release:
 #   https://github.com/idarkdeveloper/fitnesswebsite/releases/latest/download/pulsefit.apk
@@ -85,5 +85,5 @@ jobs:
         run: |
           gh release delete android --yes --cleanup-tag || true
           gh release create android pulsefit.apk --latest \
-            --title "PulseFit Android app (build ${{ github.run_number }})" \
+            --title "Mizan Android app (build ${{ github.run_number }})" \
             --notes "Open this page on your Android phone, download pulsefit.apk and open it to install. It reads Samsung Health and Galaxy Watch data through Health Connect. Built from ${{ github.sha }}."

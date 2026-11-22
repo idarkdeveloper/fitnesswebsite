@@ -1,6 +1,6 @@
 # Design debt
 
-Known gaps between how PulseFit looks or behaves and the rules in DESIGN.md. Each item has a severity
+Known gaps between how Mizan looks or behaves and the rules in DESIGN.md. Each item has a severity
 (Critical / Major / Minor / Cosmetic, as in `docs/RESEARCH.md`) and what would close it. Fix the top of the
 list first; move an item to "Closed" with its PR when done. Anything Design QA can't measure belongs here.
 

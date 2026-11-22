@@ -1,5 +1,5 @@
 name: Something looks or works wrong
-description: Report a problem you saw in PulseFit, with a screenshot.
+description: Report a problem you saw in Mizan, with a screenshot.
 title: "[Bug] "
 labels: ["design-qa"]
 body:

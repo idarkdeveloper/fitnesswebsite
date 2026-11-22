@@ -1,4 +1,4 @@
--- PulseFit cloud sync: one document per user (docs/BACKEND_DESIGN.md, section 2.1).
+-- Mizan cloud sync: one document per user (docs/BACKEND_DESIGN.md, section 2.1).
 -- Run once in Supabase: SQL Editor -> New query -> paste -> Run. Safe to read; it creates
 -- two tables, one trigger and one row-level-security policy, nothing else.
 

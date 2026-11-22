@@ -1,4 +1,4 @@
-/* PulseFit care products: the owner's dm (and Amazon) items, for quick pick on Care → Products.
+/* Mizan care products: the owner's dm (and Amazon) items, for quick pick on Care → Products.
    size + unit is a full pack; perUse is what one routine uses (estimates: 1 ml face wash, 3 drops serum ≈ 0.2 ml,
    a pea of toothpaste ≈ 1 ml, a cap of detergent = 1 wash). Routines in care.js name the products they use. */
 window.PF_PRODUCTS = {

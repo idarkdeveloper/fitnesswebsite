@@ -1,4 +1,4 @@
-# PulseFit Accounts and Cloud Sync: Backend Design (light version)
+# Mizan Accounts and Cloud Sync: Backend Design (light version)
 
 Status: **approved 2026-11-07 and implemented** (`sync-core.js`, `sync.js`, `supabase/0001_sync.sql`). Setup steps: [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md).
 

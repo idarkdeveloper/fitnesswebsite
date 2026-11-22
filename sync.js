@@ -1,4 +1,4 @@
-/* PulseFit cloud sync (light version). Design: docs/BACKEND_DESIGN.md.
+/* Mizan cloud sync (light version). Design: docs/BACKEND_DESIGN.md.
    - Local data stays the working copy; the cloud holds one document per user.
    - A sync run downloads the document, merges it with local data (sync-core.js),
      and uploads the result only if the cloud version hasn't changed meanwhile.
@@ -54,7 +54,7 @@
     let client = null;
     let user = null;
     const toUser = (session) => (session && session.user ? { id: session.user.id, email: session.user.email || '' } : null);
-    // In the PulseFit Android app, email links come back through pulsefit://login (see AndroidManifest.xml).
+    // In the Mizan Android app, email links come back through pulsefit://login (see AndroidManifest.xml).
     const inApp = () => !!(window.androidBridge || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()));
     const redirectTo = () => (inApp() ? 'pulsefit://login' : location.origin + location.pathname);
     return {

@@ -1,6 +1,6 @@
 # Setting up cloud sync (Supabase)
 
-Cloud sync is optional. Until you finish these steps, PulseFit works exactly as before, entirely in your browser.
+Cloud sync is optional. Until you finish these steps, Mizan works exactly as before, entirely in your browser.
 
 It takes about 20 minutes. The Google part takes the longest and you can skip it, because email sign-in links work on their own. Supabase redesigns its dashboard now and then, so a menu name may differ slightly from what's written here.
 
@@ -81,7 +81,7 @@ This only matters on iPhone; on Android, links work in the installed app. Supaba
 1. Open **Authentication → Emails → Templates → Magic Link**. On some projects the path is **Email Templates**.
 2. Below the existing link, add this line, then save:
    ```html
-   <p>Or enter this code in PulseFit: <strong>{{ .Token }}</strong></p>
+   <p>Or enter this code in Mizan: <strong>{{ .Token }}</strong></p>
    ```
 
 After sending a link, the app shows a code box. The link and the code both work, and each can be used once.

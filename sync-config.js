@@ -1,4 +1,4 @@
-/* Cloud sync settings (docs/SUPABASE_SETUP.md, step 7). Empty values keep PulseFit fully local.
+/* Cloud sync settings (docs/SUPABASE_SETUP.md, step 7). Empty values keep Mizan fully local.
    Both values are PUBLIC by design: the publishable key only works within the database's
    row-level security rules. Never put the service_role / secret key (or any other secret) here. */
 window.PF_SYNC_CONFIG = {

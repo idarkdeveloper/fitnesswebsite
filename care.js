@@ -1,4 +1,4 @@
-/* PulseFit self-care routines (skin, teeth, hair, beard) and weekend home care (laundry, cleaning), from the owner's own "Shift Worker Master Routine Guide".
+/* Mizan self-care routines (skin, teeth, hair, beard) and weekend home care (laundry, cleaning), from the owner's own "Shift Worker Master Routine Guide".
    Each day shows the routines for that day's shift: morning shift, late shift, or a day off (with the weekend extras).
    Products are the owner's own (dm / Rossmann); steps keep his wording, trimmed to fit a phone. */
 window.PF_CARE = (function () {

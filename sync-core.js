@@ -1,4 +1,4 @@
-/* PulseFit sync core: pure functions, no I/O.
+/* Mizan sync core: pure functions, no I/O.
    Used by sync.js in the browser and by tools/test-merge.js in Node.
    Design: docs/BACKEND_DESIGN.md, section 3. */
 (function (root) {

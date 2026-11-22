@@ -560,15 +560,27 @@ function updateSidebarFoot() {
 const VIEWS = {};
 let lastRouteKey = '';
 let pendingSummary = null;
+/** A selector that finds "the same" control after the view is rebuilt: its id, or its data-action and data-* values. */
+function focusKey(el) {
+  if (!el || !$('#view').contains(el)) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  const attrs = [...el.attributes].filter((a) => a.name.startsWith('data-') || a.name === 'role' || a.name === 'href');
+  return attrs.length ? el.tagName.toLowerCase() + attrs.map((a) => `[${a.name}="${CSS.escape(a.value)}"]`).join('') : null;
+}
 function render() {
   const r = parseRoute();
   const view = VIEWS[r.name] || VIEWS.today;
   renderNav(r.name);
   document.body.dataset.route = r.name;        // e.g. hides the tab bar during a workout
+  const key = location.hash, sameRoute = key === lastRouteKey;
+  // Views are rebuilt on every tap: put keyboard and screen-reader focus back on the same control (WCAG 2.4.3).
+  const fk = sameRoute ? focusKey(document.activeElement) : null;
   $('#view').innerHTML = view(r);
-  const key = location.hash;
-  if (key !== lastRouteKey) {
+  if (fk) { const el = $(fk, $('#view')); if (el) el.focus({ preventScroll: true }); }
+  if (!sameRoute) {
     window.scrollTo(0, 0);
+    // A new page: start screen readers at its top (the first load leaves focus where the browser put it).
+    if (lastRouteKey !== '') $('#main')?.focus({ preventScroll: true });
     lastRouteKey = key;
   }
   afterRender(r);
@@ -770,6 +782,7 @@ VIEWS.today = () => {
     </div>
     ${reminderBanner()}
     ${planBanner()}
+    ${goalPlanCard(tk)}
     <div class="wk-strip">${week}</div>
     <section class="card session-card mt-4" aria-labelledby="sessH">
       <div class="row-between">
@@ -804,13 +817,8 @@ VIEWS.today = () => {
       ${tile('track-water', 'Water', L1(water), 'L', `of ${L1(wg)} L`, (water || 0) / wg, false, `Water: ${L1(water)} litres. Edit`,
         `<button class="q-chip" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus')} 250 ml</button>`)}
     </div>
-    ${watchLine(tk)}
-    ${careCard(tk)}
-    <div class="tip-card mt-5">
-      ${icon('bolt')}
-      <p class="grow m-0"><b>60-second hit.</b> <span class="muted">${esc(TIPS[tipIdx % TIPS.length])}</span></p>
-      <button class="icon-btn round bare" data-action="next-tip" aria-label="Another tip">${icon('reset')}</button>
-    </div>`;
+    ${careRow(tk)}
+    ${watchLine(tk)}`;
 };
 VIEWS.exercises = (...a) => VIEWS.movements(...a);
 VIEWS.home = VIEWS.today;
@@ -1025,7 +1033,7 @@ function progressStrength() {
     <div class="sec-head"><h2 class="h2 m-0">Challenges</h2><span class="small muted">${LADDERS.filter((l) => state.joined[l.id]).length} joined</span></div>
     <div class="h-scroll">${ch}</div>
     <div class="sec-head"><h2 class="h2 m-0">Badges</h2><span class="small muted">${ach.filter((a) => a.earned).length} / ${ach.length}</span></div>
-    <div class="badge-row h-scroll">${ach.map(badgeHtml).join('')}</div>
+    <div class="badge-row h-scroll" tabindex="0" role="region" aria-label="Badges, scroll sideways">${ach.map(badgeHtml).join('')}</div>
     <div class="card list-card mt-5">
       ${recent.length ? recent.map(historyRow).join('') : '<p class="muted m-0 p-row">No workouts yet. Your sessions will show up here.</p>'}
       ${state.workouts.length ? '<button class="link-btn p-row" data-action="prog-tab" data-tab="history">All workouts</button>' : ''}
@@ -1192,7 +1200,7 @@ VIEWS.profile = () => {
 
     <h2 class="group-label">Appearance</h2>
     <div class="segmented theme-seg" role="radiogroup" aria-label="Theme" style="--n:3;--i:${Math.max(0, THEMES.findIndex((t) => t.id === pf.theme))}">
-      ${THEMES.map((t) => `<button role="radio" aria-checked="${pf.theme === t.id}" aria-selected="${pf.theme === t.id}" data-action="theme" data-theme="${t.id}"><i class="tdot" style="background:${t.dot}"></i>${t.name}</button>`).join('')}
+      ${THEMES.map((t) => `<button role="radio" aria-checked="${pf.theme === t.id}" data-action="theme" data-theme="${t.id}"><i class="tdot" style="background:${t.dot}"></i>${t.name}</button>`).join('')}
     </div>
 
 
@@ -1353,7 +1361,9 @@ function targets(day) {
 
 
 /* ---------- Track view ---------- */
-VIEWS.track = () => {
+let trackTab = 'food';   // Daily log: food | body | habits
+VIEWS.track = (r) => {
+  if (r && ['food', 'body', 'habits'].includes(r.arg)) trackTab = r.arg;   // #/track/body opens on that tab
   const day = tKey();
   const isToday = day === todayKey();
   const d = fromKey(day);
@@ -1379,12 +1389,12 @@ VIEWS.track = () => {
         <p class="muted small mt-2 mb-3">Add your age, height and goal weight, and PulseFit works out a daily calorie and protein target for you.</p>
         <button class="btn ghost block" data-action="track-setup">Set up targets</button>
       </section>` : ''}
-    ${trackFoodCard(day, T, thisDay)}
-    ${planCard(day)}
-    ${trackWeightCard(day, T, thisDay, isToday)}
-    ${trackHabits(day)}
-    ${compCard(day)}
-    ${trackMeasureCard(day)}
+    <div class="segmented mt-4" role="tablist" aria-label="Daily log section" style="--n:3;--i:${['food', 'body', 'habits'].indexOf(trackTab)}">
+      ${[['food', 'Food'], ['body', 'Body'], ['habits', 'Steps & sleep']].map(([k, l]) => `<button role="tab" aria-selected="${trackTab === k}" data-action="track-tab" data-tab="${k}">${l}</button>`).join('')}
+    </div>
+    ${trackTab === 'food' ? `${trackFoodCard(day, T, thisDay)}${planCard(day)}`
+      : trackTab === 'body' ? `${trackWeightCard(day, T, thisDay, isToday)}${compCard(day)}${trackMeasureCard(day)}`
+      : trackHabits(day)}
     <div class="list-group mt-5">
       <button class="list-item" data-action="track-setup"><span>Targets &amp; body profile<span class="li-sub">${T ? `${nf(T.kcal)} kcal a day${p.goalWeight ? ` · goal ${kg(p.goalWeight)} kg` : ' · no goal weight yet'}` : 'Not set up yet'}</span></span>${icon('chevR')}</button>
     </div>
@@ -1653,7 +1663,7 @@ function measureOneSheet(f, dayArg) {
   const lo = Math.max(10, Math.floor(v - 20)), hi = Math.min(300, Math.ceil(v + 20));
   openSheet(MB_LABEL[f], `
     <div class="mo-val" aria-hidden="true"><output id="moOut">${kg(v)}</output><small> cm</small></div>
-    <div class="mo-ruler"><input type="range" id="moRange" min="${lo}" max="${hi}" step="0.1" value="${v}" aria-label="${MB_LABEL[f]} in centimetres" /></div>
+    <div class="mo-ruler"><input type="range" id="moRange" min="${lo}" max="${hi}" step="0.1" value="${v}" aria-label="${MB_LABEL[f]} in centimetres" aria-valuetext="${kg(v)} centimetres" /></div>
     <div class="mo-scale small muted" aria-hidden="true"><span>${lo}</span><span>${Math.round((lo + hi) / 2)}</span><span>${hi}</span></div>
     <div class="grid2 mt-3">
       <div class="field"><label for="moNum">Exact (cm)</label><input class="input" id="moNum" type="number" inputmode="decimal" step="0.1" min="10" max="300" value="${kg(v)}" /></div>
@@ -2268,12 +2278,16 @@ const TRACK_ACTIONS = {
   'comp-log': (el) => compSheet(el.dataset.today ? todayKey() : undefined),
   'comp-history': compHistorySheet,
   'care-open': (el) => careSheet(el.dataset.id, el.dataset.day),
+  'care-list': (el) => careListSheet(el.dataset.day),
+  'track-tab': (el) => { trackTab = el.dataset.tab; history.replaceState(null, '', `#/track/${trackTab}`); lastRouteKey = location.hash; rerender(); },
+  'goal-plan': () => goalPlanSheet(),
   'care-tick': (el) => {
     const { id, day } = el.dataset, was = careDone(day, id);
     hset(day, `care:${id}`, was ? null : 1);
     save();
     if (el.dataset.close) closeSheet();
     rerender();
+    if (!el.dataset.close && $('#sheetBody .care-list')) careListSheet(day);
     if (!was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All done for today' : `${window.PF_CARE.R[id].title}: done`); }
   },
   'comp-edit': (el) => compSheet(el.dataset.day),
@@ -2496,6 +2510,20 @@ function careCard(day) {
       }).join('')}</ul>
     </section>`;
 }
+/** Today: one line for self-care: how many are done and what's next; the full list opens in a sheet. */
+function careRow(day) {
+  const ids = careIds(day);
+  if (!ids.length) return '';
+  const R = window.PF_CARE.R, n = ids.filter((id) => careDone(day, id)).length, nextId = ids.find((id) => !careDone(day, id));
+  const pct = n / ids.length;
+  return `<button class="card care-sum mt-3" data-action="care-list" data-day="${day}" aria-label="Self-care and home: ${n} of ${ids.length} done${nextId ? `. Next: ${R[nextId].title}` : ''}. Open the list">
+      <span class="ring-wrap sm">${ringSvg(pct, 44, 5)}<span class="ring-c"><b class="small">${n}/${ids.length}</b></span></span>
+      <span class="grow"><b class="d-block">Self-care &amp; home</b><span class="small muted">${nextId ? `Next: ${esc(R[nextId].at)} · ${esc(R[nextId].title)}` : 'All done for today'}</span></span>
+      ${icon('chevR')}</button>`;
+}
+function careListSheet(day) {
+  openSheet('Self-care & home', `${careCard(day).replace(/<section[^>]*>|<\/section>/g, '').replace(/<div class="row-between"><h2[^]*?<\/h2>/, '<div class="row-between"><span></span>')}`);
+}
 function careSheet(id, day) {
   const r = window.PF_CARE.R[id];
   if (!r) return;
@@ -2505,6 +2533,60 @@ function careSheet(id, day) {
     <ol class="recipe-steps mt-3">${r.steps.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
     ${r.note ? `<div class="note-box mt-3">${esc(r.note)}</div>` : ''}
     <button class="btn block lg mt-4 ${done ? 'ghost' : ''}" data-action="care-tick" data-id="${id}" data-day="${day}" data-close="1">${done ? 'Mark as not done' : 'Done'}</button>`);
+}
+
+/* ---------- 14-week plan towards 85 kg (goalplan.js) ---------- */
+/** Once: the owner said yes to the plan, so set goal 85 kg at 1 kg a week, Dumbbell Full Body on Tue/Thu/Sat.
+    Each new phase sets that phase's step goal (once per phase, so a goal you change yourself sticks until the next). */
+function seedGoalPlan() {
+  const G = window.PF_GOALPLAN, h = state.hprofile;
+  if (!G || !h) return;
+  let changed = false;
+  if (!h.goalPlanSeeded) {
+    h.goalWeight = G.GOAL_KG; h.rate = 1; h.goalPlanSeeded = 1;
+    state.routineId = 'dumbbell-full'; state.trainingDays = [2, 4, 6];
+    changed = true;
+  }
+  const ph = G.phaseOf(G.weekOf(todayKey()) || 1);
+  if (ph && h.planStepsSet !== ph.steps) { h.stepGoal = ph.steps; h.planStepsSet = ph.steps; changed = true; }
+  if (changed) save();
+}
+function goalPlanCard(tk) {
+  const G = window.PF_GOALPLAN;
+  if (!G || !hp().goalPlanSeeded) return '';
+  const wk = G.weekOf(tk);
+  if (wk > G.WEEKS) return '';
+  const w = Math.max(1, wk), ph = G.phaseOf(w), cur = avg7(tk) ?? latestOn('weight', tk)?.v;
+  const target = G.targetKg(w);
+  const status = cur == null ? '' : cur <= target + 0.3 ? '<span class="c-success">on track</span>' : `<span class="muted">${kg(cur - target)} kg above</span>`;
+  return `<button class="card goal-sum mt-3" data-action="goal-plan" aria-label="14-week plan, ${wk ? `week ${w} of ${G.WEEKS}, ${ph.name}` : `starts Monday ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}. Open the plan">
+      <span class="row-between"><span class="eyebrow">${wk ? `Week ${w} of ${G.WEEKS} · ${ph.name}${w === G.RECOVERY ? ' · recovery week' : ''}` : `Starts Mon ${esc(fmtShort(fromKey(G.START)).replace(/^\w+, /, ''))}`}</span>${icon('chevR')}</span>
+      <span class="goal-bar" aria-hidden="true"><span style="width:${(Math.max(0, wk - 1) / G.WEEKS) * 100}%"></span></span>
+      <span class="small d-block mt-2">${nf(ph.steps)} steps a day · strength Tue, Thu, Sat · ${esc(ph.cardio[0].replace(/^Sunday: /, 'Sun ').replace(/\.$/, ''))}</span>
+      <span class="small d-block muted">${wk ? 'This week\'s weight target' : 'Week 1 target'} <b>${kg(target)} kg</b>${cur != null ? ` · now ${kg(cur)}${wk ? ` ${status}` : ''}` : ''}</span>
+    </button>`;
+}
+function goalPlanSheet() {
+  const G = window.PF_GOALPLAN, tk = todayKey(), wk = Math.max(1, Math.min(G.WEEKS, G.weekOf(tk)));
+  const cur = avg7(tk) ?? latestOn('weight', tk)?.v;
+  const rows = Array.from({ length: G.WEEKS }, (_, i) => {
+    const n = i + 1, ph = G.phaseOf(n);
+    return `<li class="${n === wk ? 'cur' : n < wk ? 'past' : ''}"><span class="gw">W${n}</span><span class="grow small">${esc(fmtShort(fromKey(G.weekStart(n))).replace(/^\w+, /, ''))} · ${ph.name}${n === G.RECOVERY ? ' · recovery' : ''}</span><span class="small">${nf(ph.steps)} steps</span><b class="small">${kg(G.targetKg(n))} kg</b></li>`;
+  }).join('');
+  const ph = G.phaseOf(wk);
+  openSheet('14-week plan', `
+    <p class="small muted m-0 sheet-meta">From ${kg(G.START_KG)} kg to about ${kg(G.targetKg(G.WEEKS))} kg by the end of February, the first stretch to <b>${G.GOAL_KG} kg</b> (around September–October 2027 at a safe 0.7–1 kg a week).${cur != null ? ` Now: <b>${kg(cur)} kg</b> (7-day average).` : ''}</p>
+    <div class="note-box mt-3"><b>This week: ${ph.name}${wk === G.RECOVERY ? ', recovery week' : ''}.</b> ${esc(ph.focus)}
+      <ul class="plan-ul">
+        <li>${wk === G.RECOVERY ? 'Strength: 2 sets per exercise, no finisher. Let your body recover.' : esc(ph.strength)}</li>
+        <li>${nf(ph.steps)} steps every day (your step goal is set to this).</li>
+        ${ph.cardio.map((c) => `<li>${esc(c)}</li>`).join('')}
+        <li>About 1,800–1,900 kcal and 135 g protein a day: your food target follows your goal and weight.</li>
+      </ul></div>
+    <h3 class="sheet-sub">Week by week</h3>
+    <ul class="goal-weeks mt-2">${rows}</ul>
+    <p class="small muted m-0 mt-3">Weight targets are for the end of each week. Read your 7-day average, not single days. If the average stalls for 3 weeks, walk an extra 2,000 steps a day before cutting food. Check with your doctor before the interval weeks if you have heart, blood pressure or joint problems.</p>
+    <button class="btn ghost block mt-4" data-action="pick-routine">Strength routine: ${esc(routine().name)}</button>`);
 }
 
 const mealWhen = (m) => (m.at ? `${m.at}${m.note ? ` · ${m.note}` : ''}${m.pack ? ' · lunchbox' : ''}` : '');
@@ -4327,12 +4409,24 @@ document.addEventListener('pointerdown', (ev) => {
   if (holdRepeat) { clearTimeout(holdRepeat.t); clearInterval(holdRepeat.i); holdRepeat = null; }
 }, true));
 
+/** Tab controls (role="tablist"): arrow keys, Home and End move between tabs and select them, as the ARIA tabs pattern expects. */
+document.addEventListener('keydown', (ev) => {
+  const t = ev.target;
+  if (!t.matches || !t.matches('[role="tablist"] [role="tab"]') || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(ev.key)) return;
+  const tabs = [...t.closest('[role="tablist"]').querySelectorAll('[role="tab"]')], i = tabs.indexOf(t);
+  const j = ev.key === 'Home' ? 0 : ev.key === 'End' ? tabs.length - 1 : (i + (ev.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  ev.preventDefault();
+  const again = focusKey(tabs[j]);            // the views rebuild on click: find the new tab by its key afterwards
+  tabs[j].click();
+  const nt = again && $(again);
+  (nt || tabs[j]).focus();
+});
 document.addEventListener('input', (ev) => {
   const t = ev.target;
   if (t.id === 'moRange' || t.id === 'moNum') {                    // measurement ruler and exact field stay in step
     const v = parseNum(t.value);
     if (v == null) return;
-    if (t.id === 'moRange') { const n = $('#moNum'); if (n) n.value = kg(v); }
+    if (t.id === 'moRange') { const n = $('#moNum'); if (n) n.value = kg(v); t.setAttribute('aria-valuetext', `${kg(v)} centimetres`); }
     else { const r = $('#moRange'); if (r && v >= +r.min && v <= +r.max) r.value = v; }
     const o = $('#moOut'); if (o) o.textContent = kg(v);
     return;
@@ -4537,6 +4631,7 @@ window.PF_onSyncReady = () => window.PFSync.onChange((st) => {
 importOldTracker();
 seedQuickFoods();
 seedShift();
+seedGoalPlan();
 applyDislikes();
 applyTheme();
 if (!location.hash || location.hash === '#/home') history.replaceState(null, '', '#/today');

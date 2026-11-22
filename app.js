@@ -150,10 +150,12 @@ function sketchSrc(id) {
   const m = /^db-[a-z]+/.exec(id || '');
   return m && SKETCHES.has(m[0]) ? `img/sketch/${m[0]}.svg` : null;
 }
+/** Photo for an id; dumbbell weight steps (db-bench-7-5) share their exercise's photo (db-bench). */
+const photoFor = (id) => id && (IMAGES[id] || IMAGES[(/^db-[a-z]+/.exec(id) || [])[0]]);
 function media(catId, imgId, alt = '') {
-  const sk = !(imgId && IMAGES[imgId]) && sketchSrc(imgId || catId);
+  const sk = !photoFor(imgId || catId) && sketchSrc(imgId || catId);
   if (sk) return `${figure(catId)}<img class="photo sketch" src="${sk}" alt="${esc(alt)}" loading="lazy" decoding="async" />`;
-  const src = imgId && IMAGES[imgId];
+  const src = photoFor(imgId);
   // The figure stays underneath as the loading placeholder; the photo covers it once decoded.
   return src
     ? `${figure(catId)}<img class="photo" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" />`
@@ -1005,7 +1007,9 @@ VIEWS.exercise = (r) => {
 
 /* ---------- "Watch how" videos (videos.js) ---------- */
 /** YouTube id for a progression: your own choice first, else the one picked in videos.js. */
-const videoFor = (progId) => (state.videos && state.videos[progId]) || (window.PF_VIDEOS && window.PF_VIDEOS[progId] && window.PF_VIDEOS[progId][0]) || null;
+/** The suggested video for a progression; every weight step of a dumbbell exercise shares its exercise's video. */
+const stockVideo = (progId) => { const V = window.PF_VIDEOS || {}; return V[progId] || V[(/^db-[a-z]+/.exec(progId) || [])[0]] || null; };
+const videoFor = (progId) => (state.videos && state.videos[progId]) || (stockVideo(progId) && stockVideo(progId)[0]) || null;
 /** Accept a YouTube link (watch, youtu.be, shorts, embed) or a bare 11-character id. */
 function youtubeId(text) {
   const t = (text || '').trim();
@@ -1017,7 +1021,7 @@ function videoSheet(progId, editing = false) {
   const { p } = PROG[progId];
   const id = videoFor(progId);
   const own = !!(state.videos && state.videos[progId]);
-  const meta = !own && window.PF_VIDEOS && window.PF_VIDEOS[progId];
+  const meta = !own && stockVideo(progId);
   // Privacy-enhanced player; it only loads after you open this sheet.
   const src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
   openSheet(p.name, `

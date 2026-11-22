@@ -649,5 +649,89 @@
     "aspect": "16:9",
     "file": "img/full-clutch-flags.webp",
     "prompt": "Athlete doing full clutch flags on a vertical steel pole in an outdoor calisthenics park: clutch flag on a vertical pole, body fully horizontal and straight, legs together. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-bench",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-bench.webp",
+    "prompt": "Athlete doing dumbbell bench press in a tidy home gym corner with a black flat bench: lying on his back on the flat bench, feet flat on the floor, pressing two hex dumbbells straight up over his chest, arms nearly straight. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-row",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-row.webp",
+    "prompt": "Athlete doing one-arm dumbbell row in a tidy home gym corner with a black flat bench: one knee and the same-side hand on the flat bench, back flat and parallel to the floor, the other hand rowing a dumbbell up to his hip, elbow close to the body. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-shoulder",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-shoulder.webp",
+    "prompt": "Athlete doing seated dumbbell press in a tidy home gym corner with a black flat bench: sitting upright on the flat bench, feet flat, pressing two dumbbells overhead, arms nearly straight, ribs down. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-goblet",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-goblet.webp",
+    "prompt": "Athlete doing goblet squat in a tidy home gym corner with a black flat bench: in the bottom of a squat, holding one dumbbell vertically against his chest with both hands, chest up, heels down, knees over toes. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-rdl",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-rdl.webp",
+    "prompt": "Athlete doing dumbbell romanian deadlift in a tidy home gym corner with a black flat bench: hinged forward at the hips with a flat back, knees softly bent, two dumbbells hanging close to his shins, neck in line with the back. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-split",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-split.webp",
+    "prompt": "Athlete doing bulgarian split squat in a tidy home gym corner with a black flat bench: in a Bulgarian split squat, rear foot laces-down on the flat bench behind him, front knee bent to 90 degrees, a dumbbell in each hand at his sides. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-curl",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-curl.webp",
+    "prompt": "Athlete doing dumbbell curl in a tidy home gym corner with a black flat bench: standing tall, elbows pinned to his sides, curling two dumbbells up to shoulder height, palms facing up. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-benchsquat",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-benchsquat.webp",
+    "prompt": "Athlete doing bench squat (sit to stand) in a tidy home gym corner with a black flat bench: squatting down until his hips just touch the flat bench behind him, arms holding one dumbbell at his chest, chest up, heels down. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-hipthrust",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-hipthrust.webp",
+    "prompt": "Athlete doing hip thrust in a tidy home gym corner with a black flat bench: upper back resting across the side of the flat bench, feet flat on the floor, hips lifted so thighs and torso form a straight line, a dumbbell held on his hips with both hands. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-carry",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-carry.webp",
+    "prompt": "Athlete doing farmer's carry in a tidy home gym corner with a black flat bench: walking tall across the room holding a heavy dumbbell in each hand at his sides, shoulders back, mid-stride. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-lateral",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-lateral.webp",
+    "prompt": "Athlete doing lateral raise in a tidy home gym corner with a black flat bench: standing tall, raising two dumbbells out to the sides to shoulder height, elbows slightly bent, front view. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
+  },
+  {
+    "id": "db-triceps",
+    "kind": "cover",
+    "aspect": "16:9",
+    "file": "img/db-triceps.webp",
+    "prompt": "Athlete doing lying triceps extension in a tidy home gym corner with a black flat bench: lying on his back on the flat bench, upper arms vertical, elbows bent so two dumbbells are lowered beside his head. Realistic documentary fitness photography, crisp detail. 35mm eye-level side view, whole body in frame, centred with generous margin. Soft golden-hour side light. Cool blue-teal grade, calm and focused. Real dumbbells with clearly visible handles and plates; the bench is stable and flat. Same athlete in every image: a fit man in his late twenties with short dark hair and light stubble, plain light-beige t-shirt, grey shorts, barefoot. No text, logos, watermarks or brand marks; plain unbranded sportswear; anatomically correct hands and joints. Aspect ratio 16:9."
   }
 ]

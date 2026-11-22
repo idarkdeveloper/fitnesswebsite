@@ -1270,6 +1270,9 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 
 /* Today */
 .today-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+/* A long greeting at a large text size wraps instead of pushing the streak pill off the screen. */
+.today-head > div { min-width: 0; overflow-wrap: anywhere; }
+.today-head .streak-pill { flex-shrink: 0; }
 .streak-pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--r-pill); background: var(--surface-3); border: 1px solid var(--border-soft); font-weight: 700; color: var(--warn); }
 .streak-pill svg { width: 18px; height: 18px; }
 .wk-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: var(--space-5); }

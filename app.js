@@ -890,7 +890,7 @@ VIEWS.today = () => {
     <section class="card food-sum" aria-label="Food today">
       <div class="food-head">
         <div class="food-title">Food</div>
-        <span class="quick-pair"><button class="icon-btn round food-scan" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
+        <span class="quick-pair"><button class="quick-add ghost-q food-scan" data-action="scan-open" aria-label="Scan a barcode">${icon('barcode')}</button><button class="quick-add" data-action="track-food" data-today="1" aria-label="Add food">${icon('plus')}</button></span>
       </div>
       <div class="food-top">
         <div class="ring-wrap">${ringSvg(T ? eaten / T.kcal : 0)}<div class="ring-c">${ringCenter}</div></div>

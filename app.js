@@ -32,6 +32,8 @@ const ICONS = {
   chevR: 'M9 5.5l6.5 6.5L9 18.5',
   chevL: 'M15 5.5 8.5 12l6.5 6.5',
   swap: 'M4 8h15.5L15.5 4M20 16H4.5l4 4',
+  pin: '<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.4"/>',
+  prayer: 'M14.5 3.5a8.5 8.5 0 1 0 6 14.5 7 7 0 0 1-6-14.5ZM18.5 6.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z',
   sliders: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
   timer: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.8l2.3 2M9.5 2.5h5M19 6l1.5-1.5"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10.5" rx="2.2" fill="currentColor" stroke="none"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.6" r="1.3" fill="#000" stroke="none" opacity=".45"/>',
@@ -762,10 +764,10 @@ VIEWS.today = () => {
   const status = dayStatus(sel);
   const r = routine();
   const { current: streak } = streakStats();
-  const ws = weekStart(tk);
 
+  // Rolling week: the last five days, today and tomorrow, so the next day is always in view.
   const week = Array.from({ length: 7 }, (_, i) => {
-    const k = keyAdd(ws, i), d = fromKey(k);
+    const k = keyAdd(tk, i - 5), d = fromKey(k);
     const done = workoutsOn(k).length > 0, train = sessionFor(d).length > 0;
     const mark = done ? icon('check') : train && k >= tk ? icon('dumbbell') : '';
     return `<button class="wk-day ${k === selectedDay ? 'sel' : ''} ${k === tk ? 'today' : ''} ${train ? 'train' : ''} ${done ? 'done' : ''}" data-action="pick-day" data-day="${k}" aria-pressed="${k === selectedDay}" aria-label="${esc(fmtLong(d))}: ${done ? 'workout done' : train ? 'training day' : 'rest day'}">
@@ -801,9 +803,8 @@ VIEWS.today = () => {
           <div class="row-between small muted mt-3"><span>Rest timer ${state.restSeconds} s</span><button class="link-btn" data-action="rest-settings">Change</button></div>
         </details>
       </div>`
-    : `<div class="wc-body"><div class="row-between gap-3"><div><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">Rest day</h2></div>
+    : `<div class="wc-body"><div class="row-between gap-3 nowrap-row"><div class="grow min-w-0"><div class="eyebrow">${isToday ? "Today's workout" : esc(fmtShort(sel))}</div><h2 class="sess-title" id="sessH">Rest day</h2><div class="small muted">A walk or some mobility work helps you recover.</div></div>
         <button class="icon-btn round" data-action="pick-routine" aria-label="Adjust routine (${esc(r.name)})">${icon('sliders')}</button></div>
-        <div class="rest-day mt-3">${icon('moon')}<div><div class="fw-bold">Rest &amp; recover</div><p class="muted small m-0">No session on this day. A walk or some mobility work is a great idea.</p></div></div>
         <div class="row gap-2 mt-3 rest-acts"><button class="btn ghost grow" data-action="track-steps" data-today="1">${icon('run')} Log a walk</button><button class="btn ghost grow" data-action="mobility" aria-label="Start 10 minutes of mobility">${icon('timer')} Mobility 10m</button></div></div>`;
 
   // Today's log
@@ -853,9 +854,9 @@ VIEWS.today = () => {
     ${reminderBanner()}
     ${planBanner()}
     ${myDayRow(tk)}
-    ${goalPlanCard(tk)}
+    <section class="card session-card workout-card lime-card" aria-labelledby="sessH">${session}</section>
     <div class="wk-strip">${week}</div>
-    <section class="card session-card workout-card mt-4" aria-labelledby="sessH">${session}</section>
+    ${goalPlanCard(tk)}
     ${!state.workouts.length && !state.seenIntro ? `<div class="intro-wrap mt-3"><button class="intro-row" data-action="intro-sheet">${icon('chart')}<span class="grow">New here? <b>How levels work</b></span>${icon('chevR')}</button><button class="icon-btn round bare intro-x" data-action="intro-dismiss" aria-label="Hide this tip">${icon('x')}</button></div>` : ''}
 
     <div class="sec-head"><h2 class="h2 m-0">${isToday ? 'Today at a glance' : 'Log'}</h2><span class="row gap-3"><button class="link-btn small" data-action="habit-history" data-f="steps">Trends</button><a class="link-btn small" href="#/track">Daily log</a></span></div>
@@ -3026,11 +3027,29 @@ function dayTimeline(day) {
   add(sh === 'evening' ? W + 35 : S - 150, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
   add(sh === 'evening' ? S - 8 : S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: 'Screens away, dim lights, lay out tomorrow\'s clothes and food.' });
   add(S, { key: 'sleep', icon: 'moon', title: 'Sleep', sub: `Lights out. ${fmtSleep(((W + 1440) - S) % 1440 || 0)} until you wake.` });
+  // Prayer times for this date and place, pinned to their real time.
+  const pr = prayerFor(d);
+  if (pr) {
+    const N = window.PF_PRAYER.NAMES, fri = d.getDay() === 5;
+    const work = sh ? SHIFTS[sh].hours.split('–').map((x) => at(x)) : null;
+    Object.keys(N).forEach((k) => {
+      let m = pr[k];
+      if (m < W - 60 && m + 1440 <= S) m += 1440;                   // after midnight on a late night
+      const jumuah = fri && k === 'dhuhr';
+      const notes = [];
+      if (k === 'fajr') notes.push(`Until sunrise ${rtClock(pr.sunrise)}`);
+      if (m < W) notes.push('before you wake: set an alarm');
+      if (work && m >= work[0] && m <= (work[1] < work[0] ? work[1] + 1440 : work[1])) notes.push('during your shift: pray in your break');
+      if (jumuah) notes.unshift('Friday prayer at the mosque');
+      add(m, { key: `pray:${k}`, icon: 'prayer', title: jumuah ? "Jumu'ah" : N[k], sub: notes.length ? notes.join(' · ').replace(/^./, (c) => c.toUpperCase()) : `${N[k]} time starts`, prayer: true });
+    });
+  }
   items.sort((x, y) => x.min - y.min);
-  // Two things at the same time: keep meals where they are and move the other one on by 15 minutes.
+  // Two things at the same time: keep meals and prayers where they are and move the other one on by 15 minutes.
   for (let i = 1; i < items.length; i++) {
     if (items[i].min - items[i - 1].min < 5 && items[i].key !== 'sleep') {
-      if (items[i].meal && !items[i - 1].meal && i > 1 && items[i].min - items[i - 2].min >= 5) { const t = items[i - 1]; items[i - 1] = items[i]; items[i] = t; }
+      const pinned = (it) => it.meal || it.prayer;
+      if (pinned(items[i]) && !pinned(items[i - 1]) && i > 1 && items[i].min - items[i - 2].min >= 5) { const t = items[i - 1]; items[i - 1] = items[i]; items[i] = t; }
       items[i].min = items[i - 1].min + 15;
     }
   }
@@ -3071,10 +3090,39 @@ VIEWS.routine = () => {
       <div class="text-center"><div class="fw-bold">${isToday ? 'Today' : esc(fmtShort(fromKey(day)))}</div>${isToday ? `<div class="muted small">${esc(fmtShort(fromKey(day)))}</div>` : '<button class="link-btn small" data-action="track-day" data-n="0">Back to today</button>'}</div>
       <button class="icon-btn round bare" data-action="track-day" data-n="1" aria-label="Next day">${icon('chevR')}</button>
     </div>
+    ${prayerCfg() ? '' : `<button class="intro-row mt-3" data-action="pray-sheet">${icon('prayer')}<span class="grow">Add <b>prayer times</b> to your day</span>${icon('chevR')}</button>`}
     <ol class="rt-list mt-4">${items.map(row).join('')}</ol>
     <button class="btn ghost block mt-4" data-action="rt-times">${icon('timer')} Wake &amp; sleep time on days off</button>
+    <button class="btn ghost block mt-2" data-action="pray-sheet">${icon('prayer')} Prayer times${prayerCfg()?.on ? ` · ${esc(prayerCfg().place || 'on')}` : ''}</button>
     <p class="small muted mt-3">Shift days use the shift's own times. 7–9 hours of sleep is the target: it is also when your body repairs muscle and controls appetite.</p>`;
 };
+/** Prayer settings live in the synced health profile: { on, lat, lon, place, method, asr }. */
+const prayerCfg = () => hp().prayer || null;
+function prayerFor(d) {
+  const c = prayerCfg();
+  return c && c.on && window.PF_PRAYER ? window.PF_PRAYER.times(d, c) : null;
+}
+function prayerSheet(note) {
+  const P = window.PF_PRAYER, c = prayerCfg() || { on: true, method: 'mwl', asr: 'hanafi' };
+  const t = c.lat != null ? P.times(new Date(), c) : null;
+  const opts = (list, cur) => list.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  openSheet('Prayer times', `
+    <p class="small muted m-0 sheet-meta">Worked out on your phone from your location and the date. Shown in your Routine, around your shifts.</p>
+    ${note ? `<p class="small m-0 mt-2" role="status">${esc(note)}</p>` : ''}
+    ${t ? `<ul class="pray-today mt-3" aria-label="Today in ${esc(c.place || 'your location')}">${['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'].map((k) => `<li class="${k === 'sunrise' ? 'muted' : ''}"><span>${k === 'sunrise' ? 'Sunrise' : P.NAMES[k]}</span><b>${rtClock(t[k])}</b></li>`).join('')}</ul>
+      <p class="small muted m-0 mt-1">${esc(c.place || `${Number(c.lat).toFixed(2)}, ${Number(c.lon).toFixed(2)}`)}</p>` : ''}
+    <button class="btn ghost block mt-3" data-action="pray-locate">${icon('pin')} Use my location</button>
+    <div class="field mt-3"><label for="prCity">Or pick a city</label><select class="select" id="prCity"><option value="">${c.place && !P.CITIES.some((x) => x[0] === c.place) ? esc(c.place) : 'Choose…'}</option>${P.CITIES.map(([n]) => `<option ${n === c.place ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+    <div class="field"><label for="prMethod">Calculation</label><select class="select" id="prMethod">${opts(Object.entries(P.METHODS).map(([k, m]) => [k, m.name]), c.method)}</select></div>
+    <div class="field"><label for="prAsr">Asr</label><select class="select" id="prAsr">${opts([['hanafi', 'Hanafi (later)'], ['standard', "Shafi'i, Maliki, Hanbali"]], c.asr)}</select></div>
+    <p class="small muted m-0">Check against your local mosque's timetable and pick the calculation that matches it.</p>
+    <button class="btn block lg mt-3" data-action="pray-save">Save</button>
+    ${prayerCfg() ? `<button class="btn ghost block mt-2" data-action="pray-toggle">${c.on ? 'Hide prayer times' : 'Show prayer times'}</button>` : ''}`);
+}
+function prayerStore(patch) {
+  state.hprofile.prayer = { on: true, method: 'mwl', asr: 'hanafi', ...(prayerCfg() || {}), ...patch };
+  save();
+}
 function rtTimesSheet() {
   const p = hp();
   openSheet('Wake & sleep', `
@@ -4989,6 +5037,22 @@ const ACTIONS = {
   'intro-dismiss': () => { state.seenIntro = true; save(); rerender(); },
   'mobility': () => mobilitySheet(),
   'rt-preview': (el) => { rtPreview = el.dataset.v || null; rerender(); },
+  'pray-sheet': () => prayerSheet(),
+  'pray-save': () => {
+    const city = $('#prCity')?.value, hit = city && window.PF_PRAYER.CITIES.find((x) => x[0] === city);
+    const patch = { method: $('#prMethod').value, asr: $('#prAsr').value, on: true };
+    if (hit) Object.assign(patch, { place: hit[0], lat: hit[1], lon: hit[2] });
+    if (!hit && prayerCfg()?.lat == null) { prayerSheet('Pick a city or use your location first.'); return; }
+    prayerStore(patch); closeSheet(); rerender(); toast('Prayer times added to your routine');
+  },
+  'pray-toggle': () => { prayerStore({ on: !prayerCfg().on }); closeSheet(); rerender(); },
+  'pray-locate': () => {
+    if (!navigator.geolocation) { prayerSheet('Location is not available here. Pick a city instead.'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => { prayerStore({ lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3), place: 'My location', method: $('#prMethod')?.value || prayerCfg()?.method || 'mwl', asr: $('#prAsr')?.value || prayerCfg()?.asr || 'hanafi' }); prayerSheet('Location saved.'); rerender(); },
+      () => prayerSheet('Location was blocked. Pick a city instead, or allow location for PulseFit in your phone settings.'),
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 86400000 });
+  },
   'rt-times-save': () => { const w = $('#rtWake')?.value, s = $('#rtSleep')?.value; if (w) state.hprofile.wake = w; if (s) state.hprofile.sleepAt = s; save(); closeSheet(); rerender(); toast(`Wake ${w}, sleep ${s}`); },
   'dm-toggle': (el) => { const k = el.dataset.k; state.careshop = state.careshop || {}; if (state.careshop[k]) delete state.careshop[k]; else state.careshop[k] = 1; save(); rerender(); stockSheet(k); toast(state.careshop[k] ? 'On your dm list' : 'Taken off the dm list'); },
   'dm-bought': (el) => {

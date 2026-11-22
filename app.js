@@ -1365,7 +1365,7 @@ const PROFILE_ACTIONS = {
    Data (all synced, see sync-core.js):
    - state.hprofile: { sex, age, height, activity, goalWeight, rate, stepGoal, sleepGoal (min), waterGoal (ml) }
    - state.hlog: { "YYYY-MM-DD|field": number }  fields: weight (kg), steps, sleep (min), water (ml), MEASURES (cm),
-     COMP (bodyfat %, muscle kg, visceral rating)
+     COMP (bodyfat %, muscle kg, visceral rating), COMP_MORE (the rest of a scale report)
    - state.meals: [{ id, day, at, name, kcal, protein? }]
    - state.foods: { id: { name, kcal, protein? } }   saved foods */
 // Body measurements in cm, in pairs so left and right sit side by side. 'arm' and 'thigh' are the original
@@ -1385,7 +1385,22 @@ const COMP = [
   ['muscle', 'Muscle mass', 'kg', 10, 200, 0.1, false],
   ['visceral', 'Visceral fat', '', 1, 60, 1, true],
 ];
-const compFmt = (f, v) => (f === 'visceral' ? String(Math.round(v)) : kg(v));
+/* The rest of a smart scale's report (Renpho and similar): same shape, shown under "More from the scale". */
+const COMP_MORE = [
+  ['bmi', 'BMI', '', 10, 80, 0.1, true],
+  ['ffm', 'Fat-free weight', 'kg', 20, 250, 0.1, false],
+  ['subfat', 'Subcutaneous fat', '%', 2, 60, 0.1, true],
+  ['bodywater', 'Body water', '%', 20, 80, 0.1, false],
+  ['skeletal', 'Skeletal muscle', '%', 10, 70, 0.1, false],
+  ['bone', 'Bone mass', 'kg', 0.5, 10, 0.1, false],
+  ['protein', 'Protein', '%', 5, 35, 0.1, false],
+  ['bmr', 'BMR', 'kcal', 500, 5000, 1, false],
+  ['metage', 'Metabolic age', 'yr', 10, 100, 1, true],
+];
+const COMP_INT = new Set(['visceral', 'bmr', 'metage']);
+const COMP_LIMITS = { weight: [30, 350], ...Object.fromEntries([...COMP, ...COMP_MORE].map(([f, , , min, max]) => [f, [min, max]])) };
+const COMP_LABEL = { weight: 'Weight', ...Object.fromEntries([...COMP, ...COMP_MORE].map(([f, label]) => [f, label])) };
+const compFmt = (f, v) => (COMP_INT.has(f) ? String(Math.round(v)) : kg(v));
 const ACTIVITY = [
   [1.2, 'Mostly sitting, little exercise'],
   [1.375, 'Light: exercise 1–3 days a week'],
@@ -1739,7 +1754,7 @@ function compCard(day, logAttr = '') {
   const fatOn = (r) => { if (!r) return null; const w = hget(r.day, 'weight') ?? latestOn('weight', r.day)?.v; return w ? { day: r.day, v: (w * r.v) / 100 } : null; };
   const fm = fatOn(bf), fm0 = fatOn(firstOf('bodyfat'));
   const any = bf || mu || vi;
-  const first = COMP.map(([f]) => firstOf(f)?.day).filter(Boolean).sort()[0];
+  const first = [...COMP, ...COMP_MORE].map(([f]) => firstOf(f)?.day).filter(Boolean).sort()[0];
   return `
     <section class="card mt-4" aria-labelledby="compH">
       <div class="row-between"><div><h2 class="h3" id="compH">Body fat &amp; muscle</h2><div class="small muted">${first ? `Latest · change since first reading (${esc(fmtShort(fromKey(first)).replace(/^\w+ /, ''))})` : 'From your smart scale'}</div></div><span class="row gap-2">${any ? '<button class="btn subtle sm" data-action="comp-history">Trends</button>' : ''}<button class="btn subtle sm" data-action="comp-log" ${logAttr}>Log</button></span></div>
@@ -1749,6 +1764,7 @@ function compCard(day, logAttr = '') {
         ${tile('Fat mass', fm, fm0, kg, 'kg', true)}
         ${tile('Muscle mass', mu, firstOf('muscle'), kg, 'kg', false)}
         ${tile('Visceral fat', vi, firstOf('visceral'), (v) => String(Math.round(v)), '', true)}
+        ${COMP_MORE.map(([f, label, unit, , , , lower]) => { const l = latestOn(f, day); return l ? tile(label, l, firstOf(f), (v) => compFmt(f, v), unit, lower) : ''; }).join('')}
       </div>
       ${compChart()}
       <p class="small muted m-0 mt-3">${vi && vi.v > 12 ? 'Visceral fat (around the organs) is 1–12 on most scales when healthy; it usually falls first with a steady deficit and daily walking. ' : ''}Weigh in the morning, before eating or drinking, and watch the trend: the scale's estimates swing with water.</p>`
@@ -2116,27 +2132,56 @@ async function startScan() {
 /** Halal check from Open Food Facts: a halal label wins; otherwise look for pork, gelatine, alcohol and other
     usually-haram ingredients in the German or English ingredient list. Returns { level: 'halal'|'not'|'check', text }. */
 const HARAM = [
-  [/schwein|\bpork\b|\bpig\b|speck|bacon|schinken|\bham\b|salami|schmalz|\blard\b/i, 'pork'],
+  [/schwein|\bpork\b|\bpig\b|speck|bacon|schinken|\bham\b|salami|schmalz|\blard\b|\bporc\b/i, 'pork'],
   [/gelatine|gelatin|\be ?441\b/i, 'gelatine'],
-  [/alkohol|alcohol|\bwein\b|\bwine\b|\brum\b|likör|liqueur|\bbier\b|\bbeer\b|brandy|weinbrand|ethanol/i, 'alcohol'],
+  [/alkohol|alcohol|\bwein\b|\bwine\b|\brum\b|likör|liqueur|\bbier\b|\bbeer\b|brandy|weinbrand|ethanol|whisk(e)?y|\bsekt\b|\bsake\b|\bmirin\b/i, 'alcohol'],
   [/karmin|carmine|cochenille|cochineal|\be ?120\b/i, 'carmine (E120)'],
+  [/\bblut|\bblood\b/i, 'blood'],
+];
+/* Ingredients a label can't settle: each can be plant, microbial or animal, or made with alcohol.
+   [pattern, what to call it, settled by a vegetarian/vegan label?] */
+const HALAL_DOUBT = [
+  [/rind(er|fleisch)?\b|\bbeef\b|\bkalb|\bveal\b|hähnchen|hühn|\bhuhn\b|chicken|\bpute|turkey|\blamm|\blamb\b|\bente\b|\bduck\b|geflügel|poultry|fleisch|\bmeat\b|\btalg\b|tallow|tierisches fett|animal fat/i, 'meat or animal fat (halal only if slaughtered halal)', true],
+  [/\blab\b|rennet|käse|cheese|parmesan|cheddar|gouda|mozzarella/i, 'cheese (rennet can come from calves)', true],
+  [/molke|whey/i, 'whey (a by-product of cheese making)', true],
+  [/\be ?47[0-9][a-f]?\b|mono- ?und diglyceride|mono- ?and diglycerides|\be ?48[1-3]\b|\be ?49[1-5]\b/i, 'emulsifier E470–E495 (plant or animal fat)', true],
+  [/\be ?422\b|glycerin|glycerol/i, 'glycerine E422 (plant or animal fat)', true],
+  [/\be ?57[02]\b|stearinsäure|stearic acid|magnesiumstearat|magnesium stearate/i, 'stearate E570/E572 (plant or animal fat)', true],
+  [/\be ?920\b|cystein/i, 'L-cysteine E920 (can come from feathers or hair)', true],
+  [/\be ?542\b/i, 'bone phosphate E542', true],
+  [/\be ?6(27|31|35)\b|inosinat|inosinate|guanylat|guanylate/i, 'flavour enhancer E627/E631/E635 (can come from meat or fish)', true],
+  [/\be ?904\b|schellack|shellac/i, 'shellac E904 (from insects; opinions differ)', true],
+  [/aroma|flavou?r/i, 'flavourings (source not stated; alcohol is often the carrier)', false],
+  [/vanilleextrakt|vanilla extract/i, 'vanilla extract (made with alcohol)', false],
 ];
 function halalCheck(pr) {
   const labels = (pr.labels_tags || []).join(' ');
   if (/halal/i.test(labels)) return { level: 'halal', text: 'Halal certified (label on the pack).' };
-  const ing = [pr.ingredients_text_de, pr.ingredients_text, pr.ingredients_text_en].filter(Boolean).join(' ');
-  if (!ing) return { level: 'check', text: 'No ingredient list in the database: check the pack for a halal logo.' };
+  // The ingredient list, plus the E-numbers Open Food Facts recognised in it (a label may spell them out as names).
+  const adds = (pr.additives_tags || []).map((t) => String(t).replace(/^\w+:/, '').toUpperCase()).join(' ');
+  const text = [pr.ingredients_text_de, pr.ingredients_text, pr.ingredients_text_en].filter(Boolean).join(' ');
+  if (!text) return { level: 'check', text: 'No ingredient list in the database: read the pack and look for a halal logo.' };
+  const ing = `${text} ${adds}`;
   const found = HARAM.filter(([re]) => re.test(ing)).map(([, w]) => w);
   if (found.length) return { level: 'not', text: `Not halal: contains ${found.join(', ')}.` };
-  const doubt = /\blab\b|rennet|\be ?471\b|mono- und diglyceride|aroma|flavou?ring/i.test(ing);
-  return { level: 'check', text: `No pork, gelatine or alcohol in the ingredients.${doubt ? ' It has rennet, E471 or flavourings, which can be animal-based: look for a halal or "vegetarisch" logo.' : ' Look for a halal logo to be sure.'}` };
+  const analysis = (pr.ingredients_analysis_tags || []).join(' ');
+  const vegLabel = /\b(en:)?(vegan|vegetarian|european-vegetarian-union[\w-]*)\b/i.test(labels);
+  const veg = vegLabel || /\ben:(vegan|vegetarian)\b/.test(analysis);
+  const doubts = HALAL_DOUBT.filter(([re, , settled]) => re.test(ing) && !(veg && settled)).map(([, w]) => w);
+  const base = 'No pork, gelatine, alcohol, carmine or blood in the ingredient list.';
+  if (!doubts.length) {
+    return veg
+      ? { level: 'ok', text: `${base} ${vegLabel ? 'Labelled vegetarian or vegan' : 'All ingredients are vegetarian'}, so nothing here comes from an animal. Not certified.` }
+      : { level: 'ok', text: `${base} Nothing doubtful found either. Not certified.` };
+  }
+  return { level: 'check', text: `${base}${veg ? ` ${vegLabel ? 'Labelled vegetarian or vegan' : 'All ingredients are vegetarian'}, so no animal fat or rennet.` : ''} Can't tell from the label: ${doubts.join('; ')}. ${veg || doubts.some((d) => d.startsWith('meat')) ? 'Only a halal logo on the pack settles it.' : 'A halal or vegetarian logo on the pack settles it.'}` };
 }
 async function lookupBarcode(raw) {
   const code = String(raw || '').replace(/\D/g, '');
   if (code.length < 8) { scanMsg('Enter the 8 or 13 digits under the barcode.'); $('#scanCode')?.focus(); return; }
   scanMsg('Looking it up…');
   try {
-    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_de,product_name_en,brands,nutriments,serving_quantity,labels_tags,ingredients_text,ingredients_text_de,ingredients_text_en`);
+    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_de,product_name_en,brands,nutriments,serving_quantity,labels_tags,additives_tags,ingredients_analysis_tags,ingredients_text,ingredients_text_de,ingredients_text_en`);
     const j = await r.json();
     const pr = j && j.status === 1 ? j.product : null;
     if (!pr) { scanMsg('Not in Open Food Facts yet. Add it under "Other food" with the values from the label.'); return; }
@@ -2234,8 +2279,8 @@ function foodSheet() {
     set('#fGrams', v.grams); set('#fKcal', Math.round(v.kcal)); set('#fProt', v.protein);
     for (const k of NUT_KEYS) set(`#fN-${k}`, v[k]);
     const h = v.halal, note = document.createElement('p');
-    note.className = `halal-note ${h.level}`; note.id = 'halalNote'; note.setAttribute('role', 'note');
-    note.innerHTML = `${icon(h.level === 'not' ? 'x' : h.level === 'halal' ? 'check' : 'info')}<span><b>${h.level === 'halal' ? 'Halal' : h.level === 'not' ? 'Not halal' : 'Halal: check'}</b> · ${esc(h.text.replace(/^(Halal certified|Not halal: )/, (m) => (m.startsWith('Not') ? '' : m)))}</span>`;
+    note.className = `halal-note ${h.level === 'ok' ? 'halal' : h.level}`; note.id = 'halalNote'; note.setAttribute('role', 'note');
+    note.innerHTML = `${icon(h.level === 'not' ? 'x' : h.level === 'check' ? 'info' : 'check')}<span><b>${h.level === 'halal' ? 'Halal' : h.level === 'ok' ? 'Halal: looks fine' : h.level === 'not' ? 'Not halal' : 'Halal: check'}</b> · ${esc(h.text.replace(/^(Halal certified|Not halal: )/, (m) => (m.startsWith('Not') ? '' : m)))}</span>`;
     $('#fName')?.closest('.field')?.before(note);
     $('#fGrams').focus(); $('#fGrams').select?.();
     toast(`Found: ${v.name}. ${h.level === 'not' ? h.text : 'Check the amount you ate, then add.'}`);
@@ -2397,16 +2442,16 @@ function measureHistorySheet() {
 /** Every date with a scale reading, newest first, each one editable. */
 function compHistorySheet() {
   const by = {};
-  for (const [f] of COMP) for (const { day, v } of series(f)) (by[day] = by[day] || []).push([f, v]);
+  for (const [f] of [...COMP, ...COMP_MORE]) for (const { day, v } of series(f)) (by[day] = by[day] || []).push([f, v]);
   const rows = Object.keys(by).sort().reverse();
-  const short = { bodyfat: 'Fat', muscle: 'Muscle', visceral: 'Visceral' };
+  const short = { bodyfat: 'Fat', muscle: 'Muscle', visceral: 'Visceral', bmi: 'BMI', ffm: 'Fat-free', subfat: 'Subcut.', bodywater: 'Water', skeletal: 'Skeletal', bone: 'Bone', protein: 'Protein', bmr: 'BMR', metage: 'Met. age' };
   openSheet('Body fat & muscle trends', `
     ${compChart()}
     <p class="muted small m-0 mt-3">${rows.length} ${rows.length === 1 ? 'reading' : 'readings'}, newest first. Tap a date to change it.</p>
     <ul class="m-hist mt-3">${rows.map((day) => `
       <li><button class="m-hist-row" data-action="comp-edit" data-day="${day}">
         <span class="d">${esc(fmtShort(fromKey(day)))}${day.slice(0, 4) !== todayKey().slice(0, 4) ? ` ${day.slice(0, 4)}` : ''}</span>
-        <span class="vals">${COMP.filter(([f]) => by[day].some((x) => x[0] === f)).map(([f, , u]) => `<span class="chip sm">${short[f]} ${compFmt(f, by[day].find((x) => x[0] === f)[1])}${u === '%' ? '%' : u ? ` ${u}` : ''}</span>`).join('')}</span>
+        <span class="vals">${[...COMP, ...COMP_MORE].filter(([f]) => by[day].some((x) => x[0] === f)).map(([f, , u]) => `<span class="chip sm">${short[f]} ${compFmt(f, by[day].find((x) => x[0] === f)[1])}${u === '%' ? '%' : u ? ` ${u}` : ''}</span>`).join('')}</span>
         ${icon('chevR')}
       </button></li>`).join('')}</ul>
     <button class="btn ghost block mt-4" data-action="comp-edit" data-day="${todayKey()}">${icon('plus')} Add for another date</button>`);
@@ -2430,6 +2475,11 @@ function compSheet(dayArg, scan) {
       ${COMP.map(([f, label, unit, min, max, step]) => { const l = latestOn(f, day); return field(f, label, unit, min, max, step, got(f), l ? compFmt(f, l.v) : null); }).join('')}
     </div>
     <p class="muted small mt-3 m-0">Muscle mass is the scale's "Muscle mass" (not skeletal muscle). Visceral fat is a rating, usually 1–59.</p>
+    <details class="mt-3"${COMP_MORE.some(([f]) => got(f) != null) ? ' open' : ''}><summary class="small">More from the scale</summary>
+      <div class="grid2">
+        ${COMP_MORE.map(([f, label, unit, min, max, step]) => { const l = latestOn(f, day); return field(f, label, unit, min, max, step, got(f), l ? compFmt(f, l.v) : null); }).join('')}
+      </div>
+    </details>
     <button class="btn block lg mt-5" data-action="comp-save">Save</button>
     <button class="link-btn small mt-3" data-action="comp-history">See all dates</button>`);
 }
@@ -2442,14 +2492,24 @@ const SCALE_LABELS = [
   ['bodyfat', /^body\s*fat\b/i, /mass|weight/i],
   ['muscle', /^muscle\s*mass\b/i, null],
   ['visceral', /^visceral\s*fat\b/i, null],
+  ['bmi', /^bmi\b/i, null],
+  ['ffm', /^fat[-\s]?free\s*(body\s*)?(weight|mass)\b/i, null],
+  ['subfat', /^subcutaneous\s*fat\b/i, null],
+  ['bodywater', /^body\s*water\b/i, null],
+  ['skeletal', /^skeletal\s*muscle\b/i, null],
+  ['bone', /^bone\s*mass\b/i, null],
+  ['protein', /^protein\b/i, null],
+  ['bmr', /^(bmr\b|basal\s*metabol\w*)/i, null],
+  ['metage', /^(metabolic|body)\s*age\b/i, null],
 ];
-const SCALE_LIMITS = { weight: [30, 350], bodyfat: [3, 70], muscle: [10, 200], visceral: [1, 60] };
+const SCALE_LIMITS = COMP_LIMITS;
 /** First number in a piece of report text, in kg when the text gives pounds. */
 function scaleNum(text, f) {
-  const m = /(\d{1,3})(?:[.,]\s?(\d{1,2}))?(?!\d)/.exec(text);
+  if (f === 'bmr') text = text.replace(/(\d)[.,](\d{3})(?!\d)/, '$1$2');   // 1,957 kcal
+  const m = /(\d{1,4})(?:[.,]\s?(\d{1,2}))?(?!\d)/.exec(text);
   if (!m) return null;
   let v = parseFloat(m[1] + (m[2] ? '.' + m[2] : ''));
-  if ((f === 'weight' || f === 'muscle') && /\d\s*lbs?\b/i.test(text)) v *= 0.45359237;
+  if (['weight', 'muscle', 'ffm', 'bone'].includes(f) && /\d\s*lbs?\b/i.test(text)) v *= 0.45359237;
   return v;
 }
 /** The date printed on the report, as a day key; today when there is none or it lies in the future. */
@@ -2481,7 +2541,7 @@ function readScaleReport(lines) {
         const under = L.filter((l) => l !== hit && l.y > hit.cy && l.y < hit.y + hit.h * 4 && l.x < hit.r && l.r > hit.x && /^\s*\d/.test(l.t)).sort((a, b) => a.y - b.y);
         v = under.length ? scaleNum(under[0].t, f) : null;
       }
-      if (ok(f, v)) { vals[f] = f === 'visceral' ? Math.round(v) : Math.round(v * 10) / 10; break; }
+      if (ok(f, v)) { vals[f] = COMP_INT.has(f) ? Math.round(v) : Math.round(v * 10) / 10; break; }
     }
   }
   return { day: scaleDay(L.map((l) => l.t).join('\n')), vals };
@@ -2495,6 +2555,7 @@ async function shareCheck() {
   if (r.error || !Array.isArray(r.lines)) { toast("Couldn't open that image. Try sharing it again."); return; }
   const scan = readScaleReport(r.lines);
   if (!Object.keys(scan.vals).length) { toast("Couldn't find weight, body fat or muscle in that image"); return; }
+  if (['weight', 'bodyfat', 'muscle', 'visceral'].every((f) => scan.vals[f] == null) && Object.keys(scan.vals).length < 2) { toast("Couldn't find weight, body fat or muscle in that image"); return; }
   compSheet(scan.day, scan.vals);
 }
 
@@ -2684,13 +2745,13 @@ const TRACK_ACTIONS = {
   'comp-edit': (el) => compSheet(el.dataset.day),
   'comp-save': () => {
     const day = compDay || tKey();
-    const lim = { weight: [30, 350], bodyfat: [3, 70], muscle: [10, 200], visceral: [1, 60] };
+    const lim = COMP_LIMITS;
     const vals = {};
     for (const inp of $$('[data-comp]')) {
       const f = inp.dataset.comp, v = parseNum(inp.value);
       if (inp.value.trim() === '') { vals[f] = null; continue; }
-      if (v == null || v < lim[f][0] || v > lim[f][1]) { toast(`${f === 'bodyfat' ? 'Body fat' : f === 'muscle' ? 'Muscle mass' : f === 'visceral' ? 'Visceral fat' : 'Weight'} should be between ${lim[f][0]} and ${lim[f][1]}`); inp.focus(); return; }
-      vals[f] = f === 'visceral' ? Math.round(v) : Math.round(v * 10) / 10;
+      if (v == null || v < lim[f][0] || v > lim[f][1]) { toast(`${COMP_LABEL[f]} should be between ${lim[f][0]} and ${lim[f][1]}`); inp.closest('details')?.setAttribute('open', ''); inp.focus(); return; }
+      vals[f] = COMP_INT.has(f) ? Math.round(v) : Math.round(v * 10) / 10;
     }
     let n = 0;
     for (const [f, v] of Object.entries(vals)) if (hget(day, f) !== (v ?? undefined)) { hset(day, f, v); n++; }

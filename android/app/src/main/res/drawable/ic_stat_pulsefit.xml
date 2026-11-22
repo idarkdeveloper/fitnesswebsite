@@ -11,8 +11,8 @@
         <path android:strokeColor="#FFFFFFFF" android:strokeWidth="18" android:strokeLineCap="round" android:strokeLineJoin="round"
             android:pathData="M124 204C90 158 62 126 62 92C62 66 80 50 102 50C122 50 140 64 140 82C140 64 158 50 178 50C200 50 218 66 218 92C218 126 190 158 156 204" />
         <path android:strokeColor="#FFFFFFFF" android:strokeWidth="18" android:strokeLineCap="round" android:strokeLineJoin="round"
-            android:pathData="M8 120H110L124 94L140 128L156 94L170 120H272" />
+            android:pathData="M8 132H110L124 106L140 140L156 106L170 132H272" />
         <path android:strokeColor="#FFFFFFFF" android:strokeWidth="18" android:strokeLineCap="round"
-            android:pathData="M22 94V146M38 104V136M258 94V146M242 104V136" />
+            android:pathData="M22 106V158M38 116V148M258 106V158M242 116V148" />
     </group>
 </vector>

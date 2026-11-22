@@ -20,6 +20,8 @@ const ICONS = {
   home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
   run: '<circle cx="14" cy="4.5" r="2"/><path d="M6 21l3.5-5.5 3 2V22M9.5 15.5 11 9.5l4 2.5 3.5-.5M11 9.5 8 10.5 6.5 13.5"/>',
   activity: 'M3 12h4l3-8 4 16 3-8h4',
+  meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 6s1 4 3 4v8',
+  care: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
   award: '<circle cx="12" cy="8.5" r="5.5"/><path d="M8.6 13 7 21.5l5-2.8 5 2.8L15.4 13"/>',
   user: '<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3.2"/><path d="M5.8 18.4c1.5-2.1 3.7-3.2 6.2-3.2s4.7 1.1 6.2 3.2"/>',
   chevR: 'M9 5.5l6.5 6.5L9 18.5',
@@ -547,10 +549,13 @@ const sheetOpen = () => !!$('#layer dialog.sheet[open]');
 /* ---------------------------------------------------------------
    7. Router
    --------------------------------------------------------------- */
+/* Five sections (the owner's sketch): Today is the dashboard; Exercise holds exercises + progress,
+   Meal holds the plan, food log, water and groceries, Care holds skin, hair and cleaning routines. */
 const NAV = [
   { id: 'today', label: 'Today', icon: 'home' },
-  { id: 'exercises', label: 'Exercises', icon: 'run' },
-  { id: 'progress', label: 'Progress', icon: 'activity' },
+  { id: 'exercises', label: 'Exercise', icon: 'run' },
+  { id: 'meals', label: 'Meal', icon: 'meal' },
+  { id: 'care', label: 'Care', icon: 'care' },
   { id: 'profile', label: 'Profile', icon: 'user' },
 ];
 
@@ -562,7 +567,7 @@ function parseRoute() {
 }
 
 function renderNav(active) {
-  const section = { movements: 'exercises', category: 'exercises', exercise: 'exercises', workout: 'today', home: 'today', track: 'today', plan: 'today', activity: 'progress', challenges: 'progress' }[active] || active;
+  const section = { movements: 'exercises', category: 'exercises', exercise: 'exercises', progress: 'exercises', activity: 'exercises', challenges: 'exercises', workout: 'today', home: 'today', track: 'today', plan: 'meals' }[active] || active;
   const html = NAV.map((n) => `
     <a class="tab" href="#/${n.id}" ${section === n.id ? 'aria-current="page"' : ''}>${icon(n.icon)}<span>${n.label}</span></a>`).join('');
   $$('[data-nav]').forEach((el) => { el.innerHTML = html; });
@@ -869,12 +874,21 @@ VIEWS.today = () => {
     ${careRow(tk)}
     ${watchLine(tk)}`;
 };
-VIEWS.exercises = (...a) => VIEWS.movements(...a);
+/* Exercise section: two tabs, Exercises (the picture grid) and Progress (strength, body, steps & sleep, workouts). */
+let exSection = 'list';
+const exSectionTabs = () => `<div class="segmented mt-3" role="tablist" aria-label="Exercise section" style="--n:2;--i:${exSection === 'list' ? 0 : 1}">
+    ${[['list', 'Exercises'], ['progress', 'Progress']].map(([k, l]) => `<button role="tab" aria-selected="${exSection === k}" data-action="ex-section" data-tab="${k}">${l}</button>`).join('')}
+  </div>`;
+VIEWS.exercises = (r) => {
+  if (r && r.arg === 'progress') exSection = 'progress';
+  else if (r && r.arg === 'list') exSection = 'list';
+  return `<h1 class="h1 m-0">Exercise</h1>${exSectionTabs()}<div role="tabpanel">${exSection === 'progress' ? progressPanel() : VIEWS.movements(r, true)}</div>`;
+};
 VIEWS.home = VIEWS.today;
 
 /* ---------- Exercises: status list (#/exercises; the old #/movements still works) ---------- */
 let movFilter = 'all';
-VIEWS.movements = () => {
+VIEWS.movements = (r, inSection = false) => {
   const shown = CATS.filter((c) => movFilter === 'all' || (movFilter === 'progress' ? isStarted(c.id) : !isStarted(c.id)));
   const card = (c) => {
     const started = isStarted(c.id), cur = currentIdx(c.id), p = c.progressions[cur], n = c.progressions.length;
@@ -890,8 +904,8 @@ VIEWS.movements = () => {
   const rows = group('With dumbbells', db) + group('Bodyweight', bw);
   const chip = (id, label) => `<button class="fchip ${movFilter === id ? 'on' : ''}" data-action="mov-filter" data-f="${id}" aria-pressed="${movFilter === id}">${label}</button>`;
   return `
-    <h1 class="h1 m-0">Exercises</h1>
-    <p class="muted m-0 mt-1">${CATS.length} exercises · ${TOTAL_PROGS} progressions · ${masteredCount()} mastered</p>
+    ${inSection ? '' : '<h1 class="h1 m-0">Exercises</h1>'}
+    <p class="muted m-0 mt-3">${CATS.length} exercises · ${TOTAL_PROGS} progressions · ${masteredCount()} mastered</p>
     <div class="row gap-2 mt-4 wrap">${chip('all', 'All')}${chip('progress', 'In progress')}${chip('new', 'Not started')}</div>
     ${shown.length ? rows : `<p class="muted mt-4">${movFilter === 'progress' ? 'Nothing in progress yet. Pick an exercise and start with progression 1.' : 'You have started every exercise.'}</p>`}`;
 };
@@ -979,7 +993,7 @@ VIEWS.exercise = (r) => {
         <div class="eyebrow">${isCurrent ? 'Current progression' : `Progression ${idx + 1}`}</div>
         <h1>${esc(p.name)}</h1>
       </div>
-      ${videoFor(p.id) ? `<button class="glass-btn watch-btn" data-action="video" data-prog="${p.id}">${icon('play', 'class="icon-sm"')} Watch how</button>` : ''}
+      ${videoFor(p.id) || clipFor(p.id) ? `<button class="glass-btn watch-btn" data-action="video" data-prog="${p.id}">${icon('play', 'class="icon-sm"')} Watch how</button>` : ''}
     </div>
     <section class="card lvl-card mt-4" aria-label="Levels">
       <div class="row-between"><h2 class="h3">${mastered ? 'Mastered' : `Level ${lvl} of 3`}</h2>${mastered ? icon('trophy', 'class="c-warn icon-md"') : `<span class="small muted">Target <b class="c-text">${targetText(p, lvl)}</b></span>`}</div>
@@ -1009,6 +1023,8 @@ VIEWS.exercise = (r) => {
 /** YouTube id for a progression: your own choice first, else the one picked in videos.js. */
 /** The suggested video for a progression; every weight step of a dumbbell exercise shares its exercise's video. */
 const stockVideo = (progId) => { const V = window.PF_VIDEOS || {}; return V[progId] || V[(/^db-[a-z]+/.exec(progId) || [])[0]] || null; };
+/** PulseFit's own short clips (video/<exercise>.mp4, made in Figma Weave from the exercise photo), shared by every step. */
+const clipFor = (progId) => { const C = window.PF_CLIPS || {}; return C[progId] || C[(/^db-[a-z]+/.exec(progId) || [])[0]] || null; };
 const videoFor = (progId) => (state.videos && state.videos[progId]) || (stockVideo(progId) && stockVideo(progId)[0]) || null;
 /** Accept a YouTube link (watch, youtu.be, shorts, embed) or a bare 11-character id. */
 function youtubeId(text) {
@@ -1017,8 +1033,16 @@ function youtubeId(text) {
   const m = t.match(/(?:youtu\.be\/|[?&]v=|\/shorts\/|\/embed\/|\/live\/)([\w-]{11})/);
   return m ? m[1] : null;
 }
-function videoSheet(progId, editing = false) {
+function videoSheet(progId, editing = false, yt = false) {
   const { p } = PROG[progId];
+  const clip = clipFor(progId);
+  if (clip && !editing && !yt) {
+    const hasYt = !!videoFor(progId);
+    return openSheet(p.name, `
+      <div class="video-frame clip"><video src="${clip}" autoplay loop muted playsinline controls preload="metadata" aria-label="${esc(p.name)}: short demonstration, no sound"></video></div>
+      <p class="small muted m-0 mt-2">PulseFit demo clip (AI-generated). Copy the slow, controlled tempo; the written cues are the reference for exact form.</p>
+      ${hasYt ? `<button class="btn ghost block mt-4" data-action="video-yt" data-prog="${progId}">${icon('play')} Full tutorial (YouTube)</button>` : ''}`);
+  }
   const id = videoFor(progId);
   const own = !!(state.videos && state.videos[progId]);
   const meta = !own && stockVideo(progId);
@@ -1035,6 +1059,7 @@ function videoSheet(progId, editing = false) {
 }
 const VIDEO_ACTIONS = {
   'video': (el) => videoSheet(el.dataset.prog),
+  'video-yt': (el) => videoSheet(el.dataset.prog, false, true),
   'video-edit': (el) => { videoSheet(el.dataset.prog, true); setTimeout(() => $('#vidLink')?.focus(), 50); },
   'video-save': (el) => {
     const id = youtubeId($('#vidLink').value);
@@ -1048,7 +1073,7 @@ const VIDEO_ACTIONS = {
 
 /* ---------- Progress (Activity + Challenges + Body) ---------- */
 let progTab = 'strength';
-const PROG_TABS = ['strength', 'body', 'history'];
+const PROG_TABS = ['strength', 'body', 'activity', 'history'];
 
 function historyRow(w) {
   const d = new Date(w.at);
@@ -1160,11 +1185,11 @@ function progressHistory() {
     <div class="card list-card">${g.items.map(historyRow).join('')}</div>`).join('');
 }
 
-VIEWS.progress = () => {
+VIEWS.progress = () => { exSection = 'progress'; return VIEWS.exercises(); };
+function progressPanel() {
   const { current } = streakStats();
-  const body = progTab === 'body' ? progressBody() : progTab === 'history' ? progressHistory() : progressStrength();
+  const body = progTab === 'body' ? progressBody() : progTab === 'activity' ? trackHabits(todayKey()) : progTab === 'history' ? progressHistory() : progressStrength();
   return `
-    <h1 class="h1">Progress</h1>
     ${!state.workouts.length ? `
     <div class="card flat soft row gap-3 empty-start">${icon('flame', 'class="c-warn"')}<p class="grow m-0">No workouts yet. Your first one starts your streak.</p><a class="btn sm" href="#/today">Today's session</a></div>` : `
     <div class="stat3">
@@ -1172,12 +1197,12 @@ VIEWS.progress = () => {
       <button class="s3" data-action="prog-tab" data-tab="history"><span class="v">${state.workouts.length}</span><span class="k">Workouts</span></button>
       <button class="s3" data-action="prog-tab" data-tab="strength"><span class="v">${masteredCount()}<small>/${TOTAL_PROGS}</small></span><span class="k">Mastered</span></button>
     </div>`}
-    <div class="segmented" role="tablist" aria-label="Progress" style="--n:3;--i:${PROG_TABS.indexOf(progTab)}">
-      ${[['strength', 'Strength'], ['body', 'Body'], ['history', 'Workouts']].map(([id, label]) =>
+    <div class="segmented seg-sm mt-4" role="tablist" aria-label="Progress" style="--n:4;--i:${PROG_TABS.indexOf(progTab)}">
+      ${[['strength', 'Strength'], ['body', 'Body'], ['activity', 'Steps'], ['history', 'Workouts']].map(([id, label]) =>
         `<button role="tab" aria-selected="${progTab === id}" data-action="prog-tab" data-tab="${id}">${label}</button>`).join('')}
     </div>
     <div role="tabpanel">${body}</div>`;
-};
+}
 VIEWS.activity = VIEWS.progress;
 VIEWS.challenges = VIEWS.progress;
 
@@ -2708,6 +2733,39 @@ function careCard(day) {
       }).join('')}</ul>
     </section>`;
 }
+/* Care section (#/care/skin|hair|cleaning): every routine of that kind; today's ones first, with a done tick. */
+let careTab = 'skin';
+const CARE_KIND = (id) => (/hair|beard/.test(id) ? 'hair' : ['laundry', 'bathroom', 'kitchen'].includes(id) ? 'cleaning' : 'skin');
+VIEWS.care = (r) => {
+  if (r && ['skin', 'hair', 'cleaning'].includes(r.arg)) careTab = r.arg;
+  if (!window.PF_CARE) return '<p class="muted">Care routines are missing.</p>';
+  const day = todayKey(), R = window.PF_CARE.R, todayIds = careIds(day);
+  const ids = Object.keys(R).filter((id) => CARE_KIND(id) === careTab);
+  const now = ids.filter((id) => todayIds.includes(id)), other = ids.filter((id) => !todayIds.includes(id));
+  const row = (id, isToday) => {
+    const rr = R[id], done = isToday && careDone(day, id);
+    return `<li class="${done ? 'done' : ''}">
+      ${isToday ? `<button class="care-tick" data-action="care-tick" data-id="${id}" data-day="${day}" aria-pressed="${done}" aria-label="${esc(rr.title)}: ${done ? 'done, tap to undo' : 'mark done'}">${done ? icon('check') : ''}</button>` : ''}
+      <button class="care-row grow plain text-left" data-action="care-open" data-id="${id}" data-day="${day}">
+        <span class="grow care-txt"><span class="care-at">${esc(rr.at)}</span><b class="d-block">${esc(rr.title)}</b><span class="small muted">${esc(rr.sub)}</span></span>${icon('chevR')}
+      </button></li>`;
+  };
+  const n = now.filter((id) => careDone(day, id)).length;
+  const label = { skin: 'Skin', hair: 'Hair', cleaning: 'Cleaning' };
+  return `
+    <h1 class="h1 m-0">Care</h1>
+    <p class="muted m-0 mt-1">${shiftOn(day) ? `${SHIFTS[shiftOn(day)].name} today · timed around it` : 'Your routines, timed around your shifts'}</p>
+    <div class="segmented mt-3" role="tablist" aria-label="Care section" style="--n:3;--i:${['skin', 'hair', 'cleaning'].indexOf(careTab)}">
+      ${['skin', 'hair', 'cleaning'].map((k) => `<button role="tab" aria-selected="${careTab === k}" data-action="care-tab" data-tab="${k}">${label[k]}</button>`).join('')}
+    </div>
+    <div role="tabpanel">
+      <section class="card mt-4" aria-labelledby="careTodayH">
+        <div class="row-between"><h2 class="h3" id="careTodayH">Today</h2>${now.length ? `<span class="small muted">${n} of ${now.length} done</span>` : ''}</div>
+        ${now.length ? `<ul class="care-list mt-2">${now.map((id) => row(id, true)).join('')}</ul>` : `<p class="small muted m-0 mt-2">Nothing for ${label[careTab].toLowerCase()} today.${careTab === 'cleaning' ? ' Laundry and cleaning are on the weekend.' : ''}</p>`}
+      </section>
+      ${other.length ? `<h2 class="h2 mv-h">Other days</h2><ul class="care-list card list-card">${other.map((id) => row(id, false)).join('')}</ul>` : ''}
+    </div>`;
+};
 /** Today: one line for self-care: how many are done and what's next; the full list opens in a sheet. */
 function careRow(day) {
   const ids = careIds(day);
@@ -3076,6 +3134,24 @@ let planSel = null;   // selected day (0 = Monday) on the Week plan; null = toda
 let planWeek = null;  // 0 = this week, 1 = next week; null = automatic (Groceries shows next week from Friday)
 let planWkShown = 0;  // the week on screen, so switching tabs stays on it
 
+VIEWS.meals = (r) => {
+  if (r && r.arg === 'grocery') planTab = 'groceries';
+  else if (r && r.arg === 'plan') planTab = 'week';
+  return VIEWS.plan(r);
+};
+/** Meal section: water and today's food at the top of the Meals tab, then the week plan; Grocery is the shopping list. */
+function waterCard(day) {
+  const p = hp(), wg = p.waterGoal || HDEF.waterGoal, w = hget(day, 'water') || 0;
+  return `<section class="card water-card mt-4" aria-labelledby="waterH">
+      <div class="row gap-3">
+        <span class="water-ic" aria-hidden="true">${icon('care')}</span>
+        <button class="grow plain text-left" data-action="track-water" data-today="1" aria-label="Water: ${L1(w)} of ${L1(wg)} litres. Edit">
+          <span class="tile-k d-block" id="waterH">Water</span><span class="big-v">${L1(w)} <small>of ${L1(wg)} L</small></span></button>
+        <button class="pill-btn water-add" data-action="track-water-add" data-ml="250" data-today="1" aria-label="Add a glass of water, 250 millilitres">${icon('plus', 'class="icon-sm"')} 250 ml</button>
+      </div>
+      <span class="progress thin mt-3" aria-hidden="true"><span style="width:${Math.min(100, (w / wg) * 100)}%"></span></span>
+    </section>`;
+}
 VIEWS.plan = () => {
   if (!window.PF_MEALS) return '<p class="muted">Meal plan data is missing.</p>';
   const tk = todayKey();
@@ -3121,6 +3197,8 @@ VIEWS.plan = () => {
     const dislikeRow = `<button class="card flat soft shift-row mt-2" data-action="dislike-sheet">
         ${icon('x')}<span class="grow"><b>Foods you don't eat</b><span class="d-block small muted">${dl.length ? esc(dl.map((x) => DISLIKE_NAMES[x] || ingShort(x)).join(', ')) + ' · left out of the plan' : 'None. Tap to leave something out'}${hp().bread === 'durum' ? ' · Dürüm instead of roti' : ''}</span></span>${icon('chevR')}</button>`;
     body = `
+      ${wkOff ? '' : `${waterCard(tk)}${trackFoodCard(tk, T, 'today')}`}
+      <h2 class="h2 mv-h">Meal plan</h2>
       ${shiftRow}
       ${dislikeRow}
       <div class="pd-strip mt-4">${strip}</div>
@@ -3161,15 +3239,14 @@ VIEWS.plan = () => {
       <p class="muted small mt-4">${esc(window.PF_MEALS.PANTRY_NOTE)}</p>`;
   }
   return `
-    <a class="link-plain small" href="#/today">${icon('chevL', 'class="icon-sm"')} Today</a>
-    <h1 class="h1 mt-2 m-0">Meal plan</h1>
+    <h1 class="h1 m-0">Meal</h1>
     <p class="muted m-0 mt-1">Indian, from German shops · ${esc(short(start))} – ${esc(short(keyAdd(start, 6)))}</p>
-    <div class="chips wk-switch mt-3" role="group" aria-label="Which week">
-      ${['This week', 'Next week'].map((n, w) => `<button class="chip ${wkOff === w ? 'on' : ''}" aria-pressed="${wkOff === w}" data-action="plan-week" data-w="${w}">${n}${w && ti >= 4 ? ' · new' : ''}</button>`).join('')}
+    <div class="segmented mt-3" role="tablist" aria-label="Meal section" style="--n:2;--i:${planTab === 'week' ? 0 : 1}">
+      <button role="tab" aria-selected="${planTab === 'week'}" data-action="plan-tab" data-tab="week">Meals</button>
+      <button role="tab" aria-selected="${planTab === 'groceries'}" data-action="plan-tab" data-tab="groceries">Grocery · ${all.length}</button>
     </div>
-    <div class="segmented" role="tablist" aria-label="Meal plan" style="--n:2;--i:${planTab === 'week' ? 0 : 1}">
-      <button role="tab" aria-selected="${planTab === 'week'}" data-action="plan-tab" data-tab="week">Week plan</button>
-      <button role="tab" aria-selected="${planTab === 'groceries'}" data-action="plan-tab" data-tab="groceries">Groceries · ${all.length}</button>
+    <div class="chips wk-switch mt-3 mb-0" role="group" aria-label="Which week">
+      ${['This week', 'Next week'].map((n, w) => `<button class="chip ${wkOff === w ? 'on' : ''}" aria-pressed="${wkOff === w}" data-action="plan-week" data-w="${w}">${n}${w && ti >= 4 ? ' · new' : ''}</button>`).join('')}
     </div>
     <div role="tabpanel">${body}</div>
     <p class="muted small mt-5">General healthy-eating guidance, not medical advice. If you have diabetes, kidney problems or take regular medication, check the plan with your doctor or a dietitian first.</p>`;
@@ -3606,7 +3683,7 @@ const WORKOUT_ACTIONS = {
   },
   'wo-howto': (el) => {
     const { p } = PROG[el.dataset.prog];
-    openSheet(p.name, `${videoFor(p.id) ? `<button class="btn ghost block mb-4" data-action="video" data-prog="${p.id}">${icon('play')} Watch how (video)</button>` : ''}<ol class="num-steps">${(p.steps || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
+    openSheet(p.name, `${videoFor(p.id) || clipFor(p.id) ? `<button class="btn ghost block mb-4" data-action="video" data-prog="${p.id}">${icon('play')} Watch how (video)</button>` : ''}<ol class="num-steps">${(p.steps || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ol>
       <h3 class="h3 mt-4">Form cues</h3><ul class="cues">${(p.cues || []).map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`);
   },
 };
@@ -4494,6 +4571,8 @@ const ACTIONS = {
   'remove-set': (el) => { const e = draft.entries[el.dataset.e]; if (e.values.length > 1) { e.values.pop(); e.done.pop(); } saveDraft(); refreshDraftView(); },
   'hold-timer': (el) => toggleHold(Number(el.dataset.e)),
   'skip-rest': () => { stopRest(); if (parseRoute().name === 'workout') rerender(); },
+  'ex-section': (el) => { exSection = el.dataset.tab; history.replaceState(null, '', `#/exercises/${exSection}`); lastRouteKey = location.hash; rerender(); },
+  'care-tab': (el) => { careTab = el.dataset.tab; history.replaceState(null, '', `#/care/${careTab}`); lastRouteKey = location.hash; rerender(); },
   'ex-tab': (el) => {
     const from = EX_TABS.indexOf(exTab);
     exTab = el.dataset.tab;

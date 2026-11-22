@@ -2179,7 +2179,7 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .q-head { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-2); min-width: 0; }
 .q-ic { flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--r-sm); display: grid; place-items: center; background: color-mix(in srgb, var(--tone) 14%, transparent); color: var(--tone); }
 .q-ic svg { width: 22px; height: 22px; }
-.q-tile .k { color: var(--muted); font-weight: 600; overflow-wrap: anywhere; }
+.q-tile .k { color: var(--tone); font-weight: 700; overflow-wrap: anywhere; }
 .q-tile .bar { margin-top: auto; }
 .q-tile .bar > span, .q-tile .bar > span.accent { background: var(--tone); }
 .q-tile .sub b { font-weight: 600; }

@@ -1,6 +1,6 @@
-# PulseFit user research
+# Mizan user research
 
-PulseFit has one user: its owner. That changes the methods, not the need. The questions are still "does it
+Mizan has one user: its owner. That changes the methods, not the need. The questions are still "does it
 fit the day it lives in?" and "where does it get in the way?". Research here is a few minutes a day, run by
 the owner on his own phone, with the app's own logs as the behavioural record.
 
@@ -32,7 +32,7 @@ and anything that made you hesitate. Five of these over a few releases find most
 3. **Fix yesterday**: open Trends → Steps, change yesterday's value, come back.
 4. **Check the watch**: open the Galaxy Watch line on Today. Did last night's sleep arrive? Does the status make sense?
 5. **Start a workout** from Today and finish the warm-up.
-6. **Reminders**: Android Settings › Apps › PulseFit › Notifications. Are Workout, Water and Meal plan listed separately? Turn one off.
+6. **Reminders**: Android Settings › Apps › Mizan › Notifications. Are Workout, Water and Meal plan listed separately? Turn one off.
 7. **TalkBack** (Settings › Accessibility › TalkBack): touch the Water tile and the home-screen widget. Is what you hear useful?
 8. **Big text**: Settings › Display › Font size to the largest. Open Today, Progress and Meal plan. Anything cut off or sideways?
 

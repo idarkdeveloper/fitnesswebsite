@@ -1,4 +1,4 @@
-/* PulseFit: one short YouTube tutorial per progression, shown in the exercise page's "Watch how" sheet.
+/* Mizan: one short YouTube tutorial per progression, shown in the exercise page's "Watch how" sheet.
    [YouTube video id, title, channel]. Each one was checked as embeddable (YouTube oEmbed) when it was picked.
    Videos play in YouTube's privacy-enhanced player (youtube-nocookie.com) only after you tap play. */
 window.PF_VIDEOS = {
@@ -100,7 +100,7 @@ window.PF_VIDEOS = {
   "db-triceps": ["MO_03opCc0g", "How To: Laying Dumbbell Tricep Extension", "ScottHermanFitness"],
 };
 
-/* PulseFit's own demo clips, made in Figma Weave (Kling 4.0 Flash) from each exercise's photo, same athlete.
+/* Mizan's own demo clips, made in Figma Weave (Kling 4.0 Flash) from each exercise's photo, same athlete.
    Keyed by exercise id; every weight step uses its exercise's clip. */
 window.PF_CLIPS = {
   "db-goblet": "video/db-goblet.mp4",

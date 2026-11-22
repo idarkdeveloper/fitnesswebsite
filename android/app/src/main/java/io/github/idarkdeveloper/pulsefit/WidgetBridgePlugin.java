@@ -11,7 +11,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-/** Lets the PulseFit page update the home-screen widget and ask Android to pin one. */
+/** Lets the Mizan page update the home-screen widget and ask Android to pin one. */
 @CapacitorPlugin(name = "PulseFitWidget")
 public class WidgetBridgePlugin extends Plugin {
 

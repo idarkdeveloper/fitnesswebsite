@@ -30,7 +30,7 @@ public class StreakWidget extends AppWidgetProvider {
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
         boolean fresh = today.equals(p.getString("asOf", ""));
         int streak = p.getInt("streak", 0);
-        String status = fresh ? p.getString("status", "") : "Open PulseFit to see today";
+        String status = fresh ? p.getString("status", "") : "Open Mizan to see today";
         String detail = fresh ? p.getString("detail", "") : "";
         if (status.isEmpty()) status = streak == 0 ? "Start today" : "Keep it going";
 
@@ -40,7 +40,7 @@ public class StreakWidget extends AppWidgetProvider {
         v.setTextViewText(R.id.widget_detail, detail);
         v.setViewVisibility(R.id.widget_detail, detail.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
         // TalkBack reads the whole widget as one sentence instead of a bare number.
-        String said = "PulseFit: " + streak + (streak == 1 ? " day" : " days") + " streak. " + status + (detail.isEmpty() ? "" : ". " + detail);
+        String said = "Mizan: " + streak + (streak == 1 ? " day" : " days") + " streak. " + status + (detail.isEmpty() ? "" : ". " + detail);
         v.setContentDescription(R.id.widget_root, said);
 
         Intent open = new Intent(context, MainActivity.class);
@@ -50,7 +50,7 @@ public class StreakWidget extends AppWidgetProvider {
         return v;
     }
 
-    /** Redraw every PulseFit widget on the home screen. */
+    /** Redraw every Mizan widget on the home screen. */
     static void refreshAll(Context context) {
         AppWidgetManager m = AppWidgetManager.getInstance(context);
         int[] ids = m.getAppWidgetIds(new ComponentName(context, StreakWidget.class));

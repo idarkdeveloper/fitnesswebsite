@@ -1,5 +1,5 @@
 /* =============================================================
-   PulseFit — bodyweight progression trainer
+   Mizan — bodyweight progression trainer
    -------------------------------------------------------------
    Single-page app, no build step. Hash router + render functions.
    Content lives in data.js (window.PF_DATA); user progress lives
@@ -80,7 +80,7 @@ const ICONS = {
   chart: G('M108-255q-12-12-11.5-28.5T108-311l211-214q23-23 57-23t57 23l103 104 208-206h-64q-17 0-28.5-11.5T640-667q0-17 11.5-28.5T680-707h160q17 0 28.5 11.5T880-667v160q0 17-11.5 28.5T840-467q-17 0-28.5-11.5T800-507v-64L593-364q-23 23-57 23t-57-23L376-467 164-255q-11 11-28 11t-28-11Z'),   // trending_up
   scale: G('M480-480q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35Zm-74-106q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm60 0q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6Zm60 0q-6-6-6-14t6-14q6-6 14-6t14 6q6 6 6 14t-6 14q-6 6-14 6t-14-6ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z'),   // monitor_weight
   steps: G('M216-580q39 0 74 14t64 41l382 365h24q17 0 28.5-11.5T800-200q0-8-1.5-17T788-235L605-418l-71-214-74 18q-38 10-69-14t-31-63v-84l-28-14-154 206q-1 1-1 1.5t-1 1.5h40Zm0 80h-46q3 7 7.5 13t10.5 11l324 295q11 11 25 16t29 5h54L299-467q-17-17-38.5-25t-44.5-8ZM566-80q-30 0-57-11t-50-31L134-417q-46-42-51.5-103T114-631l154-206q17-23 45.5-30.5T368-861l28 14q21 11 32.5 30t11.5 42v84l74-19q30-8 58 7.5t38 44.5l65 196 170 170q20 20 27.5 43t7.5 49q0 50-35 85t-85 35H566Z'),   // steps
-  // Drawn for PulseFit (Google has no symbol for these exercises): 2px outline on a 24 grid.
+  // Drawn for Mizan (Google has no symbol for these exercises): 2px outline on a 24 grid.
   pushup: 'M2.5 19.5h19M4.5 9.5a1.8 1.8 0 1 0 0-.01M7 11l13 4.5M8.5 11.6V19',
   pullup: 'M3 4h18M7 4l2.2 6.5M17 4l-2.2 6.5M12 8.2a1.8 1.8 0 1 0 0-.01M9.2 10.5h5.6M12 10.5v6M12 16.5 10 21.5M12 16.5l2 5',
   squat: 'M10 3.8a1.8 1.8 0 1 0 0-.01M10.5 6.5 9 12.5h6.5l-1 6.5h3M10.3 8.5H17',
@@ -1074,7 +1074,7 @@ VIEWS.exercise = (r) => {
 /** YouTube id for a progression: your own choice first, else the one picked in videos.js. */
 /** The suggested video for a progression; every weight step of a dumbbell exercise shares its exercise's video. */
 const stockVideo = (progId) => { const V = window.PF_VIDEOS || {}; return V[progId] || V[(/^db-[a-z]+/.exec(progId) || [])[0]] || null; };
-/** PulseFit's own short clips (video/<exercise>.mp4, made in Figma Weave from the exercise photo), shared by every step. */
+/** Mizan's own short clips (video/<exercise>.mp4, made in Figma Weave from the exercise photo), shared by every step. */
 const clipFor = (progId) => { const C = window.PF_CLIPS || {}; return C[progId] || C[(/^db-[a-z]+/.exec(progId) || [])[0]] || null; };
 const videoFor = (progId) => (state.videos && state.videos[progId]) || (stockVideo(progId) && stockVideo(progId)[0]) || null;
 /** Accept a YouTube link (watch, youtu.be, shorts, embed) or a bare 11-character id. */
@@ -1091,7 +1091,7 @@ function videoSheet(progId, editing = false, yt = false) {
     const hasYt = !!videoFor(progId);
     return openSheet(p.name, `
       <div class="video-frame clip"><video src="${clip}" autoplay loop muted playsinline controls preload="metadata" aria-label="${esc(p.name)}: short demonstration, no sound"></video></div>
-      <p class="small muted m-0 mt-2">PulseFit demo clip (AI-generated). Copy the slow, controlled tempo; the written cues are the reference for exact form.</p>
+      <p class="small muted m-0 mt-2">Mizan demo clip (AI-generated). Copy the slow, controlled tempo; the written cues are the reference for exact form.</p>
       ${hasYt ? `<button class="btn ghost block mt-4" data-action="video-yt" data-prog="${progId}">${icon('play')} Full tutorial (YouTube)</button>` : ''}`);
   }
   const id = videoFor(progId);
@@ -1102,7 +1102,7 @@ function videoSheet(progId, editing = false, yt = false) {
   openSheet(p.name, `
     <div class="video-frame"><iframe src="${src}" title="${esc(p.name)} tutorial video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
     <p class="small muted m-0 mt-2">${meta ? `${esc(meta[1])} · ${esc(meta[2])}` : 'Your video'} · <a href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener">Open in YouTube</a></p>
-    <p class="small muted m-0 mt-2">Tutorials are by other creators; follow the form cues in PulseFit if anything differs.</p>
+    <p class="small muted m-0 mt-2">Tutorials are by other creators; follow the form cues in Mizan if anything differs.</p>
     ${editing ? `
       <div class="field mt-4"><label for="vidLink">YouTube link</label><input class="input" id="vidLink" inputmode="url" placeholder="https://youtu.be/…" autocomplete="off" /></div>
       <button class="btn block mt-2" data-action="video-save" data-prog="${progId}">Use this video</button>`
@@ -1337,13 +1337,13 @@ VIEWS.profile = () => {
 
     <h2 class="group-label">Watch &amp; health</h2>
     <div class="list-group">
-      ${row('health', 'Galaxy Watch &amp; Samsung Health', isNativeApp() ? (state.health && state.health.enabled ? `Health Connect · synced ${esc(ago(state.health.last))}` : 'Not connected') : 'Needs the PulseFit Android app')}
+      ${row('health', 'Galaxy Watch &amp; Samsung Health', isNativeApp() ? (state.health && state.health.enabled ? `Health Connect · synced ${esc(ago(state.health.last))}` : 'Not connected') : 'Needs the Mizan Android app')}
       ${isNativeApp() ? row('widget', 'Home screen widget', 'Day streak and today\'s session') : ''}
     </div>
 
     <h2 class="group-label">Data</h2>
     <div class="list-group">
-      ${window.PFInstall && !window.PFInstall.installed() ? row('install', 'Install PulseFit app', '', icon('download')) : ''}
+      ${window.PFInstall && !window.PFInstall.installed() ? row('install', 'Install Mizan app', '', icon('download')) : ''}
       ${window.PFSync && window.PFSync.recovery() ? row('sync-recovery', "Download this device's data from before the reset", `Saved ${esc(ago(window.PFSync.recovery().at))}`, icon('download')) : ''}
       ${row('data-sheet', 'Export or import data', '', icon('upload'))}
       ${row('help', 'Help &amp; privacy', '')}
@@ -1355,7 +1355,7 @@ VIEWS.profile = () => {
 const PROFILE_ACTIONS = {
   'account': accountSheet,
   'data-sheet': () => openSheet('Your data', `
-    <p class="muted m-0 mb-4">Download a backup file of everything in PulseFit, or load one back in.${window.PFSync && window.PFSync.signedIn() ? ' While signed in, importing merges the file into your synced data.' : ''}</p>
+    <p class="muted m-0 mb-4">Download a backup file of everything in Mizan, or load one back in.${window.PFSync && window.PFSync.signedIn() ? ' While signed in, importing merges the file into your synced data.' : ''}</p>
     <button class="btn block lg" data-action="export">${icon('download')} Export data</button>
     <button class="btn ghost block lg mt-3" data-action="import">${icon('upload')} Import data</button>`),
   'help': () => openSheet('Help & privacy', `
@@ -1539,7 +1539,7 @@ VIEWS.track = (r) => {
     ${needsProfile ? `
       <section class="card mt-4 callout">
         <h2 class="h3">Set your targets</h2>
-        <p class="muted small mt-2 mb-3">Add your age, height and goal weight, and PulseFit works out a daily calorie and protein target for you.</p>
+        <p class="muted small mt-2 mb-3">Add your age, height and goal weight, and Mizan works out a daily calorie and protein target for you.</p>
         <button class="btn ghost block" data-action="track-setup">Set up targets</button>
       </section>` : ''}
     <div class="segmented mt-4" role="tablist" aria-label="Daily log section" style="--n:3;--i:${['food', 'body', 'habits'].indexOf(trackTab)}">
@@ -2105,9 +2105,9 @@ async function startScan() {
     const old = isNativeApp() && appBuild && appBuild < CAMERA_BUILD;
     const help = $('#scanHelp');
     if (help) help.innerHTML = old
-      ? `<div class="note-box"><b>Update the app to scan with the camera.</b> This version of PulseFit can't use the camera yet. Install the latest build from <a href="https://github.com/idarkdeveloper/fitnesswebsite/releases/tag/android" target="_blank" rel="noopener">the PulseFit release page</a>, or type the number below.</div>`
+      ? `<div class="note-box"><b>Update the app to scan with the camera.</b> This version of Mizan can't use the camera yet. Install the latest build from <a href="https://github.com/idarkdeveloper/fitnesswebsite/releases/tag/android" target="_blank" rel="noopener">the Mizan release page</a>, or type the number below.</div>`
       : `<div class="note-box"><b>Camera blocked.</b> ${isNativeApp()
-          ? 'On your phone: <b>Settings → Apps → PulseFit → Permissions → Camera → Allow only while using the app</b>. Then come back and tap Try again.'
+          ? 'On your phone: <b>Settings → Apps → Mizan → Permissions → Camera → Allow only while using the app</b>. Then come back and tap Try again.'
           : 'Tap the lock or camera icon next to the address bar, allow the camera for this site, then tap Try again.'}
           ${denied ? '' : ' If another app is using the camera, close it first.'}</div>
         <button class="btn ghost block mt-2" data-action="scan-retry">${icon('refresh')} Try again</button>`;
@@ -2951,7 +2951,7 @@ function productsPanel() {
   if (!keys.length) {
     return `<section class="card mt-4 text-center empty-stock">
         <h2 class="h3">What you own</h2>
-        <p class="small muted mt-2 mb-3">Add your products once. Each time you tick a routine done, PulseFit takes what it uses off the pack, so you see how much is left and what to buy.</p>
+        <p class="small muted mt-2 mb-3">Add your products once. Each time you tick a routine done, Mizan takes what it uses off the pack, so you see how much is left and what to buy.</p>
         <button class="btn block" data-action="stock-add-all">${icon('plus')} Add all ${Object.keys(PRODUCTS()).length} from your dm orders</button>
         <button class="btn ghost block mt-2" data-action="stock-add">Pick products one by one</button>
       </section>`;
@@ -4384,7 +4384,7 @@ function routineDaysSheet() {
     <button class="btn block" data-action="close-sheet">Done</button>`);
 }
 
-/** Reminder sheets in the Android app: whether Android lets PulseFit post notifications. */
+/** Reminder sheets in the Android app: whether Android lets Mizan post notifications. */
 // App builds from 9 on declare the exact-alarm permission, so Android's "Alarms & reminders" switch works.
 const EXACT_ALARM_BUILD = 9;
 function nativeNotifLine() {
@@ -4392,9 +4392,9 @@ function nativeNotifLine() {
     const onTime = notifExact === 'granted'
       ? ' They arrive on time.'
       : ' Android may deliver them a few minutes late to save battery.';
-    return `Phone notifications are on. They arrive even when PulseFit is closed.${onTime}`;
+    return `Phone notifications are on. They arrive even when Mizan is closed.${onTime}`;
   }
-  if (notifPerm === 'denied') return 'Notifications are turned off for PulseFit. Turn them on in Android Settings → Apps → PulseFit → Notifications → Allow notifications.';
+  if (notifPerm === 'denied') return 'Notifications are turned off for Mizan. Turn them on in Android Settings → Apps → Mizan → Notifications → Allow notifications.';
   return 'Turning a reminder on asks Android to allow notifications.';
 }
 /** Test and on-time buttons under the reminder settings, in the app only. */
@@ -4402,7 +4402,7 @@ function nativeNotifButtons() {
   if (!isNativeApp()) return '';
   return `<button class="btn ghost block mt-3" data-action="notif-test">${icon('bell')} Send a test notification</button>
     ${notifPerm === 'granted' && notifExact !== 'granted' && appBuild >= EXACT_ALARM_BUILD ? `<button class="btn ghost block mt-2" data-action="notif-exact">${icon('timer')} Deliver reminders on time</button>
-    <p class="small muted mt-2 m-0">Opens Android's "Alarms and reminders" switch for PulseFit.</p>` : ''}`;
+    <p class="small muted mt-2 m-0">Opens Android's "Alarms and reminders" switch for Mizan.</p>` : ''}`;
 }
 let reminderSheetKind = 'daily';
 const refreshReminderSheet = () => (reminderSheetKind === 'plan' ? planReminderSheet() : reminderSheetKind === 'water' ? waterReminderSheet() : remindersSheet());
@@ -4411,7 +4411,7 @@ function remindersSheet() {
   const rm = state.reminder;
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   openSheet('Reminders', `
-    <div class="row-between mb-4"><div><div class="t fw-bold">Daily reminder</div><div class="small muted">${isNativeApp() ? 'A phone notification on training days, skipped once you have trained' : 'On training days, while PulseFit is open'}</div></div>
+    <div class="row-between mb-4"><div><div class="t fw-bold">Daily reminder</div><div class="small muted">${isNativeApp() ? 'A phone notification on training days, skipped once you have trained' : 'On training days, while Mizan is open'}</div></div>
       <button class="toggle" role="switch" aria-checked="${rm.enabled}" data-action="toggle-reminder" aria-label="Daily reminder"></button></div>
     <div class="field"><label for="rmTime">Time</label><input class="input" id="rmTime" type="time" value="${esc(rm.time)}" data-bind="reminderTime" /></div>
     <p class="small muted mt-4">${isNativeApp() ? nativeNotifLine() + '</p>' + nativeNotifButtons() + '<p class="m-0">' : perm === 'granted' ? 'Browser notifications are allowed.' : perm === 'denied' ? 'Browser notifications are blocked — you will still see an in-app banner.' : perm === 'unsupported' ? 'This browser does not support notifications — you will see an in-app banner instead.' : 'Turning this on will ask for notification permission.'}</p>`);
@@ -4431,7 +4431,7 @@ function waterReminderSheet() {
       <div class="field"><label for="wrTo">Until</label><input class="input" id="wrTo" type="time" value="${esc(w.to)}" data-bind="waterTo" /></div>
     </div>
     <p class="small muted mt-3 m-0" id="wrTimes">${slots.length} a day: ${slots.map(fmt).join(', ')}. Change your water goal under Goals.</p>
-    <p class="small muted mt-4 m-0">${isNativeApp() ? nativeNotifLine() : perm === 'granted' ? 'In a browser they only come while PulseFit is open.' : 'In a browser they only come while PulseFit is open, and need notifications allowed.'}</p>
+    <p class="small muted mt-4 m-0">${isNativeApp() ? nativeNotifLine() : perm === 'granted' ? 'In a browser they only come while Mizan is open.' : 'In a browser they only come while Mizan is open, and need notifications allowed.'}</p>
     ${nativeNotifButtons()}`);
 }
 function planReminderSheet() {
@@ -4447,8 +4447,8 @@ function planReminderSheet() {
     </div>
     <p class="small muted mt-4 m-0">Next week's plan comes out every Friday, so you can shop on Saturday (shops are closed on Sunday). From Friday, Groceries shows next week's list, and the banner on Today stays until Saturday evening or until you start ticking it off.</p>
     ${isNativeApp() ? '' : `<button class="btn ghost block mt-4" data-action="plan-ics">${icon('calendar')} Add to my calendar</button>
-    <p class="small muted mt-2 m-0">Adds a repeating event with an alert to your phone's calendar, so it reminds you even when PulseFit is closed.</p>`}
-    <p class="small muted mt-4 m-0">${isNativeApp() ? `${nativeNotifLine()} You also see a banner on Today.</p>${nativeNotifButtons()}<p class="m-0">` : perm === 'granted' ? 'In-app: you get a notification while PulseFit is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
+    <p class="small muted mt-2 m-0">Adds a repeating event with an alert to your phone's calendar, so it reminds you even when Mizan is closed.</p>`}
+    <p class="small muted mt-4 m-0">${isNativeApp() ? `${nativeNotifLine()} You also see a banner on Today.</p>${nativeNotifButtons()}<p class="m-0">` : perm === 'granted' ? 'In-app: you get a notification while Mizan is open, and a banner on Today.' : 'In-app: you see a banner on Today on that day.'}</p>`);
 }
 
 /** A weekly repeating calendar event (.ics) for the meal plan reminder, in German time. */
@@ -4463,14 +4463,14 @@ function planReminderIcs() {
   const end = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}T${p2(Math.min(23, hh + 1))}${p2(mm)}00`;
   const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const url = location.href.split('#')[0] + '#/plan';
-  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//PulseFit//Meal plan//EN', 'CALSCALE:GREGORIAN',
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mizan//Meal plan//EN', 'CALSCALE:GREGORIAN',
     'BEGIN:VTIMEZONE', 'TZID:Europe/Berlin',
     'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
     'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
     'END:VTIMEZONE',
     'BEGIN:VEVENT', 'UID:pulsefit-meal-plan-reminder@idarkdeveloper.github.io', `DTSTAMP:${now}`,
     `DTSTART;TZID=Europe/Berlin:${start}`, `DTEND;TZID=Europe/Berlin:${end}`, `RRULE:FREQ=WEEKLY;BYDAY=${by}`,
-    'SUMMARY:PulseFit: meal plan & groceries', `DESCRIPTION:Check next week's PulseFit meal plan and buy the groceries. ${url}`, `URL:${url}`,
+    'SUMMARY:Mizan: meal plan & groceries', `DESCRIPTION:Check next week's Mizan meal plan and buy the groceries. ${url}`, `URL:${url}`,
     'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Meal plan & groceries', 'TRIGGER:PT0M', 'END:VALARM',
     'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
   const a = document.createElement('a');
@@ -4498,7 +4498,7 @@ function privacySheet() {
     <p><strong>Barcode scanning.</strong> The camera is used only while the scan screen is open and the picture stays on the phone; only the barcode number is sent to Open Food Facts (a free, open food database) to look up the product.</p>
     <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, progressions, joined ladders, health logs (weight, food, steps, sleep, water, measurements), targets, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
     <p><strong>Imagery.</strong> Exercise photos are AI-generated illustrations (mostly with Figma), not photographs of real athletes. Follow the written cues for exact form.</p>
-    <p><strong>Terms.</strong> PulseFit is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);
+    <p><strong>Terms.</strong> Mizan is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);
 }
 
 function workoutSheet(id) {
@@ -4576,7 +4576,7 @@ function accountCard() {
 function installRow() {
   const I = window.PFInstall;
   if (!I || I.installed()) return '';
-  return `<button class="list-item" data-action="install"><span>Install PulseFit app<span class="li-sub">Home-screen icon, full screen, works offline</span></span>${icon('download')}</button>`;
+  return `<button class="list-item" data-action="install"><span>Install Mizan app<span class="li-sub">Home-screen icon, full screen, works offline</span></span>${icon('download')}</button>`;
 }
 
 function installSheet() {
@@ -4584,8 +4584,8 @@ function installSheet() {
   const steps = I && I.isIOS
     ? ['Open this page in <strong>Safari</strong>.', 'Tap the <strong>Share</strong> button (square with an arrow).', 'Choose <strong>Add to Home Screen</strong>, then <strong>Add</strong>.']
     : ['Open the browser menu (<strong>⋮</strong>, top right in Chrome).', 'Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.', 'Confirm with <strong>Install</strong>.'];
-  openSheet('Install PulseFit', `
-    <p class="muted m-0 mb-4">PulseFit becomes an app on your home screen: it opens full screen, works offline, and keeps your data and sync.</p>
+  openSheet('Install Mizan', `
+    <p class="muted m-0 mb-4">Mizan becomes an app on your home screen: it opens full screen, works offline, and keeps your data and sync.</p>
     <ol class="m-0">${steps.map((s) => `<li class="mb-2">${s}</li>`).join('')}</ol>`);
 }
 
@@ -4596,13 +4596,13 @@ function signInSheet() {
     <div class="field mt-6"><label for="syncEmail">Or get a sign-in link by email</label>
       <input class="input" id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120" /></div>
     <button class="btn ghost block mt-3" data-action="sync-email">Email me a link</button>
-    <p class="muted small m-0 mt-3">${isNativeApp() ? 'Tap the link in the email on this phone: it opens PulseFit.' : 'Open the link in this same browser.'}</p>`);
+    <p class="muted small m-0 mt-3">${isNativeApp() ? 'Tap the link in the email on this phone: it opens Mizan.' : 'Open the link in this same browser.'}</p>`);
 }
 
 function codeSheet(email) {
   openSheet('Check your email', `
     <p class="m-0">We sent a sign-in email to <strong>${esc(email)}</strong>.</p>
-    <p class="muted m-0 mt-3">${isNativeApp() ? 'Open it on this phone and tap <b>Sign in</b>. PulseFit opens and you are signed in.' : 'Open it and tap <b>Sign in</b> in this browser.'} The link works once and expires after a while; if it has, ask for a new one.</p>
+    <p class="muted m-0 mt-3">${isNativeApp() ? 'Open it on this phone and tap <b>Sign in</b>. Mizan opens and you are signed in.' : 'Open it and tap <b>Sign in</b> in this browser.'} The link works once and expires after a while; if it has, ask for a new one.</p>
     <details class="faq mt-4"><summary class="small">The email has a 6-digit code?</summary>
       <div class="field mt-3"><label for="syncCode">Code</label>
         <input class="input" id="syncCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456" data-email="${esc(email)}" /></div>
@@ -4612,7 +4612,7 @@ function codeSheet(email) {
 
 /* ---------------------------------------------------------------
    Health Connect (Android app only)
-   The PulseFit Android app is this same site inside a Capacitor shell. There, Health Connect gives us what
+   The Mizan Android app is this same site inside a Capacitor shell. There, Health Connect gives us what
    Samsung Health (and the Galaxy Watch) recorded: steps, sleep, weight, workouts and active calories.
    Values fill your daily log; anything you typed in yourself is never overwritten.
    --------------------------------------------------------------- */
@@ -4773,13 +4773,13 @@ function hcSleepStatus(h) {
   const t = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const day = (iso) => new Date(iso).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
   if ((h.denied || []).includes('sleep')) return `<div class="card flat soft mt-3"><p class="m-0"><b>Sleep: not allowed</b></p>
-    <p class="small muted m-0 mt-1">PulseFit has no permission to read sleep in Health Connect, so the Sleep tile stays empty.</p>
+    <p class="small muted m-0 mt-1">Mizan has no permission to read sleep in Health Connect, so the Sleep tile stays empty.</p>
     <button class="btn block mt-3" data-action="health-connect">${icon('moon')} Allow sleep</button></div>`;
   if (h.sleepErr) return `<div class="card flat soft mt-3"><p class="m-0"><b>Sleep: could not read</b></p><p class="small muted m-0 mt-1">${esc(h.sleepErr)}</p></div>`;
   if (h.sleepLast) return `<p class="small m-0 mt-3"><b>Last sleep read:</b> ${day(h.sleepLast.end)}, ${t(h.sleepLast.start)}–${t(h.sleepLast.end)}, ${fmtSleep(h.sleepLast.mins)} asleep. It counts on the day you wake up.</p>`;
   if (!h.last) return '';
   return `<div class="card flat soft mt-3"><p class="m-0"><b>Sleep: nothing in Health Connect</b></p>
-    <p class="small muted m-0 mt-1">PulseFit may read sleep, but Health Connect has no sleep from the last 14 days. Samsung Health isn't sharing it yet:</p>
+    <p class="small muted m-0 mt-1">Mizan may read sleep, but Health Connect has no sleep from the last 14 days. Samsung Health isn't sharing it yet:</p>
     <ol class="recipe-steps small mt-2 m-0"><li>Samsung Health → ⋮ → Settings → Health Connect.</li><li>Turn on <b>Sleep</b> under the data Samsung Health shares.</li><li>Wear the watch overnight, open Samsung Health in the morning so it syncs, then tap Sync now here.</li></ol></div>`;
 }
 
@@ -4796,12 +4796,12 @@ function healthSheet() {
   const h = hcState();
   if (!isNativeApp()) {
     openSheet('Galaxy Watch & Samsung Health', `
-      <p class="m-0">Your watch syncs to <b>Samsung Health</b>, and Samsung Health shares with <b>Health Connect</b> on your phone. The <b>PulseFit Android app</b> reads Health Connect and fills in your steps, sleep and weight every time you open it, and shows your watch workouts on Today.</p>
-      <p class="small muted">A website can't read Health Connect, so this needs the app. It is this same PulseFit, with the same data once you sign in.</p>
+      <p class="m-0">Your watch syncs to <b>Samsung Health</b>, and Samsung Health shares with <b>Health Connect</b> on your phone. The <b>Mizan Android app</b> reads Health Connect and fills in your steps, sleep and weight every time you open it, and shows your watch workouts on Today.</p>
+      <p class="small muted">A website can't read Health Connect, so this needs the app. It is this same Mizan, with the same data once you sign in.</p>
       <a class="btn block lg mt-4" href="${APK_URL}">${icon('download')} Download the Android app (APK)</a>
       <ol class="recipe-steps small mt-4">
         <li>Open the downloaded file and allow "Install unknown apps" for your browser when Android asks.</li>
-        <li>Open PulseFit, go to Profile → Account and sign in, so your data comes along.</li>
+        <li>Open Mizan, go to Profile → Account and sign in, so your data comes along.</li>
         <li>Profile → Galaxy Watch &amp; Samsung Health → Connect, and allow access.</li>
         <li>In Samsung Health: Settings → Health Connect, and allow Samsung Health to share Steps, Sleep, Weight and Exercise.</li>
       </ol>`);
@@ -4810,7 +4810,7 @@ function healthSheet() {
   const d = (h.day || {})[todayKey()] || {};
   openSheet('Galaxy Watch & Samsung Health', h.enabled ? `
     <div class="card flat soft row-between"><span><b>Connected</b><span class="d-block small muted">Health Connect · synced ${esc(ago(h.last))}</span></span><span class="pill">${icon('check')} On</span></div>
-    <p class="small mt-3 m-0">Steps, sleep, weight and body fat for the last 14 days fill in automatically when you open PulseFit. Anything you type in yourself stays as you wrote it.</p>
+    <p class="small mt-3 m-0">Steps, sleep, weight and body fat for the last 14 days fill in automatically when you open Mizan. Anything you type in yourself stays as you wrote it.</p>
     ${hcSleepStatus(h)}
     ${hcFatStatus(h)}
     ${d.workouts || d.kcal ? `<p class="small m-0 mt-2">Today from your watch: ${[d.workouts ? `${d.workouts} workouts, ${d.min} min` : '', d.kcal ? `${nf(d.kcal)} active kcal` : ''].filter(Boolean).join(' · ')}.</p>` : ''}
@@ -4818,14 +4818,14 @@ function healthSheet() {
     <button class="btn ghost block mt-2" data-action="health-settings">Health Connect permissions</button>
     <p class="small muted mt-4 m-0">Missing steps or sleep? In Samsung Health open Settings → Health Connect and allow Samsung Health to share them. Keep the Galaxy Wearable app connected so the watch syncs to your phone.</p>
     <button class="link-btn small danger-text mt-3" data-action="health-off">Stop using Health Connect</button>` : `
-    <p class="m-0">Read what Samsung Health and your Galaxy Watch recorded: <b>steps, sleep, weight, workouts and active calories</b>. PulseFit only reads; it never writes to Health Connect.</p>
+    <p class="m-0">Read what Samsung Health and your Galaxy Watch recorded: <b>steps, sleep, weight, workouts and active calories</b>. Mizan only reads; it never writes to Health Connect.</p>
     <button class="btn block lg mt-4" data-action="health-connect">${icon('activity')} Connect Health Connect</button>
     <ol class="recipe-steps small mt-4">
       <li>Tap Connect and allow the data types in the Health Connect screen.</li>
       <li>In Samsung Health: Settings → Health Connect, and allow Samsung Health to share Steps, Sleep, Weight and Exercise.</li>
       <li>Values you type in yourself are never overwritten.</li>
     </ol>
-    <p class="small muted m-0"><a href="privacy.html">How PulseFit uses this data</a></p>`);
+    <p class="small muted m-0"><a href="privacy.html">How Mizan uses this data</a></p>`);
 }
 
 
@@ -4862,14 +4862,14 @@ async function widgetSheet() {
   const w = widgetData();
   const card = `<div class="widget-preview" aria-hidden="true"><div class="wp-k">Day streak</div><div class="wp-n">${w.streak}</div><div class="wp-s">${esc(w.status)}</div>${w.detail ? `<div class="wp-d">${esc(w.detail)}</div>` : ''}</div>`;
   openSheet('Home screen widget', `
-    <p class="m-0">Your streak and today's session on your home screen, so you never miss a day. Tap it to open PulseFit.</p>
+    <p class="m-0">Your streak and today's session on your home screen, so you never miss a day. Tap it to open Mizan.</p>
     ${card}
-    ${!st ? `<p class="small m-0">This needs the latest PulseFit app. Download it, uninstall the old app, install the new one and sign in again; your synced data comes back.</p>
+    ${!st ? `<p class="small m-0">This needs the latest Mizan app. Download it, uninstall the old app, install the new one and sign in again; your synced data comes back.</p>
       <a class="btn block lg mt-4" href="${APK_URL}">${icon('download')} Download the latest app</a>`
     : st.canPin ? `<button class="btn block lg mt-2" data-action="widget-pin">${icon('plus')} Add widget</button>
-      ${st.count ? `<p class="small muted mt-3 m-0">${st.count === 1 ? 'One PulseFit widget is' : `${st.count} PulseFit widgets are`} on your home screen.</p>` : ''}`
+      ${st.count ? `<p class="small muted mt-3 m-0">${st.count === 1 ? 'One Mizan widget is' : `${st.count} Mizan widgets are`} on your home screen.</p>` : ''}`
     : ''}
-    ${st ? `<p class="small muted mt-3 m-0">Or: touch and hold an empty spot on your home screen → Widgets → PulseFit.</p>` : ''}`);
+    ${st ? `<p class="small muted mt-3 m-0">Or: touch and hold an empty spot on your home screen → Widgets → Mizan.</p>` : ''}`);
 }
 
 const HEALTH_ACTIONS = {
@@ -4878,8 +4878,8 @@ const HEALTH_ACTIONS = {
     try {
       const r = await (await hcLoad()).Widget.pin();
       widgetPush(true);
-      toast(r.requested ? 'Confirm on the next screen to place the widget' : 'Touch and hold your home screen → Widgets → PulseFit');
-    } catch { toast('Touch and hold your home screen → Widgets → PulseFit'); }
+      toast(r.requested ? 'Confirm on the next screen to place the widget' : 'Touch and hold your home screen → Widgets → Mizan');
+    } catch { toast('Touch and hold your home screen → Widgets → Mizan'); }
   },
   'health': healthSheet,
   'health-connect': hcConnect,
@@ -5014,7 +5014,7 @@ window.PF_APP = {
 const ACTIONS = {
   'install': async () => {
     const I = window.PFInstall;
-    if (I && I.canPrompt()) { if (await I.prompt()) toast('PulseFit installed'); rerender(); }
+    if (I && I.canPrompt()) { if (await I.prompt()) toast('Mizan installed'); rerender(); }
     else installSheet();
   },
   'sync-signin': signInSheet,
@@ -5056,7 +5056,7 @@ const ACTIONS = {
   'pick-day': (el) => { selectedDay = el.dataset.day; carouselIdx = 0; rerender(); },
   'next-tip': () => { tipIdx++; rerender(); },
   'dismiss-intro': () => { state.seenIntro = true; save(); if (sheetOpen()) closeSheet(); rerender(); },
-  'intro-sheet': () => openSheet('How PulseFit works', `
+  'intro-sheet': () => openSheet('How Mizan works', `
     <ol class="howto-list">
       <li>${icon('dumbbell')}<span><b>Each exercise is a ladder of progressions.</b> Start on a progression you can do with clean form, progression 1 if unsure.</span></li>
       <li>${icon('check')}<span><b>Hit a level's target</b> (e.g. 2 sets of 15) to complete it. Finish level 3 to move up to the next progression.</span></li>
@@ -5155,7 +5155,7 @@ const ACTIONS = {
     if (!navigator.geolocation) { prayerSheet('Location is not available here. Pick a city instead.'); return; }
     navigator.geolocation.getCurrentPosition(
       (p) => { prayerStore({ lat: +p.coords.latitude.toFixed(3), lon: +p.coords.longitude.toFixed(3), place: 'My location', method: $('#prMethod')?.value || prayerCfg()?.method || 'mwl', asr: $('#prAsr')?.value || prayerCfg()?.asr || 'hanafi' }); prayerSheet('Location saved.'); rerender(); },
-      () => prayerSheet('Location was blocked. Pick a city instead, or allow location for PulseFit in your phone settings.'),
+      () => prayerSheet('Location was blocked. Pick a city instead, or allow location for Mizan in your phone settings.'),
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 86400000 });
   },
   'rt-times-save': () => { const w = $('#rtWake')?.value, s = $('#rtSleep')?.value; if (w) state.hprofile.wake = w; if (s) state.hprofile.sleepAt = s; save(); closeSheet(); rerender(); toast(`Wake ${w}, sleep ${s}`); },
@@ -5215,10 +5215,10 @@ const ACTIONS = {
       let p = await Notif.checkPermissions();
       if (p.display !== 'granted') p = await Notif.requestPermissions();
       notifPerm = p.display;
-      if (p.display !== 'granted') { toast('Notifications are off for PulseFit. Allow them in Android settings'); if (sheetOpen()) refreshReminderSheet(); return; }
+      if (p.display !== 'granted') { toast('Notifications are off for Mizan. Allow them in Android settings'); if (sheetOpen()) refreshReminderSheet(); return; }
       await Notif.schedule({ notifications: [{ id: 999, title: 'Reminders are on ✅', body: 'Test notification: reminders are working.', isExactNotification: false }] });
       toast('Sent. Check your notifications');
-    } catch { toast("Couldn't send it. Update the PulseFit app and try again"); }
+    } catch { toast("Couldn't send it. Update the Mizan app and try again"); }
   },
   'notif-exact': async () => {
     try { const { Notif } = await hcLoad(); await Notif.changeExactNotificationSetting(); } catch { /* ignore */ }
@@ -5424,7 +5424,7 @@ document.addEventListener('change', async (ev) => {
     state = { ...d, ...data, profile: { ...d.profile, ...(data.profile || {}) }, reminder: { ...d.reminder, ...(data.reminder || {}) }, planReminder: { ...d.planReminder, ...(data.planReminder || {}) } };
     save(); applyTheme(); rerender(); toast('Data imported');
   } catch {
-    toast("That file doesn't look like a PulseFit backup");
+    toast("That file doesn't look like a Mizan backup");
   }
 });
 
@@ -5550,7 +5550,7 @@ bootDone();
 checkReminder();
 /* ---------- Picking up a new version ----------
    Android keeps the app's page alive in the background, so a site update didn't show until the app was
-   fully closed. When PulseFit comes back to the front, compare the live version (the service worker's cache
+   fully closed. When Mizan comes back to the front, compare the live version (the service worker's cache
    name) with the one this page loaded, and reload once if it changed. Never mid-workout, with a sheet open,
    or while typing. */
 let loadedVersion = null, lastVersionCheck = 0;

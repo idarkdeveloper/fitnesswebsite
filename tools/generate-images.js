@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* =============================================================
-   Generate PulseFit exercise images with the OpenAI Images API.
+   Generate Mizan exercise images with the OpenAI Images API.
 
    Runs on YOUR computer only. The API key never goes into the website:
-   PulseFit is a public static site, so a key in app.js would be readable
+   Mizan is a public static site, so a key in app.js would be readable
    by anyone and billed to you.
 
    Setup (once):

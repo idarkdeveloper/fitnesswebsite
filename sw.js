@@ -1,8 +1,8 @@
-/* PulseFit service worker: makes the app installable and usable offline.
+/* Mizan service worker: makes the app installable and usable offline.
    - App files: network first (you always get the latest when online), cached copy when offline.
    - Exercise images and fonts: served from cache, refreshed in the background.
    - Never touches Supabase or any other site's requests (sync must always hit the network). */
-const SHELL = 'pf-shell-v104';
+const SHELL = 'pf-shell-v109';
 const MEDIA = 'pf-media-v1';
 const SHELL_FILES = [
   './', './index.html', './styles.css', './app.js', './data.js', './dumbbells.js', './theme-boot.js', './pwa.js',

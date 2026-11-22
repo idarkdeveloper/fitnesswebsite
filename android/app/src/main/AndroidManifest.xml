@@ -69,7 +69,7 @@
     <!-- Reminders: the local-notifications plugin declares SCHEDULE_EXACT_ALARM. Keep it, so Android's
          "Alarms and reminders" switch works; reminders fall back to inexact timing while it's off. -->
 
-    <!-- Health Connect: PulseFit only reads steps, sleep, weight, body fat, workouts and active calories.
+    <!-- Health Connect: Mizan only reads steps, sleep, weight, body fat, workouts and active calories.
          The health plugin declares many more; drop everything else, including every write permission. -->
     <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED" tools:node="remove" />
     <uses-permission android:name="android.permission.health.WRITE_BASAL_BODY_TEMPERATURE" tools:node="remove" />

@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "PulseFit — Bodyweight Progressions",
-  "short_name": "PulseFit",
-  "description": "Master bodyweight training one progression at a time.",
+  "name": "Mizan — your day in balance",
+  "short_name": "Mizan",
+  "description": "Your day in balance: workouts, meals, sleep, self-care and home routines in one daily plan.",
   "start_url": "./#/today",
   "scope": "./",
   "display": "standalone",

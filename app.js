@@ -3928,7 +3928,7 @@ function privacySheet() {
     <p><strong>Privacy.</strong> Everything you enter is stored in your browser's local storage. Clearing your browser data or using Reset All Progress deletes it.</p>
     <p><strong>Barcode scanning.</strong> The camera is used only while the scan screen is open and the picture stays on the phone; only the barcode number is sent to Open Food Facts (a free, open food database) to look up the product.</p>
     <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, progressions, joined ladders, health logs (weight, food, steps, sleep, water, measurements), targets, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
-    <p><strong>Imagery.</strong> Exercise photos are AI-generated illustrations, not photographs of real athletes. Follow the written cues for exact form.</p>
+    <p><strong>Imagery.</strong> Bodyweight exercise photos are AI-generated illustrations, not photographs of real athletes. Dumbbell exercise photos are licensed from Adobe Stock or AI-generated with Canva; exercises without a photo show a pencil sketch. Follow the written cues for exact form.</p>
     <p><strong>Terms.</strong> PulseFit is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);
 }
 

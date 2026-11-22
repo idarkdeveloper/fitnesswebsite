@@ -193,6 +193,8 @@ Elevation: one shadow token, `--shadow`, used on cards, the toast and the rest b
 
 ## 8. Imagery
 
+- **Icons are Google Material Symbols** (Rounded, weight 400, Apache-2.0), inlined in `ICONS` in `app.js` as one filled path each, so they work offline and within the CSP. `icon(name)` draws them in the text colour on a 24 grid. Add a new one by taking the symbol's 24px SVG path from Google Fonts and wrapping it in `G(...)`. Only the three exercise figures (pushup, pullup, squat) are drawn for PulseFit, because Google has no symbol for them.
+
 - **Dumbbell exercises use pencil sketches** (`img/sketch/<id>.svg`, drawn by `node tools/sketches.js`): an outlined side-view figure on paper `#f4f1ea`, the working muscles filled lime, a dashed arrow for the direction of movement. Every weight step of an exercise shows that exercise's sketch. They are shown whole (`object-fit: contain`), never cropped.
 
 **Default art** is original vector stick figures on a per-family gradient (`--h` hue per family, shifted per progression). It is always the fallback.

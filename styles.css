@@ -161,6 +161,9 @@
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
   --tap: 44px;
   --nav-clear: 96px;                       /* bottom padding that clears the tab bar */
+  /* Height of the phone's status bar when the page is drawn under it (the Android app, an installed iPhone app).
+     The Android app sets --safe-area-inset-top itself; browsers that support it give env(). 0 in a normal tab. */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
 }
 
 /* ---------- base ---------- */
@@ -217,7 +220,7 @@ img, svg { display: block; }
 .main {
   flex: 1;
   min-width: 0;
-  padding: var(--space-6) var(--space-4) calc(var(--nav-clear) + env(safe-area-inset-bottom));
+  padding: calc(var(--space-6) + var(--safe-top)) var(--space-4) calc(var(--nav-clear) + env(safe-area-inset-bottom));
 }
 
 .page {
@@ -265,7 +268,7 @@ img, svg { display: block; }
 
 @media (min-width: 960px) {
   .tabbar { display: none; }
-  .main { padding: var(--space-10) var(--space-8) var(--space-16); }
+  .main { padding: calc(var(--space-10) + var(--safe-top)) var(--space-8) var(--space-16); }
   .sidebar {
     display: flex;
     flex-direction: column;
@@ -1344,11 +1347,11 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 .mv-row > svg { color: var(--muted); width: 22px; height: 22px; flex-shrink: 0; }
 
 /* Exercise */
-.ex-hero2 { position: relative; height: 300px; margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-4)) 0; overflow: hidden; }
+.ex-hero2 { position: relative; height: calc(300px + var(--safe-top)); margin: calc(-1 * var(--space-6) - var(--safe-top)) calc(-1 * var(--space-4)) 0; overflow: hidden; }
 @media (min-width: 960px) { .ex-hero2 { margin: 0; border-radius: var(--r-lg); } }
 .ex-hero2 .hero-art { position: absolute; inset: 0; border-radius: 0; }
 .ex-hero2::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, transparent 30%, transparent 45%, var(--bg-top) 100%); pointer-events: none; }
-.ex-hero-top { position: absolute; top: var(--space-4); left: var(--space-4); right: var(--space-4); display: flex; justify-content: space-between; align-items: center; z-index: 2; }
+.ex-hero-top { position: absolute; top: calc(var(--space-4) + var(--safe-top)); left: var(--space-4); right: var(--space-4); display: flex; justify-content: space-between; align-items: center; z-index: 2; }
 .icon-btn.glass, .glass-chip, .glass-btn { background: rgba(10, 12, 18, 0.55); color: #fff; border: 0; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .glass-chip { padding: var(--space-2) var(--space-3); border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 700; }
 .glass-btn { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; }
@@ -1526,7 +1529,7 @@ svg.icon-sm { width: 16px; height: 16px; }
 .widget-preview .wp-d { color: #a9b6e0; font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* "Watch how" video */
-.ex-hero2 .watch-btn { position: absolute; right: 16px; top: calc(env(safe-area-inset-top, 0px) + 68px); z-index: 2; }
+.ex-hero2 .watch-btn { position: absolute; right: 16px; top: calc(var(--safe-top) + 68px); z-index: 2; }
 .video-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r-md); overflow: hidden; background: #000; }
 .video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
@@ -1831,6 +1834,8 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 
 /* Food: combined card, ring + big number + quick add */
 .food-sum { padding: var(--space-4); }
+/* Food card: its name and the two add buttons sit in a row of their own, above the ring and the numbers. */
+.food-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .food-top { display: flex; align-items: center; gap: var(--space-4); }
 .tile-k { font-size: var(--fs-sm); color: var(--muted); }
 .big-v { font-size: 26px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
@@ -2090,6 +2095,7 @@ button.cs-row { cursor: pointer; }
 .food-title { font-size: var(--fs-sm); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
 .food-sum .ring-c b { font-size: 20px; }
 .food-scan { width: 48px; height: 48px; }
+.food-head .quick-add svg { width: 26px; height: 26px; }
 .mac-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .mac { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--border-soft); min-width: 0; }
 .mac-k { font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
@@ -2184,3 +2190,8 @@ button.cs-row { cursor: pointer; }
 .workout-card.lime-card .icon-btn:hover, .workout-card.lime-card .btn.ghost:hover { background: rgba(255, 255, 255, 0.22); }
 .workout-card.lime-card .start-btn { background: #ffffff; color: #2c3d02; }
 .workout-card.lime-card :focus-visible { outline-color: #ffffff; }
+/* Status bar: when the page is drawn under the phone's status bar (--safe-top), a strip in the page colour stays
+   behind the clock and icons, so text scrolling up never runs through them. No height in a normal browser tab. */
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); background: var(--bg-top); z-index: 60; pointer-events: none; }
+/* Icons in the two rest-day buttons keep their size when the label is long. */
+.rest-acts .btn svg { flex-shrink: 0; }

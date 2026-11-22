@@ -1270,6 +1270,9 @@ body[data-route="workout"] .main { padding-bottom: calc(var(--space-8) + env(saf
 
 /* Today */
 .today-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-3); }
+/* A long greeting at a large text size wraps instead of pushing the streak pill off the screen. */
+.today-head > div { min-width: 0; overflow-wrap: anywhere; }
+.today-head .streak-pill { flex-shrink: 0; }
 .streak-pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border-radius: var(--r-pill); background: var(--surface-3); border: 1px solid var(--border-soft); font-weight: 700; color: var(--warn); }
 .streak-pill svg { width: 18px; height: 18px; }
 .wk-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: var(--space-5); }
@@ -1969,6 +1972,25 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .rt-body .grow { min-width: 0; overflow-wrap: anywhere; }
 .rt-time { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-label); min-width: 3.2em; padding-top: 1px; color: var(--accent); }
 .rt-list li.done .rt-body { opacity: 0.6; }
+.rt-body.tap { cursor: pointer; }
+/* A routine with steps: the head unfolds a tick list inside the same card. */
+.rt-body.rt-fold { display: block; padding: 0; }
+.rt-head { display: flex; align-items: flex-start; gap: var(--space-3); width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--r-md); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rt-head > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; margin-top: 4px; transition: transform var(--dur-fast) var(--ease); }
+.rt-head[aria-expanded="true"] > svg { transform: rotate(90deg); }
+.rt-fold .care-steps { margin: 0 var(--space-3); border-top: 1px solid var(--border-soft); }
+.rt-more { display: inline-flex; align-items: center; min-height: 44px; margin: 0 var(--space-3); }
+.care-steps { list-style: none; margin: 0; padding: 0; }
+.care-steps li + li { border-top: 1px solid var(--border-soft); }
+.cs-row { display: flex; align-items: flex-start; gap: var(--space-3); width: 100%; min-height: 44px; padding: var(--space-3) 0; border: 0; border-radius: var(--r-sm); background: none; color: inherit; font: inherit; text-align: left; }
+button.cs-row { cursor: pointer; }
+.cs-row .grow { overflow-wrap: anywhere; }
+.cs-box { flex-shrink: 0; width: 24px; height: 24px; display: grid; place-items: center; border-radius: var(--r-round); border: 2px solid var(--border); color: var(--primary-ink); }
+.cs-box svg { width: 14px; height: 14px; stroke-width: 3; }
+.cs-row[aria-pressed="true"] .cs-box { background: var(--success); border-color: var(--success); }
+.cs-row[aria-pressed="true"] b { text-decoration: line-through; color: var(--muted); }
+@media (hover: hover) { .rt-body.tap:hover, .rt-fold:has(.rt-head:hover), button.cs-row:hover .cs-box { border-color: var(--accent); } }
+.rt-body.tap:active, .rt-head:active, button.cs-row:active { transform: scale(0.98); }
 .rt-list li.done b { text-decoration: line-through; }
 .rt-list li.now .rt-body { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
 .rt-now { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--primary); color: var(--primary-ink); font-size: var(--fs-xs); font-weight: 700; vertical-align: 2px; }

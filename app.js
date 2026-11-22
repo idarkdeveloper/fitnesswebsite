@@ -2531,15 +2531,24 @@ const TRACK_ACTIONS = {
   'track-tab': (el) => { trackTab = el.dataset.tab; history.replaceState(null, '', `#/track/${trackTab}`); lastRouteKey = location.hash; rerender(); },
   'goal-plan': () => goalPlanSheet(),
   'care-tick': (el) => {
-    const { id, day } = el.dataset, was = careDone(day, id);
-    hset(day, `care:${id}`, was ? null : 1);
-    const low = useProducts(id, was ? -1 : 1);
-    save();
-    if (low.length) setTimeout(() => toast(`Running low: ${low.join(', ')}`), 1600);
+    const { id, day } = el.dataset;
+    careSet(day, id, careDone(day, id) ? 0 : careFull(id));
     if (el.dataset.close) closeSheet();
     rerender();
     if (!el.dataset.close && $('#sheetBody .care-list')) careListSheet(day);
-    if (!was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All done for today' : `${window.PF_CARE.R[id].title}: done`); }
+  },
+  'care-step': (el) => {
+    const { id, day, i } = el.dataset, inSheet = !!el.closest('#sheetBody');
+    careSet(day, id, careMask(day, id) ^ (1 << +i));
+    rerender();
+    if (inSheet) careSheet(id, day);
+    $(`${inSheet ? '#sheetBody' : '#app'} [data-action="care-step"][data-id="${id}"][data-i="${i}"]`)?.focus({ preventScroll: true });
+  },
+  'rt-open': (el) => {
+    const { id } = el.dataset;
+    if (rtOpen.has(id)) rtOpen.delete(id); else rtOpen.add(id);
+    rerender();
+    $(`[data-action="rt-open"][data-id="${id}"]`)?.focus({ preventScroll: true });
   },
   'comp-edit': (el) => compSheet(el.dataset.day),
   'comp-save': () => {
@@ -2743,6 +2752,32 @@ const shiftOn = (dayKey) => { const sh = shiftForWeek(weekStart(dayKey)); return
    Ticks are stored as hlog "YYYY-MM-DD|care:<routine>" = 1, so they sync with everything else. */
 const careIds = (day) => (window.PF_CARE ? window.PF_CARE.forDay(shiftOn(day), fromKey(day).getDay(), fromKey(day).getDate()) : []);
 const careDone = (day, id) => hget(day, `care:${id}`) === 1;
+/* Steps inside a routine tick one by one: hlog "day|cs:<routine>" is a bitmask of the ticked steps (bit i = step i).
+   The routine itself (care:<routine>) is done when every step is ticked, and ticking the routine ticks all its steps. */
+const careFull = (id) => 2 ** window.PF_CARE.R[id].steps.length - 1;
+const careMask = (day, id) => (careDone(day, id) ? careFull(id) : (hget(day, `cs:${id}`) || 0) & careFull(id));
+const careStepDone = (day, id, i) => (careMask(day, id) & (1 << i)) !== 0;
+const careStepCount = (day, id) => window.PF_CARE.R[id].steps.filter((_, i) => careStepDone(day, id, i)).length;
+/** Save which steps are ticked; when that completes or reopens the routine, products are used or given back. Returns the products running low. */
+function careSet(day, id, mask) {
+  const was = careDone(day, id), now = mask === careFull(id);
+  hset(day, `cs:${id}`, mask || null);
+  let low = [];
+  if (now !== was) { hset(day, `care:${id}`, now ? 1 : null); low = useProducts(id, now ? 1 : -1); }
+  save();
+  if (low.length) setTimeout(() => toast(`Running low: ${low.join(', ')}`), 1600);
+  if (now && !was) { const ids = careIds(day); toast(ids.every((x) => careDone(day, x)) ? 'All done for today' : `${window.PF_CARE.R[id].title}: done`); }
+}
+/** The steps of one routine as a tick list (plain list when readOnly, e.g. a preview of another kind of day). */
+function careSteps(id, day, readOnly) {
+  const r = window.PF_CARE.R[id];
+  return `<ul class="care-steps" data-id="${id}">${r.steps.map(([h, t], i) => {
+    const on = !readOnly && careStepDone(day, id, i);
+    const txt = `<span class="grow"><b class="d-block">${esc(h)}</b><span class="small muted">${esc(t)}</span></span>`;
+    return readOnly ? `<li><div class="cs-row"><span class="cs-box" aria-hidden="true"></span>${txt}</div></li>`
+      : `<li><button class="cs-row" data-action="care-step" data-id="${id}" data-day="${day}" data-i="${i}" aria-pressed="${on}"><span class="cs-box" aria-hidden="true">${on ? icon('check') : ''}</span>${txt}</button></li>`;
+  }).join('')}</ul>`;
+}
 function careCard(day) {
   const ids = careIds(day);
   if (!ids.length) return '';
@@ -2922,6 +2957,7 @@ function myDayRow(day) {
 const rtMin = (hm) => { const m = /^(\d{1,2}):(\d\d)/.exec(hm || ''); return m ? +m[1] * 60 + +m[2] : null; };
 const rtClock = (m) => { m = ((Math.round(m) % 1440) + 1440) % 1440; return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`; };
 let rtPreview = null;                 // My day: null = the real day; 'off' | 'morning' | 'evening' = preview that kind of day
+const rtOpen = new Set();             // My day: care routines whose steps are unfolded
 const rtShift = (day) => (rtPreview ? (rtPreview === 'off' ? null : rtPreview) : shiftOn(day));
 function dayTimes(day) {
   const sh = rtShift(day), p = hp();
@@ -3000,8 +3036,12 @@ VIEWS.routine = () => {
       : it.workout ? (ok ? `<span class="rt-tick on" aria-label="Done">${icon('check')}</span>` : `<a class="rt-tick" href="#/today" aria-label="Go to today's workout"></a>`)
       : it.care ? `<button class="rt-tick ${ok ? 'on' : ''}" data-action="care-tick" data-id="${it.care}" data-day="${day}" aria-pressed="${ok}" aria-label="${esc(it.title)}: ${ok ? 'done, tap to undo' : 'mark done'}">${ok ? icon('check') : ''}</button>`
       : `<button class="rt-tick ${ok ? 'on' : ''}" data-action="rt-tick" data-k="${it.key}" data-day="${day}" aria-pressed="${ok}" aria-label="${esc(it.title)}: ${ok ? 'done, tap to undo' : 'mark done'}">${ok ? icon('check') : ''}</button>`;
-    const body = `<span class="rt-time">${rtClock(it.min)}</span><span class="grow"><b class="d-block">${esc(it.title)}${i === nextIdx ? ' <span class="rt-now">Next</span>' : ''}</b><span class="small muted">${esc(it.sub)}</span></span>`;
-    const open = it.care ? `<button class="rt-body plain text-left" data-action="care-open" data-id="${it.care}" data-day="${day}">${body}${icon('chevR')}</button>` : `<div class="rt-body">${body}</div>`;
+    const steps = it.care ? window.PF_CARE.R[it.care].steps.length : 0, unfolded = it.care && rtOpen.has(it.care);
+    const body = `<span class="rt-time">${rtClock(it.min)}</span><span class="grow"><b class="d-block">${esc(it.title)}${it.care && !rtPreview ? ` <span class="care-kind">${careStepCount(day, it.care)}/${steps}</span>` : ''}${i === nextIdx ? ' <span class="rt-now">Next</span>' : ''}</b><span class="small muted">${esc(it.sub)}</span></span>`;
+    // A routine with steps unfolds into its own tick list; anything else ticks when you tap the row.
+    const tap = it.info || rtPreview || it.workout || (it.meal && ok) ? '' : it.meal ? ` data-action="plan-log" data-day="${it.meal.di}" data-wk="${it.meal.wk}" data-m="${it.meal.j}"` : ` data-action="rt-tick" data-k="${it.key}" data-day="${day}"`;
+    const open = it.care ? `<div class="rt-body rt-fold"><button class="rt-head" data-action="rt-open" data-id="${it.care}" aria-expanded="${!!unfolded}">${body}${icon('chevR')}</button>${unfolded ? `${careSteps(it.care, day, !!rtPreview)}<button class="link-btn small rt-more" data-action="care-open" data-id="${it.care}" data-day="${day}">Notes &amp; details</button>` : ''}</div>`
+      : `<div class="rt-body${tap ? ' tap' : ''}"${tap}>${body}</div>`;
     return `<li class="${cls}">${tick}${open}</li>`;
   };
   return `
@@ -3049,7 +3089,7 @@ function careSheet(id, day) {
   const done = careDone(day, id);
   openSheet(r.title, `
     <p class="small muted m-0 sheet-meta">${esc(r.at)} · ${esc(r.sub)}</p>
-    <ol class="recipe-steps mt-3">${r.steps.map(([h, t]) => `<li><b>${esc(h)}.</b> ${esc(t)}</li>`).join('')}</ol>
+    <div class="mt-3">${careSteps(id, day)}</div>
     ${r.note ? `<div class="note-box mt-3">${esc(r.note)}</div>` : ''}
     <button class="btn block lg mt-4 ${done ? 'ghost' : ''}" data-action="care-tick" data-id="${id}" data-day="${day}" data-close="1">${done ? 'Mark as not done' : 'Done'}</button>`);
 }

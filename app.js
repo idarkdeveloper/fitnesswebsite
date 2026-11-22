@@ -2760,14 +2760,14 @@ function careCard(day) {
 }
 /* Care section (#/care/skin|hair|cleaning): every routine of that kind; today's ones first, with a done tick. */
 let careTab = 'skin';
-const CARE_KIND = (id) => (/hair|beard/.test(id) ? 'hair' : ['laundry', 'bathroom', 'kitchen', 'floors', 'monthly'].includes(id) ? 'cleaning' : 'skin');
+const CARE_KIND = (id) => (/teeth|whiten/.test(id) ? 'teeth' : /hair|beard/.test(id) ? 'hair' : ['laundry', 'bathroom', 'kitchen', 'floors', 'monthly'].includes(id) ? 'cleaning' : 'skin');
 VIEWS.care = (r) => {
-  if (r && ['skin', 'hair', 'cleaning', 'products'].includes(r.arg)) careTab = r.arg;
+  if (r && ['skin', 'teeth', 'hair', 'cleaning', 'products'].includes(r.arg)) careTab = r.arg;
   if (!window.PF_CARE) return '<p class="muted">Care routines are missing.</p>';
   const day = todayKey(), R = window.PF_CARE.R, todayIds = careIds(day);
   const ids = Object.keys(R).filter((id) => CARE_KIND(id) === careTab);
   // Today's list keeps the day's own order (already by time); other days sort by time of day too.
-  const rank = (id) => { const at = R[id].at, m = /^(\d\d):(\d\d)/.exec(at); if (m) { const h = +m[1]; return (h < 3 ? h + 24 : h) * 60 + +m[2]; } return { Morning: 480, 'Late morning': 630, Midday: 750, Afternoon: 900, Evening: 1140 }[at] ?? 720; };
+  const rank = (id) => { const at = R[id].at, m = /^(\d\d):(\d\d)/.exec(at); if (m) { const h = +m[1]; return (h < 3 ? h + 24 : h) * 60 + +m[2]; } return { Morning: 480, 'Late morning': 630, Midday: 750, Afternoon: 900, Evening: 1140, Bedtime: 1320 }[at] ?? 720; };
   const now = todayIds.filter((id) => CARE_KIND(id) === careTab), other = ids.filter((id) => !todayIds.includes(id)).sort((x, y) => rank(x) - rank(y));
   const row = (id, isToday) => {
     const rr = R[id], done = isToday && careDone(day, id);
@@ -2778,12 +2778,12 @@ VIEWS.care = (r) => {
       </button></li>`;
   };
   const n = now.filter((id) => careDone(day, id)).length;
-  const label = { skin: 'Skin', hair: 'Hair', cleaning: 'Cleaning', products: 'Products' };
+  const label = { skin: 'Skin', teeth: 'Teeth', hair: 'Hair', cleaning: 'Cleaning', products: 'Products' };
   return `
     <h1 class="h1 m-0">Care</h1>
     <p class="muted m-0 mt-1">${shiftOn(day) ? `${SHIFTS[shiftOn(day)].name} today · timed around it` : 'Your routines, timed around your shifts'}</p>
-    <div class="segmented seg-sm mt-3" role="tablist" aria-label="Care section" style="--n:4;--i:${['skin', 'hair', 'cleaning', 'products'].indexOf(careTab)}">
-      ${['skin', 'hair', 'cleaning', 'products'].map((k) => `<button role="tab" aria-selected="${careTab === k}" data-action="care-tab" data-tab="${k}">${label[k]}</button>`).join('')}
+    <div class="segmented seg-sm mt-3" role="tablist" aria-label="Care section" style="--n:5;--i:${['skin', 'teeth', 'hair', 'cleaning', 'products'].indexOf(careTab)}">
+      ${['skin', 'teeth', 'hair', 'cleaning', 'products'].map((k) => `<button role="tab" aria-selected="${careTab === k}" data-action="care-tab" data-tab="${k}">${label[k]}</button>`).join('')}
     </div>
     <div role="tabpanel">${careTab === 'products' ? productsPanel() : `
       <section class="card mt-4" aria-labelledby="careTodayH">

@@ -4,10 +4,8 @@
 window.PF_CARE = (function () {
   const R = {
     'm-am': {
-      at: '03:15', title: 'Wake-up prep', sub: 'Cold-shock wake-up, teeth and a matte shield for the shift',
+      at: '03:15', title: 'Wake-up prep', sub: 'Cold-shock wake-up and a matte shield for the shift',
       steps: [
-        ['Floss', 'Dontodent Zahnseidesticks (ungewachst) between every tooth; use the pick end along the back molars.'],
-        ['Brush & rinse', '2 min with Elmex Sensitive on the Dontodent brush heads. Scrape your tongue 3× and swish Dontodent Mundspülung Antibakteriell for 30 s.'],
         ['Wake-up face wash', 'L\'Oréal Men Expert Hydra Energy Aufwach-Kick Waschgel, massaged with the ebelin silicone pad in small circles.'],
         ['Tone & shield', 'Balea Gesichtswasser hautrein, then 3 drops Balea Niacinamide serum, sealed with L\'Oréal Hydra Energy Anti-Glanz gel against shine at work.'],
         ['Deodorant & pocket', 'Hidrofugal Forte roll-on on clean underarms. Put essence blotting papers in your work pocket.'],
@@ -24,10 +22,9 @@ window.PF_CARE = (function () {
       note: 'No heavy night cream: glycerin serum + aqua gel hydrate without clogging pores, so you wake up grease-free at 03:00.',
     },
     'e-am': {
-      at: '10:15', title: 'Pre-shift prep', sub: 'Shower, teeth, face shield and beard',
+      at: '10:15', title: 'Pre-shift prep', sub: 'Shower, face shield and beard',
       steps: [
         ['Shower', 'Balea med pH 5.5 Duschgel, all over.'],
-        ['Teeth', 'Floss with the Dontodent sticks, brush 2 min with Elmex Sensitive, scrape your tongue, rinse with the antibacterial mouthwash.'],
         ['Face shield', 'L\'Oréal Aufwach-Kick wash, Gesichtswasser hautrein, 3 drops Niacinamide serum, L\'Oréal Anti-Glanz gel.'],
         ['Beard', 'Comb with the ebelin Bartkamm; warm 3 drops Balea MEN Bartöl in your palms and massage down to the skin.'],
         ['Deodorant & pocket', 'Hidrofugal Forte roll-on. Blotting papers in your uniform pocket.'],
@@ -42,6 +39,41 @@ window.PF_CARE = (function () {
         ['Hands', 'Mixa Ceramide hand cream, then lights out.'],
       ],
       note: 'Low light, nothing stimulating: no menthol Aufwach-Kick wash or scalp tonic at midnight; keep those for 10:15.',
+    },
+    // Teeth: their own routines (Care → Teeth), morning and bedtime, timed to the shift.
+    'm-teeth': {
+      kind: 'Teeth', at: '03:15', title: 'Teeth (early shift)', sub: 'Floss, brush, tongue and mouthwash before work',
+      steps: [
+        ['Floss', 'Dontodent Zahnseidesticks (ungewachst) between every tooth; use the pick end along the back molars.'],
+        ['Brush', '2 min with Elmex Sensitive on the Dontodent brush heads: small circles, 45° to the gum line, every surface.'],
+        ['Tongue', 'Dontodent Zungenreiniger 3× from back to front: most morning breath sits there.'],
+        ['Rinse', 'Dontodent Mundspülung Antibakteriell for 30 s. Then don\'t eat or drink for 30 min if you can.'],
+      ],
+    },
+    'e-teeth': {
+      kind: 'Teeth', at: '10:15', title: 'Teeth (late shift)', sub: 'Floss, brush, tongue and mouthwash before work',
+      steps: [
+        ['Floss', 'Dontodent Zahnseidesticks between every tooth.'],
+        ['Brush', '2 min with Elmex Sensitive. Twice a week use Perlweiss Schönheits Zahnweiß instead.'],
+        ['Tongue & rinse', 'Zungenreiniger 3×, then 30 s Dontodent Mundspülung.'],
+      ],
+    },
+    'teeth-am': {
+      kind: 'Teeth', at: 'Morning', title: 'Teeth (morning)', sub: 'Floss, brush, tongue and mouthwash',
+      steps: [
+        ['Floss', 'Dontodent Zahnseidesticks between every tooth.'],
+        ['Brush', '2 min with Elmex Sensitive. Twice a week (e.g. Tuesday and Friday) use Perlweiss Schönheits Zahnweiß instead; keep Elmex for the other days.'],
+        ['Tongue & rinse', 'Dontodent Zungenreiniger 3×, then 30 s Dontodent Mundspülung.'],
+      ],
+    },
+    'teeth-night': {
+      kind: 'Teeth', at: 'Bedtime', title: 'Teeth (bedtime)', sub: 'The most important brush of the day',
+      steps: [
+        ['Floss', 'Dontodent Zahnseidesticks between every tooth: food left overnight is what causes decay.'],
+        ['Brush', '2 min with Elmex Sensitive, gently along the gum line.'],
+        ['Spit, don\'t rinse', 'Leave the fluoride on your teeth; nothing to eat or drink afterwards except water.'],
+      ],
+      note: 'Sensitive teeth after whitening? Use only Elmex Sensitive for a few days and dab a little on the sensitive spot before bed.',
     },
     // Hair: its own routine, done right after the shower.
     'm-hair': {
@@ -116,7 +148,7 @@ window.PF_CARE = (function () {
       note: 'Saturday, not Sunday: Sundays and holidays are quiet days in Germany, so no vacuuming then. Most house rules also ask for quiet 13:00–15:00 and after 20:00 (22:00 at the latest), so vacuum between 10:00 and 13:00.',
     },
     'whiten': {
-      at: 'Midday', title: 'Teeth whitening', sub: 'Sunday: Perlweiss strips or gel, once a week',
+      kind: 'Teeth', at: 'Midday', title: 'Teeth whitening', sub: 'Sunday: Perlweiss strips or gel, once a week',
       steps: [
         ['Brush first', 'Brush and floss, then wait 30 minutes (fresh-brushed enamel is more sensitive).'],
         ['Whiten', 'One Perlweiss Whitening Strip Intensiv Kur on upper and lower teeth for the time on the pack; or, on alternate weeks, the Perlweiss Bleaching System Dental 4.0 gel as directed. Not both on the same day.'],
@@ -135,9 +167,8 @@ window.PF_CARE = (function () {
       ],
     },
     'off-am': {
-      at: 'Morning', title: 'Teeth & face', sub: 'Your daily basics on a day off',
+      at: 'Morning', title: 'Face & beard', sub: 'Your daily basics on a day off',
       steps: [
-        ['Teeth', 'Floss with the Dontodent sticks, brush 2 min, scrape your tongue (Dontodent Zungenreiniger), rinse with the antibacterial mouthwash. Twice a week use Perlweiss Schönheits Zahnweiß instead of Elmex Sensitive; keep Elmex for the other days.'],
         ['Face', 'Balea MEN Sensitive Waschgel, Gesichtswasser hautrein on an ebelin Wattepad, 3 drops Niacinamide serum, Balea Aqua gel.'],
         ['Beard', 'Comb with the ebelin Bartkamm and 3 drops Balea MEN Bartöl.'],
       ],
@@ -145,14 +176,12 @@ window.PF_CARE = (function () {
     'sun-am': {
       at: 'Morning', title: 'Recovery morning', sub: 'Gentle after Saturday\'s BHA peel',
       steps: [
-        ['Teeth', 'Floss, brush 2 min with Elmex Sensitive, scrape your tongue, rinse.'],
         ['Face', 'Splash with cool water, sweep Gesichtswasser hautrein, then Glycerin serum + Aqua gel. No harsh cleanser today.'],
       ],
     },
     'off-pm': {
       at: 'Evening', title: 'Evening skin care', sub: 'Cleanse and moisture before bed',
       steps: [
-        ['Teeth', 'Floss and brush 2 min with Elmex Sensitive.'],
         ['Face wash', 'Balea MEN Sensitive Waschgel.'],
         ['Moisture', '3–4 drops Glycerin serum on damp skin, sealed with Balea Gesichtscreme Gel Aqua.'],
         ['Spots & hands', 'Anti-Pickel patches on any spots; Mixa Ceramide hand cream.'],
@@ -167,7 +196,6 @@ window.PF_CARE = (function () {
         ['Underarms', 'Chemist at Play UnderArm Roll-on on clean, dry underarms (it exfoliates and fights odour overnight). Not on freshly shaved skin.'],
         ['Wait', '5 minutes for the acid to absorb.'],
         ['Serums', '3 drops Niacinamide, then 3 drops Glycerin serum. Seal with Aqua gel; patches on any spots.'],
-        ['Teeth', 'Floss and brush 2 min with Elmex Sensitive.'],
       ],
     },
     'sun-hair': {
@@ -190,13 +218,13 @@ window.PF_CARE = (function () {
   };
   /** The routines for one day, in the order you do them. shift: 'morning' | 'evening' | null; dow: 0 = Sunday; dom: day of the month. */
   function forDay(shift, dow, dom) {
-    if (shift === 'morning') return ['m-am', 'm-pm', 'm-hair'];
-    if (shift === 'evening') return ['e-am', 'e-hair', 'e-pm'];
-    if (dow === 6) return ['off-am', 'off-hair', 'laundry', 'floors', 'bathroom', 'sat-bha'];
-    if (dow === 0) return ['sun-am', 'whiten', 'sun-hair', 'kitchen', ...(dom && dom <= 7 ? ['monthly'] : []), 'sun-beard', 'off-pm'];
-    return ['off-am', 'off-hair', 'off-pm'];
+    if (shift === 'morning') return ['m-am', 'm-teeth', 'm-pm', 'm-hair', 'teeth-night'];
+    if (shift === 'evening') return ['e-am', 'e-teeth', 'e-hair', 'e-pm', 'teeth-night'];
+    if (dow === 6) return ['off-am', 'teeth-am', 'off-hair', 'laundry', 'floors', 'bathroom', 'sat-bha', 'teeth-night'];
+    if (dow === 0) return ['sun-am', 'teeth-am', 'whiten', 'sun-hair', 'kitchen', ...(dom && dom <= 7 ? ['monthly'] : []), 'sun-beard', 'off-pm', 'teeth-night'];
+    return ['off-am', 'teeth-am', 'off-hair', 'off-pm', 'teeth-night'];
   }
   /** Skin (face, teeth, body), Hair or Home: the small label on each routine. */
-  const kindOf = (id) => R[id].kind || (/hair/.test(id) ? 'Hair' : /beard/.test(id) ? 'Beard' : id === 'whiten' ? 'Teeth' : 'Skin');
+  const kindOf = (id) => R[id].kind || (/hair/.test(id) ? 'Hair' : /beard/.test(id) ? 'Beard' : 'Skin');
   return { R, forDay, kindOf };
 })();

@@ -2187,3 +2187,6 @@ body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 
 .q-tile.has-chip .v small { color: var(--muted); white-space: normal; }
 .q-tile.has-chip .q-main { flex: 1; padding: 14px 14px var(--space-2); }
 .q-chip { margin: auto 14px 14px; border-radius: var(--r-sm); border-color: color-mix(in srgb, var(--tone) 40%, transparent); background: color-mix(in srgb, var(--tone) 12%, transparent); color: var(--tone); }
+/* A long value ("6,700 / 7,000", "0 L of 3 L") wraps onto a second line at large text sizes instead of running out of the tile. */
+.q-tile .v { white-space: normal; overflow-wrap: anywhere; }
+.q-tile .v small { display: inline-block; }

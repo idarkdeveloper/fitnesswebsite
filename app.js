@@ -2412,21 +2412,90 @@ function compHistorySheet() {
     <button class="btn ghost block mt-4" data-action="comp-edit" data-day="${todayKey()}">${icon('plus')} Add for another date</button>`);
 }
 let compDay = null;   // the date the body-composition sheet is showing
-function compSheet(dayArg) {
+let compScan = null;  // numbers read from a shared scale report, shown in that sheet until saved
+const SHARE_BUILD = 28;       // first Android build that can receive a shared report image ("Share to Mizan")
+function compSheet(dayArg, scan) {
   const day = typeof dayArg === 'string' ? dayArg : tKey();
   compDay = day;
+  compScan = scan || null;
+  const got = (f) => (scan && scan[f] != null ? scan[f] : hget(day, f));
+  const canShare = isNativeApp() && appBuild >= SHARE_BUILD;
   const field = (f, label, unit, min, max, step, val, last) => `<div class="field"><label for="cp-${f}">${label}${unit ? ` (${unit})` : ''}</label><input class="input" id="cp-${f}" data-comp="${f}" type="number" inputmode="decimal" step="${step}" min="${min}" max="${max}" value="${val ?? ''}" placeholder="${last != null ? last : ''}" /></div>`;
   const lw = latestOn('weight', day);
   openSheet('Body fat & muscle', `
     <div class="field"><label for="cpDate">Date</label><input class="input" id="cpDate" type="date" value="${day}" max="${todayKey()}" /></div>
-    <p class="muted small m-0 mt-2">Copy the numbers from your scale's app. Fill in what you have; empty fields are left out. Earlier values show as grey hints.</p>
+    <p class="muted small m-0 mt-2">${scan ? 'Read from the report you shared. Check the numbers against it, fix any that are off, then save.' : `Copy the numbers from your scale's app. Fill in what you have; empty fields are left out. Earlier values show as grey hints.${canShare ? ' Or share the report image from the scale\'s app and choose Mizan: the numbers fill in here.' : ''}`}</p>
     <div class="grid2">
-      ${field('weight', 'Weight', 'kg', 30, 350, 0.1, hget(day, 'weight'), lw ? kg(lw.v) : null)}
-      ${COMP.map(([f, label, unit, min, max, step]) => { const l = latestOn(f, day); return field(f, label, unit, min, max, step, hget(day, f), l ? compFmt(f, l.v) : null); }).join('')}
+      ${field('weight', 'Weight', 'kg', 30, 350, 0.1, got('weight'), lw ? kg(lw.v) : null)}
+      ${COMP.map(([f, label, unit, min, max, step]) => { const l = latestOn(f, day); return field(f, label, unit, min, max, step, got(f), l ? compFmt(f, l.v) : null); }).join('')}
     </div>
     <p class="muted small mt-3 m-0">Muscle mass is the scale's "Muscle mass" (not skeletal muscle). Visceral fat is a rating, usually 1–59.</p>
     <button class="btn block lg mt-5" data-action="comp-save">Save</button>
     <button class="link-btn small mt-3" data-action="comp-history">See all dates</button>`);
+}
+
+/* ---------- Share to Mizan: read a scale app's report image ----------
+   The Android app receives the shared image and reads its text on the phone (ShareBridgePlugin.java).
+   It hands over text lines with their position: [{ t, x, y, w, h }]. Here each label is paired with its number. */
+const SCALE_LABELS = [
+  ['weight', /^weight\b/i, /control|ideal|target|goal|free|standard/i],
+  ['bodyfat', /^body\s*fat\b/i, /mass|weight/i],
+  ['muscle', /^muscle\s*mass\b/i, null],
+  ['visceral', /^visceral\s*fat\b/i, null],
+];
+const SCALE_LIMITS = { weight: [30, 350], bodyfat: [3, 70], muscle: [10, 200], visceral: [1, 60] };
+/** First number in a piece of report text, in kg when the text gives pounds. */
+function scaleNum(text, f) {
+  const m = /(\d{1,3})(?:[.,]\s?(\d{1,2}))?(?!\d)/.exec(text);
+  if (!m) return null;
+  let v = parseFloat(m[1] + (m[2] ? '.' + m[2] : ''));
+  if ((f === 'weight' || f === 'muscle') && /\d\s*lbs?\b/i.test(text)) v *= 0.45359237;
+  return v;
+}
+/** The date printed on the report, as a day key; today when there is none or it lies in the future. */
+function scaleDay(text) {
+  const mon = 'jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec', idx = (w) => mon.split('|').indexOf(w.toLowerCase().slice(0, 3));
+  let d = null, m;
+  if ((m = new RegExp(`\\b(\\d{1,2})\\s+(${mon})[a-z]*\\.?,?\\s+(20\\d{2})\\b`, 'i').exec(text))) d = new Date(+m[3], idx(m[2]), +m[1]);
+  else if ((m = new RegExp(`\\b(${mon})[a-z]*\\.?\\s+(\\d{1,2}),?\\s+(20\\d{2})\\b`, 'i').exec(text))) d = new Date(+m[3], idx(m[1]), +m[2]);
+  else if ((m = /\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/.exec(text))) d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return d && !Number.isNaN(d.getTime()) && d <= new Date() ? dayKey(d) : todayKey();
+}
+function readScaleReport(lines) {
+  const L = (lines || []).filter((l) => l && typeof l.t === 'string').map((l) => ({ ...l, t: l.t.trim(), cy: l.y + l.h / 2, r: l.x + l.w }));
+  const vals = {};
+  const ok = (f, v) => v != null && v >= SCALE_LIMITS[f][0] && v <= SCALE_LIMITS[f][1];
+  for (const [f, label, not] of SCALE_LABELS) {
+    const hits = L.filter((l) => label.test(l.t) && !(not && not.test(l.t))).sort((a, b) => b.y - a.y);   // lowest on the page first
+    for (const hit of hits) {
+      // 1. the number sits in the same line of text, after the label
+      let v = scaleNum(hit.t.replace(label, ''), f);
+      // 2. or in the text to the right, on the same row
+      if (!ok(f, v)) {
+        const row = L.filter((l) => l !== hit && l.x >= hit.x + hit.w * 0.6 && Math.abs(l.cy - hit.cy) < Math.max(l.h, hit.h) * 0.8 && /\d/.test(l.t)).sort((a, b) => a.x - b.x);
+        v = null;
+        for (const l of row) { const n = scaleNum(l.t, f); if (ok(f, n)) { v = n; break; } }
+      }
+      // 3. or directly under the label
+      if (!ok(f, v)) {
+        const under = L.filter((l) => l !== hit && l.y > hit.cy && l.y < hit.y + hit.h * 4 && l.x < hit.r && l.r > hit.x && /^\s*\d/.test(l.t)).sort((a, b) => a.y - b.y);
+        v = under.length ? scaleNum(under[0].t, f) : null;
+      }
+      if (ok(f, v)) { vals[f] = f === 'visceral' ? Math.round(v) : Math.round(v * 10) / 10; break; }
+    }
+  }
+  return { day: scaleDay(L.map((l) => l.t).join('\n')), vals };
+}
+/** Was an image just shared to the app? Then read it and open the body sheet filled in, for you to check and save. */
+async function shareCheck() {
+  if (!isNativeApp()) return;
+  let r;
+  try { const { Share } = await hcLoad(); r = await Share.pending(); } catch { return; }   // an app version without sharing
+  if (!r || !r.shared) return;
+  if (r.error || !Array.isArray(r.lines)) { toast("Couldn't open that image. Try sharing it again."); return; }
+  const scan = readScaleReport(r.lines);
+  if (!Object.keys(scan.vals).length) { toast("Couldn't find weight, body fat or muscle in that image"); return; }
+  compSheet(scan.day, scan.vals);
 }
 
 let measureDay = null;   // the date the measurements sheet is showing
@@ -4634,7 +4703,7 @@ function hcLoad() {
     const done = () => {
       const reg = window.capacitorExports && window.capacitorExports.registerPlugin;
       if (!reg) { reject(new Error('Capacitor not available')); return; }
-      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget'), Notif: reg('LocalNotifications') };
+      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget'), Notif: reg('LocalNotifications'), Share: reg('MizanShare') };
       resolve(hcPlugins);
     };
     if (window.capacitorExports) { done(); return; }
@@ -4978,6 +5047,10 @@ async function hcBoot() {
     });
     // Android back: close an open sheet first; from a section go to Today; from Today leave the app.
     App.addListener('backButton', () => handleBack(App));
+    // "Share to Mizan": the scale app's report image arrives while the app is open, or it started the app.
+    const { Share } = await hcLoad();
+    Promise.resolve(Share.addListener('shared', shareCheck)).catch(() => {});
+    shareCheck();
     const onUrl = (url) => { if (url && url.startsWith('pulsefit://login') && window.PFSync && window.PFSync.handleAuthLink) window.PFSync.handleAuthLink(url); };
     App.addListener('appUrlOpen', ({ url }) => onUrl(url));
     const launch = await App.getLaunchUrl();
@@ -5383,7 +5456,7 @@ document.addEventListener('change', async (ev) => {
   }
   if (ev.target.id === 'cpDate') {                                  // body fat & muscle: switch to another date
     const d = ev.target.value;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) compSheet(d); else ev.target.value = compDay || todayKey();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= todayKey()) compSheet(d, compScan); else ev.target.value = compDay || todayKey();
     return;
   }
   if (ev.target.id === 'moDate') {                                  // one measurement: switch to another date

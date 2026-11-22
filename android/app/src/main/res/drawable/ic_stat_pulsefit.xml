@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Status-bar icon for reminders: the Mizan mark (heart, level beam, M), white on transparent (Android tints it). -->
+<!-- Status-bar icon for reminders: the Mizan mark (head, heart-shaped M, barbell with a pulse), white on transparent (Android tints it). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="240"
-    android:viewportHeight="240">
-    <group android:translateY="28">
-        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="16" android:strokeLineCap="round" android:strokeLineJoin="round"
-            android:pathData="M120 56C120 36 104 22 84 22C60 22 42 41 42 66C42 102 80 132 120 166C160 132 198 102 198 66C198 41 180 22 156 22C136 22 120 36 120 56Z" />
-        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="16" android:strokeLineCap="round" android:strokeLineJoin="round"
-            android:pathData="M8 96H92L106 70L120 104L134 70L148 96H232" />
-        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="16" android:strokeLineCap="round"
-            android:pathData="M24 74V118M216 74V118" />
+    android:viewportWidth="280"
+    android:viewportHeight="280">
+    <group android:translateY="33">
+        <path android:fillColor="#FFFFFFFF"
+            android:pathData="M140,16m-16,0a16,16 0,1 1,32 0a16,16 0,1 1,-32 0" />
+        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="18" android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M124 204C90 158 62 126 62 92C62 66 80 50 102 50C122 50 140 64 140 82C140 64 158 50 178 50C200 50 218 66 218 92C218 126 190 158 156 204" />
+        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="18" android:strokeLineCap="round" android:strokeLineJoin="round"
+            android:pathData="M8 120H114L128 96L152 144L166 120H272" />
+        <path android:strokeColor="#FFFFFFFF" android:strokeWidth="18" android:strokeLineCap="round"
+            android:pathData="M22 94V146M38 104V136M258 94V146M242 104V136" />
     </group>
 </vector>

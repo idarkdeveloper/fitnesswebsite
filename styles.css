@@ -1947,3 +1947,30 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .stock-adj { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .empty-stock { padding: var(--space-5); }
 #sheetBody .chips [hidden] { display: none; }
+/* Care → dm list */
+.dm-items { list-style: none; margin: 0; padding: 0; }
+.dm-items li { display: flex; align-items: center; gap: var(--space-3); min-height: 52px; border-top: 1px solid var(--border-soft); }
+.dm-items li:first-child { border-top: 0; }
+.dm-name { min-width: 0; padding: var(--space-2) 0; color: inherit; }
+.dm-items .qty { flex-shrink: 0; }
+.dm-list h2 svg { vertical-align: -2px; margin-right: 4px; }
+.dm-list h2 { display: flex; align-items: center; gap: 6px; } .dm-list h2 svg { margin: 0; }
+/* My day timeline */
+.rt-list { list-style: none; margin: 0; padding: 0; position: relative; }
+.rt-list::before { content: ""; position: absolute; left: 21px; top: 22px; bottom: 22px; width: 2px; background: var(--border-soft); }
+.rt-list li { position: relative; display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-2) 0; }
+.rt-tick { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border); background: var(--bg-bottom); display: grid; place-items: center; color: var(--primary-ink); cursor: pointer; position: relative; z-index: 1; }
+.rt-tick svg { width: 20px; height: 20px; stroke-width: 3; }
+.rt-tick.on { background: var(--success); border-color: var(--success); }
+.rt-dot { flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; position: relative; z-index: 1; }
+.rt-dot::after { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.rt-body { display: flex; align-items: flex-start; gap: var(--space-3); flex: 1; min-width: 0; padding: var(--space-2) var(--space-3); border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--border-soft); color: inherit; }
+.rt-body > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; margin-top: 4px; }
+.rt-body .grow { min-width: 0; overflow-wrap: anywhere; }
+.rt-time { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-label); min-width: 3.2em; padding-top: 1px; color: var(--accent); }
+.rt-list li.done .rt-body { opacity: 0.6; }
+.rt-list li.done b { text-decoration: line-through; }
+.rt-list li.now .rt-body { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.rt-now { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: var(--r-pill); background: var(--primary); color: var(--primary-ink); font-size: var(--fs-xs); font-weight: 700; vertical-align: 2px; }
+.myday-row { display: flex; align-items: center; gap: var(--space-3); color: inherit; text-decoration: none; }
+.myday-row > svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }

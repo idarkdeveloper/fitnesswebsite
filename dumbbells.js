@@ -109,6 +109,78 @@
       ],
       cues: ['Elbows stay pinned to your sides.', 'No swinging: sit on the bench if you start to rock.', 'Three seconds down.'],
     },
+    // Joint-friendly additions. The bench squat is the start of the squat progression ACE recommends for
+    // heavier beginners (bridge, then sit-to-stand from a bench, then a goblet squat once form is solid).
+    {
+      id: 'db-benchsquat', name: 'Bench Squat (sit to stand)', short: 'Bench Squat', perSide: false,
+      blurb: 'Sitting down onto the bench and standing up again: the knee-friendly way to build a squat at a heavier weight.',
+      weights: [0, 5, 7.5, 10],
+      primary: ['Quads', 'Glutes'], secondary: ['Core'],
+      overview: 'The bench limits how deep you go and catches you, so your knees and hips work in a safe range. Once 3 × 12 holding 10 kg feels easy, move on to the goblet squat.',
+      steps: [
+        'Stand in front of the bench, feet shoulder-width apart (hold one dumbbell at your chest from the second step).',
+        'Push your hips back and sit down slowly until you touch the bench; don\'t drop onto it.',
+        'Lean slightly forward and stand up by pushing through your whole foot.',
+      ],
+      cues: ['Three seconds down to the bench.', 'Knees follow your toes.', 'Touch, don\'t rest: stand straight back up.'],
+      after: 'Move on to the goblet squat at 7.5–10 kg.',
+    },
+    {
+      id: 'db-hipthrust', name: 'Hip Thrust', short: 'Hip Thrust', perSide: false,
+      blurb: 'Upper back on the bench, driving your hips up: the strongest glute builder, easy on the knees and back.',
+      weights: [0, 5, 7.5, 10, 12.5, 15, 17.5, 20],
+      primary: ['Glutes'], secondary: ['Hamstrings', 'Core'],
+      overview: 'Sit on the floor with your upper back against the side of the bench and drive your hips up until your body is level. A dumbbell rests on your hips once bodyweight is easy.',
+      steps: [
+        'Sit with your shoulder blades against the long side of the bench, knees bent, feet flat.',
+        'Rest the dumbbell on your hip crease and hold it with both hands (none at first).',
+        'Push through your heels and lift your hips until your knees, hips and shoulders are in a line.',
+        'Squeeze your glutes for a second, then lower with control.',
+      ],
+      cues: ['Chin tucked, ribs down.', 'Shins vertical at the top.', 'Pause one second at the top.'],
+    },
+    {
+      id: 'db-carry', name: 'Farmer\'s Carry', short: 'Farmer\'s Carry', perSide: false, type: 'hold',
+      levels: [{ sets: 3, target: 30 }, { sets: 3, target: 45 }, { sets: 3, target: 60 }],
+      blurb: 'Walking while holding a heavy dumbbell in each hand: grip, core, posture and a quiet calorie burner.',
+      weights: [10, 12.5, 15, 17.5, 20],
+      primary: ['Grip', 'Core'], secondary: ['Upper Back', 'Shoulders', 'Legs'],
+      overview: 'Pick up the dumbbells and walk tall around the room for the target time. It trains grip and posture and gets your heart rate up without any jumping.',
+      steps: [
+        'Stand between the dumbbells, squat down with a flat back and pick them up.',
+        'Stand tall, shoulders down and back, arms straight by your sides.',
+        'Walk with short, steady steps for the target time; turn carefully.',
+        'Squat to put them down.',
+      ],
+      cues: ['Don\'t let the weights pull your shoulders forward.', 'Breathe normally, stomach braced.', 'Slow, even steps.'],
+      unit: 's',
+    },
+    {
+      id: 'db-lateral', name: 'Lateral Raise', short: 'Lateral Raise', perSide: false,
+      blurb: 'Raising light dumbbells out to the sides for wider, healthier shoulders.',
+      weights: [5, 7.5, 10, 12.5],
+      primary: ['Shoulders'], secondary: ['Upper Back'],
+      overview: 'Light weights and strict form: lift to shoulder height and lower slowly. Seated on the bench if you start to swing.',
+      steps: [
+        'Stand or sit tall, a dumbbell in each hand by your sides, elbows slightly bent.',
+        'Raise both arms out to the sides until they are level with your shoulders.',
+        'Lower slowly, three seconds.',
+      ],
+      cues: ['Lead with the elbows.', 'No shrugging or swinging.', 'Stop at shoulder height.'],
+    },
+    {
+      id: 'db-triceps', name: 'Lying Triceps Extension', short: 'Triceps Extension', perSide: false,
+      blurb: 'Lying on the bench and lowering the dumbbells beside your head: triceps for stronger presses.',
+      weights: [5, 7.5, 10, 12.5, 15],
+      primary: ['Triceps'], secondary: [],
+      overview: 'Upper arms stay still while the forearms bend and straighten. Go light and slow to keep your elbows happy.',
+      steps: [
+        'Lie on the bench holding the dumbbells above your chest, arms straight, palms facing each other.',
+        'Keeping your upper arms still, bend your elbows and lower the dumbbells beside your head.',
+        'Straighten your arms back up.',
+      ],
+      cues: ['Elbows point to the ceiling.', 'Slow on the way down.', 'Stop if your elbows ache; use lighter weights.'],
+    },
   ];
   for (const e of EX) {
     D.categories.push({
@@ -118,11 +190,11 @@
         return {
           id: `${e.id}-${String(w).replace('.', '-')}`,
           name: `${e.short} · ${kgTxt(w)}`,
-          type: 'reps', perSide: e.perSide, weight: w,
+          type: e.type || 'reps', perSide: e.perSide, weight: w,
           overview: `${e.overview} ${w ? `This step: ${w} kg${e.id === 'db-goblet' ? '' : ' per dumbbell'}.` : 'This step: no dumbbells.'}`,
-          primary: e.primary, secondary: e.secondary, levels: LEVELS,
+          primary: e.primary, secondary: e.secondary, levels: e.levels || LEVELS,
           steps: e.steps,
-          harder: next != null ? `Get 3 × 12 with good form and ${next} kg unlocks. Until then, slow the lowering to 3 seconds.` : (e.after || 'You\'ve reached the heaviest dumbbells: slow the lowering to 4 seconds and pause at the hardest point.'),
+          harder: next != null ? `Get ${e.type === 'hold' ? '3 × 60 s' : '3 × 12'} with good form and ${next} kg unlocks. Until then, slow the lowering to 3 seconds.` : (e.after || 'You\'ve reached the heaviest dumbbells: slow the lowering to 4 seconds and pause at the hardest point.'),
           easier: prev != null ? `Go back to ${kgTxt(prev)} for a session, or stop each set 2 reps short.` : 'Do fewer reps with perfect form and rest a little longer between sets.',
           cues: e.cues,
         };

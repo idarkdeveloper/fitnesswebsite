@@ -60,6 +60,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Barcode scanning in Add food (the camera is only opened while the scan sheet is open) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <!-- Reminders: the local-notifications plugin declares SCHEDULE_EXACT_ALARM. Keep it, so Android's
          "Alarms and reminders" switch works; reminders fall back to inexact timing while it's off. -->

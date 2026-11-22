@@ -88,6 +88,7 @@ const CAT_HUE = {
   pushups: 215, pullups: 250, squats: 190, 'leg-raises': 280, bridges: 165, twists: 320,
   grip: 30, lunges: 140, dips: 0, 'elbow-levers': 45, 'clutch-flag': 200,
   'db-bench': 225, 'db-row': 260, 'db-shoulder': 235, 'db-goblet': 180, 'db-rdl': 155, 'db-split': 130, 'db-curl': 15,
+  'db-benchsquat': 195, 'db-hipthrust': 300, 'db-carry': 40, 'db-lateral': 245, 'db-triceps': 340,
 };
 
 /* Stick-figure artwork (original vector poses, 160×100 canvas). */
@@ -113,6 +114,11 @@ Object.assign(POSES, {
   'db-goblet': { ground: 1, head: [70, 24], lines: [[71, 31, 64, 58], [64, 58, 94, 60, 88, 85, 100, 85], [70, 38, 84, 42, 80, 34]], db: [[78, 28, 78, 44]] },
   'db-rdl': { ground: 1, head: [52, 34], lines: [[58, 38, 92, 46], [92, 46, 96, 66, 98, 88], [70, 42, 72, 66]], db: [[64, 68, 80, 68]] },
   'db-split': { bench: 1, head: [62, 18], lines: [[62, 25, 64, 52], [64, 52, 46, 66, 44, 88], [64, 52, 92, 70, 112, 60], [62, 32, 58, 52]], db: [[50, 54, 66, 54]] },
+  'db-benchsquat': { bench: 1, head: [72, 22], lines: [[72, 29, 68, 58], [68, 58, 94, 60, 92, 88], [72, 36, 92, 42]] },
+  'db-hipthrust': { ground: 1, head: [34, 54], lines: [[40, 58, 92, 56], [92, 56, 104, 72, 104, 88], [64, 58, 66, 50]], db: [[60, 50, 74, 50]], path: 'M20 62H44' },
+  'db-carry': { ground: 1, head: [80, 16], lines: [[80, 23, 80, 56], [80, 56, 70, 88], [80, 56, 92, 88], [80, 30, 70, 58], [80, 30, 90, 58]], db: [[64, 62, 76, 62], [86, 62, 98, 62]] },
+  'db-lateral': { ground: 1, head: [80, 16], lines: [[80, 23, 80, 56], [80, 56, 72, 88], [80, 56, 88, 88], [80, 30, 54, 32], [80, 30, 106, 32]], db: [[48, 32, 56, 32], [104, 32, 112, 32]] },
+  'db-triceps': { bench: 1, head: [42, 56], lines: [[48, 60, 110, 60], [110, 60, 118, 74, 118, 88], [70, 60, 66, 36, 50, 40]], db: [[44, 36, 56, 44]] },
   'db-curl': { ground: 1, head: [80, 16], lines: [[80, 23, 80, 56], [80, 56, 72, 88], [80, 56, 88, 88], [80, 30, 74, 44, 86, 40]], db: [[80, 36, 92, 44]] },
 });
 function figure(catId) {
@@ -158,8 +164,9 @@ const ROUTINES = [
   { id: 'foundation', name: 'Foundation Routine', desc: 'Two exercises a session, rotating through the core six.', sessions: [['pushups', 'leg-raises'], ['pullups', 'squats'], ['bridges', 'twists']] },
   { id: 'push-pull-legs', name: 'Push · Pull · Legs', desc: 'Classic three-way split with grip and core finishers.', sessions: [['pushups', 'twists'], ['pullups', 'grip'], ['squats', 'leg-raises', 'bridges']] },
   { id: 'full-body', name: 'Full Body Circuit', desc: 'Four big exercises every session. Best on 2–3 days a week.', sessions: [['pushups', 'pullups', 'squats', 'leg-raises']] },
-  { id: 'dumbbell-full', name: 'Dumbbell Full Body', desc: 'Your dumbbells and bench, whole body every session. Best on 3 days a week.', sessions: [['db-goblet', 'db-bench', 'db-row', 'leg-raises'], ['db-rdl', 'db-shoulder', 'db-split', 'db-curl']] },
-  { id: 'dumbbell-ul', name: 'Dumbbell Upper / Lower', desc: 'Upper body one day, legs the next. Best on 4 days a week.', sessions: [['db-bench', 'db-row', 'db-shoulder', 'db-curl'], ['db-goblet', 'db-rdl', 'db-split', 'leg-raises']] },
+  { id: 'dumbbell-full', name: 'Dumbbell Full Body', desc: 'Your dumbbells and bench, whole body every session, finishing with a carry or hip thrust. Best on 3 days a week.', sessions: [['db-goblet', 'db-bench', 'db-row', 'leg-raises', 'db-carry'], ['db-rdl', 'db-shoulder', 'db-split', 'db-hipthrust', 'db-curl']] },
+  { id: 'dumbbell-ul', name: 'Dumbbell Upper / Lower', desc: 'Upper body one day, legs the next. Best on 4 days a week.', sessions: [['db-bench', 'db-row', 'db-shoulder', 'db-lateral', 'db-triceps', 'db-curl'], ['db-goblet', 'db-rdl', 'db-split', 'db-hipthrust', 'db-carry', 'leg-raises']] },
+  { id: 'dumbbell-gentle', name: 'Dumbbell Gentle Start', desc: 'Knee- and back-friendly: bench squats, hip thrusts, presses, rows and carries. Start here if squats or lunges hurt.', sessions: [['db-benchsquat', 'db-bench', 'db-row', 'db-carry'], ['db-hipthrust', 'db-shoulder', 'db-rdl', 'leg-raises']] },
   { id: 'hybrid', name: 'Dumbbells + Bodyweight', desc: 'Dumbbell strength work with pushups, pullups and bridges in between.', sessions: [['db-bench', 'db-row', 'leg-raises'], ['db-goblet', 'db-rdl', 'bridges'], ['pushups', 'pullups', 'db-shoulder', 'db-curl']] },
   { id: 'strength-pro', name: 'Strength Builder', desc: 'Adds dips, lunges, levers and the flag.', sessions: [['pushups', 'dips', 'elbow-levers'], ['pullups', 'grip', 'clutch-flag'], ['squats', 'lunges', 'bridges']] },
 ];
@@ -1361,18 +1368,40 @@ function weeklyRate(day) {
 }
 
 /** Daily calorie and protein targets (Mifflin–St Jeor × activity, minus the chosen weekly loss). */
+/** What you actually burn, learned from your own logs (the MacroFactor idea): over the last 21 days,
+    average logged intake plus the energy of the weight trend (7,700 kcal per kg, trend = least-squares slope).
+    Needs 10+ fully logged days (800+ kcal) and 6+ weigh-ins spanning 10+ days; null until then. */
+function adaptiveTdee(day) {
+  const end = keyAdd(day, -1), start = keyAdd(day, -21);
+  const byDay = {};
+  for (const m of state.meals) if (m.day >= start && m.day <= end) byDay[m.day] = (byDay[m.day] || 0) + m.kcal;
+  const intake = Object.values(byDay).filter((k) => k >= 800);
+  const w = series('weight', start, end);
+  if (intake.length < 10 || w.length < 6) return null;
+  const t = w.map((x) => (fromKey(x.day) - fromKey(start)) / DAY_MS);
+  if (t[t.length - 1] - t[0] < 10) return null;
+  const mt = t.reduce((a, b) => a + b, 0) / t.length, mw = w.reduce((a, b) => a + b.v, 0) / w.length;
+  const slope = t.reduce((a, x, i) => a + (x - mt) * (w[i].v - mw), 0) / t.reduce((a, x) => a + (x - mt) ** 2, 0);   // kg per day
+  const eaten = intake.reduce((a, b) => a + b, 0) / intake.length;
+  return { tdee: eaten - slope * KCAL_PER_KG, eaten, slope, days: intake.length, weighIns: w.length };
+}
 function targets(day) {
   const p = hp();
   const weight = avg7(day) ?? latestOn('weight', day)?.v;
   if (!p.sex || !p.age || !p.height || !weight) return null;
   const bmr = 10 * weight + 6.25 * p.height - 5 * p.age + (p.sex === 'female' ? -161 : 5);
-  const tdee = bmr * (p.activity || 1.375);
+  const formula = bmr * (p.activity || 1.375);
+  // Adaptive (default on): once your logs say what you really burn, use it, kept within ±25% of the formula
+  // so a week of patchy logging can't swing the target wildly. 10–13 logged days count half.
+  const ad = p.adaptive === false ? null : adaptiveTdee(day);
+  const measured = ad ? clamp(ad.tdee, formula * 0.75, formula * 1.25) : null;
+  const tdee = measured == null ? formula : ad.days >= 14 ? measured : (formula + measured) / 2;
   const losing = !!p.goalWeight && p.goalWeight < weight - 0.2;
   const rate = losing ? (p.rate || 0.5) : 0;
   const floor = p.sex === 'female' ? 1200 : 1500;
   const raw = tdee - (rate * KCAL_PER_KG) / 7;
   return {
-    bmr, tdee, weight, losing, rate,
+    bmr, tdee, formula, adaptive: ad, weight, losing, rate,
     kcal: Math.round(Math.max(floor, raw) / 10) * 10,
     floored: raw < floor,
     protein: Math.round(1.6 * (p.goalWeight || weight)),
@@ -1418,7 +1447,7 @@ VIEWS.track = (r) => {
     <div class="list-group mt-5">
       <button class="list-item" data-action="track-setup"><span>Targets &amp; body profile<span class="li-sub">${T ? `${nf(T.kcal)} kcal a day${p.goalWeight ? ` · goal ${kg(p.goalWeight)} kg` : ' · no goal weight yet'}` : 'Not set up yet'}</span></span>${icon('chevR')}</button>
     </div>
-    <p class="muted small mt-4">Targets are estimates from the Mifflin–St Jeor formula. If your weekly trend is slower or faster than planned for 2–3 weeks, adjust the target. Check with a doctor before big changes to your diet or exercise.</p>`;
+    <p class="muted small mt-4">${T && T.adaptive && hp().adaptive !== false ? `Your target is learned from your own logs: you burn about ${nf(T.adaptive.tdee)} kcal a day (${T.adaptive.days} logged days, ${T.adaptive.weighIns} weigh-ins).` : 'Targets start from the Mifflin–St Jeor formula and adjust themselves once you\'ve logged food and weight for 2–3 weeks.'} Check with a doctor before big changes to your diet or exercise.</p>`;
 };
 
 /** " · fat 6 g · carbs 12 g · sugar 5 g · salt 0.1 g" for a meal or food that has them. */
@@ -1483,6 +1512,13 @@ function nutrientsSheet() {
   openSheet('Nutrients', `<p class="small muted m-0 sheet-meta">${esc(onDayLabel())} · ${nf(dayNutrients(day).tot.kcal)} kcal eaten</p><div class="mt-3">${nutrientsPanel(day, targets(day))}</div>`);
 }
 
+/** One tap to log the same food as the day before (fastest logging for people who eat the same things). */
+function repeatDayBtn(day) {
+  const prev = state.meals.filter((m) => m.day === keyAdd(day, -1));
+  if (!prev.length || state.meals.some((m) => m.day === day)) return '';
+  const kcal = prev.reduce((a, m) => a + m.kcal, 0);
+  return `<button class="btn ghost block mt-2" data-action="food-repeat-day" data-day="${day}">${icon('refresh')} Same as yesterday · ${prev.length} ${prev.length === 1 ? 'item' : 'items'}, ${nf(kcal)} kcal</button>`;
+}
 function trackFoodCard(day, T, thisDay) {
   const meals = state.meals.filter((m) => m.day === day);
   const eaten = meals.reduce((a, m) => a + m.kcal, 0);
@@ -1498,6 +1534,7 @@ function trackFoodCard(day, T, thisDay) {
         <div class="row-between small muted mt-2"><span>Eaten ${nf(eaten)} kcal</span><span>Protein ${nf(protein)} / ${T.protein} g</span></div>` : ''}
       ${meals.length ? `<h3 class="sheet-sub">Nutrients</h3><div class="mt-2">${nutrientsPanel(day, T)}</div>` : ''}
       <button class="btn block mt-4" data-action="track-food">${icon('plus')} Add food</button>
+      ${repeatDayBtn(day)}
       ${meals.length ? `<ul class="food-list mt-3">${meals.map((m) => `
         <li>
           <span class="grow"><span class="fw-bold">${esc(m.name)}</span><span class="d-block muted small">${nf(m.kcal)} kcal${m.protein ? ` · ${nf(m.protein)} g protein` : ''}${nutLine(m)}</span></span>
@@ -1901,6 +1938,84 @@ function dishFood(id) {
 }
 const pickedFood = () => (foodPick ? (foodPick.dish ? dishFood(foodPick.dish) : state.foods[foodPick.id]) : null);
 
+/* ---------- Barcode scanning: the phone camera (BarcodeDetector) or the typed number, looked up in Open Food Facts,
+   the free, open food database with good German supermarket coverage. Only the barcode number leaves the phone. */
+let foodPrefill = null, scanStream = null, scanTimer = null;
+function scanMsg(t) { const m = $('#scanMsg'); if (m) m.textContent = t; }
+function stopScan() {
+  clearInterval(scanTimer); scanTimer = null;
+  if (scanStream) scanStream.getTracks().forEach((t) => t.stop());
+  scanStream = null;
+}
+function scanSheet() {
+  const can = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
+  openSheet('Scan a barcode', `
+    ${can ? `<div class="scan-box"><video id="scanVideo" playsinline muted aria-label="Camera view: point it at the barcode"></video><span class="scan-line" aria-hidden="true"></span></div>
+      <p class="small muted m-0 mt-2">Point the camera at the barcode on the pack. It reads it by itself.</p>`
+      : '<p class="small muted m-0">This browser can\'t read barcodes with the camera. Type the numbers printed under the barcode instead.</p>'}
+    <div class="field mt-3"><label for="scanCode">Barcode number (EAN)</label><input class="input" id="scanCode" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="e.g. 4001724819905" /></div>
+    <button class="btn block lg mt-3" data-action="scan-lookup">Look up</button>
+    <p class="small m-0 mt-3" id="scanMsg" role="status" aria-live="polite"></p>
+    <p class="small muted m-0 mt-3">Product data comes from Open Food Facts, a free, open database; check it against the label. Only the barcode number is sent.</p>`, { onClose: stopScan });
+  if (can) startScan();
+}
+async function startScan() {
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    const v = $('#scanVideo');
+    if (!v) { stopScan(); return; }
+    v.srcObject = scanStream; await v.play();
+    const det = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+    scanTimer = setInterval(async () => {
+      if (!v.videoWidth) return;
+      try {
+        const r = await det.detect(v);
+        if (r && r[0]) { const code = r[0].rawValue; stopScan(); const i = $('#scanCode'); if (i) i.value = code; lookupBarcode(code); }
+      } catch { /* keep trying */ }
+    }, 350);
+  } catch {
+    stopScan();
+    scanMsg('The camera isn\'t available (allow camera access, or type the number).');
+  }
+}
+/** Halal check from Open Food Facts: a halal label wins; otherwise look for pork, gelatine, alcohol and other
+    usually-haram ingredients in the German or English ingredient list. Returns { level: 'halal'|'not'|'check', text }. */
+const HARAM = [
+  [/schwein|\bpork\b|\bpig\b|speck|bacon|schinken|\bham\b|salami|schmalz|\blard\b/i, 'pork'],
+  [/gelatine|gelatin|\be ?441\b/i, 'gelatine'],
+  [/alkohol|alcohol|\bwein\b|\bwine\b|\brum\b|likör|liqueur|\bbier\b|\bbeer\b|brandy|weinbrand|ethanol/i, 'alcohol'],
+  [/karmin|carmine|cochenille|cochineal|\be ?120\b/i, 'carmine (E120)'],
+];
+function halalCheck(pr) {
+  const labels = (pr.labels_tags || []).join(' ');
+  if (/halal/i.test(labels)) return { level: 'halal', text: 'Halal certified (label on the pack).' };
+  const ing = [pr.ingredients_text_de, pr.ingredients_text, pr.ingredients_text_en].filter(Boolean).join(' ');
+  if (!ing) return { level: 'check', text: 'No ingredient list in the database: check the pack for a halal logo.' };
+  const found = HARAM.filter(([re]) => re.test(ing)).map(([, w]) => w);
+  if (found.length) return { level: 'not', text: `Not halal: contains ${found.join(', ')}.` };
+  const doubt = /\blab\b|rennet|\be ?471\b|mono- und diglyceride|aroma|flavou?ring/i.test(ing);
+  return { level: 'check', text: `No pork, gelatine or alcohol in the ingredients.${doubt ? ' It has rennet, E471 or flavourings, which can be animal-based: look for a halal or "vegetarisch" logo.' : ' Look for a halal logo to be sure.'}` };
+}
+async function lookupBarcode(raw) {
+  const code = String(raw || '').replace(/\D/g, '');
+  if (code.length < 8) { scanMsg('Enter the 8 or 13 digits under the barcode.'); $('#scanCode')?.focus(); return; }
+  scanMsg('Looking it up…');
+  try {
+    const r = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_de,product_name_en,brands,nutriments,serving_quantity,labels_tags,ingredients_text,ingredients_text_de,ingredients_text_en`);
+    const j = await r.json();
+    const pr = j && j.status === 1 ? j.product : null;
+    if (!pr) { scanMsg('Not in Open Food Facts yet. Add it under "Other food" with the values from the label.'); return; }
+    const n = pr.nutriments || {};
+    const kcal = n['energy-kcal_100g'] ?? (n.energy_100g != null ? n.energy_100g / 4.184 : null);
+    const name = [String(pr.brands || '').split(',')[0].trim(), pr.product_name_de || pr.product_name || pr.product_name_en || 'Product ' + code].filter(Boolean).join(' ').slice(0, 60);
+    if (kcal == null) { scanMsg(`Found ${name}, but it has no calories listed. Add it under "Other food" from the label.`); return; }
+    foodPrefill = { name, halal: halalCheck(pr), kcal, protein: n.proteins_100g, fat: n.fat_100g, sat: n['saturated-fat_100g'], carbs: n.carbohydrates_100g, sugar: n.sugars_100g, salt: n.salt_100g, grams: Number(pr.serving_quantity) > 0 ? Number(pr.serving_quantity) : 100 };
+    stopScan();
+    foodSheet();
+  } catch {
+    scanMsg('No connection to Open Food Facts. Try again, or add it under "Other food".');
+  }
+}
 function foodSheet() {
   const day = tKey();
   const saved = Object.entries(state.foods).sort((a, b) => a[1].name.localeCompare(b[1].name));
@@ -1948,6 +2063,7 @@ function foodSheet() {
   openSheet('Add food', `
     <p class="small muted m-0 sheet-meta">to ${esc(onDayLabel())}${T ? ` · ${nf(Math.max(0, T.kcal - eaten))} kcal left` : ''}</p>
     <label class="search mt-3">${icon('search')}<input id="foodSearch" type="search" aria-label="Search foods" placeholder="Search foods and dishes: pizza, kulcha, dal…" autocomplete="off" /></label>
+    <button class="btn ghost block mt-2" data-action="scan-open">${icon('search')} Scan a barcode</button>
     ${pickPanel}
     <div class="row-between mt-4"><h3 class="sheet-sub m-0">My foods</h3><span class="small muted">tap · choose servings · add</span></div>
     ${saved.length ? `<div class="chips mt-2">${saved.map(([id, x]) => `<button class="chip ${foodPick && foodPick.id === id ? 'on' : ''}" data-name="${esc(x.name.toLowerCase())}" data-action="track-pick" data-food="${esc(id)}">${esc(x.name)} · ${nf(x.kcal)}</button>`).join('')}</div>` : '<p class="muted small m-0 mt-2">No saved foods yet. Add one under "Other food".</p>'}
@@ -1975,6 +2091,20 @@ function foodSheet() {
       <button class="btn block lg mt-4" data-action="track-food-add">Add to ${esc(onDayLabel())}</button>
     </details>
     <p class="muted small mt-3 m-0">Rough is fine. A rough number logged every day beats an exact one logged sometimes.</p>`);
+  if (foodPrefill) {                                   // a scanned product: open "Other food" with its label values per 100 g
+    const v = foodPrefill; foodPrefill = null;
+    const det = $('#sheetBody .other-food'); if (det) det.open = true;
+    const set = (id, x) => { const el = $(id); if (el && x != null && Number.isFinite(+x)) el.value = Math.round(+x * 100) / 100; };
+    $('#fName').value = v.name; $('#fBasis').value = '100g'; $('#fGramsField').hidden = false;
+    set('#fGrams', v.grams); set('#fKcal', Math.round(v.kcal)); set('#fProt', v.protein);
+    for (const k of NUT_KEYS) set(`#fN-${k}`, v[k]);
+    const h = v.halal, note = document.createElement('p');
+    note.className = `halal-note ${h.level}`; note.id = 'halalNote'; note.setAttribute('role', 'note');
+    note.innerHTML = `${icon(h.level === 'not' ? 'x' : h.level === 'halal' ? 'check' : 'info')}<span><b>${h.level === 'halal' ? 'Halal' : h.level === 'not' ? 'Not halal' : 'Halal: check'}</b> · ${esc(h.text.replace(/^(Halal certified|Not halal: )/, (m) => (m.startsWith('Not') ? '' : m)))}</span>`;
+    $('#fName')?.closest('.field')?.before(note);
+    $('#fGrams').focus(); $('#fGrams').select?.();
+    toast(`Found: ${v.name}. ${h.level === 'not' ? h.text : 'Check the amount you ate, then add.'}`);
+  }
 }
 
 /** Live filter for the Add food search box. */
@@ -2179,6 +2309,16 @@ function measureSheet(dayArg) {
     <button class="link-btn small mt-3" data-action="measure-history">See all dates</button>`);
 }
 
+/** Targets sheet: what the formula says vs what your own food and weight logs say you burn. */
+function adaptiveBox() {
+  const tk = todayKey(), ad = adaptiveTdee(tk), T = targets(tk), on = hp().adaptive !== false;
+  return `<div class="note-box mt-4">
+      <label class="check-row"><input type="checkbox" id="tpAdaptive" ${on ? 'checked' : ''} /> <span><b>Learn my real burn from my logs</b><span class="d-block small muted">Adjusts your target from 3 weeks of food and weigh-ins, like MacroFactor.</span></span></label>
+      <p class="small m-0 mt-2">${ad
+        ? `Your logs: you eat about <b>${nf(ad.eaten)} kcal</b> and your weight trend is <b>${ad.slope * 7 > 0 ? '+' : '−'}${Math.abs(ad.slope * 7).toFixed(2)} kg a week</b>, so you burn about <b>${nf(ad.tdee)} kcal a day</b>${T ? ` (formula: ${nf(T.formula)})` : ''}. From ${ad.days} logged days and ${ad.weighIns} weigh-ins.`
+        : 'Not enough data yet: log all your food on 10+ days and weigh in 6+ times over 2–3 weeks. Until then the formula is used.'}</p>
+    </div>`;
+}
 function setupSheet() {
   const p = hp();
   const opt = (list, cur) => list.map(([v, t]) => `<option value="${v}" ${Number(cur) === v ? 'selected' : ''}>${esc(t)}</option>`).join('');
@@ -2193,6 +2333,7 @@ function setupSheet() {
     <div class="field"><label for="tpAct">Activity outside logged workouts</label><select class="select input" id="tpAct">${opt(ACTIVITY, p.activity ?? 1.375)}</select></div>
     <div class="field"><label for="tpRate">How fast to lose</label><select class="select input" id="tpRate">${opt(RATES, p.rate ?? 0.5)}</select></div>
     <p class="muted small mt-2 m-0">Losing about 0.5–1% of your body weight a week is a common, sustainable pace. Your target never goes below 1,500 kcal (men) or 1,200 kcal (women).</p>
+    ${adaptiveBox()}
     <h3 class="sheet-sub mt-6">Daily goals</h3>
     <div class="grid3">
       <div class="field"><label for="tpSteps">Steps</label><input class="input" id="tpSteps" type="number" inputmode="numeric" min="1000" max="50000" step="500" value="${p.stepGoal ?? HDEF.stepGoal}" /></div>
@@ -2221,12 +2362,21 @@ const TRACK_ACTIONS = {
     p.sex = sex; p.age = Math.round(age); p.height = Math.round(height);
     if (goal != null) p.goalWeight = Math.round(goal * 10) / 10; else delete p.goalWeight;
     p.activity = Number($('#tpAct').value); p.rate = Number($('#tpRate').value);
+    p.adaptive = !!$('#tpAdaptive')?.checked;
     p.stepGoal = clamp(Math.round(v('#tpSteps') || HDEF.stepGoal), 1000, 50000);
     p.sleepGoal = clamp(Math.round((v('#tpSleep') || HDEF.sleepGoal / 60) * 60), 240, 720);
     p.waterGoal = clamp(Math.round((v('#tpWater') || HDEF.waterGoal / 1000) * 1000), 500, 6000);
     save(); closeSheet(); rerender(); toast('Targets saved');
   },
   'track-food': () => { foodPick = null; foodSheet(); },
+  'scan-open': () => scanSheet(),
+  'scan-lookup': () => lookupBarcode($('#scanCode')?.value),
+  'food-repeat-day': (el) => {
+    const day = el.dataset.day, prev = state.meals.filter((m) => m.day === keyAdd(day, -1));
+    const ids = prev.map((m) => { const id = newId('m'); state.meals.push({ ...m, id, day, at: new Date().toISOString() }); return id; });
+    save(); rerender();
+    toast(`Logged ${ids.length} ${ids.length === 1 ? 'item' : 'items'} from yesterday`, { label: 'Undo', run: () => { state.meals = state.meals.filter((x) => !ids.includes(x.id)); save(); rerender(); toast('Removed'); } });
+  },
   'track-food-add': () => {
     const name = ($('#fName').value || '').trim();
     const kcal = parseNum($('#fKcal').value), protein = parseNum($('#fProt').value);
@@ -3729,6 +3879,7 @@ function faqSheet() {
 function privacySheet() {
   openSheet('Privacy & Terms', `
     <p><strong>Privacy.</strong> Everything you enter is stored in your browser's local storage. Clearing your browser data or using Reset All Progress deletes it.</p>
+    <p><strong>Barcode scanning.</strong> The camera is used only while the scan screen is open and the picture stays on the phone; only the barcode number is sent to Open Food Facts (a free, open food database) to look up the product.</p>
     <p><strong>Cloud sync (optional).</strong> Only if you sign in under Profile → Account, a copy of your workouts, levels, progressions, joined ladders, health logs (weight, food, steps, sleep, water, measurements), targets, name and app settings is stored in a private Supabase database so your devices can sync. Your email field, reminders and anything else on this device are never uploaded. Only the owner's account can read or write that copy. Delete cloud data removes it.</p>
     <p><strong>Imagery.</strong> Exercise photos are AI-generated illustrations, not photographs of real athletes. Follow the written cues for exact form.</p>
     <p><strong>Terms.</strong> PulseFit is provided as-is for general fitness education. Exercise carries inherent risk; train within your abilities, warm up properly, and stop if anything hurts. Consult a qualified professional if you have health concerns.</p>`);

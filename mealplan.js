@@ -29,19 +29,19 @@ window.PF_MEALS = (function () {
     lemon: ['Lemons (Zitronen)', V, 'pc'],
     fruit: ['Fruit (apples, oranges, bananas)', V, 'pc'],
     potato: ['Potatoes, floury (mehligkochende Kartoffeln)', V, 'g', [1500, '1.5 kg bag']],
-    chicken: ['Chicken breast (Hähnchenbrustfilet)', MT, 'g', [400, '400 g pack']],
-    turkey: ['Turkey mince (Putenhackfleisch)', MT, 'g', [400, '400 g pack']],
+    chicken: ['Chicken breast, halal (Hähnchenbrustfilet)', MT, 'g', [400, '400 g pack']],
+    turkey: ['Turkey mince, halal (Putenhackfleisch)', MT, 'g', [400, '400 g pack']],
     eggs: ['Eggs (Eier)', MT, 'pc', [10, 'box of 10']],
-    chickenthigh: ['Chicken thighs, boneless (Hähnchenschenkel)', MT, 'g', [400, '400 g pack']],
-    beef: ['Beef mince (Rinderhackfleisch)', MT, 'g', [500, '500 g pack']],
-    lamb: ['Lamb (Lammfleisch)', MT, 'g', [400, '400 g pack']],
-    lambfeet: ['Lamb leg pieces for paya, skin on (Lammfüße), Turkish or halal butcher', MT, 'pc', [4, 'pack of 4, freeze 2']],
+    chickenthigh: ['Chicken thighs, boneless, halal (Hähnchenschenkel)', MT, 'g', [400, '400 g pack']],
+    beef: ['Beef mince, halal (Rinderhackfleisch)', MT, 'g', [500, '500 g pack']],
+    lamb: ['Lamb, halal (Lammfleisch)', MT, 'g', [400, '400 g pack']],
+    lambfeet: ['Lamb leg pieces for paya, skin on, halal (Lammfüße), Turkish or halal butcher', MT, 'pc', [4, 'pack of 4, freeze 2']],
     salmon: ['Salmon fillet (Lachs)', MT, 'g', [250, '2-fillet pack']],
     tofu: ['Tofu (natur)', DY, 'g', [200, '200 g block']],
     quark: ['Low-fat quark (Magerquark)', DY, 'g', [500, '500 g tub']],
     curd: ['Plain yoghurt 1.5 % (Naturjoghurt)', DY, 'g', [500, '500 g tub']],
     milk: ['Milk 1.5 % (fettarme Milch)', DY, 'ml', [1000, '1 L carton']],
-    mozzarella: ['Mozzarella light', DY, 'g', [125, '125 g ball']],
+    mozzarella: ['Mozzarella light, vegetarian rennet (mikrobielles Lab)', DY, 'g', [125, '125 g ball']],
     atta: ['Chapati atta or Weizenvollkornmehl', GR, 'g', [1000, '1 kg bag']],
     rice: ['Basmati rice', GR, 'g', [1000, '1 kg bag']],
     bread: ['Wholegrain bread (Vollkornbrot)', GR, 'pc', [10, 'loaf, about 10 slices']],
@@ -167,6 +167,15 @@ window.PF_MEALS = (function () {
     airfish: ['Air-fryer masala fish', '160 g raw', 230, 32, { fish: 160, besan: 15, oil: 5 }],
     wedges: ['Air-fryer potato wedges', '1 plate', 195, 4, { potato: 200, oil: 5 }],
     chanatikki: ['Air-fryer chana tikki', '3 patties', 265, 13, { chana: 0.5, besan: 20, onion: 20, oil: 4 }],
+    // More high-protein mains (estimates for home cooking with the amounts given).
+    karahi: ['Chicken karahi (light)', '1 bowl', 290, 37, { chicken: 150, tomato: 150, onion: 30, oil: 8 }],
+    seekh: ['Turkey seekh kebab (air fryer)', '4 kebabs', 265, 31, { turkey: 150, onion: 30, oil: 3 }],
+    palakchicken: ['Palak chicken', '1 bowl', 300, 41, { chicken: 150, spinach: 150, onion: 40, curd: 30, oil: 7 }],
+    pepperchicken: ['Chicken pepper fry', '1 plate', 265, 36, { chicken: 150, onion: 60, oil: 8 }],
+    eggroast: ['Kerala egg roast', '3 eggs', 340, 20, { eggs: 3, onion: 80, tomato: 60, oil: 8 }],
+    turkeychili: ['Turkey & bean chili', '1 bowl', 425, 36, { turkey: 120, rajma: 0.5, tinnedtom: 150, onion: 40, capsicum: 50, oil: 5 }],
+    burritobowl: ['Chicken burrito bowl', '1 bowl', 505, 41, { chicken: 130, rice: 50, rajma: 0.33, capsicum: 60, onion: 20, curd: 40, oil: 5 }],
+    salmonbake: ['Salmon, potato & broccoli tray', '1 tray', 460, 32, { salmon: 125, potato: 150, broccoli: 150, oil: 5 }],
     traybake: ['Chicken, potato & veg traybake', '1 tray', 430, 41, { chicken: 150, potato: 200, capsicum: 80, zucchini: 80, oil: 8 }],
     // Saturday breakfast in winter, from V4_FROM (asked for by name): lamb leg pieces (paya cut, skin on), slow-cooked.
     nihari: ['Nihari (lamb leg pieces)', '1 bowl', 400, 28, { lambfeet: 2, onion: 40, atta: 10, oil: 6 }],
@@ -181,6 +190,8 @@ window.PF_MEALS = (function () {
     lemonrice: [12, 1.2, 0.5, 0.6], chettinad: [12, 2, 5, 1.3], spagbol: [12, 2.5, 10, 1], tunapasta: [8, 1, 9, 1.1],
     chickenpasta: [10, 3, 6, 0.9], traybake: [11, 1.5, 6, 0.8], sattudrink: [2.4, 0.4, 1, 0.8],
     chickensandwich: [9, 3.5, 5, 1.6], masalasandwich: [9, 3.5, 5, 1.4], tunamelt: [7, 3, 4, 1.7], eggcheese: [17, 6, 4, 1.5],
+    karahi: [11, 2, 6, 1.2], seekh: [12, 3.5, 2, 1.1], palakchicken: [11, 3, 3, 1.1], pepperchicken: [10, 1.5, 3, 1],
+    eggroast: [23, 5, 6, 1.1], turkeychili: [13, 3, 9, 1.3], burritobowl: [11, 3, 5, 1.2], salmonbake: [22, 4, 4, 0.6],
     airthighs: [17, 4, 2, 1], airfish: [6, 0.6, 0.5, 0.9], wedges: [5, 0.4, 1, 0.4], chanatikki: [7, 0.7, 2, 0.9], sattuwrap: [12, 1.5, 3, 1.8],
     roti: [2.5, 0.4, 0.5, 0.2], bread: [1, 0.2, 1.5, 0.5], rice: [0.5, 0.1, 0.1, 0],
     dal: [5.5, 0.6, 3, 1], dalpalak: [5.5, 0.6, 2.5, 1], rajma: [6, 0.7, 4, 1.1], chana: [7.5, 0.8, 5, 1.1],
@@ -300,6 +311,11 @@ window.PF_MEALS = (function () {
       { p: 'chicken', v5: 1, items: [['chickensandwich', 1], ['salad', 1]] },
       { p: 'fish', v5: 1, items: [['tunamelt', 1], ['salad', 1]] },
       { p: 'beans', v5: 1, items: [['chanatikki', 1], ['roti', 1], ['raita', 1]] },
+      { p: 'chicken', v5: 1, items: [['karahi', 1], ['roti', 1], ['salad', 1]] },
+      { p: 'chicken', v5: 1, items: [['palakchicken', 1], ['rice', 1]] },
+      { p: 'turkey', v5: 1, items: [['turkeychili', 1], ['salad', 1]] },
+      { p: 'chicken', v5: 1, items: [['burritobowl', 1]] },
+      { p: 'fish', v5: 1, items: [['salmonbake', 1]] },
     ],
     [S]: [
       { p: '', items: [['chai', 1], ['roastchana', 1]] },
@@ -335,6 +351,11 @@ window.PF_MEALS = (function () {
       { p: 'chicken', v5: 1, items: [['airthighs', 1], ['roti', 1], ['salad', 1]] },
       { p: 'fish', v5: 1, items: [['airfish', 1], ['wedges', 1], ['salad', 1]] },
       { p: 'beans', v5: 1, items: [['chanatikki', 1], ['raita', 1], ['salad', 1]] },
+      { p: 'turkey', v5: 1, items: [['seekh', 1], ['roti', 1], ['raita', 1]] },
+      { p: 'chicken', v5: 1, items: [['pepperchicken', 1], ['roti', 1], ['salad', 1]] },
+      { p: 'egg', v5: 1, items: [['eggroast', 1], ['roti', 1], ['salad', 1]] },
+      { p: 'chicken', v5: 1, items: [['karahi', 1], ['roti', 1], ['SABZI', 1]] },
+      { p: 'fish', v5: 1, items: [['salmonbake', 1]] },
       { p: 'turkey', v5: 1, items: [['spagbol', 1], ['salad', 1]] },
       { p: 'fish', v5: 1, items: [['tunapasta', 1], ['salad', 1]] },
     ],
@@ -513,7 +534,7 @@ window.PF_MEALS = (function () {
     return [name, serving, Math.max(0, Math.round(kcal / 5) * 5), Math.max(0, Math.round(protein)), ings];
   }
 
-  const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday.';
+  const PANTRY_NOTE = 'Also check you have: salt, haldi, red chilli powder, jeera, garam masala and tandoori masala (Asia shop, they last for months), plus ginger, garlic, green chillies and fresh coriander (Koriander) from the supermarket. Next week\'s plan comes out on Friday; shops are closed on Sundays, so shop on Saturday. Halal: buy meat with a halal label or from a Turkish or halal butcher; for cheese look for "mikrobielles Lab" or "vegetarisch"; avoid Gelatine (gummies, some desserts and yoghurts) and Alkohol in the ingredients. Scanning a barcode checks this for you.';
 
   return { NUT, nutFrom, dishNut, SECTIONS, ING, DISH, QUICK, QUICK_DE, QUICK_OUT, POOLS, weekPlan, setDislikes, setBread, PANTRY_NOTE, GROUPS, SWAP, altsFor, swapAmount, dishWith, registerCustom };
 })();

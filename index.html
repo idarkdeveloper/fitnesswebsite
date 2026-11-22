@@ -97,6 +97,7 @@
         <li><a class="nav-link" href="#home">Home</a></li>
         <li><a class="nav-link" href="#services">Services</a></li>
         <li><a class="nav-link" href="#dashboard">Dashboard</a></li>
+        <li><a class="nav-link" href="#routine">Routine</a></li>
         <li><a class="nav-link" href="#tools">Tools</a></li>
         <li><a class="nav-link" href="#portfolio">Showcase</a></li>
       </ul>
@@ -129,6 +130,7 @@
         <li><a class="mobile-link" href="#home">Home</a></li>
         <li><a class="mobile-link" href="#services">Services</a></li>
         <li><a class="mobile-link" href="#dashboard">Dashboard</a></li>
+        <li><a class="mobile-link" href="#routine">Routine</a></li>
         <li><a class="mobile-link" href="#tools">Tools</a></li>
         <li><a class="mobile-link" href="#portfolio">Showcase</a></li>
         <li><a class="mobile-link" href="#profile">Profile</a></li>
@@ -318,6 +320,27 @@
             <p class="mt-2 text-3xl font-extrabold" id="metricSleep">0h 0m</p>
             <p class="mt-2 text-xs text-slate-500" id="sleepScore">Score: —</p>
           </div>
+        </div>
+
+        <!-- Daily routine checklist -->
+        <div id="routine" class="mt-10 scroll-mt-20 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h3 class="font-bold text-lg">Daily routine</h3>
+              <p class="text-sm text-slate-500">Tap a task to tick it off. Tasks with steps open into a sub-list.</p>
+            </div>
+            <span id="routineCount" class="chip bg-brand-100 text-brand-700 dark:bg-brand-700/20 dark:text-brand-300">0 of 0 done</span>
+          </div>
+          <div class="mt-4 h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+            <div id="routineBar" class="h-full bg-gradient-to-r from-brand-500 to-iris-500 w-0 transition-all"></div>
+          </div>
+
+          <ul id="routineList" class="mt-5 grid gap-3 md:grid-cols-2 items-start"></ul>
+
+          <form id="routineAddForm" class="mt-5 flex gap-2">
+            <input id="routineAddInput" type="text" maxlength="60" class="inp" placeholder="Add a task, e.g. Meditation" aria-label="New routine task" />
+            <button type="submit" class="btn-secondary shrink-0">+ Add task</button>
+          </form>
         </div>
 
         <!-- Meal log -->

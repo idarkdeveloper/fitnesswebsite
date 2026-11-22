@@ -25,6 +25,9 @@ photo scanner that estimates a meal's calories from an uploaded image.
   per-day in `localStorage`.
 - Quick actions: `+ Log steps`, `+ Log sleep`, `Reset day`.
 - Meal list with per-item remove.
+- **Daily routine checklist** — tick tasks off as you do them. Tasks such as
+  *Teeth* open into a sub-list of steps (brushed, tongue cleaner, floss…); add or
+  remove your own tasks and steps. Ticks reset each day.
 
 ### Tools
 - **Profile & BMI** — name, age, sex, weight, height, activity, goal, plus body

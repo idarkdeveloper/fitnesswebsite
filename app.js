@@ -6,6 +6,7 @@
      • User profile persistence (localStorage)
      • BMI, ideal weight, BMR (Mifflin-St Jeor), TDEE, macros
      • Dashboard metrics (steps, calories burned/intake, sleep)
+     • Daily routine checklist with per-task sub-steps
      • AI-style meal photo scanner (heuristic on image data)
      • Portfolio grid rendering & filtering
    All state lives in localStorage under the `pf_*` prefix so
@@ -278,8 +279,235 @@ function escapeHtml(s) {
     if (!confirm('Reset today\'s tracker?')) return;
     store.del(todayKey());
     refreshDashboard();
+    renderRoutine();
     toast('Day reset.');
   });
+})();
+
+/* =============================================================
+   4b. Daily routine checklist
+   -------------------------------------------------------------
+   The routine itself (tasks + their sub-steps) is saved once
+   under `pf_routine`. What has been ticked off is saved in the
+   per-day record, so the list starts fresh every day.
+   A task with sub-steps counts as done when all steps are done.
+   ============================================================= */
+const RoutineStore = {
+  KEY: 'pf_routine',
+  defaults: [
+    { id: 'teeth', title: 'Teeth', subs: [
+      { id: 'teeth-brush',  title: 'Brushed my teeth' },
+      { id: 'teeth-tongue', title: 'Used tongue cleaner' },
+      { id: 'teeth-floss',  title: 'Flossed' },
+      { id: 'teeth-rinse',  title: 'Rinsed with mouthwash' },
+    ] },
+    { id: 'water', title: 'Drank water after waking up', subs: [] },
+    { id: 'workout', title: 'Workout', subs: [
+      { id: 'workout-warm', title: 'Warmed up' },
+      { id: 'workout-main', title: 'Finished the main workout' },
+      { id: 'workout-cool', title: 'Cooled down and stretched' },
+    ] },
+    { id: 'skin', title: 'Skin care', subs: [
+      { id: 'skin-wash',  title: 'Washed my face' },
+      { id: 'skin-moist', title: 'Applied moisturiser' },
+      { id: 'skin-sun',   title: 'Applied sunscreen' },
+    ] },
+    { id: 'shower',   title: 'Took a shower', subs: [] },
+    { id: 'vitamins', title: 'Took my vitamins', subs: [] },
+    { id: 'bed', title: 'Bedtime wind-down', subs: [
+      { id: 'bed-screens', title: 'No screens 30 minutes before bed' },
+      { id: 'bed-time',    title: 'In bed on time' },
+    ] },
+  ],
+  load() {
+    const saved = store.get(this.KEY);
+    return Array.isArray(saved) ? saved : JSON.parse(JSON.stringify(this.defaults));
+  },
+  save(tasks) { store.set(this.KEY, tasks); },
+};
+
+const routineOpen = new Set();   // ids of tasks whose sub-list is expanded
+const routineId = () => 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+function routineTaskState(task, checks) {
+  if (!task.subs.length) return { done: !!checks[task.id], count: 0 };
+  const count = task.subs.filter(s => checks[s.id]).length;
+  return { done: count === task.subs.length, count };
+}
+
+const ROUTINE_TICK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+const ROUTINE_DASH = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M4 8h8"/></svg>';
+
+function renderRoutine() {
+  const list   = $('#routineList');
+  const tasks  = RoutineStore.load();
+  const checks = loadDay().routine || {};
+  const focusKey = document.activeElement && list.contains(document.activeElement)
+    ? document.activeElement.dataset.fk : null;
+
+  const doneTotal = tasks.filter(t => routineTaskState(t, checks).done).length;
+  $('#routineCount').textContent = `${doneTotal} of ${tasks.length} done`;
+  $('#routineBar').style.width = (tasks.length ? (doneTotal / tasks.length) * 100 : 0) + '%';
+
+  if (!tasks.length) {
+    list.innerHTML = '<li class="md:col-span-2 py-2 text-sm text-slate-500">No tasks yet. Add your first one below.</li>';
+    return;
+  }
+
+  list.innerHTML = tasks.map(task => {
+    const { done, count } = routineTaskState(task, checks);
+    const hasSubs = task.subs.length > 0;
+    const open    = routineOpen.has(task.id);
+    const partial = hasSubs && count > 0 && !done;
+    const name    = escapeHtml(task.title);
+
+    const subs = !open ? '' : `
+      <div class="routine-subs">
+        <ul>
+          ${task.subs.map(s => `
+            <li class="routine-sub-row${checks[s.id] ? ' is-done' : ''}">
+              <button type="button" class="routine-sub" role="checkbox" aria-checked="${!!checks[s.id]}"
+                data-act="toggle-sub" data-task="${task.id}" data-sub="${s.id}" data-fk="sub:${s.id}">
+                <span class="routine-box">${ROUTINE_TICK}</span>
+                <span class="routine-name">${escapeHtml(s.title)}</span>
+              </button>
+              <button type="button" class="routine-x" data-act="remove-sub" data-task="${task.id}" data-sub="${s.id}"
+                data-fk="xsub:${s.id}" aria-label="Remove step: ${escapeHtml(s.title)}">✕</button>
+            </li>`).join('')}
+        </ul>
+        <form class="routine-add-sub" data-task="${task.id}">
+          <input type="text" maxlength="60" class="inp" placeholder="Add a step…" aria-label="New step for ${name}" data-fk="addsub:${task.id}" />
+          <button type="submit" class="btn-secondary shrink-0">Add</button>
+        </form>
+      </div>`;
+
+    return `
+      <li class="routine-item${done ? ' is-done' : ''}">
+        <div class="routine-row">
+          <button type="button" class="routine-check" role="checkbox" aria-checked="${done ? 'true' : partial ? 'mixed' : 'false'}"
+            aria-label="${name}" data-act="toggle-task" data-task="${task.id}" data-fk="check:${task.id}">
+            <span class="routine-box">${partial ? ROUTINE_DASH : ROUTINE_TICK}</span>
+          </button>
+          <button type="button" class="routine-title" data-act="${hasSubs ? 'expand' : 'toggle-task'}" data-task="${task.id}"
+            data-fk="title:${task.id}" ${hasSubs ? `aria-expanded="${open}"` : 'tabindex="-1" aria-hidden="true"'}>
+            <span class="routine-name">${name}</span>
+            ${hasSubs ? `<span class="routine-count">${count}/${task.subs.length}</span>` : ''}
+          </button>
+          <button type="button" class="routine-x routine-chevron${open ? ' is-open' : ''}" data-act="expand" data-task="${task.id}"
+            data-fk="chev:${task.id}" aria-expanded="${open}" aria-label="${hasSubs ? 'Steps for' : 'Add steps to'} ${name}">
+            ${hasSubs
+              ? '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>'
+              : '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>'}
+          </button>
+          <button type="button" class="routine-x" data-act="remove-task" data-task="${task.id}"
+            data-fk="x:${task.id}" aria-label="Remove task: ${name}">✕</button>
+        </div>
+        ${subs}
+      </li>`;
+  }).join('');
+
+  if (focusKey) {
+    const el = list.querySelector(`[data-fk="${focusKey}"]`);
+    if (el) el.focus();
+  }
+}
+
+(function initRoutine() {
+  const list = $('#routineList');
+
+  function setChecks(mutator) {
+    const d = loadDay();
+    d.routine = d.routine || {};
+    mutator(d.routine);
+    saveDay(d);
+  }
+  function allDone() {
+    const tasks  = RoutineStore.load();
+    const checks = loadDay().routine || {};
+    return tasks.length > 0 && tasks.every(t => routineTaskState(t, checks).done);
+  }
+  function afterToggle(wasAllDone) {
+    renderRoutine();
+    if (!wasAllDone && allDone()) toast('Routine complete for today 🎉');
+  }
+
+  list.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const tasks = RoutineStore.load();
+    const task  = tasks.find(t => t.id === btn.dataset.task);
+    if (!task) return;
+    const wasAllDone = allDone();
+
+    switch (btn.dataset.act) {
+      case 'expand':
+        routineOpen.has(task.id) ? routineOpen.delete(task.id) : routineOpen.add(task.id);
+        renderRoutine();
+        break;
+
+      case 'toggle-task': {
+        // Ticking a parent ticks (or clears) every step under it.
+        const { done } = routineTaskState(task, loadDay().routine || {});
+        setChecks(c => {
+          if (task.subs.length) task.subs.forEach(s => { c[s.id] = !done; });
+          else c[task.id] = !done;
+        });
+        afterToggle(wasAllDone);
+        break;
+      }
+
+      case 'toggle-sub':
+        setChecks(c => { c[btn.dataset.sub] = !c[btn.dataset.sub]; });
+        afterToggle(wasAllDone);
+        break;
+
+      case 'remove-sub':
+        task.subs = task.subs.filter(s => s.id !== btn.dataset.sub);
+        RoutineStore.save(tasks);
+        renderRoutine();
+        break;
+
+      case 'remove-task':
+        if (!confirm(`Remove "${task.title}" from your routine?`)) return;
+        RoutineStore.save(tasks.filter(t => t.id !== task.id));
+        routineOpen.delete(task.id);
+        renderRoutine();
+        break;
+    }
+  });
+
+  // Add a step to a task
+  list.addEventListener('submit', (e) => {
+    const form = e.target.closest('.routine-add-sub');
+    if (!form) return;
+    e.preventDefault();
+    const title = form.querySelector('input').value.trim();
+    if (!title) return;
+    const tasks = RoutineStore.load();
+    const task  = tasks.find(t => t.id === form.dataset.task);
+    if (!task) return;
+    // A task ticked on its own becomes "not done" once it gains an unticked step.
+    task.subs.push({ id: routineId(), title });
+    RoutineStore.save(tasks);
+    renderRoutine();
+    const input = list.querySelector(`[data-fk="addsub:${task.id}"]`);
+    if (input) input.focus();
+  });
+
+  // Add a task
+  $('#routineAddForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = $('#routineAddInput');
+    const title = input.value.trim();
+    if (!title) return;
+    const tasks = RoutineStore.load();
+    tasks.push({ id: routineId(), title, subs: [] });
+    RoutineStore.save(tasks);
+    input.value = '';
+    renderRoutine();
+  });
+
+  renderRoutine();
 })();
 
 /* =============================================================

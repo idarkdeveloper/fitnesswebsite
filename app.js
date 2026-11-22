@@ -23,6 +23,7 @@ const ICONS = {
   volume: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11',
   mute: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5',
   barcode: 'M4 5v14M7 5v14M10 5v14M13 5v14M16 5v14M20 5v14M3 3h3M3 21h3M18 3h3M18 21h3',
+  cart: '<circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.4 11h11l2-8H6.3"/>',
   meal: 'M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 0-3 2-3 6s1 4 3 4v8',
   care: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z',
   award: '<circle cx="12" cy="8.5" r="5.5"/><path d="M8.6 13 7 21.5l5-2.8 5 2.8L15.4 13"/>',
@@ -244,6 +245,7 @@ function defaultState() {
     challengeStart: null,
     hprofile: {},                       // body profile & targets (Track tab)
     hlog: {},                           // "YYYY-MM-DD|field" -> number: weight, steps, sleep, water, measurements
+    careshop: {},                       // dm list: product id -> 1 when added by hand (low products join by themselves)
     stock: {},                          // care products you own: id -> { name, brand, size, unit, perUse, kind, left, pid }
     foods: {},                          // saved foods: id -> { name, kcal, protein? }
     meals: [],                          // {id, day, at, name, kcal, protein?}
@@ -2823,6 +2825,26 @@ function stockRow(k) {
         <span class="small ${low ? 'c-warn' : 'muted'} d-block mt-1">${stockQty(it.left, it.unit)} of ${stockQty(it.size, it.unit)}${u != null ? ` · about ${u} use${u === 1 ? '' : 's'} left` : ''}</span></span>
       ${icon('chevR')}</button></li>`;
 }
+/** dm list: everything running low plus what you put on it by hand. */
+function dmList() {
+  const st = state.stock || {}, man = state.careshop || {};
+  const ids = new Set([...Object.keys(st).filter((k) => isLow(st[k])), ...Object.keys(man).filter((k) => man[k])]);
+  return [...ids].filter((k) => st[k] || PRODUCTS()[k]).map((k) => ({ k, it: st[k] || { ...PRODUCTS()[k], left: 0 }, low: st[k] ? isLow(st[k]) : true, manual: !!man[k] }))
+    .sort((a, b) => a.it.name.localeCompare(b.it.name));
+}
+function dmListCard() {
+  const list = dmList();
+  return `<section class="card mt-4 dm-list" aria-labelledby="dmH">
+      <div class="row-between"><h2 class="h3" id="dmH">${icon('cart', 'class="icon-sm"')} dm list${list.length ? ` · ${list.length}` : ''}</h2>${list.length ? `<button class="link-btn small" data-action="dm-copy">Copy list</button>` : ''}</div>
+      ${list.length ? `<ul class="dm-items mt-2">${list.map(({ k, it, low, manual }) => `<li>
+          <label class="check"><input type="checkbox" data-action="dm-bought" data-k="${esc(k)}" aria-label="Bought ${esc(it.name)}: refill to a full pack" /></label>
+          <button class="grow plain text-left dm-name" data-action="stock-open" data-k="${esc(k)}"><span class="d-block">${esc(it.name)}</span>
+            <span class="small ${low ? 'c-warn' : 'muted'}">${state.stock[k] ? `${stockQty(it.left, it.unit)} left` : 'not in your products yet'}${manual && !low ? ' · added by you' : ''}</span></button>
+          <span class="small muted qty">${stockQty(it.size, it.unit)}</span></li>`).join('')}</ul>
+        <p class="small muted m-0 mt-2">Tick what you bought: it goes back to a full pack in your products.</p>`
+      : '<p class="small muted m-0 mt-2">Nothing to buy. Products that run low show up here by themselves; you can also add one from its page.</p>'}
+    </section>`;
+}
 function productsPanel() {
   const keys = Object.keys(state.stock || {}), lowKeys = keys.filter((k) => isLow(state.stock[k]));
   const groups = [['skin', 'Skin & teeth'], ['hair', 'Hair & beard'], ['cleaning', 'Laundry & cleaning']];
@@ -2835,6 +2857,7 @@ function productsPanel() {
       </section>`;
   }
   return `
+    ${dmListCard()}
     <div class="row-between mt-4"><span class="small muted">${keys.length} product${keys.length === 1 ? '' : 's'}</span><button class="btn sm" data-action="stock-add">${icon('plus')} Add product</button></div>
     ${lowKeys.length ? `<h2 class="h2 mv-h">Running low</h2><ul class="stock-list card list-card callout">${lowKeys.map(stockRow).join('')}</ul>` : ''}
     ${groups.map(([kind, title]) => { const ks = keys.filter((k) => (state.stock[k].kind || 'skin') === kind).sort((a, b) => state.stock[a].name.localeCompare(state.stock[b].name)); return ks.length ? `<h2 class="h2 mv-h">${title}</h2><ul class="stock-list card list-card">${ks.map(stockRow).join('')}</ul>` : ''; }).join('')}`;
@@ -2873,6 +2896,7 @@ function stockSheet(k) {
     </div>
     ${routines.length ? `<p class="small muted mt-3 m-0">Used in: ${esc([...new Set(routines)].join(', '))}. Ticking one done takes about ${stockQty(it.perUse, it.unit)} off.</p>` : '<p class="small muted mt-3 m-0">Not in a routine: change the amount here when you use it.</p>'}
     <button class="btn block lg mt-4" data-action="stock-refill" data-k="${esc(k)}">${icon('refresh')} New pack (full again)</button>
+    ${isLow(it) ? '<p class="small c-warn m-0 mt-2 text-center">Running low: it is on your dm list.</p>' : `<button class="btn ghost block mt-2" data-action="dm-toggle" data-k="${esc(k)}">${state.careshop?.[k] ? 'Take off the dm list' : `${icon('cart')} Put on the dm list`}</button>`}
     <button class="btn ghost block mt-2" data-action="stock-empty" data-k="${esc(k)}">Mark as empty</button>
     <button class="link-btn danger-text mt-3" data-action="stock-remove" data-k="${esc(k)}">${icon('trash', 'class="icon-sm"')} I don't use this any more</button>`);
 }
@@ -4787,10 +4811,22 @@ const ACTIONS = {
     save(); closeSheet(); rerender(); toast(`${name} added`);
   },
   'stock-open': (el) => stockSheet(el.dataset.k),
+  'dm-toggle': (el) => { const k = el.dataset.k; state.careshop = state.careshop || {}; if (state.careshop[k]) delete state.careshop[k]; else state.careshop[k] = 1; save(); rerender(); stockSheet(k); toast(state.careshop[k] ? 'On your dm list' : 'Taken off the dm list'); },
+  'dm-bought': (el) => {
+    const k = el.dataset.k, P = PRODUCTS()[k];
+    if (state.stock[k]) state.stock[k] = { ...state.stock[k], left: state.stock[k].size };
+    else if (P) addProduct(k);
+    if (state.careshop) delete state.careshop[k];
+    save(); rerender(); toast(`${(state.stock[k] || P || {}).name || 'Product'}: full pack`);
+  },
+  'dm-copy': async () => {
+    const txt = 'dm list\n' + dmList().map(({ it }) => `- ${it.name} (${stockQty(it.size, it.unit)})`).join('\n');
+    try { await navigator.clipboard.writeText(txt); toast('dm list copied'); } catch { toast('Could not copy'); }
+  },
   'stock-adj': (el) => { const it = state.stock[el.dataset.k]; if (!it) return; state.stock[el.dataset.k] = { ...it, left: Math.max(0, Math.min(it.size * 3, Math.round((it.left + Number(el.dataset.d)) * 100) / 100)) }; save(); rerender(); stockSheet(el.dataset.k); },
   'stock-refill': (el) => { const it = state.stock[el.dataset.k]; if (!it) return; state.stock[el.dataset.k] = { ...it, left: it.size }; save(); closeSheet(); rerender(); toast(`${it.name}: full again`); },
   'stock-empty': (el) => { const it = state.stock[el.dataset.k]; if (!it) return; state.stock[el.dataset.k] = { ...it, left: 0 }; save(); closeSheet(); rerender(); },
-  'stock-remove': (el) => { const it = state.stock[el.dataset.k]; delete state.stock[el.dataset.k]; save(); closeSheet(); rerender(); if (it) toast(`${it.name} removed`); },
+  'stock-remove': (el) => { const it = state.stock[el.dataset.k]; delete state.stock[el.dataset.k]; if (state.careshop) delete state.careshop[el.dataset.k]; save(); closeSheet(); rerender(); if (it) toast(`${it.name} removed`); },
   'care-tab': (el) => { careTab = el.dataset.tab; history.replaceState(null, '', `#/care/${careTab}`); lastRouteKey = location.hash; rerender(); },
   'ex-tab': (el) => {
     const from = EX_TABS.indexOf(exTab);

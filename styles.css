@@ -1947,3 +1947,11 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 .stock-adj { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }
 .empty-stock { padding: var(--space-5); }
 #sheetBody .chips [hidden] { display: none; }
+/* Care → dm list */
+.dm-items { list-style: none; margin: 0; padding: 0; }
+.dm-items li { display: flex; align-items: center; gap: var(--space-3); min-height: 52px; border-top: 1px solid var(--border-soft); }
+.dm-items li:first-child { border-top: 0; }
+.dm-name { min-width: 0; padding: var(--space-2) 0; color: inherit; }
+.dm-items .qty { flex-shrink: 0; }
+.dm-list h2 svg { vertical-align: -2px; margin-right: 4px; }
+.dm-list h2 { display: flex; align-items: center; gap: 6px; } .dm-list h2 svg { margin: 0; }

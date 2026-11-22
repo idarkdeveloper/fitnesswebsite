@@ -1834,6 +1834,8 @@ dialog.sheet.closing::backdrop { animation: fadeOut 170ms ease-in forwards; }
 
 /* Food: combined card, ring + big number + quick add */
 .food-sum { padding: var(--space-4); }
+/* Food card: its name and the two add buttons sit in a row of their own, above the ring and the numbers. */
+.food-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
 .food-top { display: flex; align-items: center; gap: var(--space-4); }
 .tile-k { font-size: var(--fs-sm); color: var(--muted); }
 .big-v { font-size: 26px; font-weight: 700; line-height: 1.1; white-space: nowrap; }
@@ -2093,6 +2095,7 @@ button.cs-row { cursor: pointer; }
 .food-title { font-size: var(--fs-sm); font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
 .food-sum .ring-c b { font-size: 20px; }
 .food-scan { width: 48px; height: 48px; }
+.food-head .quick-add svg { width: 26px; height: 26px; }
 .mac-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .mac { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--border-soft); min-width: 0; }
 .mac-k { font-size: var(--fs-xs); color: var(--muted); font-weight: 600; }
@@ -2168,3 +2171,5 @@ button.cs-row { cursor: pointer; }
 /* Status bar: when the page is drawn under the phone's status bar (--safe-top), a strip in the page colour stays
    behind the clock and icons, so text scrolling up never runs through them. No height in a normal browser tab. */
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: var(--safe-top); background: var(--bg-top); z-index: 60; pointer-events: none; }
+/* Icons in the two rest-day buttons keep their size when the label is long. */
+.rest-acts .btn svg { flex-shrink: 0; }

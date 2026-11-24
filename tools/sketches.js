@@ -1,4 +1,4 @@
-/* Draws the pencil-sketch pictures for the dumbbell exercises (img/sketch/<id>.svg).
+/* Draws the pencil-sketch pictures for the dumbbell exercises and the floor moves (img/sketch/<id>.svg).
    Run: node tools/sketches.js. Each pose is a side-view figure built from joint angles
    (0° = forward/right, 90° = down, -90° = up); the working muscles are filled lime. */
 const fs = require('fs');
@@ -125,6 +125,55 @@ const POSES = {
     return wrap(bench(100, 270, 206) + f.svg + dumbbell(f.J.nearArm[2], 90, 0.85) + arrow('M96 104 C110 80 140 74 160 80'));
   },
 };
+
+/* Floor and home moves (moves.js): one sketch per exercise group. Lying figures rest on the ground line. */
+const wall = (x) => `<g><path d="M${x} 36 V${GROUND}" stroke="${INK}" stroke-width="5" /><rect x="${x - 26}" y="36" width="26" height="${GROUND - 36}" fill="url(#hatch)" stroke="none" /></g>`;
+Object.assign(POSES, {
+  crunches: () => {
+    const f = figure({ hip: [236, 252], torso: 200, headA: 218, nearArm: [24, 196], nearLeg: [-52, 68, 0], farLeg: [-46, 72, 0] }, { torso: 1 });
+    return wrap(f.svg + arrow('M150 150 C168 126 196 118 220 124'));
+  },
+  bicycle: () => {
+    const f = figure({ hip: [196, 250], torso: 194, headA: 210, nearArm: [22, 190], nearLeg: [-112, -8, 0], farLeg: [-24, -24, 0] }, { torso: 1, nearLeg: 1 });
+    return wrap(f.svg + arrow('M300 150 C318 172 318 196 300 214'));
+  },
+  planks: () => {
+    const f = figure({ hip: [215, 232], torso: 190, headA: 184, nearArm: [90, 180], nearLeg: [10, 10, 90] }, { torso: 1 });
+    return wrap(f.svg + arrow('M150 150 H280'));
+  },
+  'flutter-kicks': () => {
+    const f = figure({ hip: [168, 252], torso: 180, headA: 180, nearArm: [6, 2], nearLeg: [-24, -24, 0], farLeg: [-7, -7, 0] }, { torso: 1, nearLeg: 1 });
+    return wrap(f.svg + arrow('M300 170 V214') + arrow('M322 214 V170'));
+  },
+  'russian-twists': () => {
+    const f = figure({ hip: [186, 250], torso: -122, headA: -108, nearArm: [24, -8], farArm: [30, -4], nearLeg: [-36, 42, 0], farLeg: [-32, 44, 0] }, { torso: 1 });
+    return wrap(f.svg + arrow('M196 120 C222 104 250 110 262 132'));
+  },
+  'mountain-climbers': () => {
+    const f = figure({ hip: [238, 212], torso: 198, headA: 190, nearArm: [90, 90], farArm: [92, 90], nearLeg: [150, 22, 90], farLeg: [22, 22, 90] }, { torso: 1, nearLeg: 1 });
+    return wrap(f.svg + arrow('M286 196 C262 186 240 190 224 204'));
+  },
+  'wall-sits': () => {
+    const f = figure({ hip: [142, 218], torso: -90, nearArm: [82, 24], nearLeg: [0, 90, 0], farLeg: [-3, 90, 0] }, { nearLeg: 1, farLeg: 1 });
+    return wrap(wall(124) + f.svg + arrow('M270 150 V214'));
+  },
+  'calf-raises': () => {
+    const f = figure({ hip: [196, 154], torso: -90, nearArm: [94, 90], farArm: [88, 90], nearLeg: [90, 90, 62], farLeg: [88, 92, 62] }, { nearLeg: 1, farLeg: 1 });
+    return wrap(f.svg + arrow('M270 250 V190'));
+  },
+  'glute-kicks': () => {
+    const f = figure({ hip: [236, 212], torso: 196, headA: 186, nearArm: [90, 90], farArm: [92, 90], nearLeg: [-10, -88, 0], farLeg: [90, 0, 0] }, { nearLeg: 1 });
+    return wrap(f.svg + arrow('M330 220 C340 190 330 164 312 150'));
+  },
+  supermans: () => {
+    const f = figure({ hip: [212, 250], torso: 189, headA: 202, nearArm: [196, 190], farArm: [200, 194], nearLeg: [-9, -9, 0], farLeg: [-5, -5, 0] }, { torso: 1 });
+    return wrap(f.svg + arrow('M84 190 V150') + arrow('M318 196 V156'));
+  },
+  'pike-pushups': () => {
+    const f = figure({ hip: [222, 166], torso: 155, headA: 118, nearArm: [110, 110], farArm: [106, 108], nearLeg: [78, 78, 0], farLeg: [74, 78, 0] }, { nearArm: 1, farArm: 1 });
+    return wrap(f.svg + arrow('M120 140 V200'));
+  },
+});
 
 const out = path.join(__dirname, '..', 'img', 'sketch');
 fs.mkdirSync(out, { recursive: true });

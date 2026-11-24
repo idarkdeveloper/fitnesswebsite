@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<defs>
+  <filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.2"/></filter>
+  <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0 V7" stroke="#23262b" stroke-width="1.2" opacity="0.35"/></pattern>
+  <marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#23262b"/></marker>
+</defs>
+<rect width="400" height="300" fill="#f4f1ea"/>
+<g stroke="#23262b" stroke-width="1" opacity="0.08"><path d="M0 60 H400 M0 120 H400 M0 180 H400 M0 240 H400"/></g>
+<g filter="url(#rough)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <ellipse cx="200" cy="274" rx="150" ry="9" fill="url(#hatch)" stroke="none"/>
+  <path d="M24 268 C120 266 280 270 376 268" stroke="#23262b" stroke-width="2.5"/>
+  <path d="M168 252 L219.6 245.7 L269.2 239.6 L283.2 239.6" stroke="#9aa0a8" stroke-width="15" /><path d="M98 252 L137.8 256.2 L175.8 257.5" stroke="#9aa0a8" stroke-width="12" /><path d="M168 252 L219.6 245.7 L269.2 239.6 L283.2 239.6" stroke="#f4f1ea" stroke-width="10.5" /><path d="M98 252 L137.8 256.2 L175.8 257.5" stroke="#f4f1ea" stroke-width="7.5" /><path d="M168 252 L98 252" stroke="#23262b" stroke-width="28" /><path d="M168 252 L98 252" stroke="#c6f432" stroke-width="23.5" /><path d="M168 252 L215.5 230.8 L261.2 210.5 L275.2 210.5" stroke="#23262b" stroke-width="16" /><path d="M168 252 L215.5 230.8 L261.2 210.5 L275.2 210.5" stroke="#c6f432" stroke-width="11.5" /><circle cx="76" cy="252" r="15" fill="#f4f1ea" stroke="#23262b" stroke-width="3" /><path d="M98 252 L137.8 256.2 L175.8 257.5" stroke="#23262b" stroke-width="13" /><path d="M98 252 L137.8 256.2 L175.8 257.5" stroke="#f4f1ea" stroke-width="8.5" /><path d="M300 170 V214" stroke="#23262b" stroke-width="2.5" stroke-dasharray="6 5" fill="none" marker-end="url(#ah)" /><path d="M322 214 V170" stroke="#23262b" stroke-width="2.5" stroke-dasharray="6 5" fill="none" marker-end="url(#ah)" />
+</g>
+</svg>

@@ -107,6 +107,8 @@ const CAT_HUE = {
   grip: 30, lunges: 140, dips: 0, 'elbow-levers': 45, 'clutch-flag': 200,
   'db-bench': 225, 'db-row': 260, 'db-shoulder': 235, 'db-goblet': 180, 'db-rdl': 155, 'db-split': 130, 'db-curl': 15,
   'db-benchsquat': 195, 'db-hipthrust': 300, 'db-carry': 40, 'db-lateral': 245, 'db-triceps': 340,
+  crunches: 290, bicycle: 270, planks: 205, 'flutter-kicks': 310, 'russian-twists': 330, 'mountain-climbers': 20,
+  'wall-sits': 185, 'calf-raises': 150, 'glute-kicks': 120, supermans: 255, 'pike-pushups': 230,
 };
 
 /* Stick-figure artwork (original vector poses, 160×100 canvas). */
@@ -162,6 +164,20 @@ function figure(catId) {
 
 /** Generated photo for an id (category cover or progression) if listed in img/manifest.js, else the stick figure. */
 const IMAGES = window.PF_IMAGES || {};
+// Floor and home moves (moves.js).
+Object.assign(POSES, {
+  crunches: { ground: 1, head: [50, 60], lines: [[57, 66, 84, 82], [84, 82, 106, 58, 122, 85], [58, 68, 76, 62]] },
+  bicycle: { ground: 1, head: [30, 76], lines: [[37, 80, 80, 82], [80, 82, 92, 54, 112, 58], [80, 82, 128, 66], [42, 80, 54, 66]] },
+  planks: { ground: 1, head: [36, 56], lines: [[43, 60, 128, 84], [48, 62, 50, 84, 66, 84]] },
+  'flutter-kicks': { ground: 1, head: [28, 76], lines: [[35, 80, 80, 82], [80, 82, 130, 62], [80, 82, 132, 78], [40, 82, 66, 85]] },
+  'russian-twists': { ground: 1, head: [60, 34], lines: [[64, 41, 80, 80], [80, 80, 104, 60, 126, 72], [66, 50, 92, 54]] },
+  'mountain-climbers': { ground: 1, head: [38, 44], lines: [[44, 50, 92, 62], [48, 52, 48, 85], [92, 62, 134, 85], [92, 62, 72, 72, 84, 85]] },
+  'wall-sits': { ground: 1, pole: 1, head: [90, 24], lines: [[92, 31, 92, 58], [92, 58, 62, 58, 62, 86], [92, 38, 76, 52]] },
+  'calf-raises': { ground: 1, head: [80, 12], lines: [[80, 19, 80, 52], [80, 52, 80, 80, 87, 87], [80, 26, 96, 42]] },
+  'glute-kicks': { ground: 1, head: [36, 48], lines: [[43, 52, 92, 54], [48, 54, 48, 86], [92, 54, 92, 86], [92, 54, 114, 44, 112, 22]] },
+  supermans: { ground: 1, head: [40, 64], lines: [[47, 70, 96, 78], [47, 68, 18, 58], [96, 78, 140, 64]] },
+  'pike-pushups': { ground: 1, head: [52, 68], lines: [[58, 60, 46, 86], [58, 58, 90, 26], [90, 26, 126, 86]] },
+});
 /** Pencil sketches for the dumbbell exercises (tools/sketches.js); every weight step uses its exercise's sketch. */
 const SKETCHES = new Set(['db-bench', 'db-row', 'db-shoulder', 'db-goblet', 'db-rdl', 'db-split', 'db-curl', 'db-benchsquat', 'db-hipthrust', 'db-carry', 'db-lateral', 'db-triceps']);
 function sketchSrc(id) {
@@ -199,6 +215,48 @@ const ROUTINES = [
   { id: 'strength-pro', name: 'Strength Builder', desc: 'Adds dips, lunges, levers and the flag.', sessions: [['pushups', 'dips', 'elbow-levers'], ['pullups', 'grip', 'clutch-flag'], ['squats', 'lunges', 'bridges']] },
 ];
 const ROUTINE = Object.fromEntries(ROUTINES.map((r) => [r.id, r]));
+
+/* A routine built around the body part you want to focus on. Stored as state.routineId = "focus:<part>:<gear>"
+   (gear: db = dumbbells and bench too, bw = bodyweight only), so it syncs like any other routine choice.
+   Each session is mostly the focus area, plus a couple of exercises for the rest of the body to stay balanced. */
+const FOCUS_PARTS = [
+  ['full', 'Whole body', 'An even mix: legs, chest, back, stomach and shoulders every session.'],
+  ['core', 'Stomach & core', 'Crunches, leg bicycle, planks, leg raises and twists.'],
+  ['legs', 'Legs & glutes', 'Squats, lunges, kickbacks, wall sits and calf raises.'],
+  ['chest', 'Chest', 'Pushups, presses and dips.'],
+  ['back', 'Back', 'Rows, pulls, supermans and bridges.'],
+  ['shoulders', 'Shoulders', 'Pike pushups, presses and raises.'],
+  ['arms', 'Arms', 'Curls, triceps work, dips and pushups.'],
+];
+const FOCUS_POOL = {
+  core: ['crunches', 'bicycle', 'planks', 'leg-raises', 'russian-twists', 'flutter-kicks', 'mountain-climbers'],
+  legs: ['squats', 'db-goblet', 'glute-kicks', 'lunges', 'db-rdl', 'wall-sits', 'db-hipthrust', 'calf-raises', 'db-split', 'bridges'],
+  chest: ['pushups', 'db-bench', 'dips'],
+  back: ['db-row', 'supermans', 'pullups', 'bridges', 'grip'],
+  shoulders: ['pike-pushups', 'db-shoulder', 'db-lateral'],
+  arms: ['db-curl', 'db-triceps', 'dips', 'pushups'],
+};
+function focusRoutine(part, gear) {
+  const meta = FOCUS_PARTS.find((f) => f[0] === part) || FOCUS_PARTS[0];
+  part = meta[0];
+  const pool = (k) => FOCUS_POOL[k].filter((c) => CAT[c] && (gear !== 'bw' || !c.startsWith('db-')));
+  const others = ['legs', 'chest', 'back', 'core', 'shoulders'].filter((k) => k !== part && !(part === 'arms' && k === 'chest'));
+  const sessions = [];
+  const main = part === 'full' ? [] : pool(part);
+  const per = Math.min(main.length, main.length > 4 ? 4 : 3), count = part === 'full' || main.length > 4 ? 3 : 2;
+  for (let s = 0; s < count; s++) {
+    const ses = [];
+    const add = (c) => { if (c && !ses.includes(c)) ses.push(c); };
+    for (let i = 0; i < per; i++) add(main[(s * per + i) % main.length]);
+    const side = part === 'full' ? others : [others[s % others.length], others[(s + 1) % others.length]];
+    for (const k of side) { const p = pool(k).filter((c) => !ses.includes(c)); add(p[s % Math.max(1, p.length)]); }
+    sessions.push(ses);
+  }
+  return { id: `focus:${part}:${gear === 'bw' ? 'bw' : 'db'}`, focus: part, gear: gear === 'bw' ? 'bw' : 'db',
+    name: part === 'full' ? 'Whole Body Mix' : `Focus: ${meta[1]}`,
+    desc: `${meta[2]} ${gear === 'bw' ? 'Bodyweight only.' : 'With your dumbbells and bench.'}`, sessions };
+}
+const focusOf = (id) => { const m = /^focus:([a-z]+):(db|bw)$/.exec(id || ''); return m ? { part: m[1], gear: m[2] } : null; };
 
 const LADDERS = [
   { id: 'pushup-ladder', cat: 'pushups', name: 'Pushup Ladder', icon: 'pushup' },
@@ -330,7 +388,8 @@ const fmtShort = (d) => `${WEEKDAY_LONG[d.getDay()].slice(0, 3)} ${d.getDate()} 
 const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
 function routine() {
-  return ROUTINE[state.routineId] || ROUTINES[0];
+  const f = focusOf(state.routineId);
+  return f ? focusRoutine(f.part, f.gear) : ROUTINE[state.routineId] || ROUTINES[0];
 }
 
 function isTrainingDay(d) { return state.trainingDays.includes(d.getDay()); }
@@ -4490,15 +4549,35 @@ function quickLogBody() {
    11. Sheets (settings, info)
    --------------------------------------------------------------- */
 function routineSheet() {
-  openSheet('Choose a routine', `<div class="opt-list" role="radiogroup">
+  const f = focusOf(state.routineId), gear = focusGear || (f ? f.gear : 'db');
+  const names = (ses) => ses.map((c) => CAT[c].name.replace(/^Dumbbell /, '')).join(', ');
+  openSheet('Choose a routine', `
+    <h3 class="h3 m-0">Which body part do you want to focus on?</h3>
+    <p class="muted small m-0 mt-1">Pick one and Mizan builds the sessions: mostly that area, plus a couple of exercises for the rest of the body so you stay balanced.</p>
+    <div class="segmented mt-3" role="radiogroup" aria-label="Equipment" style="--n:2;--i:${gear === 'bw' ? 1 : 0}">
+      <button role="radio" aria-checked="${gear !== 'bw'}" data-action="focus-gear" data-g="db">Dumbbells + bench</button>
+      <button role="radio" aria-checked="${gear === 'bw'}" data-action="focus-gear" data-g="bw">Bodyweight only</button>
+    </div>
+    <div class="opt-list mt-3" role="radiogroup" aria-label="Body part">
+    ${FOCUS_PARTS.map(([id, label, desc]) => {
+      const on = !!f && f.part === id && f.gear === gear, r = focusRoutine(id, gear);
+      return `<button class="opt" role="radio" aria-checked="${on}" data-action="set-focus" data-part="${id}" data-g="${gear}">
+        <div><div class="t">${esc(label)}</div>
+        <div class="s">${esc(on ? r.sessions.map((ses, i) => `Session ${i + 1}: ${names(ses)}.`).join(' ') : desc)}</div></div>
+        ${on ? icon('check') : ''}
+      </button>`;
+    }).join('')}</div>
+    <h3 class="h3 mt-5 mb-3">Or pick a ready-made routine</h3>
+    <div class="opt-list" role="radiogroup" aria-label="Ready-made routine">
     ${ROUTINES.map((r) => {
       return `<button class="opt" role="radio" aria-checked="${routine().id === r.id}" data-action="set-routine" data-id="${r.id}">
         <div><div class="t">${esc(r.name)}</div>
         <div class="s">${esc(r.desc)} ${r.sessions.length > 1 ? `${r.sessions.length} rotating sessions.` : ''}</div></div>
         ${routine().id === r.id ? icon('check') : ''}
       </button>`;
-    }).join('')}</div>`);
+    }).join('')}</div>`, { onClose: () => { focusGear = null; } });
 }
+let focusGear = null;   // the equipment tab showing in the routine sheet, before a body part is picked
 
 function swapSheet(catId) {
   const c = CAT[catId];
@@ -5190,6 +5269,18 @@ const ACTIONS = {
   'close-sheet': () => closeSheet(),
   'confirm-ok': () => { const run = confirmRun; confirmRun = null; closeSheet(); if (run) run(); },
   'pick-routine': routineSheet,
+  'focus-gear': (el) => {
+    focusGear = el.dataset.g;
+    const f = focusOf(state.routineId);
+    if (f && f.gear !== focusGear) { state.routineId = focusRoutine(f.part, focusGear).id; carouselIdx = 0; save(); rerender(); }
+    routineSheet();
+    $(`#sheetBody [data-action="focus-gear"][data-g="${focusGear}"]`)?.focus({ preventScroll: true });
+  },
+  'set-focus': (el) => {
+    const r = focusRoutine(el.dataset.part, el.dataset.g);
+    state.routineId = r.id; carouselIdx = 0; focusGear = null; save(); closeSheet(); rerender();
+    toast(`Routine: ${r.name}`);
+  },
   'set-routine': (el) => { state.routineId = el.dataset.id; carouselIdx = 0; save(); closeSheet(); rerender(); toast(`Routine: ${ROUTINE[el.dataset.id].name}`); },
   'swap-prog': (el) => swapSheet(el.dataset.cat),
   'choose-prog': (el) => { state.current[el.dataset.cat] = Number(el.dataset.i); save(); closeSheet(); rerender(); },

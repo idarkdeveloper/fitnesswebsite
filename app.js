@@ -236,27 +236,43 @@ const FOCUS_POOL = {
   shoulders: ['pike-pushups', 'db-shoulder', 'db-lateral'],
   arms: ['db-curl', 'db-triceps', 'dips', 'pushups'],
 };
-function focusRoutine(part, gear) {
-  const meta = FOCUS_PARTS.find((f) => f[0] === part) || FOCUS_PARTS[0];
-  part = meta[0];
+/** `parts` is one id or several joined with "+" ("legs+arms+core"); "full" on its own is the whole-body mix. */
+function focusRoutine(parts, gear) {
+  const order = FOCUS_PARTS.map((f) => f[0]);
+  let want = [...new Set(String(parts || 'full').split('+'))].filter((k) => order.includes(k)).sort((a, c) => order.indexOf(a) - order.indexOf(c));
+  if (!want.length || want.includes('full') || want.length >= order.length - 1) want = ['full'];
+  gear = gear === 'bw' ? 'bw' : 'db';
+  const label = (k) => FOCUS_PARTS.find((f) => f[0] === k)[1];
   const pool = (k) => FOCUS_POOL[k].filter((c) => CAT[c] && (gear !== 'bw' || !c.startsWith('db-')));
-  const others = ['legs', 'chest', 'back', 'core', 'shoulders'].filter((k) => k !== part && !(part === 'arms' && k === 'chest'));
+  const full = want[0] === 'full';
+  const main = full ? [] : want;
+  // What each session adds from the areas you did not pick: all five for the whole-body mix, two with one
+  // focus area, one with two, none with three or more.
+  const others = ['legs', 'chest', 'back', 'core', 'shoulders'].filter((k) => !main.includes(k) && !(main.includes('arms') && k === 'chest'));
+  const extra = full ? others.length : Math.max(0, 3 - main.length);
+  // Exercises per focus area in a session: 4 (3 for a small area) alone, 3 each for two, 2 each for three or more.
+  const per = (k) => Math.min(pool(k).length, main.length === 1 ? (pool(k).length > 4 ? 4 : 3) : main.length === 2 ? 3 : 2);
+  const count = full || main.some((k) => pool(k).length > per(k)) ? 3 : 2;
   const sessions = [];
-  const main = part === 'full' ? [] : pool(part);
-  const per = Math.min(main.length, main.length > 4 ? 4 : 3), count = part === 'full' || main.length > 4 ? 3 : 2;
   for (let s = 0; s < count; s++) {
     const ses = [];
     const add = (c) => { if (c && !ses.includes(c)) ses.push(c); };
-    for (let i = 0; i < per; i++) add(main[(s * per + i) % main.length]);
-    const side = part === 'full' ? others : [others[s % others.length], others[(s + 1) % others.length]];
-    for (const k of side) { const p = pool(k).filter((c) => !ses.includes(c)); add(p[s % Math.max(1, p.length)]); }
+    // Round by round, one more exercise from each area, up to six in total when four or more areas share a session.
+    const cap = main.length > 3 ? 6 : 99;
+    for (let i = 0; i < 4; i++) for (const k of main) { const p = pool(k), n = per(k); if (i < n && ses.length < cap) add(p[(s * n + i) % p.length]); }
+    for (let i = 0; i < extra && others.length; i++) {
+      const p = pool(others[(full ? i : s + i) % others.length]).filter((c) => !ses.includes(c));
+      add(p[s % Math.max(1, p.length)]);
+    }
     sessions.push(ses);
   }
-  return { id: `focus:${part}:${gear === 'bw' ? 'bw' : 'db'}`, focus: part, gear: gear === 'bw' ? 'bw' : 'db',
-    name: part === 'full' ? 'Whole Body Mix' : `Focus: ${meta[1]}`,
-    desc: `${meta[2]} ${gear === 'bw' ? 'Bodyweight only.' : 'With your dumbbells and bench.'}`, sessions };
+  const short = { core: 'Core', legs: 'Legs', chest: 'Chest', back: 'Back', shoulders: 'Shoulders', arms: 'Arms' };
+  const names = main.length > 1 ? main.map((k) => short[k]) : main.map(label);
+  return { id: `focus:${want.join('+')}:${gear}`, parts: want, gear,
+    name: full ? 'Whole Body Mix' : `Focus: ${names.length > 1 ? `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}` : names[0]}`,
+    desc: `${full ? FOCUS_PARTS[0][2] : `Built around ${names.join(', ').toLowerCase()}.`} ${gear === 'bw' ? 'Bodyweight only.' : 'With your dumbbells and bench.'}`, sessions };
 }
-const focusOf = (id) => { const m = /^focus:([a-z]+):(db|bw)$/.exec(id || ''); return m ? { part: m[1], gear: m[2] } : null; };
+const focusOf = (id) => { const m = /^focus:([a-z+]+):(db|bw)$/.exec(id || ''); return m ? { parts: m[1].split('+'), gear: m[2] } : null; };
 
 const LADDERS = [
   { id: 'pushup-ladder', cat: 'pushups', name: 'Pushup Ladder', icon: 'pushup' },
@@ -389,7 +405,7 @@ const fmtTime = (d) => d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: 
 
 function routine() {
   const f = focusOf(state.routineId);
-  return f ? focusRoutine(f.part, f.gear) : ROUTINE[state.routineId] || ROUTINES[0];
+  return f ? focusRoutine(f.parts.join('+'), f.gear) : ROUTINE[state.routineId] || ROUTINES[0];
 }
 
 function isTrainingDay(d) { return state.trainingDays.includes(d.getDay()); }
@@ -4550,23 +4566,27 @@ function quickLogBody() {
    --------------------------------------------------------------- */
 function routineSheet() {
   const f = focusOf(state.routineId), gear = focusGear || (f ? f.gear : 'db');
+  const cur = f ? focusRoutine(f.parts.join('+'), gear) : null;
   const names = (ses) => ses.map((c) => CAT[c].name.replace(/^Dumbbell /, '')).join(', ');
   openSheet('Choose a routine', `
-    <h3 class="h3 m-0">Which body part do you want to focus on?</h3>
-    <p class="muted small m-0 mt-1">Pick one and Mizan builds the sessions: mostly that area, plus a couple of exercises for the rest of the body so you stay balanced.</p>
+    <h3 class="h3 m-0">Which body parts do you want to focus on?</h3>
+    <p class="muted small m-0 mt-1">Pick one or several, or the whole body. Mizan builds the sessions around them and, with one or two areas, adds a little for the rest of the body so you stay balanced.</p>
     <div class="segmented mt-3" role="radiogroup" aria-label="Equipment" style="--n:2;--i:${gear === 'bw' ? 1 : 0}">
       <button role="radio" aria-checked="${gear !== 'bw'}" data-action="focus-gear" data-g="db">Dumbbells + bench</button>
       <button role="radio" aria-checked="${gear === 'bw'}" data-action="focus-gear" data-g="bw">Bodyweight only</button>
     </div>
-    <div class="opt-list mt-3" role="radiogroup" aria-label="Body part">
+    <div class="opt-list mt-3" role="group" aria-label="Body parts">
     ${FOCUS_PARTS.map(([id, label, desc]) => {
-      const on = !!f && f.part === id && f.gear === gear, r = focusRoutine(id, gear);
-      return `<button class="opt" role="radio" aria-checked="${on}" data-action="set-focus" data-part="${id}" data-g="${gear}">
+      const on = !!cur && cur.parts.includes(id);
+      return `<button class="opt" role="checkbox" aria-checked="${on}" data-action="set-focus" data-part="${id}" data-g="${gear}">
         <div><div class="t">${esc(label)}</div>
-        <div class="s">${esc(on ? r.sessions.map((ses, i) => `Session ${i + 1}: ${names(ses)}.`).join(' ') : desc)}</div></div>
+        <div class="s">${esc(desc)}</div></div>
         ${on ? icon('check') : ''}
       </button>`;
     }).join('')}</div>
+    ${cur ? `<div class="card mt-3" role="status"><div class="fw-bold">${esc(cur.name)}</div>
+      <p class="small muted m-0 mt-1">${cur.sessions.map((ses, i) => `<b>Session ${i + 1}:</b> ${esc(names(ses))}.`).join('<br>')}</p></div>
+      <button class="btn block lg mt-3" data-action="close-sheet">Use this routine</button>` : ''}
     <h3 class="h3 mt-5 mb-3">Or pick a ready-made routine</h3>
     <div class="opt-list" role="radiogroup" aria-label="Ready-made routine">
     ${ROUTINES.map((r) => {
@@ -5272,14 +5292,20 @@ const ACTIONS = {
   'focus-gear': (el) => {
     focusGear = el.dataset.g;
     const f = focusOf(state.routineId);
-    if (f && f.gear !== focusGear) { state.routineId = focusRoutine(f.part, focusGear).id; carouselIdx = 0; save(); rerender(); }
+    if (f && f.gear !== focusGear) { state.routineId = focusRoutine(f.parts.join('+'), focusGear).id; carouselIdx = 0; save(); rerender(); }
     routineSheet();
     $(`#sheetBody [data-action="focus-gear"][data-g="${focusGear}"]`)?.focus({ preventScroll: true });
   },
+  // Tap a body part to add or remove it; "Whole body" stands alone. The sheet stays open to show the sessions.
   'set-focus': (el) => {
-    const r = focusRoutine(el.dataset.part, el.dataset.g);
-    state.routineId = r.id; carouselIdx = 0; focusGear = null; save(); closeSheet(); rerender();
-    toast(`Routine: ${r.name}`);
+    const part = el.dataset.part, f = focusOf(state.routineId);
+    let parts = f ? f.parts.filter((k) => k !== 'full') : [];
+    if (part === 'full') parts = ['full'];
+    else if (parts.includes(part)) parts = parts.filter((k) => k !== part);
+    else parts.push(part);
+    const r = focusRoutine(parts.join('+'), el.dataset.g);
+    state.routineId = r.id; carouselIdx = 0; save(); rerender(); routineSheet();
+    $(`#sheetBody [data-action="set-focus"][data-part="${part}"]`)?.focus({ preventScroll: true });
   },
   'set-routine': (el) => { state.routineId = el.dataset.id; carouselIdx = 0; save(); closeSheet(); rerender(); toast(`Routine: ${ROUTINE[el.dataset.id].name}`); },
   'swap-prog': (el) => swapSheet(el.dataset.cat),

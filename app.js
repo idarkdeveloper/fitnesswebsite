@@ -849,6 +849,55 @@ function planBannerDue() {
 }
 /** Next week's plan comes out on Friday: Friday–Sunday the reminder and Groceries are about next week. */
 const planReminderWeek = () => (planIdx(todayKey()) >= 4 ? 1 : 0);
+/* ---------- App update (Android) ----------
+   The screens update with the website; the Android shell itself only changes with a new APK. The newest APK's
+   build number is in the title of the project's "android" release on GitHub. When it is higher than the installed
+   build, Today shows a banner: one tap downloads it and opens Android's installer (UpdateBridgePlugin.java). */
+const UPDATE_BUILD = 32;      // first Android build that can download and install an update itself
+const RELEASE_API = 'https://api.github.com/repos/idarkdeveloper/fitnesswebsite/releases/tags/android';
+let latestBuild = 0, updateBusy = false;
+try { latestBuild = Number(JSON.parse(localStorage.getItem('pf-latest-build') || '{}').n) || 0; } catch { /* ignore */ }
+/** Ask GitHub for the newest build, at most every 6 hours. Quiet on any failure. */
+async function checkAppUpdate() {
+  if (!isNativeApp()) return;
+  let seen = {};
+  try { seen = JSON.parse(localStorage.getItem('pf-latest-build') || '{}'); } catch { /* ignore */ }
+  if (Date.now() - (seen.at || 0) < 6 * 3600e3) return;
+  try {
+    const r = await fetch(RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!r.ok) return;
+    const j = await r.json(), m = /build (\d+)/i.exec(j.name || '');
+    if (j.draft || !m) return;
+    const before = latestBuild;
+    latestBuild = Number(m[1]);
+    try { localStorage.setItem('pf-latest-build', JSON.stringify({ n: latestBuild, at: Date.now() })); } catch { /* ignore */ }
+    if (latestBuild !== before && parseRoute().name === 'today' && !sheetOpen()) rerender();
+  } catch { /* offline */ }
+}
+function updateBanner() {
+  if (!isNativeApp() || !appBuild || latestBuild <= appBuild) return '';
+  return `<div class="banner">${icon('download')}<span class="grow" id="updMsg">${updateBusy ? 'Downloading the update…' : 'A new version of the app is ready.'}</span>
+    <button class="btn subtle sm" data-action="app-update"${updateBusy ? ' disabled' : ''}>Update</button></div>`;
+}
+async function appUpdate() {
+  if (updateBusy) return;
+  const viaBrowser = () => { window.open(APK_URL, '_blank'); toast('Downloading in your browser. Open the file when it finishes, then tap Install.'); };
+  if (appBuild < UPDATE_BUILD) { viaBrowser(); return; }   // older app: no installer bridge yet
+  updateBusy = true; rerender();
+  let sub = null;
+  try {
+    const { Update } = await hcLoad();
+    sub = await Update.addListener('progress', ({ percent }) => { const el = $('#updMsg'); if (el && percent >= 0) el.textContent = `Downloading the update… ${percent}%`; });
+    await Update.install({ url: APK_URL });
+    toast('Tap Install to finish. Your data stays.');
+  } catch {
+    viaBrowser();
+  } finally {
+    try { sub && sub.remove && sub.remove(); } catch { /* ignore */ }
+    updateBusy = false; rerender();
+  }
+}
+
 function planBanner() {
   if (!planBannerDue()) return '';
   const w = planReminderWeek();
@@ -968,6 +1017,7 @@ VIEWS.today = () => {
       <div><h1 class="h1 m-0">${greeting()}</h1><p class="muted m-0 mt-1">${esc(fmtLong(today()))}</p></div>
       <button class="streak-pill" data-action="info-streak" aria-label="${streak} day streak">${icon('flame')} ${streak}</button>
     </div>
+    ${updateBanner()}
     ${reminderBanner()}
     ${planBanner()}
     ${myDayRow(tk)}
@@ -2830,6 +2880,7 @@ const TRACK_ACTIONS = {
     $(`[data-action="rt-open"][data-id="${id}"]`)?.focus({ preventScroll: true });
   },
   'comp-edit': (el) => compSheet(el.dataset.day),
+  'app-update': appUpdate,
   'share-copy': async () => {
     try { await navigator.clipboard.writeText(JSON.stringify((shareLines || []).map((l) => [l.t, l.x, l.y, l.w, l.h]))); toast('Copied. Paste it to whoever looks after the app.'); }
     catch { toast("Couldn't copy on this phone"); }
@@ -4901,7 +4952,7 @@ function hcLoad() {
     const done = () => {
       const reg = window.capacitorExports && window.capacitorExports.registerPlugin;
       if (!reg) { reject(new Error('Capacitor not available')); return; }
-      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget'), Notif: reg('LocalNotifications'), Share: reg('MizanShare') };
+      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget'), Notif: reg('LocalNotifications'), Share: reg('MizanShare'), Update: reg('MizanUpdate') };
       resolve(hcPlugins);
     };
     if (window.capacitorExports) { done(); return; }
@@ -5239,6 +5290,7 @@ async function hcBoot() {
     App.addListener('appStateChange', ({ isActive }) => {
       if (!isActive) return;
       checkForUpdate();
+      checkAppUpdate();
       widgetPush(true);
       syncNativeReminders();
       if (Date.now() - Date.parse(state.health?.last || 0) > 5 * 60e3) hcSync();
@@ -5260,6 +5312,9 @@ async function hcBoot() {
   let asked = false;
   try { asked = localStorage.getItem('pf-notif-asked') === '1'; localStorage.setItem('pf-notif-asked', '1'); } catch { /* ignore */ }
   try { const { App } = await hcLoad(); appBuild = Number((await App.getInfo()).build) || 0; } catch { /* ignore */ }
+  // Now that the installed build is known: is there a newer APK? Show the banner if one was already seen.
+  checkAppUpdate();
+  if (latestBuild > appBuild && appBuild && parseRoute().name === 'today' && !sheetOpen()) rerender();
   try {
     const { Notif } = await hcLoad();
     // One Android notification category per kind, so each can be muted on its own in the phone's settings.

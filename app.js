@@ -5142,10 +5142,9 @@ function installSheet() {
 function signInSheet() {
   openSheet('Back up & sync', `
     <p class="muted m-0 mb-4">Sign in to keep your workouts and progress in sync across your devices. This app works fully without signing in.</p>
-    <button class="btn block lg" data-action="sync-google">Continue with Google</button>
-    <div class="field mt-6"><label for="syncEmail">Or get a sign-in link by email</label>
+    <div class="field"><label for="syncEmail">Get a sign-in link by email</label>
       <input class="input" id="syncEmail" type="email" autocomplete="email" placeholder="you@example.com" maxlength="120" /></div>
-    <button class="btn ghost block mt-3" data-action="sync-email">Email me a link</button>
+    <button class="btn block lg mt-3" data-action="sync-email">Email me a link</button>
     <p class="muted small m-0 mt-3">${isNativeApp() ? 'Tap the link in the email on this phone: it opens Mizan.' : 'Open the link in this same browser.'}</p>`);
 }
 

@@ -3312,6 +3312,51 @@ function dayTimes(day) {
   if (sh === 'evening') return { wake: '09:15', sleep: '01:00' };
   return { wake: p.wake || '07:00', sleep: p.sleepAt || '22:00' };
 }
+/* ---------- Weather outside (Open-Meteo, free, no account) ----------
+   Uses the place you set for prayer times, rounded to about a kilometre. Fetched at most every 30 minutes and kept
+   for offline use. The walk row uses the forecast for the walk's own hour to say outside or indoors. */
+const WMO = [[0, 'clear'], [1, 'mostly clear'], [2, 'partly cloudy'], [3, 'cloudy'], [45, 'fog'], [48, 'fog'], [51, 'light drizzle'], [53, 'drizzle'], [55, 'heavy drizzle'],
+  [56, 'freezing drizzle'], [57, 'freezing drizzle'], [61, 'light rain'], [63, 'rain'], [65, 'heavy rain'], [66, 'freezing rain'], [67, 'freezing rain'], [71, 'light snow'], [73, 'snow'], [75, 'heavy snow'],
+  [77, 'snow grains'], [80, 'light showers'], [81, 'showers'], [82, 'heavy showers'], [85, 'snow showers'], [86, 'snow showers'], [95, 'thunderstorm'], [96, 'thunderstorm'], [99, 'thunderstorm']];
+const wmoText = (c) => (WMO.find(([k]) => k === c) || [0, ''])[1];
+let weather = null;
+try { weather = JSON.parse(localStorage.getItem('pf-weather') || 'null'); } catch { /* ignore */ }
+async function weatherLoad() {
+  const c = prayerCfg();
+  if (!c || c.lat == null) return;
+  const where = `${Number(c.lat).toFixed(2)},${Number(c.lon).toFixed(2)}`;
+  if (weather && weather.where === where && Date.now() - weather.at < 30 * 60e3) return;
+  try {
+    const [la, lo] = where.split(',');
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&forecast_days=2&timezone=auto`);
+    if (!r.ok) return;
+    const j = await r.json();
+    weather = { at: Date.now(), where, cur: { t: j.current.temperature_2m, code: j.current.weather_code },
+      hours: j.hourly.time.map((t, i) => [t, j.hourly.temperature_2m[i], j.hourly.precipitation_probability[i], j.hourly.weather_code[i]]) };
+    try { localStorage.setItem('pf-weather', JSON.stringify(weather)); } catch { /* ignore */ }
+    if (['routine', 'today', 'home'].includes(parseRoute().name) && !sheetOpen() && !document.activeElement?.matches('input, textarea, select')) rerender();
+  } catch { /* offline */ }
+}
+/** Forecast for a day and minute of the day: { t, prob, code }, or null when not known (older than 6 h, other day). */
+function weatherAt(day, min) {
+  if (!weather || Date.now() - weather.at > 6 * 3600e3) return null;
+  const m = ((min % 1440) + 1440) % 1440, k = `${min >= 1440 ? keyAdd(day, 1) : day}T${pad(Math.floor(m / 60))}:00`;
+  const h = weather.hours.find((x) => x[0] === k);
+  return h ? { t: h[1], prob: h[2], code: h[3] } : null;
+}
+const weatherNow = () => (weather && Date.now() - weather.at < 2 * 3600e3 ? `${Math.round(weather.cur.t)}°, ${wmoText(weather.cur.code)}` : '');
+/** One sentence for the walk: what it is like outside then, and whether to walk outside or indoors. */
+function walkWeather(day, min) {
+  const w = weatherAt(day, min);
+  if (!w) return '';
+  const wet = w.code >= 51 && w.code !== 71 && w.code !== 77 || (w.prob ?? 0) >= 60, storm = w.code >= 95, icy = w.code === 56 || w.code === 57 || w.code === 66 || w.code === 67;
+  const what = `Outside at ${rtClock(min)}: ${Math.round(w.t)}°, ${wmoText(w.code)}${(w.prob ?? 0) >= 30 ? `, ${w.prob}% chance of ${[71, 73, 75, 77, 85, 86].includes(w.code) ? 'snow' : 'rain'}` : ''}.`;
+  const tip = storm || icy || w.t <= -8 || w.t >= 33 ? 'Walk indoors today: around the flat, on the spot or the stairs.'
+    : wet ? 'Walk indoors, or outside with a rain jacket.'
+      : w.t < 5 ? 'Good for outside: jacket and gloves.' : 'Good for a walk outside.';
+  return ` ${what} ${tip}`;
+}
+
 function dayTimeline(day) {
   const d = fromKey(day), sh = rtShift(day), { wake, sleep } = dayTimes(day), W = rtMin(wake);
   let S = rtMin(sleep); if (S <= W) S += 1440;
@@ -3411,9 +3456,9 @@ function dayTimeline(day) {
   }
   if (trains) add(workoutAt, { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min${fasted ? ', before breakfast. Drink water first.' : ''}`, workout: true });
   const sg = hp().stepGoal || HDEF.stepGoal;
-  add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: walkLen < 30
+  add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: (walkLen < 30
     ? `${walkLen} minutes today: the morning is full. Make up the steps in your break (goal ${nf(sg)}).`
-    : `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
+    : `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).`) + walkWeather(day, walkAt) });
   add(sh === 'evening' ? S - 8 : S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: 'Screens away, dim lights, lay out tomorrow\'s clothes and food.' });
   add(S, { key: 'sleep', icon: 'moon', title: 'Sleep', sub: `Lights out. ${fmtSleep(((W + 1440) - S) % 1440 || 0)} until you wake.` });
   // Prayer times for this date and place, pinned to their real time.
@@ -3487,7 +3532,7 @@ VIEWS.routine = () => {
   };
   return `
     <h1 class="h1 m-0">Routine</h1>
-    <p class="muted m-0 mt-1">${sh ? `${SHIFTS[sh].name}: wake ${wake}, sleep ${sleep}` : `Day off: wake ${wake}, sleep ${sleep}`}${rtPreview ? ' · preview' : ` · ${done} of ${total} done`}</p>
+    <p class="muted m-0 mt-1">${sh ? `${SHIFTS[sh].name}: wake ${wake}, sleep ${sleep}` : `Day off: wake ${wake}, sleep ${sleep}`}${rtPreview ? ' · preview' : ` · ${done} of ${total} done`}${isToday && weatherNow() ? ` · outside ${esc(weatherNow())}` : ''}</p>
     <div class="chips mt-3" role="group" aria-label="Show the plan for">
       ${[[null, 'This day'], ['off', 'Off'], ['morning', 'Early'], ['evening', 'Late']].map(([v, l]) => `<button class="chip ${rtPreview === v ? 'on' : ''}" aria-pressed="${rtPreview === v}" data-action="rt-preview" data-v="${v || ''}">${l}</button>`).join('')}
     </div>
@@ -3529,6 +3574,7 @@ function prayerSheet(note) {
 function prayerStore(patch) {
   state.hprofile.prayer = { on: true, method: 'mwl', asr: 'hanafi', ...(prayerCfg() || {}), ...patch };
   save();
+  weatherLoad();   // the weather uses the same place
 }
 function rtTimesSheet() {
   const p = hp();
@@ -5968,7 +6014,8 @@ async function checkForUpdate() {
   if (draft || sheetOpen() || parseRoute().name === 'workout' || document.activeElement?.matches('input, textarea, select')) return;
   location.reload();
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkForUpdate(); weatherLoad(); } });
+weatherLoad();
 
 hcBoot();
 setInterval(checkReminder, 60000);

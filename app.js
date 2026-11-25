@@ -180,12 +180,18 @@ Object.assign(POSES, {
 });
 /** Pencil sketches for the dumbbell exercises (tools/sketches.js); every weight step uses its exercise's sketch. */
 const SKETCHES = new Set(['db-bench', 'db-row', 'db-shoulder', 'db-goblet', 'db-rdl', 'db-split', 'db-curl', 'db-benchsquat', 'db-hipthrust', 'db-carry', 'db-lateral', 'db-triceps']);
+// Floor moves (moves.js) have one sketch per exercise group; each step of the group uses it.
+const MOVE_SKETCHES = new Set(['crunches', 'bicycle', 'planks', 'flutter-kicks', 'russian-twists', 'mountain-climbers', 'wall-sits', 'calf-raises', 'glute-kicks', 'supermans', 'pike-pushups']);
 function sketchSrc(id) {
   const m = /^db-[a-z]+/.exec(id || '');
-  return m && SKETCHES.has(m[0]) ? `img/sketch/${m[0]}.svg` : null;
+  if (m) return SKETCHES.has(m[0]) ? `img/sketch/${m[0]}.svg` : null;
+  const cat = MOVE_SKETCHES.has(id) ? id : PROG[id] && PROG[id].cat && PROG[id].cat.id;
+  return MOVE_SKETCHES.has(cat) ? `img/sketch/${cat}.svg` : null;
 }
 /** Photo for an id; dumbbell weight steps (db-bench-7-5) share their exercise's photo (db-bench). */
-const photoFor = (id) => id && (IMAGES[id] || IMAGES[(/^db-[a-z]+/.exec(id) || [])[0]]);
+const photoFor = (id) => id && (IMAGES[id] || IMAGES[(/^db-[a-z]+/.exec(id) || [])[0]] || moveGroupPhoto(id));
+/** The steps of a floor-move group (moves.js) share the group's photo until they have their own. */
+function moveGroupPhoto(id) { const g = PROG[id] && PROG[id].cat.id; return MOVE_SKETCHES.has(g) ? IMAGES[g] : undefined; }
 function media(catId, imgId, alt = '') {
   const sk = !photoFor(imgId || catId) && sketchSrc(imgId || catId);
   if (sk) return `${figure(catId)}<img class="photo sketch" src="${sk}" alt="${esc(alt)}" loading="lazy" decoding="async" />`;

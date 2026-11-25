@@ -3762,6 +3762,32 @@ const mealWhen = (m) => (m.at ? `${m.at}${m.note ? ` · ${m.note}` : ''}${m.pack
 /** Plan day i (0 = Monday) of the week starting on Monday `wk`. A new plan is generated for every week.
     On a shift day the meals carry a time and a lunchbox mark, in the order you eat them. */
 /** What is eaten at dinner on a day: on an evening shift that is the lunch dish (cooked once, packed for the break). */
+/** Ingredients marked "Not bought" on a week's list that have no stand-in (semolina, oats: nothing of their kind to swap in). */
+function blockedFor(wk) {
+  const subs = subsFor(wk) || {}, out = [];
+  for (const [k, v] of Object.entries(state.grocery)) {
+    if (!k.startsWith(wk + '|') || !v || typeof v !== 'object' || v.b !== 0 || v.sub) continue;
+    const ing = k.slice(wk.length + 1);
+    if (!subs[ing]) out.push(ing);
+  }
+  return out;
+}
+/** A meal that needs an ingredient you didn't buy is replaced by another option for the same slot that you can cook:
+    none of its ingredients are blocked, and as few as possible are missing from that week's list. The same meal
+    always gets the same replacement, so a dish cooked once for two meals stays one dish. */
+function swapBlocked(items, wk, blocked) {
+  const M = window.PF_MEALS, needs = (id) => Object.keys((M.DISH[id] || [0, 0, 0, 0, {}])[4]);
+  const bad = (list) => list.some(([id]) => needs(id).some((ing) => blocked.includes(ing)));
+  if (!blocked.length || !bad(items)) return items;
+  const hit = items.find(([id]) => needs(id).some((ing) => blocked.includes(ing)))[0];
+  const slot = Object.keys(M.POOLS).find((l) => M.POOLS[l].some((o) => o.items.some(([id]) => id === hit)));
+  if (!slot) return items;
+  const { tot } = weekNeeds(wk);
+  const missing = (o) => o.items.reduce((n, [id]) => n + needs(id).filter((ing) => !tot[ing]).length, 0);
+  const opts = M.POOLS[slot].filter((o) => o.items.every(([id]) => M.DISH[id]) && !bad(o.items))
+    .map((o, i) => ({ o, i, miss: missing(o) })).sort((a, b) => a.miss - b.miss || a.i - b.i);
+  return opts.length ? opts[0].o.items : items;
+}
 function dinnerItems(dayKey) {
   const plan = window.PF_MEALS.weekPlan(weekStart(dayKey))[planIdx(dayKey)];
   const pick = (l) => plan.find(([label]) => label === l)[1];
@@ -3776,7 +3802,8 @@ function dayInfo(i, wk = weekStart(todayKey()), raw = false) {
     sh === 'evening' && label === 'Dinner' ? dinnerItems(dayK)
       : sh === 'morning' && label === 'Lunch' ? dinnerItems(keyAdd(dayK, -1))
       : sh === 'evening' && label === 'Snack' && items.some(([id]) => id !== 'tea' && id !== 'chai') ? items.filter(([id]) => id !== 'tea' && id !== 'chai') : items]);
-  let meals = base.map(([label, items]) => ({ label, items, ...mealInfo(items, subs) }));
+  const blocked = raw ? [] : blockedFor(wk);
+  let meals = base.map(([label, items0]) => { const items = swapBlocked(items0, wk, blocked); return { label, items, ...mealInfo(items, subs) }; });
   if (sh) {
     const S = SHIFTS[sh];
     meals = S.order.map((l) => meals.find((m) => m.label === l)).filter(Boolean)
@@ -3945,10 +3972,10 @@ function fmtQty(ing, v) {
 }
 const ingShort = (ing) => window.PF_MEALS.ING[ing][0].replace(/\s*\(.*\)\s*$/, '');
 /** The note under a grocery row: what you bought, or what you got instead. */
-function groceryStatus(ing, v) {
+function groceryStatus(ing, v, wk) {
   if (!v || typeof v !== 'object') return '';
   const parts = [];
-  if (v.b === 0 && !v.sub) parts.push('Not bought');
+  if (v.b === 0 && !v.sub) parts.push(wk && blockedFor(wk).includes(ing) ? 'Not bought: the plan uses another dish' : 'Not bought');
   else if (v.b > 0) parts.push(`Bought ${fmtAmt(ing, v.b)}`);
   if (v.sub) {
     const other = v.sub === 'other';
@@ -4172,7 +4199,7 @@ VIEWS.plan = () => {
         <ul class="grocery card list-card">${s.items.map((it) => {
           const k = `${start}|${it.id}`;
           const v = state.grocery[k];
-          let st = groceryStatus(it.id, v);
+          let st = groceryStatus(it.id, v, start);
           if (v && v.b === 0 && !v.sub && gsubs && gsubs[it.id]) st += ` · meals use ${ingShort(gsubs[it.id]).toLowerCase()} instead`;
           const hv = it.have ? `${it.covered ? 'Already have it: ' : ''}${fmtAmt(it.id, it.have)} left from earlier weeks` : '';
           const done = v || it.covered;

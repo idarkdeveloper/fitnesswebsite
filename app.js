@@ -1014,7 +1014,7 @@ VIEWS.today = () => {
 
   return `
     <div class="today-head">
-      <div><h1 class="h1 m-0">${greeting()}</h1><p class="muted m-0 mt-1">${esc(fmtLong(today()))}</p></div>
+      <div><h1 class="h1 m-0">${greeting()}</h1><p class="muted m-0 mt-1">${esc(fmtLong(today()))}</p>${climateLine()}</div>
       <button class="streak-pill" data-action="info-streak" aria-label="${streak} day streak">${icon('flame')} ${streak}</button>
     </div>
     ${updateBanner()}
@@ -3458,6 +3458,11 @@ function walkWeather(day, min) {
   return ` ${what} ${tip}`;
 }
 
+/** Today's header: the weather outside and the room reading, when known. */
+function climateLine() {
+  const parts = [weatherNow() && `Outside ${weatherNow()}`, roomNow() && `Room ${roomNow()}`].filter(Boolean);
+  return parts.length ? `<p class="small muted m-0 mt-1">${esc(parts.join(' · '))}</p>` : '';
+}
 function dayTimeline(day) {
   const d = fromKey(day), sh = rtShift(day), { wake, sleep } = dayTimes(day), W = rtMin(wake);
   let S = rtMin(sleep); if (S <= W) S += 1440;

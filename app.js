@@ -3369,7 +3369,9 @@ function dayTimeline(day) {
   // Workout and walk. On an evening shift both come after breakfast, so they follow it when it moves.
   const walkAt = sh === 'evening' ? W + 35 + late : S - 150,   // 20 minutes after breakfast
     trains = sessionFor(d).length > 0;
-  const workoutAt = sh === 'evening' ? Math.max(W + 75, late ? walkAt + 35 : 0) : sh === 'morning' ? at('17:15') : at('17:30');
+  // The walk takes 30 minutes and the workout 35: on an evening shift the workout starts when the walk is over.
+  const WALK = 30, WORKOUT = 35;
+  const workoutAt = sh === 'evening' ? walkAt + WALK + 5 : sh === 'morning' ? at('17:15') : at('17:30');
   if (!trains && state.trainingDays.length) {
     // A rest day says so at the time the workout would be, with the day of the next one.
     let nd = null;
@@ -3380,10 +3382,16 @@ function dayTimeline(day) {
   if (trains) add(workoutAt, { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min`, workout: true });
   const sg = hp().stepGoal || HDEF.stepGoal;
   add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
-  // A late breakfast squeezes the morning: lunch's cooking starts once the workout (or walk) is over, at the latest 40 minutes before lunch.
-  if (sh === 'evening' && late) {
+  // Evening shift, the morning before work: lunch's cooking starts once the workout (or a late walk) is over, at the
+  // latest 40 minutes before lunch. On a workout day the shower, hair and teeth come after it, while lunch cooks.
+  if (sh === 'evening') {
     const cook = items.find((it) => it.key === 'cook');
-    if (cook) cook.min = Math.min(at('11:35'), Math.max(cook.min, (trains ? workoutAt : walkAt) + 35));
+    const free = trains ? workoutAt + WORKOUT : walkAt + WALK;
+    if (cook) cook.min = Math.min(at('11:35'), Math.max(cook.min, free));
+    if (trains) {
+      const after = (cook ? cook.min : free) + 10;
+      ['e-am', 'e-hair', 'e-teeth'].forEach((id, i) => { const it = items.find((x) => x.key === `care:${id}`); if (it && it.min < after + 40) it.min = after + i * 12; });
+    }
   }
   add(sh === 'evening' ? S - 8 : S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: 'Screens away, dim lights, lay out tomorrow\'s clothes and food.' });
   add(S, { key: 'sleep', icon: 'moon', title: 'Sleep', sub: `Lights out. ${fmtSleep(((W + 1440) - S) % 1440 || 0)} until you wake.` });
@@ -3405,6 +3413,14 @@ function dayTimeline(day) {
     });
   }
   items.sort((x, y) => x.min - y.min);
+  // Nothing else starts while you are working out: what falls inside those 35 minutes moves to the end of them.
+  const wo = items.find((it) => it.workout);
+  const clearWorkout = () => {
+    if (!wo) return;
+    items.forEach((it) => { if (it !== wo && !it.meal && !it.prayer && !it.info && it.key !== 'sleep' && it.min >= wo.min && it.min < wo.min + WORKOUT) it.min = wo.min + WORKOUT; });
+    items.sort((x, y) => x.min - y.min);
+  };
+  clearWorkout();
   // Two things at the same time: keep meals, prayers and the workout where they are and move the other one on by 15 minutes.
   for (let i = 1; i < items.length; i++) {
     if (items[i].min - items[i - 1].min < 5 && items[i].key !== 'sleep') {
@@ -3413,6 +3429,7 @@ function dayTimeline(day) {
       items[i].min = items[i - 1].min + 15;
     }
   }
+  clearWorkout();   // moving things apart may have pushed one into the workout
   return items.sort((x, y) => x.min - y.min);
 }
 const rtDone = (day, it) => !rtPreview && rtDoneReal(day, it);

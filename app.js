@@ -1438,6 +1438,7 @@ VIEWS.profile = () => {
       ${row('pick-routine', 'Routine', esc(routine().name))}
       ${row('routine-days', 'Training days', days)}
       ${row('rest-settings', 'Rest timer', `${state.restSeconds} seconds`)}
+      ${isNativeApp() ? row('room-sheet', 'Room thermometer', meterCfg() ? (roomNow() ? esc(roomNow()) : 'No recent reading') : 'SwitchBot meter over Bluetooth') : ''}
       <div class="list-item static"><span class="grow"><span>Warm-up<span class="li-sub">${state.warmup !== false ? 'A few minutes of moves for that day, before each workout' : 'Off'}</span></span></span>
         <button class="toggle" role="switch" aria-checked="${state.warmup !== false}" data-action="toggle-warmup" aria-label="Warm-up before workouts"></button></div>
       ${canSpeak() ? `<div class="list-item static"><span class="grow"><span>Voice coach<span class="li-sub">${state.voice ? 'Reads out each set and counts down your rest' : 'Off'}</span></span></span>
@@ -2881,6 +2882,28 @@ const TRACK_ACTIONS = {
   },
   'comp-edit': (el) => compSheet(el.dataset.day),
   'app-update': appUpdate,
+  'room-sheet': roomSheet,
+  'room-scan': async () => {
+    const c = meterCfg();
+    roomBusy = false; const p = meterScan(8000); roomSheet();   // show "Listening…" while it runs
+    const list = await p;
+    if (list) {
+      const hit = c && list.find((d) => d.addr === c.addr);
+      if (hit) { room = { ...hit, at: Date.now() }; try { localStorage.setItem('pf-room', JSON.stringify(room)); } catch { /* ignore */ } }
+      roomFound = c && hit ? null : list;
+      if (c && !hit) roomMsg = "Didn't hear your meter this time. Hold the phone nearer and try again, or pick it again below.";
+    }
+    if (sheetOpen()) roomSheet();
+    rerender();
+  },
+  'room-pick': (el) => {
+    const d = (roomFound || []).find((x) => x.addr === el.dataset.addr);
+    if (!d) return;
+    state.hprofile.meter = { addr: d.addr, name: d.model };
+    room = { ...d, at: Date.now() }; try { localStorage.setItem('pf-room', JSON.stringify(room)); } catch { /* ignore */ }
+    roomFound = null; save(); roomSheet(); rerender(); toast(`Room thermometer: ${d.t}°, ${d.h}%`);
+  },
+  'room-remove': () => { state.hprofile.meter = null; room = null; try { localStorage.removeItem('pf-room'); } catch { /* ignore */ } save(); closeSheet(); rerender(); toast('Room thermometer removed'); },
   'share-copy': async () => {
     try { await navigator.clipboard.writeText(JSON.stringify((shareLines || []).map((l) => [l.t, l.x, l.y, l.w, l.h]))); toast('Copied. Paste it to whoever looks after the app.'); }
     catch { toast("Couldn't copy on this phone"); }
@@ -3312,6 +3335,129 @@ function dayTimes(day) {
   if (sh === 'evening') return { wake: '09:15', sleep: '01:00' };
   return { wake: p.wake || '07:00', sleep: p.sleepAt || '22:00' };
 }
+/* ---------- Room thermometer (SwitchBot Meter, over Bluetooth) ----------
+   A SwitchBot meter broadcasts its reading every few seconds. The Android app listens for a few seconds
+   (BleBridgePlugin.java) and hands over the raw bytes; they are read here, so a fix needs no new app.
+   Layout (SwitchBot's published format): service data byte 0 = model letter, byte 2 = battery %;
+   the reading is 3 bytes, at 8..10 of the manufacturer data (Meter Pro, Outdoor Meter) or 3..5 of the service
+   data (Meter, Meter Plus): tenths of a degree, then sign bit + whole degrees, then humidity %.
+   state.hprofile.meter = { addr, name } is the meter you picked; the last reading stays on this device. */
+const BLE_BUILD = 34;         // first Android build that can listen to the meter
+const METER_MODELS = { T: 'Meter', i: 'Meter Plus', w: 'Outdoor Meter', 4: 'Meter Pro', 5: 'Meter Pro CO2', v: 'Hub 2' };
+const hexBytes = (h) => (h || '').match(/../g)?.map((x) => parseInt(x, 16)) || [];
+function meterParse(dev) {
+  const mfr = hexBytes(dev.mfr), svc = hexBytes(dev.svc);
+  const model = svc.length ? String.fromCharCode(svc[0] & 0x7f) : '';
+  const td = mfr.length >= 11 ? mfr.slice(8, 11) : svc.length >= 6 ? svc.slice(3, 6) : null;
+  if (!td) return null;
+  const t = (td[1] & 0x80 ? 1 : -1) * ((td[1] & 0x7f) + (td[0] & 0x0f) / 10), h = td[2] & 0x7f;
+  if (t < -40 || t > 70 || h < 1 || h > 100 || (model && !METER_MODELS[model])) return null;
+  return { addr: dev.addr, t: Math.round(t * 10) / 10, h, batt: svc.length >= 3 ? svc[2] & 0x7f : null, model: METER_MODELS[model] || 'SwitchBot meter', rssi: dev.rssi ?? -99 };
+}
+let room = null, roomBusy = false, roomFound = null, roomMsg = '';
+try { room = JSON.parse(localStorage.getItem('pf-room') || 'null'); } catch { /* ignore */ }
+const meterCfg = () => hp().meter || null;
+const roomFresh = () => (room && meterCfg() && room.addr === meterCfg().addr && Date.now() - room.at < 3 * 3600e3 ? room : null);
+const roomNow = () => (roomFresh() ? `${room.t}°, ${room.h}% humidity` : '');
+/** Listen for the meters nearby; `ms` how long. Returns the readings found (strongest signal first), or null on failure. */
+async function meterScan(ms) {
+  if (!isNativeApp() || appBuild < BLE_BUILD || roomBusy) return null;
+  roomBusy = true; roomMsg = '';
+  try {
+    const { Ble } = await hcLoad();
+    const r = await Ble.scan({ ms });
+    return (r.devices || []).map(meterParse).filter(Boolean).sort((a, b) => b.rssi - a.rssi);
+  } catch (e) {
+    const m = String((e && e.message) || e);
+    roomMsg = /denied/.test(m) ? 'Mizan needs the "Nearby devices" permission to hear the meter. Allow it in Android Settings → Apps → Mizan → Permissions.'
+      : /off/.test(m) ? 'Bluetooth is off. Switch it on and try again.' : "Couldn't listen for the meter. Try again.";
+    return null;
+  } finally { roomBusy = false; }
+}
+/** Refresh the reading of your meter, quietly: at most every 10 minutes, when the app is open. */
+async function roomRefresh(force) {
+  const c = meterCfg();
+  if (!c || (!force && room && room.addr === c.addr && Date.now() - room.at < 10 * 60e3)) return;
+  const list = await meterScan(6000), hit = list && list.find((d) => d.addr === c.addr);
+  if (!hit) return;
+  room = { ...hit, at: Date.now() };
+  try { localStorage.setItem('pf-room', JSON.stringify(room)); } catch { /* ignore */ }
+  if (['routine', 'today', 'home', 'profile'].includes(parseRoute().name) && !sheetOpen() && !document.activeElement?.matches('input, textarea, select')) rerender();
+}
+/** What the room reading means for you, if anything. */
+function roomAdvice(r) {
+  const out = [];
+  if (r.h < 35) out.push('The air is dry: drink water through the day and moisturise after washing.');
+  else if (r.h > 65) out.push('The air is humid: open the windows wide for ten minutes to keep mould away.');
+  if (r.t > 26) out.push('The room is warm: air it and drink more.');
+  else if (r.t < 17) out.push('The room is cold: put on a layer before you sit still.');
+  return out;
+}
+function roomSheet() {
+  const c = meterCfg(), r = roomFresh(), can = isNativeApp() && appBuild >= BLE_BUILD;
+  const found = roomFound ? (roomFound.length ? `<div class="opt-list mt-3" role="radiogroup" aria-label="Meters nearby">${roomFound.map((d) => `
+      <button class="opt" role="radio" aria-checked="${!!c && c.addr === d.addr}" data-action="room-pick" data-addr="${esc(d.addr)}">
+        <div><div class="t">${d.t}° · ${d.h}%</div><div class="s">${esc(d.model)}${d.batt != null ? ` · battery ${d.batt}%` : ''} · pick the one that matches the meter's display</div></div>
+        ${c && c.addr === d.addr ? icon('check') : ''}</button>`).join('')}</div>`
+    : '<p class="muted small mt-3 m-0">No SwitchBot meter heard. Hold the phone near the meter and try again.</p>') : '';
+  openSheet('Room thermometer', `
+    <p class="muted small m-0">Shows your room's temperature and humidity from a SwitchBot meter. The app listens to what the meter broadcasts over Bluetooth while your phone is near it. No hub, account or internet needed.</p>
+    ${!isNativeApp() ? '<p class="small mt-3 m-0">This works in the Android app, not in a browser.</p>'
+    : !can ? `<p class="small mt-3 m-0">This version of the app can't listen yet. <a href="${APK_URL}">Download the latest app</a> and install it.</p>`
+    : `${c ? `<div class="card mt-3" role="status"><div class="fw-bold">${r ? `${r.t}° · ${r.h}% humidity` : 'No recent reading'}</div>
+        <p class="small muted m-0 mt-1">${r ? `${esc(r.model)}${r.batt != null ? ` · battery ${r.batt}%` : ''} · read at ${fmtTime(new Date(r.at))}` : 'Bring the phone near the meter and tap Read now.'}</p>
+        ${r ? roomAdvice(r).map((x) => `<p class="small m-0 mt-2">${esc(x)}</p>`).join('') : ''}</div>` : ''}
+      ${roomMsg ? `<p class="small mt-3 m-0" role="alert">${esc(roomMsg)}</p>` : ''}
+      ${found}
+      <button class="btn block lg mt-4" data-action="room-scan"${roomBusy ? ' disabled' : ''}>${roomBusy ? 'Listening…' : c ? 'Read now' : 'Find my meter'}</button>
+      ${c ? '<button class="link-btn small mt-3" data-action="room-remove">Stop using this meter</button>' : ''}`}`, { onClose: () => { roomFound = null; roomMsg = ''; } });
+}
+
+/* ---------- Weather outside (Open-Meteo, free, no account) ----------
+   Uses the place you set for prayer times, rounded to about a kilometre. Fetched at most every 30 minutes and kept
+   for offline use. The walk row uses the forecast for the walk's own hour to say outside or indoors. */
+const WMO = [[0, 'clear'], [1, 'mostly clear'], [2, 'partly cloudy'], [3, 'cloudy'], [45, 'fog'], [48, 'fog'], [51, 'light drizzle'], [53, 'drizzle'], [55, 'heavy drizzle'],
+  [56, 'freezing drizzle'], [57, 'freezing drizzle'], [61, 'light rain'], [63, 'rain'], [65, 'heavy rain'], [66, 'freezing rain'], [67, 'freezing rain'], [71, 'light snow'], [73, 'snow'], [75, 'heavy snow'],
+  [77, 'snow grains'], [80, 'light showers'], [81, 'showers'], [82, 'heavy showers'], [85, 'snow showers'], [86, 'snow showers'], [95, 'thunderstorm'], [96, 'thunderstorm'], [99, 'thunderstorm']];
+const wmoText = (c) => (WMO.find(([k]) => k === c) || [0, ''])[1];
+let weather = null;
+try { weather = JSON.parse(localStorage.getItem('pf-weather') || 'null'); } catch { /* ignore */ }
+async function weatherLoad() {
+  const c = prayerCfg();
+  if (!c || c.lat == null) return;
+  const where = `${Number(c.lat).toFixed(2)},${Number(c.lon).toFixed(2)}`;
+  if (weather && weather.where === where && Date.now() - weather.at < 30 * 60e3) return;
+  try {
+    const [la, lo] = where.split(',');
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,weather_code&hourly=temperature_2m,precipitation_probability,weather_code&forecast_days=2&timezone=auto`);
+    if (!r.ok) return;
+    const j = await r.json();
+    weather = { at: Date.now(), where, cur: { t: j.current.temperature_2m, code: j.current.weather_code },
+      hours: j.hourly.time.map((t, i) => [t, j.hourly.temperature_2m[i], j.hourly.precipitation_probability[i], j.hourly.weather_code[i]]) };
+    try { localStorage.setItem('pf-weather', JSON.stringify(weather)); } catch { /* ignore */ }
+    if (['routine', 'today', 'home'].includes(parseRoute().name) && !sheetOpen() && !document.activeElement?.matches('input, textarea, select')) rerender();
+  } catch { /* offline */ }
+}
+/** Forecast for a day and minute of the day: { t, prob, code }, or null when not known (older than 6 h, other day). */
+function weatherAt(day, min) {
+  if (!weather || Date.now() - weather.at > 6 * 3600e3) return null;
+  const m = ((min % 1440) + 1440) % 1440, k = `${min >= 1440 ? keyAdd(day, 1) : day}T${pad(Math.floor(m / 60))}:00`;
+  const h = weather.hours.find((x) => x[0] === k);
+  return h ? { t: h[1], prob: h[2], code: h[3] } : null;
+}
+const weatherNow = () => (weather && Date.now() - weather.at < 2 * 3600e3 ? `${Math.round(weather.cur.t)}°, ${wmoText(weather.cur.code)}` : '');
+/** One sentence for the walk: what it is like outside then, and whether to walk outside or indoors. */
+function walkWeather(day, min) {
+  const w = weatherAt(day, min);
+  if (!w) return '';
+  const wet = w.code >= 51 && w.code !== 71 && w.code !== 77 || (w.prob ?? 0) >= 60, storm = w.code >= 95, icy = w.code === 56 || w.code === 57 || w.code === 66 || w.code === 67;
+  const what = `Outside at ${rtClock(min)}: ${Math.round(w.t)}°, ${wmoText(w.code)}${(w.prob ?? 0) >= 30 ? `, ${w.prob}% chance of ${[71, 73, 75, 77, 85, 86].includes(w.code) ? 'snow' : 'rain'}` : ''}.`;
+  const tip = storm || icy || w.t <= -8 || w.t >= 33 ? 'Walk indoors today: around the flat, on the spot or the stairs.'
+    : wet ? 'Walk indoors, or outside with a rain jacket.'
+      : w.t < 5 ? 'Good for outside: jacket and gloves.' : 'Good for a walk outside.';
+  return ` ${what} ${tip}`;
+}
+
 function dayTimeline(day) {
   const d = fromKey(day), sh = rtShift(day), { wake, sleep } = dayTimes(day), W = rtMin(wake);
   let S = rtMin(sleep); if (S <= W) S += 1440;
@@ -3345,33 +3491,63 @@ function dayTimeline(day) {
   }
   // Meals from the plan. A meal you cook at home gets a "start cooking" step as long before it as its recipe takes,
   // and a breakfast that needs cooking moves later, so there is time to get up and cook it first.
-  let late = 0;   // minutes breakfast moved; the walk and workout after it move too
+  // The workout comes before breakfast (never straight after eating): soon after waking on an evening shift or a
+  // day off. A morning shift leaves at 03:40, so there it comes when you are home, before the snack.
+  const trains = sessionFor(d).length > 0, WORKOUT = 35;
+  const workoutAt = sh === 'evening' ? W + 10 : sh === 'morning' ? at('16:45') : W + 20;   // day off: teeth first
+  const fasted = trains && sh !== 'morning', workoutEnd = workoutAt + WORKOUT;
+  let late = 0;   // minutes breakfast moved; the walk after it moves too
+  let lunchT = 0; // minutes the longest lunch recipe takes (evening shift: the double portion)
   if (window.PF_MEALS) {
     const di = planIdx(day), wk = weekStart(day), dm = dayInfo(di, wk).meals, R = window.PF_RECIPES || {};
     const def = { Breakfast: W + 60, Lunch: W + 330, Snack: W + 570, Dinner: S - 180 };
     dm.forEach((m, j) => {
       const sat = sh && SHIFTS[sh].at[m.label];
       let t = sat ? at(sat[0]) : (def[m.label] ?? W + 300);
+      if (m.label === 'Lunch') lunchT = Math.max(0, ...m.items.map(([id]) => (R[id] && R[id].t) || 0));
       // Longest recipe of the meal; not for packed meals, snacks, a 03:30 breakfast (made the evening before)
       // or an evening shift's lunch, which already has its own cooking step.
       const prep = m.pack || m.label === 'Snack' || (sh === 'morning' && m.label === 'Breakfast') || (sh === 'evening' && m.label === 'Lunch')
         ? 0 : Math.max(0, ...m.items.map(([id]) => (R[id] && R[id].t) || 0));
+      if (sh === 'morning' && trains && m.label === 'Snack') t = workoutEnd + 5;   // snack after the workout, not before
+      // After a workout: shower (and hair) first, then cook, then eat.
+      const cookFrom = fasted && m.label === 'Breakfast' ? workoutEnd + (sh === 'evening' ? 25 : 20) : 0;
+      if (cookFrom && t - (prep >= 10 && prep <= 60 ? prep : 5) < cookFrom) { const was = t; t = Math.ceil((cookFrom + (prep >= 10 && prep <= 60 ? prep : 5)) / 5) * 5; late = t - was; }
       if (prep > 60) {
         // A slow dish (nihari takes hours) is cooked ahead: the day only needs time to warm it.
         add(t - 15, { key: `cookm:${m.label}`, icon: 'meal', title: `Warm up ${m.label.toLowerCase()}`, sub: `${m.text} takes about ${Math.round(prep / 60)} hours, so cook it the day before and warm it now.` });
       } else if (prep >= 10) {
-        if (m.label === 'Breakfast' && t - prep < W + 5) { late = Math.ceil((W + 5 + prep - t) / 5) * 5; t += late; }
-        add(t - prep, { key: `cookm:${m.label}`, icon: 'meal', title: `Start cooking ${m.label.toLowerCase()}`, sub: `About ${prep} min for ${m.text}. The recipe is under Meal.` });
+        if (m.label === 'Breakfast' && t - prep < W + 5) { const add5 = Math.ceil((W + 5 + prep - t) / 5) * 5; late += add5; t += add5; }
+        add(t - prep, { key: `cookm:${m.label}`, cookFor: prep, icon: 'meal', title: `Start cooking ${m.label.toLowerCase()}`, sub: `About ${prep} min for ${m.text}. The recipe is under Meal.` });
       }
       add(t, { key: `meal:${m.label}`, icon: 'meal', title: m.label, sub: `${m.text} · ${nf(m.kcal)} kcal`, meal: { di, wk, j, label: m.label } });
     });
   }
-  // Workout and walk. On an evening shift both come after breakfast, so they follow it when it moves.
-  const walkAt = sh === 'evening' ? W + 35 + late : S - 150,   // 20 minutes after breakfast
-    trains = sessionFor(d).length > 0;
-  // The walk takes 30 minutes and the workout 35: on an evening shift the workout starts when the walk is over.
-  const WALK = 30, WORKOUT = 35;
-  const workoutAt = sh === 'evening' ? walkAt + WALK + 5 : sh === 'morning' ? at('17:15') : at('17:30');
+  // The walk comes after breakfast on an evening shift (it follows breakfast when that moves), in the evening otherwise.
+  const walkAt = sh === 'evening' ? W + 35 + late : S - 150;   // evening shift: 20 minutes after breakfast
+  let walkLen = 30;
+  if (sh === 'evening') {
+    /* The morning before an evening shift, with real lengths, in the order you would do it. Workout day:
+       workout (35 min), shower (15), hair (10), cook and eat breakfast, walk, teeth (10), then cook lunch until 12:15.
+       Cooking lunch gets its recipe's time plus 15 minutes for the second portion (40–60 min). If that does not all
+       fit, the walk gets shorter (10 minutes at least); if it still does not, cooking starts a little later. */
+    const cook = items.find((it) => it.key === 'cook');
+    const cookLen = Math.min(60, Math.max(40, lunchT + 15));
+    let cookAt = at('12:15') - cookLen;
+    const put = (id, min) => { const it = items.find((x) => x.key === `care:${id}`); if (it) it.min = min; };
+    if (trains) {
+      put('e-am', workoutEnd); put('e-hair', workoutEnd + 15);
+      walkLen = Math.max(10, Math.min(30, Math.floor((cookAt - 10 - walkAt) / 5) * 5));
+      put('e-teeth', walkAt + walkLen);
+      cookAt = Math.max(cookAt, walkAt + walkLen + 10);
+    } else {
+      cookAt = Math.max(Math.min(cookAt, at('11:00')), walkAt + walkLen);
+    }
+    if (cook) {
+      cook.min = cookAt;
+      cook.sub = `About ${Math.round((at('12:15') - cookAt) / 5) * 5} min until lunch at 12:15. Lunch now and the same meal for the 18:30 break.`;
+    }
+  }
   if (!trains && state.trainingDays.length) {
     // A rest day says so at the time the workout would be, with the day of the next one.
     let nd = null;
@@ -3379,21 +3555,12 @@ function dayTimeline(day) {
     add(workoutAt, { key: 'rest', icon: 'dumbbell', title: 'Rest day: no workout', info: true,
       sub: `${nd ? `Next workout: ${WEEKDAY_LONG[nd.getDay()]}, about 35 min. ` : ''}Your walk today helps you recover.` });
   }
-  if (trains) add(workoutAt, { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min`, workout: true });
+  if (trains) add(workoutAt, { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min${fasted ? ', before breakfast. Drink water first.' : ''}`, workout: true });
   const sg = hp().stepGoal || HDEF.stepGoal;
-  add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
-  // Evening shift, the morning before work: lunch's cooking starts once the workout (or a late walk) is over, at the
-  // latest 40 minutes before lunch. On a workout day the shower, hair and teeth come after it, while lunch cooks.
-  if (sh === 'evening') {
-    const cook = items.find((it) => it.key === 'cook');
-    const free = trains ? workoutAt + WORKOUT : walkAt + WALK;
-    if (cook) cook.min = Math.min(at('11:35'), Math.max(cook.min, free));
-    if (trains) {
-      const after = (cook ? cook.min : free) + 10;
-      ['e-am', 'e-hair', 'e-teeth'].forEach((id, i) => { const it = items.find((x) => x.key === `care:${id}`); if (it && it.min < after + 40) it.min = after + i * 12; });
-    }
-  }
-  add(sh === 'evening' ? S - 8 : S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: 'Screens away, dim lights, lay out tomorrow\'s clothes and food.' });
+  add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: (walkLen < 30
+    ? `${walkLen} minutes today: the morning is full. Make up the steps in your break (goal ${nf(sg)}).`
+    : `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).`) + walkWeather(day, walkAt) });
+  add(sh === 'evening' ? S - 8 : S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: `Screens away, dim lights, lay out tomorrow's clothes and food.${day === todayKey() && roomFresh() && room.t > 21 ? ` The room is ${room.t}°: air it now, sleep is best at 16–19°.` : ''}` });
   add(S, { key: 'sleep', icon: 'moon', title: 'Sleep', sub: `Lights out. ${fmtSleep(((W + 1440) - S) % 1440 || 0)} until you wake.` });
   // Prayer times for this date and place, pinned to their real time.
   const pr = prayerFor(d);
@@ -3421,15 +3588,24 @@ function dayTimeline(day) {
     items.sort((x, y) => x.min - y.min);
   };
   clearWorkout();
+  // Nor while you are cooking a meal: a step that fell between "Start cooking" and the meal comes 20 minutes after the meal.
+  const clearCooking = () => {
+    items.filter((c) => c.cookFor).forEach((c) => {
+      items.forEach((it) => { if (it !== c && !it.meal && !it.prayer && !it.info && !it.workout && !it.cookFor && it.key !== 'sleep' && it.min >= c.min && it.min < c.min + c.cookFor) it.min = c.min + c.cookFor + 20; });
+    });
+    items.sort((x, y) => x.min - y.min);
+  };
+  clearCooking();
   // Two things at the same time: keep meals, prayers and the workout where they are and move the other one on by 15 minutes.
   for (let i = 1; i < items.length; i++) {
-    if (items[i].min - items[i - 1].min < 5 && items[i].key !== 'sleep') {
+    if (items[i].min - items[i - 1].min < 5 && items[i].key !== 'sleep' && items[i].key !== 'rest' && items[i - 1].key !== 'rest') {   // the rest-day note takes no time
       const pinned = (it) => it.meal || it.prayer || it.workout;
       if (pinned(items[i]) && !pinned(items[i - 1]) && i > 1 && items[i].min - items[i - 2].min >= 5) { const t = items[i - 1]; items[i - 1] = items[i]; items[i] = t; }
       items[i].min = items[i - 1].min + 15;
     }
   }
   clearWorkout();   // moving things apart may have pushed one into the workout
+  clearCooking();   // or into a meal's cooking
   return items.sort((x, y) => x.min - y.min);
 }
 const rtDone = (day, it) => !rtPreview && rtDoneReal(day, it);
@@ -3457,7 +3633,7 @@ VIEWS.routine = () => {
   };
   return `
     <h1 class="h1 m-0">Routine</h1>
-    <p class="muted m-0 mt-1">${sh ? `${SHIFTS[sh].name}: wake ${wake}, sleep ${sleep}` : `Day off: wake ${wake}, sleep ${sleep}`}${rtPreview ? ' · preview' : ` · ${done} of ${total} done`}</p>
+    <p class="muted m-0 mt-1">${sh ? `${SHIFTS[sh].name}: wake ${wake}, sleep ${sleep}` : `Day off: wake ${wake}, sleep ${sleep}`}${rtPreview ? ' · preview' : ` · ${done} of ${total} done`}${isToday && weatherNow() ? ` · outside ${esc(weatherNow())}` : ''}${isToday && roomNow() ? ` · room ${esc(roomNow())}` : ''}</p>
     <div class="chips mt-3" role="group" aria-label="Show the plan for">
       ${[[null, 'This day'], ['off', 'Off'], ['morning', 'Early'], ['evening', 'Late']].map(([v, l]) => `<button class="chip ${rtPreview === v ? 'on' : ''}" aria-pressed="${rtPreview === v}" data-action="rt-preview" data-v="${v || ''}">${l}</button>`).join('')}
     </div>
@@ -3499,6 +3675,7 @@ function prayerSheet(note) {
 function prayerStore(patch) {
   state.hprofile.prayer = { on: true, method: 'mwl', asr: 'hanafi', ...(prayerCfg() || {}), ...patch };
   save();
+  weatherLoad();   // the weather uses the same place
 }
 function rtTimesSheet() {
   const p = hp();
@@ -4976,7 +5153,7 @@ function hcLoad() {
     const done = () => {
       const reg = window.capacitorExports && window.capacitorExports.registerPlugin;
       if (!reg) { reject(new Error('Capacitor not available')); return; }
-      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget'), Notif: reg('LocalNotifications'), Share: reg('MizanShare'), Update: reg('MizanUpdate') };
+      hcPlugins = { Health: reg('Health'), App: reg('App'), Widget: reg('PulseFitWidget'), Notif: reg('LocalNotifications'), Share: reg('MizanShare'), Update: reg('MizanUpdate'), Ble: reg('MizanBle') };
       resolve(hcPlugins);
     };
     if (window.capacitorExports) { done(); return; }
@@ -5338,6 +5515,7 @@ async function hcBoot() {
   try { const { App } = await hcLoad(); appBuild = Number((await App.getInfo()).build) || 0; } catch { /* ignore */ }
   // Now that the installed build is known: is there a newer APK? Show the banner if one was already seen.
   checkAppUpdate();
+  roomRefresh();
   if (latestBuild > appBuild && appBuild && parseRoute().name === 'today' && !sheetOpen()) rerender();
   try {
     const { Notif } = await hcLoad();
@@ -5938,7 +6116,8 @@ async function checkForUpdate() {
   if (draft || sheetOpen() || parseRoute().name === 'workout' || document.activeElement?.matches('input, textarea, select')) return;
   location.reload();
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkForUpdate(); weatherLoad(); roomRefresh(); } });
+weatherLoad();
 
 hcBoot();
 setInterval(checkReminder, 60000);

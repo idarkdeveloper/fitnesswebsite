@@ -3346,12 +3346,14 @@ function dayTimeline(day) {
   // Meals from the plan. A meal you cook at home gets a "start cooking" step as long before it as its recipe takes,
   // and a breakfast that needs cooking moves later, so there is time to get up and cook it first.
   let late = 0;   // minutes breakfast moved; the walk and workout after it move too
+  let lunchT = 0; // minutes the longest lunch recipe takes (evening shift: the double portion)
   if (window.PF_MEALS) {
     const di = planIdx(day), wk = weekStart(day), dm = dayInfo(di, wk).meals, R = window.PF_RECIPES || {};
     const def = { Breakfast: W + 60, Lunch: W + 330, Snack: W + 570, Dinner: S - 180 };
     dm.forEach((m, j) => {
       const sat = sh && SHIFTS[sh].at[m.label];
       let t = sat ? at(sat[0]) : (def[m.label] ?? W + 300);
+      if (m.label === 'Lunch') lunchT = Math.max(0, ...m.items.map(([id]) => (R[id] && R[id].t) || 0));
       // Longest recipe of the meal; not for packed meals, snacks, a 03:30 breakfast (made the evening before)
       // or an evening shift's lunch, which already has its own cooking step.
       const prep = m.pack || m.label === 'Snack' || (sh === 'morning' && m.label === 'Breakfast') || (sh === 'evening' && m.label === 'Lunch')
@@ -3361,17 +3363,38 @@ function dayTimeline(day) {
         add(t - 15, { key: `cookm:${m.label}`, icon: 'meal', title: `Warm up ${m.label.toLowerCase()}`, sub: `${m.text} takes about ${Math.round(prep / 60)} hours, so cook it the day before and warm it now.` });
       } else if (prep >= 10) {
         if (m.label === 'Breakfast' && t - prep < W + 5) { late = Math.ceil((W + 5 + prep - t) / 5) * 5; t += late; }
-        add(t - prep, { key: `cookm:${m.label}`, icon: 'meal', title: `Start cooking ${m.label.toLowerCase()}`, sub: `About ${prep} min for ${m.text}. The recipe is under Meal.` });
+        add(t - prep, { key: `cookm:${m.label}`, cookFor: prep, icon: 'meal', title: `Start cooking ${m.label.toLowerCase()}`, sub: `About ${prep} min for ${m.text}. The recipe is under Meal.` });
       }
       add(t, { key: `meal:${m.label}`, icon: 'meal', title: m.label, sub: `${m.text} · ${nf(m.kcal)} kcal`, meal: { di, wk, j, label: m.label } });
     });
   }
   // Workout and walk. On an evening shift both come after breakfast, so they follow it when it moves.
-  const walkAt = sh === 'evening' ? W + 35 + late : S - 150,   // 20 minutes after breakfast
-    trains = sessionFor(d).length > 0;
-  // The walk takes 30 minutes and the workout 35: on an evening shift the workout starts when the walk is over.
-  const WALK = 30, WORKOUT = 35;
-  const workoutAt = sh === 'evening' ? walkAt + WALK + 5 : sh === 'morning' ? at('17:15') : at('17:30');
+  const trains = sessionFor(d).length > 0, WORKOUT = 35;
+  const walkAt = sh === 'evening' ? W + 35 + late : S - 150;   // evening shift: 20 minutes after breakfast
+  let walkLen = 30, workoutAt = sh === 'morning' ? at('17:15') : at('17:30');
+  if (sh === 'evening') {
+    /* The morning before an evening shift, with real lengths, in the order you would do it:
+       walk, workout (35 min), shower (15), hair (10), teeth (10), then cook lunch until 12:15.
+       Cooking gets its recipe's time plus 15 minutes for the second portion (40–60 min). If that does not all fit,
+       the walk gets shorter (10 minutes at least); if it still does not, cooking starts a little later. */
+    const cook = items.find((it) => it.key === 'cook');
+    const cookLen = Math.min(60, Math.max(40, lunchT + 15));
+    let cookAt = at('12:15') - cookLen;
+    if (trains) {
+      walkLen = Math.max(10, Math.min(30, Math.floor((cookAt - walkAt - 5 - WORKOUT - 35) / 5) * 5));
+      workoutAt = walkAt + walkLen + 5;
+      const care = workoutAt + WORKOUT;
+      [['e-am', 0], ['e-hair', 15], ['e-teeth', 25]].forEach(([id, off]) => { const it = items.find((x) => x.key === `care:${id}`); if (it) it.min = care + off; });
+      cookAt = Math.max(cookAt, care + 35);
+    } else {
+      workoutAt = walkAt + walkLen;                           // where the rest-day note sits
+      cookAt = Math.max(Math.min(cookAt, at('11:00')), walkAt + walkLen);
+    }
+    if (cook) {
+      cook.min = cookAt;
+      cook.sub = `About ${Math.round((at('12:15') - cookAt) / 5) * 5} min until lunch at 12:15. Lunch now and the same meal for the 18:30 break.`;
+    }
+  }
   if (!trains && state.trainingDays.length) {
     // A rest day says so at the time the workout would be, with the day of the next one.
     let nd = null;
@@ -3381,18 +3404,9 @@ function dayTimeline(day) {
   }
   if (trains) add(workoutAt, { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min`, workout: true });
   const sg = hp().stepGoal || HDEF.stepGoal;
-  add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
-  // Evening shift, the morning before work: lunch's cooking starts once the workout (or a late walk) is over, at the
-  // latest 40 minutes before lunch. On a workout day the shower, hair and teeth come after it, while lunch cooks.
-  if (sh === 'evening') {
-    const cook = items.find((it) => it.key === 'cook');
-    const free = trains ? workoutAt + WORKOUT : walkAt + WALK;
-    if (cook) cook.min = Math.min(at('11:35'), Math.max(cook.min, free));
-    if (trains) {
-      const after = (cook ? cook.min : free) + 10;
-      ['e-am', 'e-hair', 'e-teeth'].forEach((id, i) => { const it = items.find((x) => x.key === `care:${id}`); if (it && it.min < after + 40) it.min = after + i * 12; });
-    }
-  }
+  add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: walkLen < 30
+    ? `${walkLen} minutes today, to leave room for the workout. Make up the steps in your break (goal ${nf(sg)}).`
+    : `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
   add(sh === 'evening' ? S - 8 : S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: 'Screens away, dim lights, lay out tomorrow\'s clothes and food.' });
   add(S, { key: 'sleep', icon: 'moon', title: 'Sleep', sub: `Lights out. ${fmtSleep(((W + 1440) - S) % 1440 || 0)} until you wake.` });
   // Prayer times for this date and place, pinned to their real time.
@@ -3421,15 +3435,24 @@ function dayTimeline(day) {
     items.sort((x, y) => x.min - y.min);
   };
   clearWorkout();
+  // Nor while you are cooking a meal: a step that fell between "Start cooking" and the meal comes 20 minutes after the meal.
+  const clearCooking = () => {
+    items.filter((c) => c.cookFor).forEach((c) => {
+      items.forEach((it) => { if (it !== c && !it.meal && !it.prayer && !it.info && !it.workout && !it.cookFor && it.key !== 'sleep' && it.min >= c.min && it.min < c.min + c.cookFor) it.min = c.min + c.cookFor + 20; });
+    });
+    items.sort((x, y) => x.min - y.min);
+  };
+  clearCooking();
   // Two things at the same time: keep meals, prayers and the workout where they are and move the other one on by 15 minutes.
   for (let i = 1; i < items.length; i++) {
-    if (items[i].min - items[i - 1].min < 5 && items[i].key !== 'sleep') {
+    if (items[i].min - items[i - 1].min < 5 && items[i].key !== 'sleep' && items[i].key !== 'rest' && items[i - 1].key !== 'rest') {   // the rest-day note takes no time
       const pinned = (it) => it.meal || it.prayer || it.workout;
       if (pinned(items[i]) && !pinned(items[i - 1]) && i > 1 && items[i].min - items[i - 2].min >= 5) { const t = items[i - 1]; items[i - 1] = items[i]; items[i] = t; }
       items[i].min = items[i - 1].min + 15;
     }
   }
   clearWorkout();   // moving things apart may have pushed one into the workout
+  clearCooking();   // or into a meal's cooking
   return items.sort((x, y) => x.min - y.min);
 }
 const rtDone = (day, it) => !rtPreview && rtDoneReal(day, it);

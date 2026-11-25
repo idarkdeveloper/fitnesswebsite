@@ -3292,19 +3292,41 @@ function dayTimeline(day) {
       add(at('12:25'), { key: 'pack', icon: 'meal', title: 'Pack your bag', sub: 'Break meal, snack for the way home, water bottle.' });
     }
   }
-  // Meals from the plan.
+  // Meals from the plan. A meal you cook at home gets a "start cooking" step as long before it as its recipe takes,
+  // and a breakfast that needs cooking moves later, so there is time to get up and cook it first.
+  let late = 0;   // minutes breakfast moved; the walk and workout after it move too
   if (window.PF_MEALS) {
-    const di = planIdx(day), wk = weekStart(day), dm = dayInfo(di, wk).meals;
+    const di = planIdx(day), wk = weekStart(day), dm = dayInfo(di, wk).meals, R = window.PF_RECIPES || {};
     const def = { Breakfast: W + 60, Lunch: W + 330, Snack: W + 570, Dinner: S - 180 };
     dm.forEach((m, j) => {
       const sat = sh && SHIFTS[sh].at[m.label];
-      add(sat ? at(sat[0]) : (def[m.label] ?? W + 300), { key: `meal:${m.label}`, icon: 'meal', title: m.label, sub: `${m.text} · ${nf(m.kcal)} kcal`, meal: { di, wk, j, label: m.label } });
+      let t = sat ? at(sat[0]) : (def[m.label] ?? W + 300);
+      // Longest recipe of the meal; not for packed meals, snacks, a 03:30 breakfast (made the evening before)
+      // or an evening shift's lunch, which already has its own cooking step.
+      const prep = m.pack || m.label === 'Snack' || (sh === 'morning' && m.label === 'Breakfast') || (sh === 'evening' && m.label === 'Lunch')
+        ? 0 : Math.max(0, ...m.items.map(([id]) => (R[id] && R[id].t) || 0));
+      if (prep > 60) {
+        // A slow dish (nihari takes hours) is cooked ahead: the day only needs time to warm it.
+        add(t - 15, { key: `cookm:${m.label}`, icon: 'meal', title: `Warm up ${m.label.toLowerCase()}`, sub: `${m.text} takes about ${Math.round(prep / 60)} hours, so cook it the day before and warm it now.` });
+      } else if (prep >= 10) {
+        if (m.label === 'Breakfast' && t - prep < W + 5) { late = Math.ceil((W + 5 + prep - t) / 5) * 5; t += late; }
+        add(t - prep, { key: `cookm:${m.label}`, icon: 'meal', title: `Start cooking ${m.label.toLowerCase()}`, sub: `About ${prep} min for ${m.text}. The recipe is under Meal.` });
+      }
+      add(t, { key: `meal:${m.label}`, icon: 'meal', title: m.label, sub: `${m.text} · ${nf(m.kcal)} kcal`, meal: { di, wk, j, label: m.label } });
     });
   }
-  // Workout and walk.
-  if (sessionFor(d).length) add(sh === 'evening' ? W + 75 : sh === 'morning' ? at('17:15') : at('17:30'), { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min`, workout: true });
+  // Workout and walk. On an evening shift both come after breakfast, so they follow it when it moves.
+  const walkAt = sh === 'evening' ? W + 35 + late : S - 150,   // 20 minutes after breakfast
+    trains = sessionFor(d).length > 0;
+  const workoutAt = sh === 'evening' ? Math.max(W + 75, late ? walkAt + 35 : 0) : sh === 'morning' ? at('17:15') : at('17:30');
+  if (trains) add(workoutAt, { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min`, workout: true });
   const sg = hp().stepGoal || HDEF.stepGoal;
-  add(sh === 'evening' ? W + 35 : S - 150, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
+  add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });
+  // A late breakfast squeezes the morning: lunch's cooking starts once the workout (or walk) is over, at the latest 40 minutes before lunch.
+  if (sh === 'evening' && late) {
+    const cook = items.find((it) => it.key === 'cook');
+    if (cook) cook.min = Math.min(at('11:35'), Math.max(cook.min, (trains ? workoutAt : walkAt) + 35));
+  }
   add(sh === 'evening' ? S - 8 : S - 45, { key: 'wind', icon: 'moon', title: 'Wind down', sub: 'Screens away, dim lights, lay out tomorrow\'s clothes and food.' });
   add(S, { key: 'sleep', icon: 'moon', title: 'Sleep', sub: `Lights out. ${fmtSleep(((W + 1440) - S) % 1440 || 0)} until you wake.` });
   // Prayer times for this date and place, pinned to their real time.
@@ -3325,10 +3347,10 @@ function dayTimeline(day) {
     });
   }
   items.sort((x, y) => x.min - y.min);
-  // Two things at the same time: keep meals and prayers where they are and move the other one on by 15 minutes.
+  // Two things at the same time: keep meals, prayers and the workout where they are and move the other one on by 15 minutes.
   for (let i = 1; i < items.length; i++) {
     if (items[i].min - items[i - 1].min < 5 && items[i].key !== 'sleep') {
-      const pinned = (it) => it.meal || it.prayer;
+      const pinned = (it) => it.meal || it.prayer || it.workout;
       if (pinned(items[i]) && !pinned(items[i - 1]) && i > 1 && items[i].min - items[i - 2].min >= 5) { const t = items[i - 1]; items[i - 1] = items[i]; items[i] = t; }
       items[i].min = items[i - 1].min + 15;
     }

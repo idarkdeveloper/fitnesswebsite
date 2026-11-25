@@ -3370,6 +3370,13 @@ function dayTimeline(day) {
   const walkAt = sh === 'evening' ? W + 35 + late : S - 150,   // 20 minutes after breakfast
     trains = sessionFor(d).length > 0;
   const workoutAt = sh === 'evening' ? Math.max(W + 75, late ? walkAt + 35 : 0) : sh === 'morning' ? at('17:15') : at('17:30');
+  if (!trains && state.trainingDays.length) {
+    // A rest day says so at the time the workout would be, with the day of the next one.
+    let nd = null;
+    for (let i = 1; i <= 7 && !nd; i++) if (sessionFor(addDays(d, i)).length) nd = addDays(d, i);
+    add(workoutAt, { key: 'rest', icon: 'dumbbell', title: 'Rest day: no workout', info: true,
+      sub: `${nd ? `Next workout: ${WEEKDAY_LONG[nd.getDay()]}, about 35 min. ` : ''}Your walk today helps you recover.` });
+  }
   if (trains) add(workoutAt, { key: 'workout', icon: 'dumbbell', title: `Workout · ${routineShort(routine())}`, sub: `${sessionFor(d).length} exercises, about 35 min`, workout: true });
   const sg = hp().stepGoal || HDEF.stepGoal;
   add(walkAt, { key: 'walk', icon: 'run', title: 'Walk', sub: `30 minutes towards ${nf(sg)} steps (after a meal is best for blood sugar).` });

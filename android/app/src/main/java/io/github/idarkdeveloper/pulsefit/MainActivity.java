@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(WidgetBridgePlugin.class);   // home-screen widget bridge (must come before super)
         registerPlugin(ShareBridgePlugin.class);    // "Share to Mizan": reads a shared scale report image
         registerPlugin(UpdateBridgePlugin.class);   // in-app update: download the new APK and open the installer
+        registerPlugin(BleBridgePlugin.class);      // reads a SwitchBot room thermometer's Bluetooth broadcasts
         super.onCreate(savedInstanceState);
     }
 }

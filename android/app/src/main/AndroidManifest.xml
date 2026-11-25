@@ -67,6 +67,12 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Room thermometer (SwitchBot Meter): listening to its Bluetooth broadcasts. Never used to find your location.
+         Android 11 and older tie Bluetooth scanning to the location permission. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="30" />
     <!-- In-app update: lets Mizan hand its own new APK to Android's installer (you still confirm the install). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Barcode scanning in Add food (the camera is only opened while the scan sheet is open) -->

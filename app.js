@@ -921,6 +921,7 @@ function ringSvg(pct, size = 88, stroke = 9) {
   </svg>`;
 }
 const routineShort = (r) => r.name.replace(/\s*Routine$/i, '');
+const MEAL_SLOTS = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
 const planLogged = (key, label) => state.meals.some((m) => m.day === key && m.name.startsWith(label + ':'));
 /** "✓ Logged" on a plan meal: tap it to remove that logged meal again (with Undo). */
 const loggedBtn = (key, label) => `<button class="logged" data-action="plan-unlog" data-day="${key}" data-label="${esc(label)}" aria-label="${esc(label)} logged. Remove it">${icon('check', 'class="icon-sm"')} Logged ${icon('x', 'class="icon-sm unlog-x"')}</button>`;
@@ -2387,6 +2388,7 @@ function foodSheet() {
     <div class="rough-grid mt-2">${[['Small', 400], ['Normal', 700], ['Big', 1000]].map(([n, k]) => `<button class="rough" data-action="track-food-rough" data-name="${n} meal" data-kcal="${k}"><b>${n}</b><span class="small muted">${nf(k)} kcal</span></button>`).join('')}</div>
     <details class="other-food mt-3"><summary><span class="fw-bold">Other food</span><span class="small muted">name · kcal · label nutrients</span></summary>
       <div class="field"><label for="fName">Food</label><input class="input" id="fName" maxlength="60" placeholder="e.g. Butter-Spritzgebäck" autocomplete="off" /></div>
+      <div class="field"><label for="fMeal">Add it as</label><select class="input" id="fMeal"><option value="">Choose a meal…</option>${MEAL_SLOTS.map((l) => `<option value="${l}">${l}${planLogged(day, l) ? ' (already logged)' : ''}</option>`).join('')}<option value="-">Just a food, no meal</option></select></div>
       <div class="grid2">
         <div class="field"><label for="fBasis">Label values are</label><select class="input" id="fBasis"><option value="serving">per serving</option><option value="100g">per 100 g</option></select></div>
         <div class="field" id="fGramsField" hidden><label for="fGrams">You ate (g)</label><input class="input" id="fGrams" type="number" inputmode="decimal" min="1" max="5000" /></div>
@@ -2790,6 +2792,8 @@ const TRACK_ACTIONS = {
     if (!name) { toast('Name the food'); return; }
     if (kcal == null || kcal < 0 || kcal > 5000) { toast('Enter calories between 0 and 5,000'); return; }
     if (protein != null && (protein < 0 || protein > 500)) { toast('Protein should be between 0 and 500 g'); return; }
+    const slot = $('#fMeal')?.value || '';
+    if (!slot) { toast('Choose breakfast, lunch, dinner or snack'); $('#fMeal')?.focus(); return; }
     const per = {};
     for (const k of NUT_KEYS) { const v = parseNum($(`#fN-${k}`)?.value); if (v != null) per[k] = v; }
     if (Object.values(per).some((v) => v < 0 || v > 1000)) { toast('Nutrient values should be between 0 and 1,000 g'); return; }
@@ -2800,7 +2804,7 @@ const TRACK_ACTIONS = {
     const grams = parseNum($('#fGrams')?.value);
     if (per100 && (grams == null || grams <= 0 || grams > 5000)) { toast('Enter how many grams you ate'); return; }
     const q = per100 ? grams / 100 : 1;
-    const eatenName = per100 ? `${name} (${nf(grams)} g)` : name;
+    const eatenName = `${MEAL_SLOTS.includes(slot) ? `${slot}: ` : ''}${per100 ? `${name} (${nf(grams)} g)` : name}`;   // "Lunch: …" also ticks that meal in the plan
     if ($('#fSave').checked) {
       const saveName = per100 ? `${name} (100 g)` : name;           // one serving of the saved food = what the label column says
       const exists = Object.values(state.foods).some((f) => f.name.toLowerCase() === saveName.toLowerCase());
